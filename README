@@ -1,0 +1,23 @@
+=================
+websocket-client
+=================
+
+websocket-client module  is WebSocket client for python. This provide the low level APIs for WebSocket. All APIs are the synchronous functions.
+
+Installation
+=============
+
+This module is tested on only Python 2.7.
+Type "python setup.py install" to install.
+
+Example
+========
+
+    from websocket import create_connection
+    ws = create_connection("ws://localhost:5000/echo")
+    print "Sending 'Hello, World'..."
+    ws.send("Hello, World")
+    print "Sent"
+    print "Reeiving..."
+    result =  ws.recv()
+    print "Received '%s'" % result
