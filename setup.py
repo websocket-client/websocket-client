@@ -20,4 +20,5 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Intended Audience :: Developers",
     ],
+    py_modules=["websocket"],
 )

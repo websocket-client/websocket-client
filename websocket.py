@@ -3,7 +3,10 @@ from urlparse import urlparse
 import random
 
 
-class ConnectionClosedException(Exception):
+class WebSocketException(Exception):
+    pass
+
+class ConnectionClosedException(WebSocketException):
     pass
 
 default_timeout = None
@@ -34,6 +37,8 @@ def _parse_url(url):
             port = parsed.port
         else:
             port = 80
+    elif parsed.scheme == "wss":
+        raise ValueError("scheme wss is not supported")
     else:
         raise ValueError("scheme %s is invalid" % parsed.scheme)
     
@@ -53,14 +58,10 @@ def create_connection(url, timeout=None):
     Passing optional timeout parameter will set the timeout on the socket.
     If no timeout is supplied, the global default timeout setting returned by getdefauttimeout() is used.
     """
-    try:
-        websock = WebSocket()
-        websock.settimeout(timeout != None and timeout or default_timeout)
-        websock.connect(url)
-        return websock
-    except Exception, e:
-        #websock.close()
-        raise e
+    websock = WebSocket()
+    websock.settimeout(timeout != None and timeout or default_timeout)
+    websock.connect(url)
+    return websock
 
 _MAX_INTEGER = (1 << 32) -1
 _AVAILABLE_KEY_CHARS = range(0x21, 0x2f + 1) + range(0x3a, 0x7e + 1)
@@ -87,6 +88,11 @@ def _create_sec_websocket_key():
 
 def _create_key3():
     return "".join([chr(random.randint(0, _MAX_CHAR_BYTE)) for i in range(8)])
+
+HEADERS_TO_CHECK = {
+    "Upgrade": "websocket",
+    "Connection": "upgrade",
+    }
     
 
 class WebSocket(object):
@@ -130,22 +136,50 @@ class WebSocket(object):
         headers.append("Host: %s" % hostport)
         headers.append("Origin: %s" % hostport)
         
-        number_1, key_1 = _create_sec_websocket_key()
+        # number_1, key_1 = _create_sec_websocket_key()
         # headers.append("Sec-WebSocket-Key1: %s" % key_1)
-        number_2, key_2 = _create_sec_websocket_key()
+        # number_2, key_2 = _create_sec_websocket_key()
         # headers.append("Sec-WebSocket-Key2: %s" % key_2)
         
         header_str = "\r\n".join(headers)
         sock.send(header_str)
         sock.send("\r\n\r\n")
-        key3 = _create_key3()
+        # key3 = _create_key3()
         #sock.send(key3)
 
+        status, resp_headers = self._read_headers()
+        if status != 101:
+            self.sock.close()
+            raise WebSocketException("Handshake Status %d" % status)
+        if not self._validate_header(resp_headers):
+            self.sock.close()
+            raise WebSocketException("Invalid WebSocket Header")
+
+    def _validate_header(self, headers):
+        #TODO: check other headers
+        for key, value in HEADERS_TO_CHECK.iteritems():
+            v = headers[key]
+            if value != v:
+                return False
+        return True
+            
+
+    def _read_headers(self):
+        status = None
+        headers = {}
         while True:
             line = self._recv_line()
-            # TODO: check handshake response
             if line == "\r\n":
                 break
+            line = line.strip()
+            if not status:
+                status_info = line.split(" ", 2)
+                status = int(status_info[1])
+            else:
+                key, value = line.split(":", 1)
+                headers[key] = value.strip().lower()
+        
+        return status, headers    
     
     def send(self, payload):
         """
