@@ -1,6 +1,8 @@
 import socket
 from urlparse import urlparse
 import random
+import struct
+import md5
 
 
 class WebSocketException(Exception):
@@ -10,6 +12,11 @@ class ConnectionClosedException(WebSocketException):
     pass
 
 default_timeout = None
+traceEnabled = False
+
+def enableTrace(tracable):
+    global traceEnabled
+    traceEnabled = tracable
 
 def setdefaulttimeout(timeout):
     """
@@ -50,7 +57,7 @@ def _parse_url(url):
     return (hostname, port, resource)
 
 
-def create_connection(url, timeout=None):
+def create_connection(url, timeout=None, **options):
     """
     connect to url and return websocket object.
 
@@ -60,7 +67,7 @@ def create_connection(url, timeout=None):
     """
     websock = WebSocket()
     websock.settimeout(timeout != None and timeout or default_timeout)
-    websock.connect(url)
+    websock.connect(url, **options)
     return websock
 
 _MAX_INTEGER = (1 << 32) -1
@@ -90,9 +97,19 @@ def _create_key3():
     return "".join([chr(random.randint(0, _MAX_CHAR_BYTE)) for i in range(8)])
 
 HEADERS_TO_CHECK = {
-    "Upgrade": "websocket",
-    "Connection": "upgrade",
+    "upgrade": "websocket",
+    "connection": "upgrade",
     }
+
+HEADERS_TO_EXIST_FOR_HYBI00 = [
+    "sec-websocket-origin",
+    "sec-websocket-location",
+]
+
+HEADERS_TO_EXIST_FOR_HIXIE75 = [
+    "websocket-origin",
+    "websocket-location",
+]
     
 
 class WebSocket(object):
@@ -100,6 +117,7 @@ class WebSocket(object):
         """
         Initalize WebSocket object.
         """
+        self.connected = False
         self.sock = socket.socket()
 
     def settimeout(self, timeout):
@@ -114,17 +132,19 @@ class WebSocket(object):
         """
         return self.sock.gettimeout()
     
-    def connect(self, url):
+    def connect(self, url, **options):
         """
         Connect to url. url is websocket url scheme. ie. ws://host:port/resource
         """
         hostname, port, resource = _parse_url(url)
         self.sock.connect((hostname, port))
-        self._handshake(hostname, port, resource)
+        self._handshake(hostname, port, resource, **options)
 
-    def _handshake(self, host, port, resource):
+    def _handshake(self, host, port, resource, **options):
         sock = self.sock
         headers = []
+        if "header" in options:
+            headers.extend(options["header"])
 
         headers.append("GET %s HTTP/1.1" % resource)
         headers.append("Upgrade: WebSocket")
@@ -135,25 +155,58 @@ class WebSocket(object):
             hostport = "%s:%d" % (host, port)
         headers.append("Host: %s" % hostport)
         headers.append("Origin: %s" % hostport)
-        
-        # number_1, key_1 = _create_sec_websocket_key()
-        # headers.append("Sec-WebSocket-Key1: %s" % key_1)
-        # number_2, key_2 = _create_sec_websocket_key()
-        # headers.append("Sec-WebSocket-Key2: %s" % key_2)
-        
+   
+        number_1, key_1 = _create_sec_websocket_key()
+        headers.append("Sec-WebSocket-Key1: %s" % key_1)
+        number_2, key_2 = _create_sec_websocket_key()
+        headers.append("Sec-WebSocket-Key2: %s" % key_2)
+        headers.append("")
+        key3 = _create_key3()
+        headers.append(key3)
+
         header_str = "\r\n".join(headers)
         sock.send(header_str)
-        sock.send("\r\n\r\n")
-        # key3 = _create_key3()
-        #sock.send(key3)
+        if enableTrace:
+            print "--- request header ---"
+            print header_str
+            print "-----------------------"
 
         status, resp_headers = self._read_headers()
         if status != 101:
             self.sock.close()
             raise WebSocketException("Handshake Status %d" % status)
-        if not self._validate_header(resp_headers):
+        success, secure = self._validate_header(resp_headers)
+        if not success:
             self.sock.close()
             raise WebSocketException("Invalid WebSocket Header")
+        
+        if secure:
+            resp = self._get_resp()
+            if not self._validate_resp(number_1, number_2, key3, resp):
+                self.sock.close()
+                raise WebSocketException("challenge-response error")
+
+        self.connected = True
+    
+    def _validate_resp(self, number_1, number_2, key3, resp):
+        challenge = struct.pack("!i", number_1)
+        challenge += struct.pack("!i", number_2)
+        challenge += key3
+        digest = md5.md5(challenge).digest()
+        
+        return  resp == digest
+
+    def _get_resp(self):
+        to = self.sock.gettimeout()
+        self.sock.settimeout(3)
+        result = self._recv(16)
+        self.sock.settimeout(to)
+        if enableTrace:
+            print "--- challenge response result ---"
+            print result
+            print "---------------------------------"
+        
+        return result
 
     def _validate_header(self, headers):
         #TODO: check other headers
@@ -161,23 +214,47 @@ class WebSocket(object):
             v = headers[key]
             if value != v:
                 return False
-        return True
+        success = 0
+        for key in HEADERS_TO_EXIST_FOR_HYBI00:
+            if key in headers:
+                success += 1
+        if success == len(HEADERS_TO_EXIST_FOR_HYBI00):
+            return True, True
+        elif success != 0:
+            return False, True
+
+        success = 0
+        for key in HEADERS_TO_EXIST_FOR_HIXIE75:
+            if key in headers:
+                success += 1
+        if success == len(HEADERS_TO_EXIST_FOR_HIXIE75):
+            return True, False
+
+        return False, False
             
 
     def _read_headers(self):
         status = None
         headers = {}
+        if enableTrace:
+            print "--- response header ---"
+            
         while True:
             line = self._recv_line()
             if line == "\r\n":
                 break
             line = line.strip()
+            if enableTrace:
+                print line
             if not status:
                 status_info = line.split(" ", 2)
                 status = int(status_info[1])
             else:
                 key, value = line.split(":", 1)
-                headers[key] = value.strip().lower()
+                headers[key.lower()] = value.strip().lower()
+
+        if enableTrace:
+            print "-----------------------"
         
         return status, headers    
     
@@ -209,6 +286,9 @@ class WebSocket(object):
         """
         Close Websocket object
         """
+        if self.connected and self.version == HYBI00:
+            # TODO: closing handshake
+            pass
         self.sock.close()
         
     def _recv(self, bufsize):
@@ -229,11 +309,14 @@ class WebSocket(object):
         
 
 if __name__ == "__main__":
+    enableTrace(True)
+    #setdefaulttimeout(1)
+    # ws = create_connection("ws://localhost:8080/echo")
     ws = create_connection("ws://localhost:5000/chat")
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
     print "Sent"
-    print "Reeiving..."
+    print "Receiving..."
     result =  ws.recv()
     print "Received '%s'" % result
         
