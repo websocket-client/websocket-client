@@ -203,7 +203,7 @@ class WebSocket(object):
         self.sock.settimeout(to)
         if enableTrace:
             print "--- challenge response result ---"
-            print result
+            print repr(result)
             print "---------------------------------"
         
         return result
@@ -270,17 +270,32 @@ class WebSocket(object):
         """
         Reeive utf-8 string data from the server.
         """
-        bytes = []
+        b = self._recv(1)
+        frame_type = ord(b)
+        if frame_type == 0x00:
+            bytes = []
+            while True:
+                b = self._recv(1)
+                if b == "\xff":
+                    break
+                else:
+                    bytes.append(b)
+            return "".join(bytes)
+        elif (frame_type & 0x80) == 0x80:
+            # which frame type is valid?
+            length = self._read_length()
+            bytes = self._recv_strict(length)
+            return bytes
+
+    def _read_length(self):
+        length = 0
         while True:
-            b = self._recv(1)
-            if b == "\xff":
+            b = ord(self._recv(1))
+            length = length * (1 << 7) + (b & 0x7f)
+            if (b & 0x80) == 0x80:
                 break
-            elif b == "\x00":
-                # start bytes
-                pass
-            else:
-                bytes.append(b)
-        return "".join(bytes)
+            
+        return length
 
     def close(self):
         """
@@ -296,6 +311,15 @@ class WebSocket(object):
         if not bytes:
             raise ConnectionClosedException()
         return bytes
+
+    def _recv_strict(self, bufsize):
+        remaining = bufszie
+        bytes = ""
+        while remaining:
+            bytes += self._recv(remaining)
+            remaining = bufsize - len(bytes)
+            
+        return self._recv(bufsize)
 
     def _recv_line(self):
         line = []
