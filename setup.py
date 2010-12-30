@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="websocket-client",
-    version="0.1",
+    version="0.2",
     description="WebSocket client for python",
     long_description=open("README").read(),
     author="liris",
