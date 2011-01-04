@@ -45,6 +45,7 @@ def _parse_url(url):
         else:
             port = 80
     elif parsed.scheme == "wss":
+        # TODO: support wss
         raise ValueError("scheme wss is not supported")
     else:
         raise ValueError("scheme %s is invalid" % parsed.scheme)
@@ -137,6 +138,7 @@ class WebSocket(object):
         Connect to url. url is websocket url scheme. ie. ws://host:port/resource
         """
         hostname, port, resource = _parse_url(url)
+        # TODO: we need to support proxy
         self.sock.connect((hostname, port))
         self._handshake(hostname, port, resource, **options)
 
@@ -166,7 +168,7 @@ class WebSocket(object):
 
         header_str = "\r\n".join(headers)
         sock.send(header_str)
-        if enableTrace:
+        if traceEnabled:
             print "--- request header ---"
             print header_str
             print "-----------------------"
@@ -197,11 +199,8 @@ class WebSocket(object):
         return  resp == digest
 
     def _get_resp(self):
-        to = self.sock.gettimeout()
-        self.sock.settimeout(3)
         result = self._recv(16)
-        self.sock.settimeout(to)
-        if enableTrace:
+        if traceEnabled:
             print "--- challenge response result ---"
             print repr(result)
             print "---------------------------------"
@@ -211,9 +210,10 @@ class WebSocket(object):
     def _validate_header(self, headers):
         #TODO: check other headers
         for key, value in HEADERS_TO_CHECK.iteritems():
-            v = headers[key]
+            v = headers.get(key, None)
             if value != v:
-                return False
+                return False, False
+
         success = 0
         for key in HEADERS_TO_EXIST_FOR_HYBI00:
             if key in headers:
@@ -236,7 +236,7 @@ class WebSocket(object):
     def _read_headers(self):
         status = None
         headers = {}
-        if enableTrace:
+        if traceEnabled:
             print "--- response header ---"
             
         while True:
@@ -244,16 +244,20 @@ class WebSocket(object):
             if line == "\r\n":
                 break
             line = line.strip()
-            if enableTrace:
+            if traceEnabled:
                 print line
             if not status:
                 status_info = line.split(" ", 2)
                 status = int(status_info[1])
             else:
-                key, value = line.split(":", 1)
-                headers[key.lower()] = value.strip().lower()
+                kv = line.split(":", 1)
+                if len(kv) == 2:
+                    key, value = kv
+                    headers[key.lower()] = value.strip().lower()
+                else:
+                    raise WebSocketException("Invalid header")
 
-        if enableTrace:
+        if traceEnabled:
             print "-----------------------"
         
         return status, headers    
@@ -281,7 +285,7 @@ class WebSocket(object):
                 else:
                     bytes.append(b)
             return "".join(bytes)
-        elif (frame_type & 0x80) == 0x80:
+        elif 0 < frame_type < 0x80:
             # which frame type is valid?
             length = self._read_length()
             bytes = self._recv_strict(length)
@@ -292,7 +296,7 @@ class WebSocket(object):
         while True:
             b = ord(self._recv(1))
             length = length * (1 << 7) + (b & 0x7f)
-            if (b & 0x80) == 0x80:
+            if b < 0x80:
                 break
             
         return length
@@ -318,13 +322,13 @@ class WebSocket(object):
         return bytes
 
     def _recv_strict(self, bufsize):
-        remaining = bufszie
+        remaining = bufsize
         bytes = ""
         while remaining:
             bytes += self._recv(remaining)
             remaining = bufsize - len(bytes)
             
-        return self._recv(bufsize)
+        return bytes
 
     def _recv_line(self):
         line = []
