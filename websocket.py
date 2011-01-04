@@ -301,9 +301,14 @@ class WebSocket(object):
         """
         Close Websocket object
         """
-        if self.connected and self.version == HYBI00:
-            # TODO: closing handshake
-            pass
+        if self.connected:
+            try:
+                self.sock.send("\xff\x00")
+                result = self._recv(2)
+                if result != "\xff\x00":
+                    logger.error("bad closing Handshake")
+            except:
+                pass
         self.sock.close()
         
     def _recv(self, bufsize):
@@ -334,7 +339,6 @@ class WebSocket(object):
 
 if __name__ == "__main__":
     enableTrace(True)
-    #setdefaulttimeout(1)
     # ws = create_connection("ws://localhost:8080/echo")
     ws = create_connection("ws://localhost:5000/chat")
     print "Sending 'Hello, World'..."

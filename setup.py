@@ -1,8 +1,11 @@
 from setuptools import setup
 
+VERSION = "0.3"
+
+
 setup(
     name="websocket-client",
-    version="0.2",
+    version=VERSION,
     description="WebSocket client for python",
     long_description=open("README").read(),
     author="liris",
@@ -11,7 +14,7 @@ setup(
     url="https://github.com/liris/websocket-client",
     classifiers = [
         "Development Status :: 3 - Alpha",
-        "License :: OSI Approved :: LGPL License",
+        "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Programming Language :: Python",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
