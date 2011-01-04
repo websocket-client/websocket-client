@@ -13,6 +13,7 @@ Type "python setup.py install" to install.
 Example
 ========
 
+::
     from websocket import create_connection
     ws = create_connection("ws://localhost:5000/echo")
     print "Sending 'Hello, World'..."
