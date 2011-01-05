@@ -49,34 +49,44 @@ class WebSocketTest(unittest.TestCase):
         self.assertEquals(p[0], "www.example.com")
         self.assertEquals(p[1], 80)
         self.assertEquals(p[2], "/r")
+        self.assertEquals(p[3], False)
 
         p = ws._parse_url("ws://www.example.com/")
         self.assertEquals(p[0], "www.example.com")
         self.assertEquals(p[1], 80)
         self.assertEquals(p[2], "/")
+        self.assertEquals(p[3], False)
 
         p = ws._parse_url("ws://www.example.com")
         self.assertEquals(p[0], "www.example.com")
         self.assertEquals(p[1], 80)
         self.assertEquals(p[2], "/")
+        self.assertEquals(p[3], False)
 
         p = ws._parse_url("ws://www.example.com:8080/r")
         self.assertEquals(p[0], "www.example.com")
         self.assertEquals(p[1], 8080)
         self.assertEquals(p[2], "/r")
+        self.assertEquals(p[3], False)
 
         p = ws._parse_url("ws://www.example.com:8080/")
         self.assertEquals(p[0], "www.example.com")
         self.assertEquals(p[1], 8080)
         self.assertEquals(p[2], "/")
+        self.assertEquals(p[3], False)
 
         p = ws._parse_url("ws://www.example.com:8080")
         self.assertEquals(p[0], "www.example.com")
         self.assertEquals(p[1], 8080)
         self.assertEquals(p[2], "/")
+        self.assertEquals(p[3], False)
 
-        # we do not support wss for a while
-        self.assertRaises(ValueError, ws._parse_url, "wss://www.example.com/r")
+        p = ws._parse_url("wss://www.example.com:8080/r")
+        self.assertEquals(p[0], "www.example.com")
+        self.assertEquals(p[1], 8080)
+        self.assertEquals(p[2], "/r")
+        self.assertEquals(p[3], True)
+
         self.assertRaises(ValueError, ws._parse_url, "http://www.example.com/r")
 
     def testWSKey(self):
@@ -127,7 +137,7 @@ class WebSocketTest(unittest.TestCase):
 
     def testReadHeader(self):
         sock = ws.WebSocket()
-        sock.sock = HeaderSockMock("data/header01.txt")
+        sock.io_sock = sock.sock = HeaderSockMock("data/header01.txt")
         status, header = sock._read_headers()
         self.assertEquals(status, 101)
         self.assertEquals(header["connection"], "upgrade")
@@ -135,12 +145,12 @@ class WebSocketTest(unittest.TestCase):
         
         self.assertEquals(sock._get_resp(), "ssssss\r\naaaaaaaa")
 
-        sock.sock = HeaderSockMock("data/header02.txt")
+        sock.io_sock = sock.sock = HeaderSockMock("data/header02.txt")
         self.assertRaises(ws.WebSocketException, sock._read_headers)
 
     def testSend(self):
         sock = ws.WebSocket()
-        s = sock.sock = HeaderSockMock("data/header01.txt")
+        s = sock.io_sock = sock.sock = HeaderSockMock("data/header01.txt")
         sock.send("Hello")
         self.assertEquals(s.sent[0], "\x00Hello\xff")
         sock.send("こんにちは")
@@ -150,7 +160,7 @@ class WebSocketTest(unittest.TestCase):
 
     def testRecv(self):
         sock = ws.WebSocket()
-        s = sock.sock = StringSockMock()
+        s = sock.io_sock = sock.sock = StringSockMock()
         s.set_data("\x00こんにちは\xff")
         data = sock.recv()
         self.assertEquals(data, "こんにちは")
