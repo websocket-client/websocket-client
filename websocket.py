@@ -303,11 +303,13 @@ class WebSocket(object):
                 else:
                     bytes.append(b)
             return "".join(bytes)
-        elif 0 < frame_type < 0x80:
+        elif frame_type > 0x80:
             # which frame type is valid?
             length = self._read_length()
             bytes = self._recv_strict(length)
             return bytes
+        else:
+            raise WebSocketException("Invalid frame type")
 
     def _read_length(self):
         length = 0

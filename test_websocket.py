@@ -165,11 +165,11 @@ class WebSocketTest(unittest.TestCase):
         data = sock.recv()
         self.assertEquals(data, "こんにちは")
         
-        s.set_data("\x01\x05Hello")
+        s.set_data("\x81\x05Hello")
         data = sock.recv()
         self.assertEquals(data, "Hello")
 
-        s.set_data("\x01\x81\x7f" + ("a"*255))
+        s.set_data("\x81\x81\x7f" + ("a"*255))
         data = sock.recv()
         self.assertEquals(len(data), 255)
         self.assertEquals(data, "a" * 255)
