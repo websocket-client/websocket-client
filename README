@@ -4,16 +4,22 @@ websocket-client
 
 websocket-client module  is WebSocket client for python. This provide the low level APIs for WebSocket. All APIs are the synchronous functions.
 
+License
+============
+
+ - LGPL
+
 Installation
 =============
 
 This module is tested on only Python 2.7.
+
 Type "python setup.py install" or "pip install websocket-client" to install.
 
 This module does not depend on any other module.
 
 Example
-========
+============
 
 ::
     from websocket import create_connection
