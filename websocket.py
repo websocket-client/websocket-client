@@ -3,7 +3,10 @@ from urlparse import urlparse
 import random
 import struct
 import md5
+import logging
 
+
+logger = logging.getLogger()
 
 class WebSocketException(Exception):
     pass
@@ -15,8 +18,15 @@ default_timeout = None
 traceEnabled = False
 
 def enableTrace(tracable):
+    """
+    turn on/off the tracability.
+    """
     global traceEnabled
     traceEnabled = tracable
+    if tracable:
+        if not logger.handlers:
+            logger.addHandler(logging.StreamHandler())
+        logger.setLevel(logging.DEBUG)
 
 def setdefaulttimeout(timeout):
     """
@@ -119,7 +129,7 @@ HEADERS_TO_EXIST_FOR_HIXIE75 = [
     "websocket-location",
 ]
 
-class SSLSocketWrapper(object):
+class _SSLSocketWrapper(object):
     def __init__(self, sock):
         self.ssl = socket.ssl(sock)
 
@@ -130,6 +140,23 @@ class SSLSocketWrapper(object):
         return self.ssl.write(payload)
 
 class WebSocket(object):
+    """
+    Low level WebSocket interface.
+    This class is based on
+      The WebSocket protocol draft-hixie-thewebsocketprotocol-76
+      http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-76
+
+    We can connect to the websocket server and send/recieve data.
+    The following example is a echo client.
+
+    >>> import websocket
+    >>> ws = websocket.WebSocket()
+    >>> ws.Connect("ws://localhost:8080/echo")
+    >>> ws.send("Hello, Server")
+    >>> ws.recv()
+    'Hello, Server'
+    >>> ws.close()
+    """
     def __init__(self):
         """
         Initalize WebSocket object.
@@ -157,7 +184,7 @@ class WebSocket(object):
         # TODO: we need to support proxy
         self.sock.connect((hostname, port))
         if is_secure:
-            self.io_sock = SSLSocketWrapper(self.sock)
+            self.io_sock = _SSLSocketWrapper(self.sock)
         self._handshake(hostname, port, resource, **options)
 
     def _handshake(self, host, port, resource, **options):
@@ -187,9 +214,9 @@ class WebSocket(object):
         header_str = "\r\n".join(headers)
         sock.send(header_str)
         if traceEnabled:
-            print "--- request header ---"
-            print header_str
-            print "-----------------------"
+            logger.debug( "--- request header ---")
+            logger.debug( header_str)
+            logger.debug("-----------------------")
 
         status, resp_headers = self._read_headers()
         if status != 101:
@@ -209,8 +236,8 @@ class WebSocket(object):
         self.connected = True
     
     def _validate_resp(self, number_1, number_2, key3, resp):
-        challenge = struct.pack("!i", number_1)
-        challenge += struct.pack("!i", number_2)
+        challenge = struct.pack("!I", number_1)
+        challenge += struct.pack("!I", number_2)
         challenge += key3
         digest = md5.md5(challenge).digest()
         
@@ -219,9 +246,9 @@ class WebSocket(object):
     def _get_resp(self):
         result = self._recv(16)
         if traceEnabled:
-            print "--- challenge response result ---"
-            print repr(result)
-            print "---------------------------------"
+            logger.debug("--- challenge response result ---")
+            logger.debug(repr(result))
+            logger.debug("---------------------------------")
         
         return result
 
@@ -255,7 +282,7 @@ class WebSocket(object):
         status = None
         headers = {}
         if traceEnabled:
-            print "--- response header ---"
+            logger.debug("--- response header ---")
             
         while True:
             line = self._recv_line()
@@ -263,7 +290,7 @@ class WebSocket(object):
                 break
             line = line.strip()
             if traceEnabled:
-                print line
+                logger.debug(line)
             if not status:
                 status_info = line.split(" ", 2)
                 status = int(status_info[1])
@@ -276,7 +303,7 @@ class WebSocket(object):
                     raise WebSocketException("Invalid header")
 
         if traceEnabled:
-            print "-----------------------"
+            logger.debug("-----------------------")
         
         return status, headers    
     
@@ -286,13 +313,18 @@ class WebSocket(object):
         """
         if isinstance(payload, unicode):
             payload = payload.encode("utf-8")
-        self.io_sock.send("".join(["\x00", payload, "\xff"]))
+        data = "".join(["\x00", payload, "\xff"])
+        self.io_sock.send(data)
+        if traceEnabled:
+            logger.debug("send: " + repr(data))
 
     def recv(self):
         """
         Reeive utf-8 string data from the server.
         """
         b = self._recv(1)
+        if enableTrace:
+            logger.debug("recv frame: " + repr(b))
         frame_type = ord(b)
         if frame_type == 0x00:
             bytes = []
@@ -303,11 +335,15 @@ class WebSocket(object):
                 else:
                     bytes.append(b)
             return "".join(bytes)
-        elif frame_type > 0x80:
+        elif 0x80 < frame_type < 0xff:
             # which frame type is valid?
             length = self._read_length()
             bytes = self._recv_strict(length)
             return bytes
+        elif frame_type == 0xff:
+            n = self._recv(1)
+            self._closeInternal()
+            return None
         else:
             raise WebSocketException("Invalid frame type")
 
@@ -328,11 +364,22 @@ class WebSocket(object):
         if self.connected:
             try:
                 self.io_sock.send("\xff\x00")
-                result = self._recv(2)
-                if result != "\xff\x00":
-                    logger.error("bad closing Handshake")
+                timeout = self.sock.gettimeout()
+                self.sock.settimeout(1)
+                try:
+                    result = self._recv(2)
+                    if result != "\xff\x00":
+                        logger.error("bad closing Handshake")
+                except:
+                    pass
+                self.sock.settimeout(timeout)
+                self.sock.shutdown(socket.SHUT_RDWR)
             except:
                 pass
+        self._closeInternal()
+
+    def _closeInternal(self):
+        self.connected = False
         self.sock.close()
         self.io_sock = self.sock
         
@@ -360,11 +407,83 @@ class WebSocket(object):
                 break
         return "".join(line)
             
-        
+class WebSocketApp(object):
+    """
+    Higher level of APIs are provided. 
+    The interface is like JavaScript WebSocket object.
+    """
+    def __init__(self, url,
+                 on_open = None, on_message = None, on_error = None, 
+                 on_close = None):
+        """
+        url: websocket url.
+        on_open: callable object which is called at opening websocket.
+          this function has one argument. The arugment is this class object.
+        on_message: callbale object which is called when recieved data.
+         on_message has 2 arguments. 
+         The 1st arugment is this class object.
+         The passing 2nd arugment is utf-8 string which we get from the server.
+       on_error: callable object which is called when we get error.
+         on_error has 2 arguments.
+         The 1st arugment is this class object.
+         The passing 2nd arugment is exception object.
+       on_close: callable object which is called when closed the connection.
+         this function has one argument. The arugment is this class object.
+        """
+        self.url = url
+        self.on_open = on_open
+        self.on_message = on_message
+        self.on_error = on_error
+        self.on_close = on_close
+        self.sock = None
+
+    def send(self, data):
+        """
+        send message. data must be utf-8 string or unicode.
+        """
+        self.sock.send(data)
+
+    def close(self):
+        """
+        close websocket connection.
+        """
+        self.sock.close()
+
+    def run_forever(self):
+        """
+        run event loop for WebSocket framework.
+        This loop is infinite loop and is alive during websocket is available.
+        """
+        if self.sock:
+            raise WebSocketException("socket is already opened")
+        try:
+            self.sock = WebSocket()
+            self.sock.connect(self.url)
+            self._run_with_no_err(self.on_open)
+            while True:
+                data = self.sock.recv()
+                if data is None:
+                    break
+                self._run_with_no_err(self.on_message, data)
+        except Exception, e:
+            self._run_with_no_err(self.on_error, e)
+        finally:
+            self.sock.close()
+            self._run_with_no_err(self.on_close)
+            self.sock = None
+
+    def _run_with_no_err(self, callback, *args):
+        if callback:
+            try:
+                callback(self, *args)
+            except Exception, e:
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.error(e)
+
 
 if __name__ == "__main__":
     enableTrace(True)
-    # ws = create_connection("ws://localhost:8080/echo")
+    #ws = create_connection("ws://localhost:8080/echo")
     ws = create_connection("ws://localhost:5000/chat")
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
@@ -372,6 +491,7 @@ if __name__ == "__main__":
     print "Receiving..."
     result =  ws.recv()
     print "Received '%s'" % result
+    ws.close()
         
 
 

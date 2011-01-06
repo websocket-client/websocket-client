@@ -33,7 +33,7 @@ class HeaderSockMock(StringSockMock):
 
 class WebSocketTest(unittest.TestCase):
     def setUp(self):
-        pass
+        ws.enableTrace(True)
     
     def tearDown(self):
         pass
