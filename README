@@ -69,3 +69,10 @@ JavaScript websocket-like API example::
       ws.on_open = on_open
       
       ws.run_forever()
+
+ChangeLog
+============
+
+- v0.4.1
+  - fix incorrect custom header order(ISSUE#1)
+   
