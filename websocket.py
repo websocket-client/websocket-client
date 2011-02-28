@@ -17,7 +17,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""
+"""        
 
 
 import socket
@@ -212,9 +212,6 @@ class WebSocket(object):
     def _handshake(self, host, port, resource, **options):
         sock = self.io_sock
         headers = []
-        if "header" in options:
-            headers.extend(options["header"])
-
         headers.append("GET %s HTTP/1.1" % resource)
         headers.append("Upgrade: WebSocket")
         headers.append("Connection: Upgrade")
@@ -229,6 +226,9 @@ class WebSocket(object):
         headers.append("Sec-WebSocket-Key1: %s" % key_1)
         number_2, key_2 = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key2: %s" % key_2)
+        if "header" in options:
+            headers.extend(options["header"])
+
         headers.append("")
         key3 = _create_key3()
         headers.append(key3)
