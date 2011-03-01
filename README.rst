@@ -24,7 +24,7 @@ Example
 Low Level API example::
 
     from websocket import create_connection
-    ws = create_connection("ws://localhost:5000/echo")
+    ws = create_connection("ws://echo.websocket.org/")
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
     print "Sent"

@@ -173,7 +173,7 @@ class WebSocket(object):
 
     >>> import websocket
     >>> ws = websocket.WebSocket()
-    >>> ws.Connect("ws://localhost:8080/echo")
+    >>> ws.Connect("ws://echo.websocket.org")
     >>> ws.send("Hello, Server")
     >>> ws.recv()
     'Hello, Server'
