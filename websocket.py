@@ -506,7 +506,7 @@ class WebSocketApp(object):
 if __name__ == "__main__":
     enableTrace(True)
     #ws = create_connection("ws://localhost:8080/echo")
-    ws = create_connection("ws://localhost:5000/chat")
+    ws = create_connection("ws://echo.websocket.org/")
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
     print "Sent"
