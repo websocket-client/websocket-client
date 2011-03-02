@@ -7,7 +7,7 @@ setup(
     name="websocket-client",
     version=VERSION,
     description="WebSocket client for python",
-    long_description=open("README").read(),
+    long_description=open("README.rst").read(),
     author="liris",
     author_email="liris.pp@gmail.com",
     license="LGPL",
