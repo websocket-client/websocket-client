@@ -174,6 +174,32 @@ class WebSocketTest(unittest.TestCase):
         self.assertEquals(len(data), 255)
         self.assertEquals(data, "a" * 255)
 
+    def testWebSocket(self):
+        s  = ws.create_connection("ws://echo.websocket.org/")
+        self.assertNotEquals(s, None)
+        s.send("Hello, World")
+        result = s.recv()
+        self.assertEquals(result, "Hello, World")
+        s.close()
+
+    def testSecureWebsocket(self):
+        s  = ws.create_connection("wss://echo.websocket.org/")
+        self.assertNotEquals(s, None)
+        s.send("Hello, World")
+        result = s.recv()
+        self.assertEquals(result, "Hello, World")
+        s.close()
+
+    def testWebSocketWihtCustomHeader(self):
+        s  = ws.create_connection("ws://echo.websocket.org/",
+                                  headers={"User-Agent": "PythonWebsocketClient"})
+        self.assertNotEquals(s, None)
+        s.send("Hello, World")
+        result = s.recv()
+        self.assertEquals(result, "Hello, World")
+        s.close()
+        
+
 if __name__ == "__main__":
     unittest.main()
 
