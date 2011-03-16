@@ -4,6 +4,8 @@
 import unittest
 import websocket as ws
 
+TRACABLE=False
+
 class StringSockMock:
     def __init__(self):
         self.set_data("")
@@ -33,7 +35,7 @@ class HeaderSockMock(StringSockMock):
 
 class WebSocketTest(unittest.TestCase):
     def setUp(self):
-        ws.enableTrace(True)
+        ws.enableTrace(TRACABLE)
     
     def tearDown(self):
         pass
@@ -180,6 +182,9 @@ class WebSocketTest(unittest.TestCase):
         s.send("Hello, World")
         result = s.recv()
         self.assertEquals(result, "Hello, World")
+        s.send("こにゃにゃちは、世界")
+        result = s.recv()
+        self.assertEquals(result, "こにゃにゃちは、世界")
         s.close()
 
     def testSecureWebsocket(self):
@@ -188,6 +193,9 @@ class WebSocketTest(unittest.TestCase):
         s.send("Hello, World")
         result = s.recv()
         self.assertEquals(result, "Hello, World")
+        s.send("こにゃにゃちは、世界")
+        result = s.recv()
+        self.assertEquals(result, "こにゃにゃちは、世界")
         s.close()
 
     def testWebSocketWihtCustomHeader(self):
@@ -198,6 +206,15 @@ class WebSocketTest(unittest.TestCase):
         result = s.recv()
         self.assertEquals(result, "Hello, World")
         s.close()
+
+    def testAfterClose(self):
+        from socket import error
+        s  = ws.create_connection("ws://echo.websocket.org/")
+        self.assertNotEquals(s, None)
+        s.close()
+        self.assertRaises(error, s.send, "Hello")
+        self.assertRaises(error, s.recv)
+        
         
 
 if __name__ == "__main__":

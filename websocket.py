@@ -173,7 +173,7 @@ class WebSocket(object):
 
     >>> import websocket
     >>> ws = websocket.WebSocket()
-    >>> ws.Connect("ws://echo.websocket.org")
+    >>> ws.connect("ws://echo.websocket.org")
     >>> ws.send("Hello, Server")
     >>> ws.recv()
     'Hello, Server'
@@ -363,7 +363,7 @@ class WebSocket(object):
             bytes = self._recv_strict(length)
             return bytes
         elif frame_type == 0xff:
-            n = self._recv(1)
+            self._recv(1)
             self._closeInternal()
             return None
         else:
@@ -505,7 +505,6 @@ class WebSocketApp(object):
 
 if __name__ == "__main__":
     enableTrace(True)
-    #ws = create_connection("ws://localhost:8080/echo")
     ws = create_connection("ws://echo.websocket.org/")
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
@@ -514,8 +513,3 @@ if __name__ == "__main__":
     result =  ws.recv()
     print "Received '%s'" % result
     ws.close()
-        
-
-
-
-
