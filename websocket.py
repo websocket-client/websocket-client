@@ -104,6 +104,11 @@ def create_connection(url, timeout=None, **options):
     Connect to url and return the WebSocket object.
     Passing optional timeout parameter will set the timeout on the socket.
     If no timeout is supplied, the global default timeout setting returned by getdefauttimeout() is used.
+    You can customize using 'options'.
+    If you set "headers" dict object, you can set your own custom header.
+
+    >>> conn = create_connection("ws://echo.websocket.org/",
+    ...     headers={"User-Agent": "MyProgram"})
     """
     websock = WebSocket()
     websock.settimeout(timeout != None and timeout or default_timeout)
@@ -201,6 +206,12 @@ class WebSocket(object):
     def connect(self, url, **options):
         """
         Connect to url. url is websocket url scheme. ie. ws://host:port/resource
+        You can customize using 'options'.
+        If you set "headers" dict object, you can set your own custom header.
+        
+        >>> ws = WebSocket()
+        >>> ws.connect("ws://echo.websocket.org/",
+        ...     headers={"User-Agent": "MyProgram"})
         """
         hostname, port, resource, is_secure = _parse_url(url)
         # TODO: we need to support proxy
