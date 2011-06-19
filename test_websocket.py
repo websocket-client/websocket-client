@@ -190,6 +190,7 @@ class WebSocketTest(unittest.TestCase):
     def testSecureWebsocket(self):
         s  = ws.create_connection("wss://echo.websocket.org/")
         self.assertNotEquals(s, None)
+        self.assert_(isinstance(s.io_sock, ws._SSLSocketWrapper))
         s.send("Hello, World")
         result = s.recv()
         self.assertEquals(result, "Hello, World")
