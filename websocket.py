@@ -24,7 +24,7 @@ import socket
 from urlparse import urlparse
 import random
 import struct
-import md5
+import hashlib
 import logging
 
 
@@ -272,7 +272,7 @@ class WebSocket(object):
         challenge = struct.pack("!I", number_1)
         challenge += struct.pack("!I", number_2)
         challenge += key3
-        digest = md5.md5(challenge).digest()
+        digest = hashlib.md5(challenge).digest()
         
         return  resp == digest
 
