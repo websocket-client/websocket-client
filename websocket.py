@@ -69,7 +69,13 @@ def _parse_url(url):
     parse url and the result is tuple of 
     (hostname, port, resource path and the flag of secure mode)
     """
-    parsed = urlparse(url)
+    if ":" not in url:
+        raise ValueError("url is invalid")
+
+    scheme, url = url.split(":", 1)
+    url = url.rstrip("/")
+
+    parsed = urlparse(url, scheme="http")
     if parsed.hostname:
         hostname = parsed.hostname
     else:
@@ -77,25 +83,24 @@ def _parse_url(url):
     port = 0
     if parsed.port:
         port = parsed.port
-   
+
     is_secure = False
-    if parsed.scheme == "ws":
+    if scheme == "ws":
         if not port:
             port = 80
-    elif parsed.scheme == "wss":
+    elif scheme == "wss":
         is_secure = True
         if not port:
             port  = 443
     else:
-        raise ValueError("scheme %s is invalid" % parsed.scheme)
-    
+        raise ValueError("scheme %s is invalid" % scheme)
+
     if parsed.path:
         resource = parsed.path
     else:
         resource = "/"
-    
-    return (hostname, port, resource, is_secure)
 
+    return (hostname, port, resource, is_secure)
 
 def create_connection(url, timeout=None, **options):
     """
