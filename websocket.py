@@ -358,10 +358,10 @@ class WebSocket(object):
 
     def recv(self):
         """
-        Reeive utf-8 string data from the server.
+        Receive utf-8 string data from the server.
         """
         b = self._recv(1)
-        if enableTrace:
+        if traceEnabled:
             logger.debug("recv frame: " + repr(b))
         frame_type = ord(b)
         if frame_type == 0x00:
