@@ -1,9 +1,6 @@
 HTTP/1.1 101 WebSocket Protocol Handshake
 Connection: Upgrade 
 Upgrade: WebSocket
-sec-websocket-location: http://localhost/r
-sec-websocket-origin: http://localhost/r
+Sec-WebSocket-Accept: Kxep+hNu9n51529fGidYu7a3wO0=
 some_header: something
 
-ssssss
-aaaaaaaa

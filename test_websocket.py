@@ -92,50 +92,39 @@ class WebSocketTest(unittest.TestCase):
         self.assertRaises(ValueError, ws._parse_url, "http://www.example.com/r")
 
     def testWSKey(self):
-        n, k = ws._create_sec_websocket_key()
-        self.assert_(0 < n < (1<<32))
-        self.assert_(len(k) > 0)
-
-        k3 = ws._create_key3()
-        self.assertEquals(len(k3), 8)
+        key = ws._create_sec_websocket_key()
+        self.assert_(key != 24)
+        self.assert_("¥n" not in key)
 
     def testWsUtils(self):
         sock = ws.WebSocket()
-        self.assertNotEquals(sock._validate_resp(1,2,"test", "fuga"), True)
-        hashed = '6\xa3p\xb6#\xac\xb9=\xec\x0e\x96\xb5\xc1@\x1d\x90'
-        self.assertEquals(sock._validate_resp(1,2,"test", hashed), True)
 
-        hibi_header = {
+        key = "c6b8hTg4EeGb2gQMztV1/g=="
+        required_header = {
             "upgrade": "websocket",
             "connection": "upgrade",
-            "sec-websocket-origin": "http://www.example.com",
-            "sec-websocket-location": "http://www.example.com",
+            "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0=",
             }
-        self.assertEquals(sock._validate_header(hibi_header), (True, True))
+        self.assertEquals(sock._validate_header(required_header, key), True)
 
-        header = hibi_header.copy()
+        header = required_header.copy()
         header["upgrade"] = "http"
-        self.assertEquals(sock._validate_header(header), (False, False))
+        self.assertEquals(sock._validate_header(header, key), False)
         del header["upgrade"]
-        self.assertEquals(sock._validate_header(header), (False, False))
-        
-        header = hibi_header.copy()
-        header["connection"] = "http"
-        self.assertEquals(sock._validate_header(header), (False, False))
+        self.assertEquals(sock._validate_header(header, key), False)
+
+        header = required_header.copy()
+        header["connection"] = "something"
+        self.assertEquals(sock._validate_header(header, key), False)
         del header["connection"]
-        self.assertEquals(sock._validate_header(header), (False, False))
+        self.assertEquals(sock._validate_header(header, key), False)
 
-        header = hibi_header.copy()
-        header["sec-websocket-origin"] = "somewhere origin"
-        self.assertEquals(sock._validate_header(header), (True, True))
-        del header["sec-websocket-origin"]
-        self.assertEquals(sock._validate_header(header), (False, True))
 
-        header = hibi_header.copy()
-        header["sec-websocket-location"] = "somewhere location"
-        self.assertEquals(sock._validate_header(header), (True, True))
-        del header["sec-websocket-location"]
-        self.assertEquals(sock._validate_header(header), (False, True))
+        header = required_header.copy()
+        header["sec-websocket-accept"] = "something"
+        self.assertEquals(sock._validate_header(header, key), False)
+        del header["sec-websocket-accept"]
+        self.assertEquals(sock._validate_header(header, key), False)
 
     def testReadHeader(self):
         sock = ws.WebSocket()
@@ -143,10 +132,7 @@ class WebSocketTest(unittest.TestCase):
         status, header = sock._read_headers()
         self.assertEquals(status, 101)
         self.assertEquals(header["connection"], "upgrade")
-        self.assertEquals("ssssss" in header, False)
         
-        self.assertEquals(sock._get_resp(), "ssssss\r\naaaaaaaa")
-
         sock.io_sock = sock.sock = HeaderSockMock("data/header02.txt")
         self.assertRaises(ws.WebSocketException, sock._read_headers)
 

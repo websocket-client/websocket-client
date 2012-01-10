@@ -22,11 +22,13 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import socket
 from urlparse import urlparse
-import random
-import struct
-import hashlib
+import uuid
+import sha
+import base64
 import logging
 
+
+VERSION = 13
 
 logger = logging.getLogger()
 
@@ -128,38 +130,13 @@ _MAX_CHAR_BYTE = (1<<8) -1
 # http://axod.blogspot.com/2010/06/websocket-gets-update-and-it-breaks.html
 
 def _create_sec_websocket_key():
-    spaces_n = random.randint(1, 12)
-    max_n = _MAX_INTEGER / spaces_n
-    number_n = random.randint(0, max_n)
-    product_n = number_n * spaces_n
-    key_n = str(product_n)
-    for i in range(random.randint(1, 12)):
-        c = random.choice(_AVAILABLE_KEY_CHARS)
-        pos = random.randint(0, len(key_n))
-        key_n = key_n[0:pos] + chr(c) + key_n[pos:]
-    for i in range(spaces_n):
-        pos = random.randint(1, len(key_n)-1)
-        key_n = key_n[0:pos] + " " + key_n[pos:]
-    
-    return number_n, key_n
-
-def _create_key3():
-    return "".join([chr(random.randint(0, _MAX_CHAR_BYTE)) for i in range(8)])
+    uid = uuid.uuid1()
+    return base64.encodestring(uid.bytes).strip()
 
 HEADERS_TO_CHECK = {
     "upgrade": "websocket",
     "connection": "upgrade",
     }
-
-HEADERS_TO_EXIST_FOR_HYBI00 = [
-    "sec-websocket-origin",
-    "sec-websocket-location",
-]
-
-HEADERS_TO_EXIST_FOR_HIXIE75 = [
-    "websocket-origin",
-    "websocket-location",
-]
 
 class _SSLSocketWrapper(object):
     def __init__(self, sock):
@@ -229,7 +206,7 @@ class WebSocket(object):
         sock = self.io_sock
         headers = []
         headers.append("GET %s HTTP/1.1" % resource)
-        headers.append("Upgrade: WebSocket")
+        headers.append("Upgrade: websocket")
         headers.append("Connection: Upgrade")
         if port == 80:
             hostport = host
@@ -238,16 +215,15 @@ class WebSocket(object):
         headers.append("Host: %s" % hostport)
         headers.append("Origin: %s" % hostport)
    
-        number_1, key_1 = _create_sec_websocket_key()
-        headers.append("Sec-WebSocket-Key1: %s" % key_1)
-        number_2, key_2 = _create_sec_websocket_key()
-        headers.append("Sec-WebSocket-Key2: %s" % key_2)
+        key = _create_sec_websocket_key()
+        headers.append("Sec-WebSocket-Key: %s" % key)
+        headers.append("Sec-WebSocket-Protocol: chat, superchat")
+        headers.append("Sec-WebSocket-Version: %s" % VERSION)
         if "header" in options:
             headers.extend(options["header"])
 
         headers.append("")
-        key3 = _create_key3()
-        headers.append(key3)
+        headers.append("")
 
         header_str = "\r\n".join(headers)
         sock.send(header_str)
@@ -260,61 +236,31 @@ class WebSocket(object):
         if status != 101:
             self.close()
             raise WebSocketException("Handshake Status %d" % status)
-        success, secure = self._validate_header(resp_headers)
+
+        success = self._validate_header(resp_headers, key)
         if not success:
             self.close()
             raise WebSocketException("Invalid WebSocket Header")
         
-        if secure:
-            resp = self._get_resp()
-            if not self._validate_resp(number_1, number_2, key3, resp):
-                self.close()
-                raise WebSocketException("challenge-response error")
-
         self.connected = True
     
-    def _validate_resp(self, number_1, number_2, key3, resp):
-        challenge = struct.pack("!I", number_1)
-        challenge += struct.pack("!I", number_2)
-        challenge += key3
-        digest = hashlib.md5(challenge).digest()
+    def _validate_header(self, headers, key):
+        for k, v in HEADERS_TO_CHECK.iteritems():
+            r = headers.get(k, None)
+            if not r:
+                return False
+            r = r.lower()
+            if v != r:
+                return False
+
+        result = headers.get("sec-websocket-accept", None)
+        if not result:
+            return False
+        result = result.lower()
         
-        return  resp == digest
-
-    def _get_resp(self):
-        result = self._recv(16)
-        if traceEnabled:
-            logger.debug("--- challenge response result ---")
-            logger.debug(repr(result))
-            logger.debug("---------------------------------")
-        
-        return result
-
-    def _validate_header(self, headers):
-        #TODO: check other headers
-        for key, value in HEADERS_TO_CHECK.iteritems():
-            v = headers.get(key, None)
-            if value != v:
-                return False, False
-
-        success = 0
-        for key in HEADERS_TO_EXIST_FOR_HYBI00:
-            if key in headers:
-                success += 1
-        if success == len(HEADERS_TO_EXIST_FOR_HYBI00):
-            return True, True
-        elif success != 0:
-            return False, True
-
-        success = 0
-        for key in HEADERS_TO_EXIST_FOR_HIXIE75:
-            if key in headers:
-                success += 1
-        if success == len(HEADERS_TO_EXIST_FOR_HIXIE75):
-            return True, False
-
-        return False, False
-            
+        value = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        hashed = base64.encodestring(sha.sha(value).digest()).strip().lower()
+        return hashed == result
 
     def _read_headers(self):
         status = None
