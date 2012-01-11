@@ -22,6 +22,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import socket
 from urlparse import urlparse
+import os
 import struct
 import uuid
 import sha
@@ -175,7 +176,7 @@ class ABNF(object):
     LENGTH_63 = 1 << 63
 
     def __init__(self, fin = 0, rsv1 = 0, rsv2 = 0, rsv3 = 0,
-                 opcode = OPCODE_TEXT, mask = 0, data = ""):
+                 opcode = OPCODE_TEXT, mask = 1, data = ""):
         self.fin = fin
         self.rsv1 = rsv1
         self.rsv2 = rsv2
@@ -183,12 +184,13 @@ class ABNF(object):
         self.opcode = opcode
         self.mask = mask
         self.data = data
+        self.get_mask_key = os.urandom
 
     @staticmethod
     def create_frame(data, opcode):
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, unicode):
             data = data.encode("utf-8")
-        return ABNF(1, 0, 0, 0, opcode, 0, data)
+        return ABNF(1, 0, 0, 0, opcode, 1, data)
 
     def format(self):
         if not is_bool(self.fin, self.rsv1, self.rsv2, self.rsv3):
@@ -213,8 +215,24 @@ class ABNF(object):
         
         if not self.mask:
             return frame_header + self.data
-        
-        raise NotImplementedError("masked format is not implemented")
+        else:
+            mask_key = self.get_mask_key(4)
+            return frame_header + self._get_masked(mask_key)
+
+    def _get_masked(self, mask_key):
+        s = ABNF.mask(mask_key, self.data)
+        return mask_key + "".join(s)
+
+    @staticmethod
+    def mask(mask_key, data):
+        _m = map(ord, mask_key)
+        _d = map(ord, data)
+        for i in range(len(_d)):
+            _d[i] ^= _m[i % 4]
+        s = map(chr, _d)
+        return "".join(s)
+
+
         
         
 
@@ -242,6 +260,10 @@ class WebSocket(object):
         """
         self.connected = False
         self.io_sock = self.sock = socket.socket()
+        self.get_mask_key = None
+        
+    def set_mask_key(self, func):
+        self.get_mask_key = func
 
     def settimeout(self, timeout):
         """
@@ -361,25 +383,38 @@ class WebSocket(object):
         
         return status, headers    
     
-    def send(self, payload, binary = False):
+    def send(self, payload, opcode = ABNF.OPCODE_TEXT, binary = False):
         """
         Send the data as string. payload must be utf-8 string or unicoce.
         """
-        frame = ABNF.create_frame(payload, ABNF.OPCODE_TEXT)
+        frame = ABNF.create_frame(payload, opcode)
+        if self.get_mask_key:
+            frame.get_mask_key = self.get_mask_key
         data = frame.format()
-        print repr(data)
         self.io_sock.send(data)
         if traceEnabled:
             logger.debug("send: " + repr(data))
+
+    def ping(self, payload):
+        self.send(payload, ABNF.OPCODE_PING)
+
+    def pong(self, payload):
+        self.send(payload, ABNF.OPCODE_PONG)
 
     def recv(self):
         """
         Receive utf-8 string data from the server.
         """
-        frame = self.read_frame()
-        return frame.data
+        while True:
+            frame = self.recv_frame()
+            if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+                return frame.data
+            elif frame.opcode == ABNF.OPCODE_CLOSE:
+                return None
+            elif frame.opcode == ABNF.OPCODE_PING:
+                self.pong("Hi!")
 
-    def read_frame(self):
+    def recv_frame(self):
         header_bytes = self._recv(2)
         b1 = ord(header_bytes[0])
         fin = b1 >> 7 & 1
@@ -398,11 +433,12 @@ class WebSocket(object):
         elif length == 0x7f:
             l = self._recv(8)
             length = struct.unpack("!Q", l)[0]
-        
-        data = self._recv(length)
 
         if mask:
-            raise NotImplementedError("masked data transfer is not implemented")
+            mask_key = self._recv(4)
+        data = self._recv(length)
+        if mask:
+            data = ABNF.mask(mask_key, data)
         
         frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, mask, data)
         return frame
@@ -414,7 +450,7 @@ class WebSocket(object):
         """
         if self.connected:
             try:
-                self.io_sock.send("\xff\x00")
+                self.send("bye", ABNF.OPCODE_CLOSE)
                 timeout = self.sock.gettimeout()
                 self.sock.settimeout(1)
                 try:

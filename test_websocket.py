@@ -6,6 +6,9 @@ import websocket as ws
 
 TRACABLE=False
 
+def create_mask_key(n):
+    return "abcd"
+
 class StringSockMock:
     def __init__(self):
         self.set_data("")
@@ -137,30 +140,30 @@ class WebSocketTest(unittest.TestCase):
         self.assertRaises(ws.WebSocketException, sock._read_headers)
 
     def testSend(self):
+        # TODO: add longer frame data
         sock = ws.WebSocket()
+        sock.set_mask_key(create_mask_key)
         s = sock.io_sock = sock.sock = HeaderSockMock("data/header01.txt")
         sock.send("Hello")
-        #self.assertEquals(s.sent[0], "\x00Hello\xff")
+        self.assertEquals(s.sent[0], "\x81\x85abcd)\x07\x0f\x08\x0e")
+
         sock.send("こんにちは")
-        #self.assertEquals(s.sent[1], "\x00こんにちは\xff")
+        self.assertEquals(s.sent[1], "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+
         sock.send(u"こんにちは")
-        #self.assertEquals(s.sent[1], "\x00こんにちは\xff")
+        self.assertEquals(s.sent[1], "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
 
     def testRecv(self):
+        # TODO: add longer frame data
         sock = ws.WebSocket()
         s = sock.io_sock = sock.sock = StringSockMock()
-        s.set_data("\x00こんにちは\xff")
+        s.set_data("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
         data = sock.recv()
         self.assertEquals(data, "こんにちは")
         
-        s.set_data("\x81\x05Hello")
+        s.set_data("\x81\x85abcd)\x07\x0f\x08\x0e")
         data = sock.recv()
         self.assertEquals(data, "Hello")
-
-        s.set_data("\x81\x81\x7f" + ("a"*255))
-        data = sock.recv()
-        self.assertEquals(len(data), 255)
-        self.assertEquals(data, "a" * 255)
 
     def testWebSocket(self):
         s  = ws.create_connection("ws://echo.websocket.org/") #ws://localhost:8080/echo")
@@ -168,12 +171,20 @@ class WebSocketTest(unittest.TestCase):
         s.send("Hello, World")
         result = s.recv()
         self.assertEquals(result, "Hello, World")
+
         s.send("こにゃにゃちは、世界")
         result = s.recv()
         self.assertEquals(result, "こにゃにゃちは、世界")
         s.close()
 
-    def testSecureWebsocket(self):
+    def testPingPong(self):
+        s  = ws.create_connection("ws://echo.websocket.org/")
+        self.assertNotEquals(s, None)
+        s.ping("Hello")
+        s.pong("Hi")
+        s.close()
+        
+    def testSecureWebSocket(self):
         s  = ws.create_connection("wss://echo.websocket.org/")
         self.assertNotEquals(s, None)
         self.assert_(isinstance(s.io_sock, ws._SSLSocketWrapper))
