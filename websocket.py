@@ -22,6 +22,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import socket
 from urlparse import urlparse
+import struct
 import uuid
 import sha
 import base64
@@ -58,7 +59,6 @@ def setdefaulttimeout(timeout):
     """
     global default_timeout
     default_timeout = timeout
-
 
 def getdefaulttimeout():
     """
@@ -147,6 +147,76 @@ class _SSLSocketWrapper(object):
     
     def send(self, payload):
         return self.ssl.write(payload)
+
+BOOL_VALUES = (0, 1)
+def is_bool(*values):
+    for v in values:
+        if v not in BOOL_VALUES:
+            return False
+    
+    return True
+
+class ABNF(object):
+    """
+    ABNF frame class.
+    see http://tools.ietf.org/html/rfc5234
+    and http://tools.ietf.org/html/rfc6455#section-5.2
+    """
+    OPCODE_TEXT   = 0x1
+    OPCODE_BINARY = 0x2
+    OPCODE_CLOSE  = 0x8
+    OPCODE_PING   = 0x9
+    OPCODE_PONG   = 0xa
+    OPTCODES = (OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
+                OPCODE_PING, OPCODE_PONG)
+
+    LENGTH_7  = 0x7d
+    LENGTH_16 = 1 << 16
+    LENGTH_63 = 1 << 63
+
+    def __init__(self, fin = 0, rsv1 = 0, rsv2 = 0, rsv3 = 0,
+                 opcode = OPCODE_TEXT, mask = 0, data = ""):
+        self.fin = fin
+        self.rsv1 = rsv1
+        self.rsv2 = rsv2
+        self.rsv3 = rsv3
+        self.opcode = opcode
+        self.mask = mask
+        self.data = data
+
+    @staticmethod
+    def create_frame(data, opcode):
+        if opcode == ABNF.OPCODE_TEXT and isinstance(data, unicode):
+            data = data.encode("utf-8")
+        return ABNF(1, 0, 0, 0, opcode, 0, data)
+
+    def format(self):
+        if not is_bool(self.fin, self.rsv1, self.rsv2, self.rsv3):
+            raise ValueError("not 0 or 1")
+        if self.opcode not in ABNF.OPTCODES:
+            raise ValueError("Invalid OPCODE")
+        length = len(self.data)
+        if length >= ABNF.LENGTH_63:
+            raise ValueError("data is too long")
+        
+        frame_header = chr(self.fin << 7
+                           | self.rsv1 << 6 | self.rsv2 << 5 | self.rsv3 << 4
+                           | self.opcode)
+        if length < ABNF.LENGTH_7:
+            frame_header += chr(self.mask << 7 | length)
+        elif length <= ABNF.LENGTH_16:
+            frame_header += chr(self.mask << 7 | 0x7e)
+            frame_header += struct.pack("!H", length)
+        else:
+            frame_header += chr(self.mask << 7 | 0x7f)
+            frame_header += struct.pack("!Q", length)
+        
+        if not self.mask:
+            return frame_header + self.data
+        
+        raise NotImplementedError("masked format is not implemented")
+        
+        
 
 class WebSocket(object):
     """
@@ -241,7 +311,7 @@ class WebSocket(object):
         if not success:
             self.close()
             raise WebSocketException("Invalid WebSocket Header")
-        
+
         self.connected = True
     
     def _validate_header(self, headers, key):
@@ -291,13 +361,13 @@ class WebSocket(object):
         
         return status, headers    
     
-    def send(self, payload):
+    def send(self, payload, binary = False):
         """
         Send the data as string. payload must be utf-8 string or unicoce.
         """
-        if isinstance(payload, unicode):
-            payload = payload.encode("utf-8")
-        data = "".join(["\x00", payload, "\xff"])
+        frame = ABNF.create_frame(payload, ABNF.OPCODE_TEXT)
+        data = frame.format()
+        print repr(data)
         self.io_sock.send(data)
         if traceEnabled:
             logger.debug("send: " + repr(data))
@@ -306,40 +376,37 @@ class WebSocket(object):
         """
         Receive utf-8 string data from the server.
         """
-        b = self._recv(1)
-        if traceEnabled:
-            logger.debug("recv frame: " + repr(b))
-        frame_type = ord(b)
-        if frame_type == 0x00:
-            bytes = []
-            while True:
-                b = self._recv(1)
-                if b == "\xff":
-                    break
-                else:
-                    bytes.append(b)
-            return "".join(bytes)
-        elif 0x80 < frame_type < 0xff:
-            # which frame type is valid?
-            length = self._read_length()
-            bytes = self._recv_strict(length)
-            return bytes
-        elif frame_type == 0xff:
-            self._recv(1)
-            self._closeInternal()
-            return None
-        else:
-            raise WebSocketException("Invalid frame type")
+        frame = self.read_frame()
+        return frame.data
 
-    def _read_length(self):
-        length = 0
-        while True:
-            b = ord(self._recv(1))
-            length = length * (1 << 7) + (b & 0x7f)
-            if b < 0x80:
-                break
-            
-        return length
+    def read_frame(self):
+        header_bytes = self._recv(2)
+        b1 = ord(header_bytes[0])
+        fin = b1 >> 7 & 1
+        rsv1 = b1 >> 6 & 1
+        rsv2 = b1 >> 5 & 1
+        rsv3 = b1 >> 4 & 1
+        opcode = b1 & 0xf
+        
+        b2 = ord(header_bytes[1])
+        mask = b2 >> 7 & 1
+        length = b2 & 0x7f
+
+        if length == 0x7e:
+            l = self._recv(2)
+            length = struct.unpack("!H", l)[0]
+        elif length == 0x7f:
+            l = self._recv(8)
+            length = struct.unpack("!Q", l)[0]
+        
+        data = self._recv(length)
+
+        if mask:
+            raise NotImplementedError("masked data transfer is not implemented")
+        
+        frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, mask, data)
+        return frame
+
 
     def close(self):
         """
@@ -369,8 +436,6 @@ class WebSocket(object):
         
     def _recv(self, bufsize):
         bytes = self.io_sock.recv(bufsize)
-        if not bytes:
-            raise ConnectionClosedException()
         return bytes
 
     def _recv_strict(self, bufsize):
@@ -390,6 +455,10 @@ class WebSocket(object):
             if c == "\n":
                 break
         return "".join(line)
+
+
+
+
             
 class WebSocketApp(object):
     """
