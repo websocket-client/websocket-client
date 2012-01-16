@@ -29,9 +29,19 @@ import sha
 import base64
 import logging
 
+"""
+websocket python client.
+=========================
 
+This version support only hybi-13.
+Please see http://tools.ietf.org/html/rfc6455 for protocol.
+"""
+
+
+# websocket supported version.
 VERSION = 13
 
+# closing frame status codes.
 STATUS_NORMAL = 1000
 STATUS_GOING_AWAY = 1001
 STATUS_PROTOCOL_ERROR = 1002
@@ -49,9 +59,9 @@ STATUS_TLS_HANDSHAKE_ERROR = 1015
 logger = logging.getLogger()
 
 class WebSocketException(Exception):
-    pass
-
-class ConnectionClosedException(WebSocketException):
+    """
+    websocket exeception class.
+    """
     pass
 
 default_timeout = None
@@ -60,6 +70,8 @@ traceEnabled = False
 def enableTrace(tracable):
     """
     turn on/off the tracability.
+
+    tracable: boolean value. if set True, tracability is enabled.
     """
     global traceEnabled
     traceEnabled = tracable
@@ -71,13 +83,15 @@ def enableTrace(tracable):
 def setdefaulttimeout(timeout):
     """
     Set the global timeout setting to connect.
+
+    timeout: default socket timeout time. This value is second.
     """
     global default_timeout
     default_timeout = timeout
 
 def getdefaulttimeout():
     """
-    Return the global timeout setting to connect.
+    Return the global timeout setting(second) to connect.
     """
     return default_timeout
 
@@ -85,6 +99,8 @@ def _parse_url(url):
     """
     parse url and the result is tuple of 
     (hostname, port, resource path and the flag of secure mode)
+
+    url: url string.
     """
     if ":" not in url:
         raise ValueError("url is invalid")
@@ -131,6 +147,12 @@ def create_connection(url, timeout=None, **options):
 
     >>> conn = create_connection("ws://echo.websocket.org/",
     ...     headers={"User-Agent": "MyProgram"})
+
+    timeout: socket timeout time. This value is integer.
+             if you set None for this value, it means "use default_timeout value"
+
+    options: current support option is only "header".
+             if you set header as dict value, the custom HTTP headers are added.
     """
     websock = WebSocket()
     websock.settimeout(timeout != None and timeout or default_timeout)
@@ -148,7 +170,7 @@ def _create_sec_websocket_key():
     uid = uuid.uuid1()
     return base64.encodestring(uid.bytes).strip()
 
-HEADERS_TO_CHECK = {
+_HEADERS_TO_CHECK = {
     "upgrade": "websocket",
     "connection": "upgrade",
     }
@@ -163,10 +185,10 @@ class _SSLSocketWrapper(object):
     def send(self, payload):
         return self.ssl.write(payload)
 
-BOOL_VALUES = (0, 1)
-def is_bool(*values):
+_BOOL_VALUES = (0, 1)
+def _is_bool(*values):
     for v in values:
-        if v not in BOOL_VALUES:
+        if v not in _BOOL_VALUES:
             return False
     
     return True
@@ -177,20 +199,29 @@ class ABNF(object):
     see http://tools.ietf.org/html/rfc5234
     and http://tools.ietf.org/html/rfc6455#section-5.2
     """
+    
+    # operation code values.
     OPCODE_TEXT   = 0x1
     OPCODE_BINARY = 0x2
     OPCODE_CLOSE  = 0x8
     OPCODE_PING   = 0x9
     OPCODE_PONG   = 0xa
-    OPTCODES = (OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
+    
+    # available operation code value tuple
+    OPCODES = (OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
                 OPCODE_PING, OPCODE_PONG)
 
+    # data length threashold.
     LENGTH_7  = 0x7d
     LENGTH_16 = 1 << 16
     LENGTH_63 = 1 << 63
 
     def __init__(self, fin = 0, rsv1 = 0, rsv2 = 0, rsv3 = 0,
                  opcode = OPCODE_TEXT, mask = 1, data = ""):
+        """
+        Constructor for ABNF.
+        please check RFC for arguments.
+        """
         self.fin = fin
         self.rsv1 = rsv1
         self.rsv2 = rsv2
@@ -202,15 +233,27 @@ class ABNF(object):
 
     @staticmethod
     def create_frame(data, opcode):
+        """
+        create frame to send text, binary and other data.
+        
+        data: data to send. This is string value(byte array).
+            if opcode is OPCODE_TEXT and this value is uniocde,
+            data value is conveted into unicode string, automatically.
+
+        opcode: operation code. please see OPCODE_XXX.
+        """
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, unicode):
             data = data.encode("utf-8")
         # mask must be set if send data from client
         return ABNF(1, 0, 0, 0, opcode, 1, data)
 
     def format(self):
-        if not is_bool(self.fin, self.rsv1, self.rsv2, self.rsv3):
+        """
+        format this object to string(byte array) to send data to server.
+        """
+        if not _is_bool(self.fin, self.rsv1, self.rsv2, self.rsv3):
             raise ValueError("not 0 or 1")
-        if self.opcode not in ABNF.OPTCODES:
+        if self.opcode not in ABNF.OPCODES:
             raise ValueError("Invalid OPCODE")
         length = len(self.data)
         if length >= ABNF.LENGTH_63:
@@ -240,16 +283,19 @@ class ABNF(object):
 
     @staticmethod
     def mask(mask_key, data):
+        """
+        mask or unmask data. Just do xor for each byte
+
+        mask_key: 4 byte string(byte).
+        
+        data: data to mask/unmask.
+        """
         _m = map(ord, mask_key)
         _d = map(ord, data)
         for i in range(len(_d)):
             _d[i] ^= _m[i % 4]
         s = map(chr, _d)
         return "".join(s)
-
-
-        
-        
 
 class WebSocket(object):
     """
@@ -278,17 +324,28 @@ class WebSocket(object):
         self.get_mask_key = None
         
     def set_mask_key(self, func):
+        """
+        set function to create musk key. You can custumize mask key generator.
+        Mainly, this is for testing purpose.
+
+        func: callable object. the fuct must 1 argument as integer.
+              The argument means length of mask key.
+              This func must be return string(byte array),
+              which length is argument specified.
+        """
         self.get_mask_key = func
 
     def settimeout(self, timeout):
         """
         Set the timeout to the websocket.
+        
+        timeout: timeout time(second).
         """
         self.sock.settimeout(timeout)
 
     def gettimeout(self):
         """
-        Get the websocket timeout.
+        Get the websocket timeout(second).
         """
         return self.sock.gettimeout()
     
@@ -301,6 +358,15 @@ class WebSocket(object):
         >>> ws = WebSocket()
         >>> ws.connect("ws://echo.websocket.org/",
         ...     headers={"User-Agent": "MyProgram"})
+
+        timeout: socket timeout time. This value is integer.
+                 if you set None for this value,
+                 it means "use default_timeout value"
+
+        options: current support option is only "header".
+                 if you set header as dict value,
+                 the custom HTTP headers are added.
+
         """
         hostname, port, resource, is_secure = _parse_url(url)
         # TODO: we need to support proxy
@@ -352,7 +418,7 @@ class WebSocket(object):
         self.connected = True
     
     def _validate_header(self, headers, key):
-        for k, v in HEADERS_TO_CHECK.iteritems():
+        for k, v in _HEADERS_TO_CHECK.iteritems():
             r = headers.get(k, None)
             if not r:
                 return False
@@ -398,9 +464,15 @@ class WebSocket(object):
         
         return status, headers    
     
-    def send(self, payload, opcode = ABNF.OPCODE_TEXT, binary = False):
+    def send(self, payload, opcode = ABNF.OPCODE_TEXT):
         """
-        Send the data as string. payload must be utf-8 string or unicoce.
+        Send the data as string. 
+
+        payload: Payload must be utf-8 string or unicoce,
+                  if the opcode is OPCODE_TEXT.
+                  Otherwise, it must be string(byte array)
+
+        opcode: operation code to send. Please see OPCODE_XXX.
         """
         frame = ABNF.create_frame(payload, opcode)
         if self.get_mask_key:
@@ -410,32 +482,54 @@ class WebSocket(object):
         if traceEnabled:
             logger.debug("send: " + repr(data))
 
-    def ping(self, payload):
+    def ping(self, payload = ""):
+        """
+        send ping data.
+        
+        payload: data payload to send server.
+        """
         self.send(payload, ABNF.OPCODE_PING)
 
     def pong(self, payload):
+        """
+        send pong data.
+        
+        payload: data payload to send server.
+        """
         self.send(payload, ABNF.OPCODE_PONG)
 
     def recv(self):
         """
-        Receive utf-8 string data from the server.
+        Receive string data(byte array) from the server.
+
+        return value: string(byte array) value.
         """
         opcode, data = self.recv_data()
         return data
 
     def recv_data(self):
+        """
+        Recieve data with operation code.
+        
+        return  value: tuple of operation code and string(byte array) value.
+        """
         while True:
             frame = self.recv_frame()
             if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
                 return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
-                return None
+                return (frame.opcode, None)
             elif frame.opcode == ABNF.OPCODE_PING:
                 self.pong("Hi!")
 
 
     def recv_frame(self):
+        """
+        recieve data as frame from server.
+
+        return value: ABNF frame object.
+        """
         header_bytes = self._recv(2)
         if not header_bytes:
             return None
@@ -467,6 +561,13 @@ class WebSocket(object):
         return frame
 
     def send_close(self, status = STATUS_NORMAL, reason = ""):
+        """
+        send close data to the server.
+        
+        status: status code to send. see STATUS_XXX.
+
+        reason: the reason to close. This must be string.
+        """
         if status < 0 or status > ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
@@ -476,6 +577,10 @@ class WebSocket(object):
     def close(self, status = STATUS_NORMAL, reason = ""):
         """
         Close Websocket object
+
+        status: status code to send. see STATUS_XXX.
+
+        reason: the reason to close. This must be string.
         """
         if self.connected:
             if status < 0 or status > ABNF.LENGTH_16:
@@ -524,10 +629,6 @@ class WebSocket(object):
             if c == "\n":
                 break
         return "".join(line)
-
-
-
-
             
 class WebSocketApp(object):
     """
