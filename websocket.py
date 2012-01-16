@@ -32,6 +32,20 @@ import logging
 
 VERSION = 13
 
+STATUS_NORMAL = 1000
+STATUS_GOING_AWAY = 1001
+STATUS_PROTOCOL_ERROR = 1002
+STATUS_UNSUPPORTED_DATA_TYPE = 1003
+STATUS_STATUS_NOT_AVAILABLE = 1005
+STATUS_ABNORMAL_CLOSED = 1006
+STATUS_INVALID_PAYLOAD = 1007
+STATUS_POLICY_VIOLATION = 1008
+STATUS_MESSAGE_TOO_BIG = 1009
+STATUS_INVALID_EXTENSION = 1010
+STATUS_UNEXPECT_CONDITION = 1011
+STATUS_TLS_HANDSHAKE_ERROR = 1015
+
+
 logger = logging.getLogger()
 
 class WebSocketException(Exception):
@@ -190,6 +204,7 @@ class ABNF(object):
     def create_frame(data, opcode):
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, unicode):
             data = data.encode("utf-8")
+        # mask must be set if send data from client
         return ABNF(1, 0, 0, 0, opcode, 1, data)
 
     def format(self):
@@ -405,17 +420,25 @@ class WebSocket(object):
         """
         Receive utf-8 string data from the server.
         """
+        opcode, data = self.recv_data()
+        return data
+
+    def recv_data(self):
         while True:
             frame = self.recv_frame()
             if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
-                return frame.data
+                return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_CLOSE:
+                self.send_close()
                 return None
             elif frame.opcode == ABNF.OPCODE_PING:
                 self.pong("Hi!")
 
+
     def recv_frame(self):
         header_bytes = self._recv(2)
+        if not header_bytes:
+            return None
         b1 = ord(header_bytes[0])
         fin = b1 >> 7 & 1
         rsv1 = b1 >> 6 & 1
@@ -443,20 +466,30 @@ class WebSocket(object):
         frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, mask, data)
         return frame
 
+    def send_close(self, status = STATUS_NORMAL, reason = ""):
+        if status < 0 or status > ABNF.LENGTH_16:
+            raise ValueError("code is invalid range")
+        self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
+        
 
-    def close(self):
+
+    def close(self, status = STATUS_NORMAL, reason = ""):
         """
         Close Websocket object
         """
         if self.connected:
+            if status < 0 or status > ABNF.LENGTH_16:
+                raise ValueError("code is invalid range")
+
             try:
-                self.send("bye", ABNF.OPCODE_CLOSE)
+                self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
                 timeout = self.sock.gettimeout()
-                self.sock.settimeout(1)
+                self.sock.settimeout(3)
                 try:
-                    result = self._recv(2)
-                    if result != "\xff\x00":
-                        logger.error("bad closing Handshake")
+                    frame = self.recv_frame()
+                    print repr(frame.data)
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.error("close status: " + repr(frame.data))
                 except:
                     pass
                 self.sock.settimeout(timeout)
