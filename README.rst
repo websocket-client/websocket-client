@@ -75,6 +75,8 @@ JavaScript websocket-like API example::
 ChangeLog
 ============
 
+- v0.5.1
+  - delete invalid print statement.
 - v0.5.0
   - support hybi-13 protocol.
 - v0.4.1
