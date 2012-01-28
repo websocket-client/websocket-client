@@ -592,7 +592,6 @@ class WebSocket(object):
                 self.sock.settimeout(3)
                 try:
                     frame = self.recv_frame()
-                    print repr(frame.data)
                     if logger.isEnabledFor(logging.DEBUG):
                         logger.error("close status: " + repr(frame.data))
                 except:
