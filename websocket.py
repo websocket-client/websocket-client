@@ -55,7 +55,6 @@ STATUS_INVALID_EXTENSION = 1010
 STATUS_UNEXPECTED_CONDITION = 1011
 STATUS_TLS_HANDSHAKE_ERROR = 1015
 
-
 logger = logging.getLogger()
 
 class WebSocketException(Exception):
@@ -515,7 +514,11 @@ class WebSocket(object):
         """
         while True:
             frame = self.recv_frame()
-            if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+            if not frame:
+                # handle error: 
+                # 'NoneType' object has no attribute 'opcode'
+                raise WebSocketException("Not a valid frame %s" % frame)
+            elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
                 return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
