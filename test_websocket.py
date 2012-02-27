@@ -222,6 +222,52 @@ class WebSocketTest(unittest.TestCase):
         key = ws._create_sec_websocket_key()
         u = uuid.UUID(bytes=base64.b64decode(key))
         self.assertEquals(4, u.version)
+
+class WebSocketKeepRunningTest(unittest.TestCase):
+
+    class NotSetYet(object):
+        """ A marker class for signalling that a value hasn't been set yet.
+        """
+    
+    def setUp(self):
+        ws.enableTrace(TRACABLE)
+        
+        WebSocketKeepRunningTest.keep_running_open = WebSocketKeepRunningTest.NotSetYet()
+        WebSocketKeepRunningTest.keep_running_close = WebSocketKeepRunningTest.NotSetYet()
+    
+    def tearDown(self):
+        
+        WebSocketKeepRunningTest.keep_running_open = WebSocketKeepRunningTest.NotSetYet()
+        WebSocketKeepRunningTest.keep_running_close = WebSocketKeepRunningTest.NotSetYet()
+        
+    def testKeepRunning(self):
+        """ A WebSocketApp should keep running as long as its self.keep_running
+        is not False (in the boolean context).
+        """
+
+        def on_open(self, *args, **kwargs):
+            """ Set the keep_running flag for later inspection and immediately
+            close the connection.
+            """
+            WebSocketKeepRunningTest.keep_running_open = self.keep_running
+            self.close()
+            
+        def on_close(self, *args, **kwargs):
+            """ Set the keep_running flag for the test to use.
+            """
+            WebSocketKeepRunningTest.keep_running_close = self.keep_running
+        
+        app = ws.WebSocketApp('ws://echo.websocket.org/', on_open=on_open, on_close=on_close)
+        app.run_forever()
+        
+        self.assertFalse(isinstance(WebSocketKeepRunningTest.keep_running_open, 
+                                    WebSocketKeepRunningTest.NotSetYet))
+        
+        self.assertFalse(isinstance(WebSocketKeepRunningTest.keep_running_close, 
+                                    WebSocketKeepRunningTest.NotSetYet))
+        
+        self.assertEquals(True, WebSocketKeepRunningTest.keep_running_open)
+        self.assertEquals(False, WebSocketKeepRunningTest.keep_running_close)
         
 
 if __name__ == "__main__":

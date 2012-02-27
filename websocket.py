@@ -639,7 +639,7 @@ class WebSocketApp(object):
     """
     def __init__(self, url,
                  on_open = None, on_message = None, on_error = None, 
-                 on_close = None):
+                 on_close = None, keep_running = True):
         """
         url: websocket url.
         on_open: callable object which is called at opening websocket.
@@ -654,6 +654,8 @@ class WebSocketApp(object):
          The passing 2nd arugment is exception object.
        on_close: callable object which is called when closed the connection.
          this function has one argument. The arugment is this class object.
+       keep_running: a boolean flag indicating whether the app's main loop should
+         keep running, defaults to True
         """
         self.url = url
         self.on_open = on_open
@@ -661,6 +663,7 @@ class WebSocketApp(object):
         self.on_error = on_error
         self.on_close = on_close
         self.sock = None
+        self.keep_running = keep_running
 
     def send(self, data):
         """
@@ -672,6 +675,7 @@ class WebSocketApp(object):
         """
         close websocket connection.
         """
+        self.keep_running = False
         self.sock.close()
 
     def run_forever(self):
@@ -685,7 +689,7 @@ class WebSocketApp(object):
             self.sock = WebSocket()
             self.sock.connect(self.url)
             self._run_with_no_err(self.on_open)
-            while True:
+            while self.keep_running:
                 data = self.sock.recv()
                 if data is None:
                     break
