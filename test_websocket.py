@@ -223,7 +223,7 @@ class WebSocketTest(unittest.TestCase):
         u = uuid.UUID(bytes=base64.b64decode(key))
         self.assertEquals(4, u.version)
 
-class WebSocketKeepRunningTest(unittest.TestCase):
+class WebSocketAppTest(unittest.TestCase):
 
     class NotSetYet(object):
         """ A marker class for signalling that a value hasn't been set yet.
@@ -232,13 +232,15 @@ class WebSocketKeepRunningTest(unittest.TestCase):
     def setUp(self):
         ws.enableTrace(TRACABLE)
         
-        WebSocketKeepRunningTest.keep_running_open = WebSocketKeepRunningTest.NotSetYet()
-        WebSocketKeepRunningTest.keep_running_close = WebSocketKeepRunningTest.NotSetYet()
+        WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
+        WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
+        WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
     
     def tearDown(self):
         
-        WebSocketKeepRunningTest.keep_running_open = WebSocketKeepRunningTest.NotSetYet()
-        WebSocketKeepRunningTest.keep_running_close = WebSocketKeepRunningTest.NotSetYet()
+        WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
+        WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
+        WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
         
     def testKeepRunning(self):
         """ A WebSocketApp should keep running as long as its self.keep_running
@@ -249,25 +251,46 @@ class WebSocketKeepRunningTest(unittest.TestCase):
             """ Set the keep_running flag for later inspection and immediately
             close the connection.
             """
-            WebSocketKeepRunningTest.keep_running_open = self.keep_running
+            WebSocketAppTest.keep_running_open = self.keep_running
             self.close()
             
         def on_close(self, *args, **kwargs):
             """ Set the keep_running flag for the test to use.
             """
-            WebSocketKeepRunningTest.keep_running_close = self.keep_running
+            WebSocketAppTest.keep_running_close = self.keep_running
         
         app = ws.WebSocketApp('ws://echo.websocket.org/', on_open=on_open, on_close=on_close)
         app.run_forever()
         
-        self.assertFalse(isinstance(WebSocketKeepRunningTest.keep_running_open, 
-                                    WebSocketKeepRunningTest.NotSetYet))
+        self.assertFalse(isinstance(WebSocketAppTest.keep_running_open, 
+                                    WebSocketAppTest.NotSetYet))
         
-        self.assertFalse(isinstance(WebSocketKeepRunningTest.keep_running_close, 
-                                    WebSocketKeepRunningTest.NotSetYet))
+        self.assertFalse(isinstance(WebSocketAppTest.keep_running_close, 
+                                    WebSocketAppTest.NotSetYet))
         
-        self.assertEquals(True, WebSocketKeepRunningTest.keep_running_open)
-        self.assertEquals(False, WebSocketKeepRunningTest.keep_running_close)
+        self.assertEquals(True, WebSocketAppTest.keep_running_open)
+        self.assertEquals(False, WebSocketAppTest.keep_running_close)
+        
+    def testSockMaskKey(self):
+        """ A WebSocketApp should forward the received mask_key function down
+        to the actual socket.
+        """
+        
+        def my_mask_key_func():
+            pass
+
+        def on_open(self, *args, **kwargs):
+            """ Set the value so the test can use it later on and immediately 
+            close the connection.
+            """
+            WebSocketAppTest.get_mask_key_id = id(self.get_mask_key)
+            self.close()
+        
+        app = ws.WebSocketApp('ws://echo.websocket.org/', on_open=on_open, get_mask_key=my_mask_key_func)
+        app.run_forever()
+
+        # Note: We can't use 'is' for comparing the functions directly, need to use 'id'.
+        self.assertEquals(WebSocketAppTest.get_mask_key_id, id(my_mask_key_func))
         
 
 if __name__ == "__main__":
