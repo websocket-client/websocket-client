@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 
-import unittest
+# stdlib
+import base64, unittest, uuid
+
+# websocket-client
 import websocket as ws
 
 TRACABLE=False
@@ -213,6 +216,12 @@ class WebSocketTest(unittest.TestCase):
         self.assertRaises(error, s.send, "Hello")
         self.assertRaises(error, s.recv)
         
+    def testUUID4(self):
+        """ WebSocket key should be a UUID4.
+        """
+        key = ws._create_sec_websocket_key()
+        u = uuid.UUID(bytes=base64.b64decode(key))
+        self.assertEquals(4, u.version)
         
 
 if __name__ == "__main__":

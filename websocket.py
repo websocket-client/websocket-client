@@ -166,7 +166,7 @@ _MAX_CHAR_BYTE = (1<<8) -1
 # http://axod.blogspot.com/2010/06/websocket-gets-update-and-it-breaks.html
 
 def _create_sec_websocket_key():
-    uid = uuid.uuid1()
+    uid = uuid.uuid4()
     return base64.encodestring(uid.bytes).strip()
 
 _HEADERS_TO_CHECK = {
