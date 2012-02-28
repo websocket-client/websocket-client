@@ -74,7 +74,9 @@ JavaScript websocket-like API example::
 
 ChangeLog
 ============
-
+- v0.5.2
+  - fix Echo App Demo Throw Error: 'NoneType' object has no attribute 'opcode
+  (ISSUE#10)
 - v0.5.1
   - delete invalid print statement.
 - v0.5.0
