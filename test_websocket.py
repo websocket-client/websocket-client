@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 #
 
-# stdlib
-import base64, unittest, uuid
+import base64
+import uuid
+import unittest
 
 # websocket-client
 import websocket as ws
