@@ -166,7 +166,7 @@ _MAX_CHAR_BYTE = (1<<8) -1
 # http://axod.blogspot.com/2010/06/websocket-gets-update-and-it-breaks.html
 
 def _create_sec_websocket_key():
-    uid = uuid.uuid1()
+    uid = uuid.uuid4()
     return base64.encodestring(uid.bytes).strip()
 
 _HEADERS_TO_CHECK = {
@@ -313,14 +313,17 @@ class WebSocket(object):
     >>> ws.recv()
     'Hello, Server'
     >>> ws.close()
+    
+    get_mask_key: a callable to produce new mask keys, see the set_mask_key 
+      function's docstring for more details
     """
-    def __init__(self):
+    def __init__(self, get_mask_key = None):
         """
         Initalize WebSocket object.
         """
         self.connected = False
         self.io_sock = self.sock = socket.socket()
-        self.get_mask_key = None
+        self.get_mask_key = get_mask_key
         
     def set_mask_key(self, func):
         """
@@ -639,7 +642,7 @@ class WebSocketApp(object):
     """
     def __init__(self, url,
                  on_open = None, on_message = None, on_error = None, 
-                 on_close = None):
+                 on_close = None, keep_running = True, get_mask_key = None):
         """
         url: websocket url.
         on_open: callable object which is called at opening websocket.
@@ -654,12 +657,18 @@ class WebSocketApp(object):
          The passing 2nd arugment is exception object.
        on_close: callable object which is called when closed the connection.
          this function has one argument. The arugment is this class object.
+       keep_running: a boolean flag indicating whether the app's main loop should
+         keep running, defaults to True
+       get_mask_key: a callable to produce new mask keys, see the WebSocket.set_mask_key's
+         docstring for more information
         """
         self.url = url
         self.on_open = on_open
         self.on_message = on_message
         self.on_error = on_error
         self.on_close = on_close
+        self.keep_running = keep_running
+        self.get_mask_key = get_mask_key
         self.sock = None
 
     def send(self, data):
@@ -672,6 +681,7 @@ class WebSocketApp(object):
         """
         close websocket connection.
         """
+        self.keep_running = False
         self.sock.close()
 
     def run_forever(self):
@@ -682,10 +692,10 @@ class WebSocketApp(object):
         if self.sock:
             raise WebSocketException("socket is already opened")
         try:
-            self.sock = WebSocket()
+            self.sock = WebSocket(self.get_mask_key)
             self.sock.connect(self.url)
             self._run_with_no_err(self.on_open)
-            while True:
+            while self.keep_running:
                 data = self.sock.recv()
                 if data is None:
                     break
