@@ -28,7 +28,7 @@ class StringSockMock:
             return
         buf = self.data[self.pos: self.pos + bufsize]
         self.pos += bufsize
-        return buf
+        return buf
 
     def send(self, data):
         self.sent.append(data)
