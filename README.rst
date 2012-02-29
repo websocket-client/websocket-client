@@ -78,7 +78,7 @@ wsdump.py
 
 wsdump.py is simple WebSocket test(debug) tool.
 
-::sample for echo.websocket.org
+sample for echo.websocket.org::
 
   $ wsdump.py ws://echo.websocket.org/
   Press Ctrl+C to quit
@@ -90,17 +90,18 @@ wsdump.py is simple WebSocket test(debug) tool.
 Usage
 ---------
 
-  usage: wsdump.py [-h] [-v [VERBOSE]] ws_url
+usage::
+  wsdump.py [-h] [-v [VERBOSE]] ws_url
 
 WebSocket Simple Dump Tool
+
 positional arguments:
   ws_url                websocket url. ex. ws://echo.websocket.org/
 
 optional arguments:
   -h, --help            show this help message and exit
-  -v [VERBOSE], --verbose [VERBOSE]
-                        set verbose mode. If set to 1, show opcode. If set to
-                        2, enable to trace websocket module
+  
+  -v [VERBOSE], --verbose [VERBOSE]  set verbose mode. If set to 1, show opcode. If set to 2, enable to trace websocket module
 
 
 ChangeLog
