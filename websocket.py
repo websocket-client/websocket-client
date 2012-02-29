@@ -210,6 +210,15 @@ class ABNF(object):
     OPCODES = (OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
                 OPCODE_PING, OPCODE_PONG)
 
+    # opcode human readable string
+    OPCODE_MAP = {
+        OPCODE_TEXT: "text",
+        OPCODE_BINARY: "binary",
+        OPCODE_CLOSE: "close",
+        OPCODE_PING: "ping",
+        OPCODE_PONG: "pong"
+        }
+
     # data length threashold.
     LENGTH_7  = 0x7d
     LENGTH_16 = 1 << 16
@@ -550,16 +559,22 @@ class WebSocket(object):
         mask = b2 >> 7 & 1
         length = b2 & 0x7f
 
+        length_data = ""
         if length == 0x7e:
-            l = self._recv(2)
-            length = struct.unpack("!H", l)[0]
+            length_data = self._recv(2)
+            length = struct.unpack("!H", length_data)[0]
         elif length == 0x7f:
-            l = self._recv(8)
-            length = struct.unpack("!Q", l)[0]
+            length_data = self._recv(8)
+            length = struct.unpack("!Q", length_data)[0]
 
+        mask_key = ""
         if mask:
             mask_key = self._recv(4)
         data = self._recv(length)
+        if traceEnabled:
+            recieved = header_bytes + length_data + mask_key + data
+            logger.debug("recv: " + repr(recieved))
+
         if mask:
             data = ABNF.mask(mask_key, data)
         
