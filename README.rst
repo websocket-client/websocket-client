@@ -112,15 +112,23 @@ example::
 ChangeLog
 ============
 - v0.6.0
+
   - Patches: UUID4, self.keep_running, mask_key (ISSUE#11)
   - add wsdump.py tool 
+
 - v0.5.2
-  - fix Echo App Demo Throw Error: 'NoneType' object has no attribute 'opcode
-  (ISSUE#10)
+
+  - fix Echo App Demo Throw Error: 'NoneType' object has no attribute 'opcode  (ISSUE#10)
+
 - v0.5.1
+
   - delete invalid print statement.
+
 - v0.5.0
+
   - support hybi-13 protocol.
+
 - v0.4.1
+
   - fix incorrect custom header order(ISSUE#1)
    
