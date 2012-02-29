@@ -99,10 +99,15 @@ positional arguments:
   ws_url                websocket url. ex. ws://echo.websocket.org/
 
 optional arguments:
-  -h, --help            show this help message and exit
-  
-  -v [VERBOSE], --verbose [VERBOSE]  set verbose mode. If set to 1, show opcode. If set to 2, enable to trace websocket module
+  -h, --help                           show this help message and exit
 
+  -v VERBOSE, --verbose VERBOSE    set verbose mode. If set to 1, show opcode. If set to 2, enable to trace websocket module
+
+example::
+
+  $ wsdump.py ws://echo.websocket.org/
+  $ wsdump.py ws://echo.websocket.org/ -v
+  $ wsdump.py ws://echo.websocket.org/ -vv
 
 ChangeLog
 ============
