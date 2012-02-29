@@ -72,10 +72,42 @@ JavaScript websocket-like API example::
       
       ws.run_forever()
 
+
+wsdump.py
+============
+
+wsdump.py is simple WebSocket test(debug) tool.
+
+::sample for echo.websocket.org
+
+  $ wsdump.py ws://echo.websocket.org/
+  Press Ctrl+C to quit
+  > Hello, WebSocket
+  < Hello, WebSocket
+  > How are you?
+  < How are you?
+
+Usage
+---------
+
+  usage: wsdump.py [-h] [-v [VERBOSE]] ws_url
+
+WebSocket Simple Dump Tool
+positional arguments:
+  ws_url                websocket url. ex. ws://echo.websocket.org/
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v [VERBOSE], --verbose [VERBOSE]
+                        set verbose mode. If set to 1, show opcode. If set to
+                        2, enable to trace websocket module
+
+
 ChangeLog
 ============
 - v0.6.0
   - Patches: UUID4, self.keep_running, mask_key (ISSUE#11)
+  - add wsdump.py tool 
 - v0.5.2
   - fix Echo App Demo Throw Error: 'NoneType' object has no attribute 'opcode
   (ISSUE#10)

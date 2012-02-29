@@ -24,4 +24,5 @@ setup(
         "Intended Audience :: Developers",
     ],
     py_modules=["websocket"],
+    scripts=["bin/wsdump.py"]
 )
