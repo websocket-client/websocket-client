@@ -25,7 +25,7 @@ from urlparse import urlparse
 import os
 import struct
 import uuid
-import sha
+import hashlib
 import base64
 import logging
 
@@ -443,7 +443,7 @@ class WebSocket(object):
         result = result.lower()
         
         value = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-        hashed = base64.encodestring(sha.sha(value).digest()).strip().lower()
+        hashed = base64.encodestring(hashlib.sha1(value).digest()).strip().lower()
         return hashed == result
 
     def _read_headers(self):
