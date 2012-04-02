@@ -272,7 +272,7 @@ class ABNF(object):
                            | self.opcode)
         if length < ABNF.LENGTH_7:
             frame_header += chr(self.mask << 7 | length)
-        elif length <= ABNF.LENGTH_16:
+        elif length < ABNF.LENGTH_16:
             frame_header += chr(self.mask << 7 | 0x7e)
             frame_header += struct.pack("!H", length)
         else:
@@ -589,7 +589,7 @@ class WebSocket(object):
 
         reason: the reason to close. This must be string.
         """
-        if status < 0 or status > ABNF.LENGTH_16:
+        if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
         
@@ -604,7 +604,7 @@ class WebSocket(object):
         reason: the reason to close. This must be string.
         """
         if self.connected:
-            if status < 0 or status > ABNF.LENGTH_16:
+            if status < 0 or status >= ABNF.LENGTH_16:
                 raise ValueError("code is invalid range")
 
             try:
