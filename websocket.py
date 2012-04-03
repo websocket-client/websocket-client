@@ -554,7 +554,6 @@ class WebSocket(object):
         rsv2 = b1 >> 5 & 1
         rsv3 = b1 >> 4 & 1
         opcode = b1 & 0xf
-        
         b2 = ord(header_bytes[1])
         mask = b2 >> 7 & 1
         length = b2 & 0x7f
@@ -570,7 +569,7 @@ class WebSocket(object):
         mask_key = ""
         if mask:
             mask_key = self._recv(4)
-        data = self._recv(length)
+        data = self._recv_strict(length)
         if traceEnabled:
             recieved = header_bytes + length_data + mask_key + data
             logger.debug("recv: " + repr(recieved))
