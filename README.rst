@@ -111,6 +111,12 @@ example::
 
 ChangeLog
 ============
+
+- v0.7.0
+
+  - fixed problem to read long data.(ISSUE#12)
+  - fix buffer size boundary violation
+
 - v0.6.0
 
   - Patches: UUID4, self.keep_running, mask_key (ISSUE#11)
