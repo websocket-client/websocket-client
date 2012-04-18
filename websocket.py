@@ -142,10 +142,12 @@ def create_connection(url, timeout=None, **options):
     Passing optional timeout parameter will set the timeout on the socket.
     If no timeout is supplied, the global default timeout setting returned by getdefauttimeout() is used.
     You can customize using 'options'.
-    If you set "headers" dict object, you can set your own custom header.
+    If you set "header" dict object, you can set your own custom header.
 
     >>> conn = create_connection("ws://echo.websocket.org/",
-    ...     headers={"User-Agent": "MyProgram"})
+         ...     header={"User-Agent: MyProgram",
+         ...             "x-custom: header"})
+
 
     timeout: socket timeout time. This value is integer.
              if you set None for this value, it means "use default_timeout value"
@@ -364,11 +366,12 @@ class WebSocket(object):
         """
         Connect to url. url is websocket url scheme. ie. ws://host:port/resource
         You can customize using 'options'.
-        If you set "headers" dict object, you can set your own custom header.
+        If you set "header" dict object, you can set your own custom header.
         
         >>> ws = WebSocket()
         >>> ws.connect("ws://echo.websocket.org/",
-        ...     headers={"User-Agent": "MyProgram"})
+                ...     header={"User-Agent: MyProgram",
+                ...             "x-custom: header"})
 
         timeout: socket timeout time. This value is integer.
                  if you set None for this value,
