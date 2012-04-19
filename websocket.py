@@ -132,6 +132,9 @@ def _parse_url(url):
     else:
         resource = "/"
 
+    if parsed.query:
+        resource += "?" + parsed.query
+
     return (hostname, port, resource, is_secure)
 
 def create_connection(url, timeout=None, **options):

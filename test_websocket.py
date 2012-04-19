@@ -96,6 +96,12 @@ class WebSocketTest(unittest.TestCase):
         self.assertEquals(p[2], "/r")
         self.assertEquals(p[3], True)
 
+        p = ws._parse_url("wss://www.example.com:8080/r?key=value")
+        self.assertEquals(p[0], "www.example.com")
+        self.assertEquals(p[1], 8080)
+        self.assertEquals(p[2], "/r?key=value")
+        self.assertEquals(p[3], True)
+
         self.assertRaises(ValueError, ws._parse_url, "http://www.example.com/r")
 
     def testWSKey(self):
