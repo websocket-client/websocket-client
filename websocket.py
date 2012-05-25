@@ -63,6 +63,13 @@ class WebSocketException(Exception):
     """
     pass
 
+class WebSocketConnectionClosedException(WebSocketException):
+    """
+    If remote host closed the connection or some network error happened,
+    this exception will be raised.
+    """
+    pass
+
 default_timeout = None
 traceEnabled = False
 
@@ -634,6 +641,8 @@ class WebSocket(object):
         
     def _recv(self, bufsize):
         bytes = self.io_sock.recv(bufsize)
+        if bytes == 0:
+            raise WebSocketConnectionClosedException()
         return bytes
 
     def _recv_strict(self, bufsize):
@@ -694,7 +703,8 @@ class WebSocketApp(object):
         """
         send message. data must be utf-8 string or unicode.
         """
-        self.sock.send(data)
+        if self.sock.send(data) == 0:
+            raise WebSocketConnectionClosedException()
 
     def close(self):
         """
