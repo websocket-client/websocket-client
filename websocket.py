@@ -105,7 +105,6 @@ def _parse_url(url):
         raise ValueError("url is invalid")
 
     scheme, url = url.split(":", 1)
-    url = url.rstrip("/")
 
     parsed = urlparse(url, scheme="http")
     if parsed.hostname:
