@@ -520,7 +520,10 @@ class WebSocket(object):
 
         return value: string(byte array) value.
         """
-        opcode, data = self.recv_data()
+        try:
+            opcode, data = self.recv_data()
+        except WebSocketException, e:
+            data = None
         return data
 
     def recv_data(self):
