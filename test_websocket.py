@@ -60,6 +60,12 @@ class WebSocketTest(unittest.TestCase):
         self.assertEquals(p[2], "/r")
         self.assertEquals(p[3], False)
 
+        p = ws._parse_url("ws://www.example.com/r/")
+        self.assertEquals(p[0], "www.example.com")
+        self.assertEquals(p[1], 80)
+        self.assertEquals(p[2], "/r/")
+        self.assertEquals(p[3], False)
+
         p = ws._parse_url("ws://www.example.com/")
         self.assertEquals(p[0], "www.example.com")
         self.assertEquals(p[1], 80)
