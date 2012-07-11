@@ -413,7 +413,6 @@ class WebSocket(object):
    
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
-        headers.append("Sec-WebSocket-Protocol: chat, superchat")
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
         if "header" in options:
             headers.extend(options["header"])
