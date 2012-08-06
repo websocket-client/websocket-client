@@ -23,6 +23,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import socket
 from urlparse import urlparse
 import os
+import array
 import struct
 import uuid
 import hashlib
@@ -309,12 +310,11 @@ class ABNF(object):
         
         data: data to mask/unmask.
         """
-        _m = map(ord, mask_key)
-        _d = map(ord, data)
-        for i in range(len(_d)):
+        _m = array.array("B", mask_key)
+        _d = array.array("B", data)
+        for i in xrange(len(_d)):
             _d[i] ^= _m[i % 4]
-        s = map(chr, _d)
-        return "".join(s)
+        return _d.tostring()
 
 class WebSocket(object):
     """
