@@ -644,7 +644,7 @@ class WebSocket(object):
         
     def _recv(self, bufsize):
         bytes = self.io_sock.recv(bufsize)
-        if bytes == 0:
+        if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes
 
