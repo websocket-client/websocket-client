@@ -526,7 +526,10 @@ class WebSocket(object):
 
         return value: string(byte array) value.
         """
-        opcode, data = self.recv_data()
+        try:
+            opcode, data = self.recv_data()
+        except WebSocketException, e:
+            data = None
         return data
 
     def recv_data(self):
@@ -556,7 +559,7 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
-        header_bytes = self._recv(2)
+        header_bytes = self._recv_strict(2)
         if not header_bytes:
             return None
         b1 = ord(header_bytes[0])
@@ -571,15 +574,15 @@ class WebSocket(object):
 
         length_data = ""
         if length == 0x7e:
-            length_data = self._recv(2)
+            length_data = self._recv_strict(2)
             length = struct.unpack("!H", length_data)[0]
         elif length == 0x7f:
-            length_data = self._recv(8)
+            length_data = self._recv_strict(8)
             length = struct.unpack("!Q", length_data)[0]
 
         mask_key = ""
         if mask:
-            mask_key = self._recv(4)
+            mask_key = self._recv_strict(4)
         data = self._recv_strict(length)
         if traceEnabled:
             recieved = header_bytes + length_data + mask_key + data
@@ -640,7 +643,7 @@ class WebSocket(object):
         
     def _recv(self, bufsize):
         bytes = self.io_sock.recv(bufsize)
-        if bytes == 0:
+        if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes
 
