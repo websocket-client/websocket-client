@@ -17,7 +17,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""        
+"""
 
 
 import socket
@@ -103,7 +103,7 @@ def getdefaulttimeout():
 
 def _parse_url(url):
     """
-    parse url and the result is tuple of 
+    parse url and the result is tuple of
     (hostname, port, resource path and the flag of secure mode)
 
     url: url string.
@@ -191,7 +191,7 @@ class _SSLSocketWrapper(object):
 
     def recv(self, bufsize):
         return self.ssl.read(bufsize)
-    
+
     def send(self, payload):
         return self.ssl.write(payload)
 
@@ -200,7 +200,7 @@ def _is_bool(*values):
     for v in values:
         if v not in _BOOL_VALUES:
             return False
-    
+
     return True
 
 class ABNF(object):
@@ -209,14 +209,14 @@ class ABNF(object):
     see http://tools.ietf.org/html/rfc5234
     and http://tools.ietf.org/html/rfc6455#section-5.2
     """
-    
+
     # operation code values.
     OPCODE_TEXT   = 0x1
     OPCODE_BINARY = 0x2
     OPCODE_CLOSE  = 0x8
     OPCODE_PING   = 0x9
     OPCODE_PONG   = 0xa
-    
+
     # available operation code value tuple
     OPCODES = (OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
                 OPCODE_PING, OPCODE_PONG)
@@ -254,7 +254,7 @@ class ABNF(object):
     def create_frame(data, opcode):
         """
         create frame to send text, binary and other data.
-        
+
         data: data to send. This is string value(byte array).
             if opcode is OPCODE_TEXT and this value is uniocde,
             data value is conveted into unicode string, automatically.
@@ -277,7 +277,7 @@ class ABNF(object):
         length = len(self.data)
         if length >= ABNF.LENGTH_63:
             raise ValueError("data is too long")
-        
+
         frame_header = chr(self.fin << 7
                            | self.rsv1 << 6 | self.rsv2 << 5 | self.rsv3 << 4
                            | self.opcode)
@@ -289,7 +289,7 @@ class ABNF(object):
         else:
             frame_header += chr(self.mask << 7 | 0x7f)
             frame_header += struct.pack("!Q", length)
-        
+
         if not self.mask:
             return frame_header + self.data
         else:
@@ -306,7 +306,7 @@ class ABNF(object):
         mask or unmask data. Just do xor for each byte
 
         mask_key: 4 byte string(byte).
-        
+
         data: data to mask/unmask.
         """
         _m = map(ord, mask_key)
@@ -333,8 +333,8 @@ class WebSocket(object):
     >>> ws.recv()
     'Hello, Server'
     >>> ws.close()
-    
-    get_mask_key: a callable to produce new mask keys, see the set_mask_key 
+
+    get_mask_key: a callable to produce new mask keys, see the set_mask_key
       function's docstring for more details
     """
     def __init__(self, get_mask_key = None):
@@ -344,7 +344,7 @@ class WebSocket(object):
         self.connected = False
         self.io_sock = self.sock = socket.socket()
         self.get_mask_key = get_mask_key
-        
+
     def set_mask_key(self, func):
         """
         set function to create musk key. You can custumize mask key generator.
@@ -360,7 +360,7 @@ class WebSocket(object):
     def settimeout(self, timeout):
         """
         Set the timeout to the websocket.
-        
+
         timeout: timeout time(second).
         """
         self.sock.settimeout(timeout)
@@ -370,13 +370,13 @@ class WebSocket(object):
         Get the websocket timeout(second).
         """
         return self.sock.gettimeout()
-    
+
     def connect(self, url, **options):
         """
         Connect to url. url is websocket url scheme. ie. ws://host:port/resource
         You can customize using 'options'.
         If you set "header" dict object, you can set your own custom header.
-        
+
         >>> ws = WebSocket()
         >>> ws.connect("ws://echo.websocket.org/",
                 ...     header={"User-Agent: MyProgram",
@@ -410,7 +410,7 @@ class WebSocket(object):
             hostport = "%s:%d" % (host, port)
         headers.append("Host: %s" % hostport)
         headers.append("Origin: %s" % hostport)
-   
+
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
         headers.append("Sec-WebSocket-Protocol: chat, superchat")
@@ -439,7 +439,7 @@ class WebSocket(object):
             raise WebSocketException("Invalid WebSocket Header")
 
         self.connected = True
-    
+
     def _validate_header(self, headers, key):
         for k, v in _HEADERS_TO_CHECK.iteritems():
             r = headers.get(k, None)
@@ -453,7 +453,7 @@ class WebSocket(object):
         if not result:
             return False
         result = result.lower()
-        
+
         value = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
         hashed = base64.encodestring(hashlib.sha1(value).digest()).strip().lower()
         return hashed == result
@@ -463,7 +463,7 @@ class WebSocket(object):
         headers = {}
         if traceEnabled:
             logger.debug("--- response header ---")
-            
+
         while True:
             line = self._recv_line()
             if line == "\r\n":
@@ -484,12 +484,12 @@ class WebSocket(object):
 
         if traceEnabled:
             logger.debug("-----------------------")
-        
-        return status, headers    
-    
+
+        return status, headers
+
     def send(self, payload, opcode = ABNF.OPCODE_TEXT):
         """
-        Send the data as string. 
+        Send the data as string.
 
         payload: Payload must be utf-8 string or unicoce,
                   if the opcode is OPCODE_TEXT.
@@ -508,7 +508,7 @@ class WebSocket(object):
     def ping(self, payload = ""):
         """
         send ping data.
-        
+
         payload: data payload to send server.
         """
         self.send(payload, ABNF.OPCODE_PING)
@@ -516,7 +516,7 @@ class WebSocket(object):
     def pong(self, payload):
         """
         send pong data.
-        
+
         payload: data payload to send server.
         """
         self.send(payload, ABNF.OPCODE_PONG)
@@ -533,13 +533,13 @@ class WebSocket(object):
     def recv_data(self):
         """
         Recieve data with operation code.
-        
+
         return  value: tuple of operation code and string(byte array) value.
         """
         while True:
             frame = self.recv_frame()
             if not frame:
-                # handle error: 
+                # handle error:
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketException("Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
@@ -557,7 +557,7 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
-        header_bytes = self._recv(2)
+        header_bytes = self._recv_strict(2)
         if not header_bytes:
             return None
         b1 = ord(header_bytes[0])
@@ -572,15 +572,15 @@ class WebSocket(object):
 
         length_data = ""
         if length == 0x7e:
-            length_data = self._recv(2)
+            length_data = self._recv_strict(2)
             length = struct.unpack("!H", length_data)[0]
         elif length == 0x7f:
-            length_data = self._recv(8)
+            length_data = self._recv_strict(8)
             length = struct.unpack("!Q", length_data)[0]
 
         mask_key = ""
         if mask:
-            mask_key = self._recv(4)
+            mask_key = self._recv_strict(4)
         data = self._recv_strict(length)
         if traceEnabled:
             recieved = header_bytes + length_data + mask_key + data
@@ -588,14 +588,14 @@ class WebSocket(object):
 
         if mask:
             data = ABNF.mask(mask_key, data)
-        
+
         frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, mask, data)
         return frame
 
     def send_close(self, status = STATUS_NORMAL, reason = ""):
         """
         send close data to the server.
-        
+
         status: status code to send. see STATUS_XXX.
 
         reason: the reason to close. This must be string.
@@ -603,7 +603,7 @@ class WebSocket(object):
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
-        
+
 
 
     def close(self, status = STATUS_NORMAL, reason = ""):
@@ -638,10 +638,10 @@ class WebSocket(object):
         self.connected = False
         self.sock.close()
         self.io_sock = self.sock
-        
+
     def _recv(self, bufsize):
         bytes = self.io_sock.recv(bufsize)
-        if bytes == 0:
+        if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes
 
@@ -651,7 +651,7 @@ class WebSocket(object):
         while remaining:
             bytes += self._recv(remaining)
             remaining = bufsize - len(bytes)
-            
+
         return bytes
 
     def _recv_line(self):
@@ -662,21 +662,21 @@ class WebSocket(object):
             if c == "\n":
                 break
         return "".join(line)
-            
+
 class WebSocketApp(object):
     """
-    Higher level of APIs are provided. 
+    Higher level of APIs are provided.
     The interface is like JavaScript WebSocket object.
     """
     def __init__(self, url,
-                 on_open = None, on_message = None, on_error = None, 
+                 on_open = None, on_message = None, on_error = None,
                  on_close = None, keep_running = True, get_mask_key = None):
         """
         url: websocket url.
         on_open: callable object which is called at opening websocket.
           this function has one argument. The arugment is this class object.
         on_message: callbale object which is called when recieved data.
-         on_message has 2 arguments. 
+         on_message has 2 arguments.
          The 1st arugment is this class object.
          The passing 2nd arugment is utf-8 string which we get from the server.
        on_error: callable object which is called when we get error.
