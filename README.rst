@@ -112,6 +112,11 @@ example::
 ChangeLog
 ============
 
+- v0.8.0
+
+  - many bug fix
+  - some performance improvement
+
 - v0.7.0
 
   - fixed problem to read long data.(ISSUE#12)
