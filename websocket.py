@@ -547,7 +547,7 @@ class WebSocket(object):
                 self.send_close()
                 return (frame.opcode, None)
             elif frame.opcode == ABNF.OPCODE_PING:
-                self.pong("Hi!")
+                self.pong(frame.data)
 
 
     def recv_frame(self):
