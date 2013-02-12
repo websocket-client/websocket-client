@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = "0.8.0"
+VERSION = "0.9.0"
 
 
 setup(
@@ -12,7 +12,7 @@ setup(
     author_email="liris.pp@gmail.com",
     license="LGPL",
     url="https://github.com/liris/websocket-client",
-    classifiers = [
+    classifiers=[
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Programming Language :: Python",

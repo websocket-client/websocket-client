@@ -700,7 +700,9 @@ class WebSocketApp(object):
 
     def send(self, data, opcode = ABNF.OPCODE_TEXT):
         """
-        send message. data must be utf-8 string or unicode.
+        send message. 
+        data: message to send. If you set opcode to OPCODE_TEXT, data must be utf-8 string or unicode.
+        opcode: operation code of data. default is OPCODE_TEXT.
         """
         if self.sock.send(data, opcode) == 0:
             raise WebSocketConnectionClosedException()
