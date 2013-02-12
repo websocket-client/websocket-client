@@ -58,11 +58,13 @@ STATUS_TLS_HANDSHAKE_ERROR = 1015
 
 logger = logging.getLogger()
 
+
 class WebSocketException(Exception):
     """
     websocket exeception class.
     """
     pass
+
 
 class WebSocketConnectionClosedException(WebSocketException):
     """
@@ -73,6 +75,7 @@ class WebSocketConnectionClosedException(WebSocketException):
 
 default_timeout = None
 traceEnabled = False
+
 
 def enableTrace(tracable):
     """
@@ -87,6 +90,7 @@ def enableTrace(tracable):
             logger.addHandler(logging.StreamHandler())
         logger.setLevel(logging.DEBUG)
 
+
 def setdefaulttimeout(timeout):
     """
     Set the global timeout setting to connect.
@@ -96,11 +100,13 @@ def setdefaulttimeout(timeout):
     global default_timeout
     default_timeout = timeout
 
+
 def getdefaulttimeout():
     """
     Return the global timeout setting(second) to connect.
     """
     return default_timeout
+
 
 def _parse_url(url):
     """
@@ -130,7 +136,7 @@ def _parse_url(url):
     elif scheme == "wss":
         is_secure = True
         if not port:
-            port  = 443
+            port = 443
     else:
         raise ValueError("scheme %s is invalid" % scheme)
 
@@ -143,6 +149,7 @@ def _parse_url(url):
         resource += "?" + parsed.query
 
     return (hostname, port, resource, is_secure)
+
 
 def create_connection(url, timeout=None, **options):
     """
@@ -177,6 +184,7 @@ _MAX_CHAR_BYTE = (1<<8) -1
 # ref. Websocket gets an update, and it breaks stuff.
 # http://axod.blogspot.com/2010/06/websocket-gets-update-and-it-breaks.html
 
+
 def _create_sec_websocket_key():
     uid = uuid.uuid4()
     return base64.encodestring(uid.bytes).strip()
@@ -185,6 +193,7 @@ _HEADERS_TO_CHECK = {
     "upgrade": "websocket",
     "connection": "upgrade",
     }
+
 
 class _SSLSocketWrapper(object):
     def __init__(self, sock):
@@ -197,12 +206,15 @@ class _SSLSocketWrapper(object):
         return self.ssl.write(payload)
 
 _BOOL_VALUES = (0, 1)
+
+
 def _is_bool(*values):
     for v in values:
         if v not in _BOOL_VALUES:
             return False
 
     return True
+
 
 class ABNF(object):
     """
@@ -316,6 +328,7 @@ class ABNF(object):
             _d[i] ^= _m[i % 4]
         return _d.tostring()
 
+
 class WebSocket(object):
     """
     Low level WebSocket interface.
@@ -337,6 +350,7 @@ class WebSocket(object):
     get_mask_key: a callable to produce new mask keys, see the set_mask_key
       function's docstring for more details
     """
+
     def __init__(self, get_mask_key = None):
         """
         Initalize WebSocket object.
@@ -423,8 +437,8 @@ class WebSocket(object):
         header_str = "\r\n".join(headers)
         sock.send(header_str)
         if traceEnabled:
-            logger.debug( "--- request header ---")
-            logger.debug( header_str)
+            logger.debug("--- request header ---")
+            logger.debug(header_str)
             logger.debug("-----------------------")
 
         status, resp_headers = self._read_headers()
@@ -549,7 +563,6 @@ class WebSocket(object):
             elif frame.opcode == ABNF.OPCODE_PING:
                 self.pong(frame.data)
 
-
     def recv_frame(self):
         """
         recieve data as frame from server.
@@ -602,8 +615,6 @@ class WebSocket(object):
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
-
-
 
     def close(self, status = STATUS_NORMAL, reason = ""):
         """
@@ -662,6 +673,7 @@ class WebSocket(object):
                 break
         return "".join(line)
 
+
 class WebSocketApp(object):
     """
     Higher level of APIs are provided.
@@ -700,7 +712,7 @@ class WebSocketApp(object):
 
     def send(self, data, opcode = ABNF.OPCODE_TEXT):
         """
-        send message. 
+        send message.
         data: message to send. If you set opcode to OPCODE_TEXT, data must be utf-8 string or unicode.
         opcode: operation code of data. default is OPCODE_TEXT.
         """
@@ -753,6 +765,6 @@ if __name__ == "__main__":
     ws.send("Hello, World")
     print "Sent"
     print "Receiving..."
-    result =  ws.recv()
+    result = ws.recv()
     print "Received '%s'" % result
     ws.close()
