@@ -423,7 +423,11 @@ class WebSocket(object):
         else:
             hostport = "%s:%d" % (host, port)
         headers.append("Host: %s" % hostport)
-        headers.append("Origin: %s" % hostport)
+        
+        if "origin" in options:
+            headers.append("Origin: %s" % options["origin"])
+        else:
+            headers.append("Origin: %s" % hostport)
 
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
