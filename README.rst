@@ -112,6 +112,11 @@ example::
 ChangeLog
 ============
 
+- v0.9.0
+
+  - allow to set opcode in WebSocketApp.send(ISSUE#25)
+  - allow to modify Origin(ISSUE#26)
+
 - v0.8.0
 
   - many bug fix
