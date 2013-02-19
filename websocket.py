@@ -765,10 +765,10 @@ class WebSocketApp(object):
 if __name__ == "__main__":
     enableTrace(True)
     ws = create_connection("ws://echo.websocket.org/")
-    print "Sending 'Hello, World'..."
+    print("Sending 'Hello, World'...")
     ws.send("Hello, World")
-    print "Sent"
-    print "Receiving..."
+    print("Sent")
+    print("Receiving...")
     result = ws.recv()
-    print "Received '%s'" % result
+    print("Received '%s'" % result)
     ws.close()
