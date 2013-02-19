@@ -44,7 +44,6 @@ class InteractiveConsole(code.InteractiveConsole):
         sys.stdout.write("\n> ")
         sys.stdout.flush()
 
-
     def raw_input(self, prompt):
         line = raw_input(prompt)
         if ENCODING and ENCODING != "utf-8" and not isinstance(line, unicode):
@@ -61,8 +60,8 @@ def main():
     ws = websocket.create_connection(args.url)
     if args.verbose > 1:
         websocket.enableTrace(True)
-    print "Press Ctrl+C to quit"
-    
+    print("Press Ctrl+C to quit")
+
     def recv():
         frame = ws.recv_frame()
         if not frame:
@@ -108,4 +107,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception, e:
-        print e
+        print(e)
