@@ -1,5 +1,5 @@
 import websocket
-import thread
+import _thread
 import time
 import sys
 
@@ -29,7 +29,7 @@ def on_open(ws):
         ws.close()
         print("Thread terminating...")
 
-    thread.start_new_thread(run, ())
+    _thread.start_new_thread(run, ())
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
