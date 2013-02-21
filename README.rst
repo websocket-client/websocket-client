@@ -21,9 +21,9 @@ License
 Installation
 =============
 
-This module is tested on only Python 2.7.
+This module is tested on Python 3.3.
 
-Type "python setup.py install" or "pip install websocket-client" to install.
+Check out git repository of py3 branch, and type "python3 setup.py install".
 
 This module does not depend on any other module.
 
@@ -40,12 +40,12 @@ Low Level API example::
 
     from websocket import create_connection
     ws = create_connection("ws://echo.websocket.org/")
-    print "Sending 'Hello, World'..."
+    print("Sending 'Hello, World'...")
     ws.send("Hello, World")
-    print "Sent"
-    print "Reeiving..."
+    print("Sent")
+    print("Reeiving...")
     result =  ws.recv()
-    print "Received '%s'" % result
+    print("Received '%s'" % result)
     ws.close()
 
 If you want to customize socket options, set sockopt.
@@ -67,10 +67,10 @@ JavaScript websocket-like API example::
       print message
   
   def on_error(ws, error):
-      print error
+      print(error)
   
   def on_close(ws):
-      print "### closed ###"
+      print("### closed ###")
   
   def on_open(ws):
       def run(*args):
@@ -79,7 +79,7 @@ JavaScript websocket-like API example::
               ws.send("Hello %d" % i)
           time.sleep(1)
           ws.close()
-          print "thread terminating..."
+          print("thread terminating...")
       thread.start_new_thread(run, ())
   
   
