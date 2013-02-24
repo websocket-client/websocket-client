@@ -683,7 +683,7 @@ class WebSocketApp(object):
     Higher level of APIs are provided.
     The interface is like JavaScript WebSocket object.
     """
-    def __init__(self, url,
+    def __init__(self, url, header = [],
                  on_open = None, on_message = None, on_error = None,
                  on_close = None, keep_running = True, get_mask_key = None):
         """
@@ -706,6 +706,7 @@ class WebSocketApp(object):
          docstring for more information
         """
         self.url = url
+        self.header = header
         self.on_open = on_open
         self.on_message = on_message
         self.on_error = on_error
@@ -739,7 +740,7 @@ class WebSocketApp(object):
             raise WebSocketException("socket is already opened")
         try:
             self.sock = WebSocket(self.get_mask_key)
-            self.sock.connect(self.url)
+            self.sock.connect(self.url, header = self.header)
             self._run_with_no_err(self.on_open)
             while self.keep_running:
                 data = self.sock.recv()
