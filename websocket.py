@@ -162,8 +162,8 @@ def create_connection(url, timeout=None, **options):
     If you set "header" dict object, you can set your own custom header.
 
     >>> conn = create_connection("ws://echo.websocket.org/",
-         ...     header={"User-Agent: MyProgram",
-         ...             "x-custom: header"})
+         ...     header=["User-Agent: MyProgram",
+         ...             "x-custom: header"])
 
 
     timeout: socket timeout time. This value is integer.
