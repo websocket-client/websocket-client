@@ -688,6 +688,7 @@ class WebSocketApp(object):
                  on_close = None, keep_running = True, get_mask_key = None):
         """
         url: websocket url.
+        header: custom header for websocket handshake.
         on_open: callable object which is called at opening websocket.
           this function has one argument. The arugment is this class object.
         on_message: callbale object which is called when recieved data.
