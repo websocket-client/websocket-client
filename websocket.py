@@ -518,7 +518,9 @@ class WebSocket(object):
         if self.get_mask_key:
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
-        self.io_sock.send(data)
+        while data:
+            l = self.io_sock.send(data)
+            data = data[l:]
         if traceEnabled:
             logger.debug("send: " + repr(data))
 
