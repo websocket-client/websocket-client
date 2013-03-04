@@ -20,6 +20,12 @@ Type "python setup.py install" or "pip install websocket-client" to install.
 
 This module does not depend on any other module.
 
+How about Python 3
+===========================
+
+py3( https://github.com/liris/websocket-client/tree/py3 ) branch is for python 3.3. Every test case is passed.
+If you are using python3, please check it.
+
 Example
 ============
 
@@ -34,6 +40,14 @@ Low Level API example::
     result =  ws.recv()
     print "Received '%s'" % result
     ws.close()
+
+If you want to customize socket options, set sockopt.
+
+sockopt example:
+
+    from websocket import create_connection
+    ws = create_connection("ws://echo.websocket.org/".
+                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),) )
 
 
 JavaScript websocket-like API example::
