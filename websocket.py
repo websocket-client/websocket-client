@@ -172,7 +172,8 @@ def create_connection(url, timeout=None, **options):
     options: current support option is only "header".
              if you set header as dict value, the custom HTTP headers are added.
     """
-    websock = WebSocket()
+    sockopt = options.get("sockopt", ())
+    websock = WebSocket(sockopt=sockopt)
     websock.settimeout(timeout != None and timeout or default_timeout)
     websock.connect(url, **options)
     return websock
@@ -349,14 +350,18 @@ class WebSocket(object):
 
     get_mask_key: a callable to produce new mask keys, see the set_mask_key
       function's docstring for more details
+    sockopt: values for socket.setsockopt.
+        sockopt must be tuple and each element is argument of sock.setscokopt.
     """
 
-    def __init__(self, get_mask_key = None):
+    def __init__(self, get_mask_key = None, sockopt = ()):
         """
         Initalize WebSocket object.
         """
         self.connected = False
         self.io_sock = self.sock = socket.socket()
+        for opts in sockopt:
+            self.sock.setsockopt(*opts)
         self.get_mask_key = get_mask_key
 
     def set_mask_key(self, func):
@@ -687,7 +692,8 @@ class WebSocketApp(object):
     """
     def __init__(self, url, header = [],
                  on_open = None, on_message = None, on_error = None,
-                 on_close = None, keep_running = True, get_mask_key = None):
+                 on_close = None, keep_running = True, get_mask_key = None,
+                 sockopt=()):
         """
         url: websocket url.
         header: custom header for websocket handshake.
@@ -734,15 +740,17 @@ class WebSocketApp(object):
         self.keep_running = False
         self.sock.close()
 
-    def run_forever(self):
+    def run_forever(self, sockopt=()):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
+        sockopt: values for socket.setsockopt.
+            sockopt must be tuple and each element is argument of sock.setscokopt.
         """
         if self.sock:
             raise WebSocketException("socket is already opened")
         try:
-            self.sock = WebSocket(self.get_mask_key)
+            self.sock = WebSocket(self.get_mask_key, sockopt = sockopt)
             self.sock.connect(self.url, header = self.header)
             self._run_with_no_err(self.on_open)
             while self.keep_running:

@@ -4,6 +4,7 @@
 import base64
 import uuid
 import unittest
+import socket
 
 # websocket-client
 import websocket as ws
@@ -32,6 +33,7 @@ class StringSockMock:
 
     def send(self, data):
         self.sent.append(data)
+        return len(data)
 
 
 class HeaderSockMock(StringSockMock):
@@ -303,6 +305,16 @@ class WebSocketAppTest(unittest.TestCase):
 
         # Note: We can't use 'is' for comparing the functions directly, need to use 'id'.
         self.assertEquals(WebSocketAppTest.get_mask_key_id, id(my_mask_key_func))
+
+
+class SockOptTest(unittest.TestCase):
+    def testSockOpt(self):
+        sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
+        s = ws.WebSocket(sockopt = sockopt)
+        self.assertNotEquals(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
+        s = ws.create_connection("ws://echo.websocket.org", sockopt = sockopt)
+        self.assertNotEquals(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
