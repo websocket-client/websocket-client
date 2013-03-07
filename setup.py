@@ -23,6 +23,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Intended Audience :: Developers",
     ],
+    keywords='websockets',
     py_modules=["websocket"],
     scripts=["bin/wsdump.py"]
 )
