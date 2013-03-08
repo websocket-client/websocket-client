@@ -45,11 +45,11 @@ class InteractiveConsole(code.InteractiveConsole):
         sys.stdout.flush()
 
     def raw_input(self, prompt):
-        line = raw_input(prompt)
-        if ENCODING and ENCODING != "utf-8" and not isinstance(line, unicode):
+        line = input(prompt)
+        if ENCODING and ENCODING != "utf-8" and not isinstance(line, str):
             line = line.decode(ENCODING).encode("utf-8")
-        elif isinstance(line, unicode):
-            line = encode("utf-8")
+        elif isinstance(line, str):
+            line = line.encode("utf-8")
 
         return line
 
@@ -106,5 +106,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception, e:
+    except Exception as e:
         print(e)

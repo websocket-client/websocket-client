@@ -12,7 +12,7 @@ import websocket as ws
 TRACABLE=False
 
 def create_mask_key(n):
-    return "abcd"
+    return b"abcd"
 
 class StringSockMock:
     def __init__(self):
@@ -35,87 +35,91 @@ class StringSockMock:
         self.sent.append(data)
         return len(data)
 
+    def close(self):
+        pass
+
 
 class HeaderSockMock(StringSockMock):
     def __init__(self, fname):
-        self.set_data(open(fname).read())
+        with open(fname, "rb") as f:
+            self.set_data(f.read())
         self.sent = []
 
 
 class WebSocketTest(unittest.TestCase):
     def setUp(self):
         ws.enableTrace(TRACABLE)
-    
+
     def tearDown(self):
         pass
 
     def testDefaultTimeout(self):
-        self.assertEquals(ws.getdefaulttimeout(), None)
+        self.assertEqual(ws.getdefaulttimeout(), None)
         ws.setdefaulttimeout(10)
-        self.assertEquals(ws.getdefaulttimeout(), 10)
+        self.assertEqual(ws.getdefaulttimeout(), 10)
         ws.setdefaulttimeout(None)
 
     def testParseUrl(self):
         p = ws._parse_url("ws://www.example.com/r")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 80)
-        self.assertEquals(p[2], "/r")
-        self.assertEquals(p[3], False)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 80)
+        self.assertEqual(p[2], "/r")
+        self.assertEqual(p[3], False)
 
         p = ws._parse_url("ws://www.example.com/r/")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 80)
-        self.assertEquals(p[2], "/r/")
-        self.assertEquals(p[3], False)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 80)
+        self.assertEqual(p[2], "/r/")
+        self.assertEqual(p[3], False)
 
         p = ws._parse_url("ws://www.example.com/")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 80)
-        self.assertEquals(p[2], "/")
-        self.assertEquals(p[3], False)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 80)
+        self.assertEqual(p[2], "/")
+        self.assertEqual(p[3], False)
 
         p = ws._parse_url("ws://www.example.com")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 80)
-        self.assertEquals(p[2], "/")
-        self.assertEquals(p[3], False)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 80)
+        self.assertEqual(p[2], "/")
+        self.assertEqual(p[3], False)
 
         p = ws._parse_url("ws://www.example.com:8080/r")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 8080)
-        self.assertEquals(p[2], "/r")
-        self.assertEquals(p[3], False)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 8080)
+        self.assertEqual(p[2], "/r")
+        self.assertEqual(p[3], False)
 
         p = ws._parse_url("ws://www.example.com:8080/")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 8080)
-        self.assertEquals(p[2], "/")
-        self.assertEquals(p[3], False)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 8080)
+        self.assertEqual(p[2], "/")
+        self.assertEqual(p[3], False)
 
         p = ws._parse_url("ws://www.example.com:8080")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 8080)
-        self.assertEquals(p[2], "/")
-        self.assertEquals(p[3], False)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 8080)
+        self.assertEqual(p[2], "/")
+        self.assertEqual(p[3], False)
 
         p = ws._parse_url("wss://www.example.com:8080/r")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 8080)
-        self.assertEquals(p[2], "/r")
-        self.assertEquals(p[3], True)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 8080)
+        self.assertEqual(p[2], "/r")
+        self.assertEqual(p[3], True)
 
         p = ws._parse_url("wss://www.example.com:8080/r?key=value")
-        self.assertEquals(p[0], "www.example.com")
-        self.assertEquals(p[1], 8080)
-        self.assertEquals(p[2], "/r?key=value")
-        self.assertEquals(p[3], True)
+        self.assertEqual(p[0], "www.example.com")
+        self.assertEqual(p[1], 8080)
+        self.assertEqual(p[2], "/r?key=value")
+        self.assertEqual(p[3], True)
 
         self.assertRaises(ValueError, ws._parse_url, "http://www.example.com/r")
 
     def testWSKey(self):
         key = ws._create_sec_websocket_key()
-        self.assert_(key != 24)
-        self.assert_("¥n" not in key)
+        self.assertTrue(key != 24)
+        self.assertTrue("¥n" not in key)
 
     def testWsUtils(self):
         sock = ws.WebSocket()
@@ -126,106 +130,110 @@ class WebSocketTest(unittest.TestCase):
             "connection": "upgrade",
             "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0=",
             }
-        self.assertEquals(sock._validate_header(required_header, key), True)
+        self.assertEqual(sock._validate_header(required_header, key), True)
 
         header = required_header.copy()
         header["upgrade"] = "http"
-        self.assertEquals(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key), False)
         del header["upgrade"]
-        self.assertEquals(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key), False)
 
         header = required_header.copy()
         header["connection"] = "something"
-        self.assertEquals(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key), False)
         del header["connection"]
-        self.assertEquals(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key), False)
 
         header = required_header.copy()
         header["sec-websocket-accept"] = "something"
-        self.assertEquals(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key), False)
         del header["sec-websocket-accept"]
-        self.assertEquals(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key), False)
+        sock.close()
 
     def testReadHeader(self):
         sock = ws.WebSocket()
-        sock.io_sock = sock.sock = HeaderSockMock("data/header01.txt")
+        sock.sock.close()
+        sock.sock = HeaderSockMock("data/header01.txt")
         status, header = sock._read_headers()
-        self.assertEquals(status, 101)
-        self.assertEquals(header["connection"], "upgrade")
+        self.assertEqual(status, 101)
+        self.assertEqual(header["connection"], "upgrade")
 
-        sock.io_sock = sock.sock = HeaderSockMock("data/header02.txt")
+        sock.sock = HeaderSockMock("data/header02.txt")
         self.assertRaises(ws.WebSocketException, sock._read_headers)
 
     def testSend(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
         sock.set_mask_key(create_mask_key)
-        s = sock.io_sock = sock.sock = HeaderSockMock("data/header01.txt")
+        sock.sock.close()
+        s = sock.sock = HeaderSockMock("data/header01.txt")
         sock.send("Hello")
-        self.assertEquals(s.sent[0], "\x81\x85abcd)\x07\x0f\x08\x0e")
+        self.assertEqual(s.sent[0], b"\x81\x85abcd)\x07\x0f\x08\x0e")
 
         sock.send("こんにちは")
-        self.assertEquals(s.sent[1], "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        self.assertEqual(s.sent[1], b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
 
         sock.send(u"こんにちは")
-        self.assertEquals(s.sent[1], "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        self.assertEqual(s.sent[1], b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
 
     def testRecv(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
-        s = sock.io_sock = sock.sock = StringSockMock()
-        s.set_data("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        sock.sock.close()
+        s = sock.sock = StringSockMock()
+        s.set_data(b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
         data = sock.recv()
-        self.assertEquals(data, "こんにちは")
+        self.assertEqual(data, "こんにちは")
 
-        s.set_data("\x81\x85abcd)\x07\x0f\x08\x0e")
+        s.set_data(b"\x81\x85abcd)\x07\x0f\x08\x0e")
         data = sock.recv()
-        self.assertEquals(data, "Hello")
+        self.assertEqual(data, "Hello")
 
     def testWebSocket(self):
         s = ws.create_connection("ws://echo.websocket.org/")
-        self.assertNotEquals(s, None)
+        self.assertNotEqual(s, None)
         s.send("Hello, World")
         result = s.recv()
-        self.assertEquals(result, "Hello, World")
+        self.assertEqual(result, "Hello, World")
 
         s.send("こにゃにゃちは、世界")
         result = s.recv()
-        self.assertEquals(result, "こにゃにゃちは、世界")
+        self.assertEqual(result, "こにゃにゃちは、世界")
         s.close()
 
     def testPingPong(self):
         s = ws.create_connection("ws://echo.websocket.org/")
-        self.assertNotEquals(s, None)
+        self.assertNotEqual(s, None)
         s.ping("Hello")
         s.pong("Hi")
         s.close()
 
     def testSecureWebSocket(self):
         s = ws.create_connection("wss://echo.websocket.org/")
-        self.assertNotEquals(s, None)
-        self.assert_(isinstance(s.io_sock, ws._SSLSocketWrapper))
+        self.assertNotEqual(s, None)
+        self.assertTrue(isinstance(s.sock, ws._SSLSocketWrapper))
         s.send("Hello, World")
         result = s.recv()
-        self.assertEquals(result, "Hello, World")
+        self.assertEqual(result, "Hello, World")
         s.send("こにゃにゃちは、世界")
         result = s.recv()
-        self.assertEquals(result, "こにゃにゃちは、世界")
+        self.assertEqual(result, "こにゃにゃちは、世界")
         s.close()
 
     def testWebSocketWihtCustomHeader(self):
         s = ws.create_connection("ws://echo.websocket.org/",
                                   headers={"User-Agent": "PythonWebsocketClient"})
-        self.assertNotEquals(s, None)
+        self.assertNotEqual(s, None)
         s.send("Hello, World")
         result = s.recv()
-        self.assertEquals(result, "Hello, World")
+        self.assertEqual(result, "Hello, World")
         s.close()
 
     def testAfterClose(self):
         from socket import error
         s = ws.create_connection("ws://echo.websocket.org/")
-        self.assertNotEquals(s, None)
+        self.assertNotEqual(s, None)
         s.close()
         self.assertRaises(error, s.send, "Hello")
         self.assertRaises(error, s.recv)
@@ -235,7 +243,7 @@ class WebSocketTest(unittest.TestCase):
         """
         key = ws._create_sec_websocket_key()
         u = uuid.UUID(bytes=base64.b64decode(key))
-        self.assertEquals(4, u.version)
+        self.assertEqual(4, u.version)
 
 
 class WebSocketAppTest(unittest.TestCase):
@@ -282,8 +290,8 @@ class WebSocketAppTest(unittest.TestCase):
         self.assertFalse(isinstance(WebSocketAppTest.keep_running_close,
                                     WebSocketAppTest.NotSetYet))
 
-        self.assertEquals(True, WebSocketAppTest.keep_running_open)
-        self.assertEquals(False, WebSocketAppTest.keep_running_close)
+        self.assertEqual(True, WebSocketAppTest.keep_running_open)
+        self.assertEqual(False, WebSocketAppTest.keep_running_close)
 
     def testSockMaskKey(self):
         """ A WebSocketApp should forward the received mask_key function down
@@ -304,16 +312,16 @@ class WebSocketAppTest(unittest.TestCase):
         app.run_forever()
 
         # Note: We can't use 'is' for comparing the functions directly, need to use 'id'.
-        self.assertEquals(WebSocketAppTest.get_mask_key_id, id(my_mask_key_func))
+        self.assertEqual(WebSocketAppTest.get_mask_key_id, id(my_mask_key_func))
 
 
 class SockOptTest(unittest.TestCase):
     def testSockOpt(self):
         sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         s = ws.WebSocket(sockopt = sockopt)
-        self.assertNotEquals(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
+        self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
         s = ws.create_connection("ws://echo.websocket.org", sockopt = sockopt)
-        self.assertNotEquals(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
+        self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
 
 
 if __name__ == "__main__":
