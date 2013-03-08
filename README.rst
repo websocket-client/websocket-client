@@ -6,6 +6,12 @@ websocket-client module  is WebSocket client for python. This provide the low le
 
 websocket-client supports only hybi-13.
 
+How about Python 3
+===========================
+
+py3( https://github.com/liris/websocket-client/tree/py3 ) branch is for python 3.3. Every test case is passed.
+If you are using python3, please check it.
+
 
 License
 ============
@@ -20,12 +26,6 @@ This module is tested on Python 3.3.
 Check out git repository of py3 branch, and type "python3 setup.py install".
 
 This module does not depend on any other module.
-
-How about Python 3
-===========================
-
-py3( https://github.com/liris/websocket-client/tree/py3 ) branch is for python 3.3. Every test case is passed.
-If you are using python3, please check it.
 
 Example
 ============

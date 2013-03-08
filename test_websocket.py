@@ -38,6 +38,9 @@ class StringSockMock:
     def close(self):
         pass
 
+    def close(self):
+        pass
+
 
 class HeaderSockMock(StringSockMock):
     def __init__(self, fname):
