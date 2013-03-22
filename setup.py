@@ -4,9 +4,9 @@ VERSION = "0.10.0"
 
 
 setup(
-    name="websocket-client",
+    name="websocket-client-py3",
     version=VERSION,
-    description="WebSocket client for python. hybi13 is supported.",
+    description="WebSocket client for python3. hybi13 is supported.",
     long_description=open("README.rst").read(),
     author="liris",
     author_email="liris.pp@gmail.com",
