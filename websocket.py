@@ -645,8 +645,10 @@ class WebSocket(object):
                 self.sock.settimeout(3)
                 try:
                     frame = self.recv_frame()
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.error("close status: " + repr(frame.data))
+                    if logger.isEnabledFor(logging.ERROR):
+                        recv_status = struct.unpack("!H", frame.data)[0]
+                        if recv_status != STATUS_NORMAL:
+                            logger.error("close status: " + repr(recv_status))
                 except:
                     pass
                 self.sock.settimeout(timeout)
