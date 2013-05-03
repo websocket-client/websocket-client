@@ -57,9 +57,9 @@ class InteractiveConsole(code.InteractiveConsole):
 def main():
     args = parse_args()
     console = InteractiveConsole()
-    ws = websocket.create_connection(args.url)
     if args.verbose > 1:
         websocket.enableTrace(True)
+    ws = websocket.create_connection(args.url)
     print("Press Ctrl+C to quit")
 
     def recv():
