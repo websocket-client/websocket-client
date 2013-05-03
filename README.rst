@@ -126,6 +126,19 @@ example::
 ChangeLog
 ============
 
+- v0.11.0
+
+  - Only log non-normal close status(ISSUE#31)
+  - Fix default Origin isn't URI(ISSUE#32)
+
+- v0.10.0
+
+  - allow to set HTTP Header to WebSocketApp(ISSUE#27)
+  - fix typo in pydoc(ISSUE#28)
+  - Passing a socketopt flag to the websocket constructor(ISSUE#29)
+  - websocket.send fails with long data(ISSUE#30)
+
+
 - v0.9.0
 
   - allow to set opcode in WebSocketApp.send(ISSUE#25)
