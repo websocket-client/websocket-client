@@ -364,6 +364,9 @@ class WebSocket(object):
             self.sock.setsockopt(*opts)
         self.get_mask_key = get_mask_key
 
+    def fileno(self):
+        return self.io_sock.fileno()
+
     def set_mask_key(self, func):
         """
         set function to create musk key. You can custumize mask key generator.
@@ -428,7 +431,7 @@ class WebSocket(object):
         else:
             hostport = "%s:%d" % (host, port)
         headers.append("Host: %s" % hostport)
-        
+
         if "origin" in options:
             headers.append("Origin: %s" % options["origin"])
         else:
