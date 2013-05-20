@@ -431,7 +431,7 @@ class WebSocket(object):
         else:
             hostport = "%s:%d" % (host, port)
         headers.append("Host: %s" % hostport)
-        
+
         if "origin" in options:
             headers.append("Origin: %s" % options["origin"])
         else:
