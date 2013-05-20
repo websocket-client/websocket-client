@@ -364,6 +364,9 @@ class WebSocket(object):
             self.sock.setsockopt(*opts)
         self.get_mask_key = get_mask_key
 
+    def fileno(self):
+        return self.io_sock.fileno()
+
     def set_mask_key(self, func):
         """
         set function to create musk key. You can custumize mask key generator.
