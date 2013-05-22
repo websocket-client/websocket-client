@@ -206,6 +206,9 @@ class _SSLSocketWrapper(object):
     def send(self, payload):
         return self.ssl.write(payload)
 
+    def fileno(self):
+        return self.ssl.fileno()
+
 _BOOL_VALUES = (0, 1)
 
 
