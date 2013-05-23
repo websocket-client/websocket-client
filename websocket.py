@@ -214,6 +214,9 @@ class _SSLSocketWrapper(object):
     def close(self):
         self._ssl.close()
 
+    def fileno(self):
+        return self.ssl.fileno()
+
 _BOOL_VALUES = (0, 1)
 
 
@@ -373,6 +376,9 @@ class WebSocket(object):
         for opts in sockopt:
             self.sock.setsockopt(*opts)
         self.get_mask_key = get_mask_key
+
+    def fileno(self):
+        return self.io_sock.fileno()
 
     def set_mask_key(self, func):
         """
