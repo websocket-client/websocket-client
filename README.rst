@@ -131,6 +131,7 @@ ChangeLog
 
   - Only log non-normal close status(ISSUE#31)
   - Fix default Origin isn't URI(ISSUE#32)
+  - fileno support(ISSUE#33)
 
 - v0.10.0
 
