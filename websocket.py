@@ -21,6 +21,10 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 
 import socket
+try:
+    import ssl
+except:
+    pass
 from urlparse import urlparse
 import os
 import array
@@ -173,6 +177,7 @@ def create_connection(url, timeout=None, **options):
              if you set header as dict value, the custom HTTP headers are added.
     """
     sockopt = options.get("sockopt", ())
+    sslopt = options.get("sslopt", {})
     websock = WebSocket(sockopt=sockopt)
     websock.settimeout(timeout != None and timeout or default_timeout)
     websock.connect(url, **options)
@@ -197,8 +202,8 @@ _HEADERS_TO_CHECK = {
 
 
 class _SSLSocketWrapper(object):
-    def __init__(self, sock):
-        self.ssl = socket.ssl(sock)
+    def __init__(self, sock, sslopt={}):
+        self.ssl = ssl.wrap_socket(sock, **sslopt)
 
     def recv(self, bufsize):
         return self.ssl.read(bufsize)
@@ -355,9 +360,10 @@ class WebSocket(object):
       function's docstring for more details
     sockopt: values for socket.setsockopt.
         sockopt must be tuple and each element is argument of sock.setscokopt.
+    sslopt: dict object for ssl socket option.
     """
 
-    def __init__(self, get_mask_key = None, sockopt = ()):
+    def __init__(self, get_mask_key=None, sockopt=(), sslopt={}):
         """
         Initalize WebSocket object.
         """
@@ -365,6 +371,7 @@ class WebSocket(object):
         self.io_sock = self.sock = socket.socket()
         for opts in sockopt:
             self.sock.setsockopt(*opts)
+        self.sslopt = sslopt
         self.get_mask_key = get_mask_key
 
     def fileno(self):
@@ -420,7 +427,7 @@ class WebSocket(object):
         # TODO: we need to support proxy
         self.sock.connect((hostname, port))
         if is_secure:
-            self.io_sock = _SSLSocketWrapper(self.sock)
+            self.io_sock = _SSLSocketWrapper(self.sock, self.sslopt)
         self._handshake(hostname, port, resource, **options)
 
     def _handshake(self, host, port, resource, **options):
@@ -698,10 +705,9 @@ class WebSocketApp(object):
     Higher level of APIs are provided.
     The interface is like JavaScript WebSocket object.
     """
-    def __init__(self, url, header = [],
-                 on_open = None, on_message = None, on_error = None,
-                 on_close = None, keep_running = True, get_mask_key = None,
-                 sockopt=()):
+    def __init__(self, url, header=[],
+                 on_open=None, on_message=None, on_error=None,
+                 on_close=None, keep_running=True, get_mask_key=None):
         """
         url: websocket url.
         header: custom header for websocket handshake.
@@ -732,6 +738,7 @@ class WebSocketApp(object):
         self.get_mask_key = get_mask_key
         self.sock = None
 
+
     def send(self, data, opcode = ABNF.OPCODE_TEXT):
         """
         send message.
@@ -748,18 +755,19 @@ class WebSocketApp(object):
         self.keep_running = False
         self.sock.close()
 
-    def run_forever(self, sockopt=()):
+    def run_forever(self, sockopt=(), sslopt={}):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
         sockopt: values for socket.setsockopt.
             sockopt must be tuple and each element is argument of sock.setscokopt.
+        sslopt: ssl socket optional dict.
         """
         if self.sock:
             raise WebSocketException("socket is already opened")
         try:
-            self.sock = WebSocket(self.get_mask_key, sockopt = sockopt)
-            self.sock.connect(self.url, header = self.header)
+            self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt)
+            self.sock.connect(self.url, header=self.header)
             self._run_with_no_err(self.on_open)
             while self.keep_running:
                 data = self.sock.recv()
