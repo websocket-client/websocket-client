@@ -210,21 +210,30 @@ class WebSocketTest(unittest.TestCase):
         s.close()
 
     def testSecureWebSocket(self):
-        s = ws.create_connection("wss://echo.websocket.org/")
-        self.assertNotEqual(s, None)
-        self.assertTrue(isinstance(s.sock, ws._SSLSocketWrapper))
-        s.send("Hello, World")
-        result = s.recv()
-        self.assertEqual(result, "Hello, World")
-        s.send("こにゃにゃちは、世界")
-        result = s.recv()
-        self.assertEqual(result, "こにゃにゃちは、世界")
-        s.close()
+        try:
+            import ssl
+            s = ws.create_connection("wss://echo.websocket.org/")
+            self.assertNotEqual(s, None)
+            self.assertTrue(isinstance(s.sock, ssl.SSLSock))
+            s.send("Hello, World")
+            result = s.recv()
+            self.assertEqual(result, "Hello, World")
+            s.send("こにゃにゃちは、世界")
+            result = s.recv()
+            self.assertEqual(result, "こにゃにゃちは、世界")
+            s.close()
+        except:
+            pass
 
     def testWebSocketWihtCustomHeader(self):
         s = ws.create_connection("ws://echo.websocket.org/",
                                   headers={"User-Agent": "PythonWebsocketClient"})
         self.assertNotEqual(s, None)
+
+    def testWebSocketWihtCustomHeader(self):
+        s = ws.create_connection("ws://echo.websocket.org/",
+                                 headers={"User-Agent": "PythonWebsocketClient"})
+        self.assertNotEquals(s, None)
         s.send("Hello, World")
         result = s.recv()
         self.assertEqual(result, "Hello, World")

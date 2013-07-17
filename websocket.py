@@ -204,26 +204,6 @@ _HEADERS_TO_CHECK = {
     }
 
 
-if HAVE_SSL:
-    class _SSLSocketWrapper(object):
-        def __init__(self, sock, sslopt=None):
-            if sslopt is None:
-                sslopt = {}
-            self._ssl = ssl.wrap_socket(sock, **sslopt)
-       
-        def recv(self, bufsize):
-            return self._ssl.read(bufsize)
-
-        def send(self, payload):
-            return self._ssl.write(payload)
-
-        def close(self):
-            self._ssl.close()
-
-        def fileno(self):
-            return self._ssl.fileno()
-
-
 class ABNF(object):
     """
     ABNF frame class.
@@ -435,7 +415,11 @@ class WebSocket(object):
         self.sock.connect((hostname, port))
         if is_secure:
             if HAVE_SSL:
-                self.sock = _SSLSocketWrapper(self.sock, self.sslopt)
+                if self.sslopt is None:
+                    sslopt = {}
+                else:
+                    sslopt = self.sslopt
+                self.sock = ssl.wrap_socket(self.sock, **sslopt)
             else:
                 raise WebSocketException("SSL not available.")
 
