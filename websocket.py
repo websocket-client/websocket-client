@@ -35,6 +35,8 @@ import struct
 import uuid
 import hashlib
 import base64
+import threading
+import time
 import logging
 
 """
@@ -530,11 +532,11 @@ class WebSocket(object):
         if self.get_mask_key:
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
+        if traceEnabled:
+            logger.debug("send: " + repr(data))
         while data:
             l = self.sock.send(data)
             data = data[l:]
-        if traceEnabled:
-            logger.debug("send: " + repr(data))
 
     def send_binary(self, payload):
         return self.send(payload, ABNF.OPCODE_BINARY)
@@ -751,13 +753,20 @@ class WebSocketApp(object):
         self.keep_running = False
         self.sock.close()
 
-    def run_forever(self, sockopt=None, sslopt=None):
+    def _send_ping(self, interval):
+        while self.keep_running:
+            time.sleep(interval)
+            self.sock.ping()
+
+    def run_forever(self, sockopt=None, sslopt=None, ping_interval=0):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
         sockopt: values for socket.setsockopt.
             sockopt must be tuple and each element is argument of sock.setscokopt.
         sslopt: ssl socket optional dict.
+        ping_interval: automatically send "ping" command every specified period(second)
+            if set to 0, not send automatically.
         """
         if sockopt is None:
             sockopt = []
@@ -765,10 +774,18 @@ class WebSocketApp(object):
             sslopt = {}
         if self.sock:
             raise WebSocketException("socket is already opened")
+        thread = None
+
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt)
             self.sock.connect(self.url, header=self.header)
             self._run_with_no_err(self.on_open)
+
+            if ping_interval:
+                thread = threading.Thread(target=self._send_ping, args=(ping_interval,))
+                thread.setDaemon(True)
+                thread.start()
+
             while self.keep_running:
                 data = self.sock.recv()
                 if data is None:
@@ -777,6 +794,8 @@ class WebSocketApp(object):
         except Exception, e:
             self._run_with_no_err(self.on_error, e)
         finally:
+            if thread:
+                thread.join()
             self.sock.close()
             self._run_with_no_err(self.on_close)
             self.sock = None
