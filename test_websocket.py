@@ -318,10 +318,12 @@ class WebSocketAppTest(unittest.TestCase):
 class SockOptTest(unittest.TestCase):
     def testSockOpt(self):
         sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
-        s = ws.WebSocket(sockopt = sockopt)
+        s = ws.WebSocket(sockopt=sockopt)
         self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
-        s = ws.create_connection("ws://echo.websocket.org", sockopt = sockopt)
+        s.close()
+        s = ws.create_connection("ws://echo.websocket.org", sockopt=sockopt)
         self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
+        s.close()
 
 
 if __name__ == "__main__":
