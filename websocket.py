@@ -205,24 +205,6 @@ _HEADERS_TO_CHECK = {
     }
 
 
-if HAVE_SSL:
-    class _SSLSocketWrapper(object):
-        def __init__(self, sock, sslopt=None):
-            if sslopt is None:
-                sslopt = {}
-            self.ssl = ssl.wrap_socket(sock, **sslopt)
-
-        def recv(self, bufsize):
-            return self.ssl.read(bufsize)
-
-        def send(self, payload):
-            return self.ssl.write(payload)
-
-        def fileno(self):
-            return self.ssl.fileno()
-
-
-
 class ABNF(object):
     """
     ABNF frame class.
@@ -370,14 +352,14 @@ class WebSocket(object):
         if sslopt is None:
             sslopt = {}
         self.connected = False
-        self.io_sock = self.sock = socket.socket()
+        self.sock = socket.socket()
         for opts in sockopt:
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
         self.get_mask_key = get_mask_key
 
     def fileno(self):
-        return self.io_sock.fileno()
+        return self.sock.fileno()
 
     def set_mask_key(self, func):
         """
@@ -432,14 +414,18 @@ class WebSocket(object):
         self.sock.connect((hostname, port))
         if is_secure:
             if HAVE_SSL:
-                self.io_sock = _SSLSocketWrapper(self.sock, self.sslopt)
+                if self.sslopt is None:
+                    sslopt = {}
+                else:
+                    sslopt = self.sslopt
+                self.sock = ssl.wrap_socket(self.sock, **sslopt)
             else:
                 raise WebSocketException("SSL not available.")
 
         self._handshake(hostname, port, resource, **options)
 
     def _handshake(self, host, port, resource, **options):
-        sock = self.io_sock
+        sock = self.sock
         headers = []
         headers.append("GET %s HTTP/1.1" % resource)
         headers.append("Upgrade: websocket")
@@ -545,7 +531,7 @@ class WebSocket(object):
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
         while data:
-            l = self.io_sock.send(data)
+            l = self.sock.send(data)
             data = data[l:]
         if traceEnabled:
             logger.debug("send: " + repr(data))
@@ -684,10 +670,9 @@ class WebSocket(object):
     def _closeInternal(self):
         self.connected = False
         self.sock.close()
-        self.io_sock = self.sock
 
     def _recv(self, bufsize):
-        bytes = self.io_sock.recv(bufsize)
+        bytes = self.sock.recv(bufsize)
         if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes

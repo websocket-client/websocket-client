@@ -148,19 +148,19 @@ class WebSocketTest(unittest.TestCase):
 
     def testReadHeader(self):
         sock = ws.WebSocket()
-        sock.io_sock = sock.sock = HeaderSockMock("data/header01.txt")
+        sock.sock = HeaderSockMock("data/header01.txt")
         status, header = sock._read_headers()
         self.assertEquals(status, 101)
         self.assertEquals(header["connection"], "upgrade")
 
-        sock.io_sock = sock.sock = HeaderSockMock("data/header02.txt")
+        sock.sock = HeaderSockMock("data/header02.txt")
         self.assertRaises(ws.WebSocketException, sock._read_headers)
 
     def testSend(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
         sock.set_mask_key(create_mask_key)
-        s = sock.io_sock = sock.sock = HeaderSockMock("data/header01.txt")
+        s = sock.sock = HeaderSockMock("data/header01.txt")
         sock.send("Hello")
         self.assertEquals(s.sent[0], "\x81\x85abcd)\x07\x0f\x08\x0e")
 
@@ -173,7 +173,7 @@ class WebSocketTest(unittest.TestCase):
     def testRecv(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
-        s = sock.io_sock = sock.sock = StringSockMock()
+        s = sock.sock = StringSockMock()
         s.set_data("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
         data = sock.recv()
         self.assertEquals(data, "こんにちは")
@@ -202,20 +202,24 @@ class WebSocketTest(unittest.TestCase):
         s.close()
 
     def testSecureWebSocket(self):
-        s = ws.create_connection("wss://echo.websocket.org/")
-        self.assertNotEquals(s, None)
-        self.assert_(isinstance(s.io_sock, ws._SSLSocketWrapper))
-        s.send("Hello, World")
-        result = s.recv()
-        self.assertEquals(result, "Hello, World")
-        s.send("こにゃにゃちは、世界")
-        result = s.recv()
-        self.assertEquals(result, "こにゃにゃちは、世界")
-        s.close()
+        try:
+            import ssl
+            s = ws.create_connection("wss://echo.websocket.org/")
+            self.assertNotEquals(s, None)
+            self.assert_(isinstance(s.sock, ssl.SSLSock))
+            s.send("Hello, World")
+            result = s.recv()
+            self.assertEquals(result, "Hello, World")
+            s.send("こにゃにゃちは、世界")
+            result = s.recv()
+            self.assertEquals(result, "こにゃにゃちは、世界")
+            s.close()
+        except:
+            pass
 
     def testWebSocketWihtCustomHeader(self):
         s = ws.create_connection("ws://echo.websocket.org/",
-                                  headers={"User-Agent": "PythonWebsocketClient"})
+                                 headers={"User-Agent": "PythonWebsocketClient"})
         self.assertNotEquals(s, None)
         s.send("Hello, World")
         result = s.recv()
@@ -310,9 +314,9 @@ class WebSocketAppTest(unittest.TestCase):
 class SockOptTest(unittest.TestCase):
     def testSockOpt(self):
         sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
-        s = ws.WebSocket(sockopt = sockopt)
+        s = ws.WebSocket(sockopt=sockopt)
         self.assertNotEquals(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
-        s = ws.create_connection("ws://echo.websocket.org", sockopt = sockopt)
+        s = ws.create_connection("ws://echo.websocket.org", sockopt=sockopt)
         self.assertNotEquals(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
 
 
