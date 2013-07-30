@@ -38,6 +38,8 @@ import base64
 import threading
 import time
 import logging
+import traceback
+import sys
 
 """
 websocket python client.
@@ -806,6 +808,9 @@ class WebSocketApp(object):
                 callback(self, *args)
             except Exception, e:
                 logger.error(e)
+                if logger.isEnabledFor(logging.DEBUG):
+                    _, _, tb = sys_exc_info()
+                    traceback.print_tb(tb)
 
 
 if __name__ == "__main__":
