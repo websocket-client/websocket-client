@@ -779,7 +779,7 @@ class WebSocketApp(object):
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt)
             self.sock.connect(self.url, header=self.header)
-            self._run_with_no_err(self.on_open)
+            self._callback(self.on_open)
 
             if ping_interval:
                 thread = threading.Thread(target=self._send_ping, args=(ping_interval,))
@@ -790,23 +790,22 @@ class WebSocketApp(object):
                 data = self.sock.recv()
                 if data is None:
                     break
-                self._run_with_no_err(self.on_message, data)
+                self._callback(self.on_message, data)
         except Exception, e:
-            self._run_with_no_err(self.on_error, e)
+            self._callback(self.on_error, e)
         finally:
             if thread:
                 thread.join()
             self.sock.close()
-            self._run_with_no_err(self.on_close)
+            self._callback(self.on_close)
             self.sock = None
 
-    def _run_with_no_err(self, callback, *args):
+    def _callback(self, callback, *args):
         if callback:
             try:
                 callback(self, *args)
             except Exception, e:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.error(e)
+                logger.error(e)
 
 
 if __name__ == "__main__":
