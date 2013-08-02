@@ -738,7 +738,6 @@ class WebSocketApp(object):
         self.get_mask_key = get_mask_key
         self.sock = None
 
-
     def send(self, data, opcode=ABNF.OPCODE_TEXT):
         """
         send message.

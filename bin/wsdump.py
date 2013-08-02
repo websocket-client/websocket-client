@@ -75,7 +75,7 @@ def main():
             ws.pong("Hi!")
             return frame.opcode, frame.data
 
-        return None, None
+        return frame.opcode, frame.data
 
 
     def recv_ws():
