@@ -73,8 +73,9 @@ def main():
             return (frame.opcode, None)
         elif frame.opcode == websocket.ABNF.OPCODE_PING:
             ws.pong("Hi!")
+            return frame.opcode, frame.data
 
-        return None, None
+        return frame.opcode, frame.data
 
 
     def recv_ws():
