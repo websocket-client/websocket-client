@@ -233,7 +233,7 @@ class WebSocketTest(unittest.TestCase):
     def testWebSocketWihtCustomHeader(self):
         s = ws.create_connection("ws://echo.websocket.org/",
                                  headers={"User-Agent": "PythonWebsocketClient"})
-        self.assertNotEquals(s, None)
+        self.assertNotEqual(s, None)
         s.send("Hello, World")
         result = s.recv()
         self.assertEqual(result, "Hello, World")
