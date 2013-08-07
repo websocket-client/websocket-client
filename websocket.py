@@ -84,6 +84,12 @@ class WebSocketConnectionClosedException(WebSocketException):
     """
     pass
 
+class WebSocketTimeoutException(WebSocketException):
+    """
+    WebSocketTimeoutException will be raised at socket timeout during read/write data.
+    """
+    pass
+
 default_timeout = None
 traceEnabled = False
 
@@ -455,7 +461,7 @@ class WebSocket(object):
         headers.append("")
 
         header_str = "\r\n".join(headers)
-        sock.send(header_str)
+        self._send(header_str)
         if traceEnabled:
             logger.debug("--- request header ---")
             logger.debug(header_str)
@@ -537,7 +543,7 @@ class WebSocket(object):
         if traceEnabled:
             logger.debug("send: " + repr(data))
         while data:
-            l = self.sock.send(data)
+            l = self._send(data)
             data = data[l:]
 
     def send_binary(self, payload):
@@ -675,11 +681,31 @@ class WebSocket(object):
         self.connected = False
         self.sock.close()
 
+    def _send(self, data):
+        try:
+            return self.sock.send(data)
+        except socket.timeout as e:
+            raise WebSocketTimeoutException(e.message)
+        except Exception as e:
+            if "timed out" in e.message:
+                raise WebSocketTimeoutException(e.message)
+            else:
+                raise e
+
     def _recv(self, bufsize):
-        bytes = self.sock.recv(bufsize)
-        if not bytes:
-            raise WebSocketConnectionClosedException()
-        return bytes
+        try:
+            bytes = self.sock.recv(bufsize)
+            if not bytes:
+                raise WebSocketConnectionClosedException()
+            return bytes
+        except socket.timeout as e:
+            raise WebSocketTimeoutException(e.message)
+        except Exception as e:
+            if "timed out" in e.message:
+                raise WebSocketTimeoutException(e.message)
+            else:
+                raise e
+
 
     def _recv_strict(self, bufsize):
         remaining = bufsize
