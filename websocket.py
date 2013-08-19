@@ -834,7 +834,7 @@ class WebSocketApp(object):
             except Exception, e:
                 logger.error(e)
                 if logger.isEnabledFor(logging.DEBUG):
-                    _, _, tb = sys_exc_info()
+                    _, _, tb = sys.exc_info()
                     traceback.print_tb(tb)
 
 
