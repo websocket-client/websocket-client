@@ -367,6 +367,7 @@ class WebSocket(object):
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
         self.get_mask_key = get_mask_key
+        self._recv_buffer = []
 
     def fileno(self):
         return self.sock.fileno()
@@ -708,13 +709,19 @@ class WebSocket(object):
 
 
     def _recv_strict(self, bufsize):
-        remaining = bufsize
-        bytes = ""
-        while remaining:
-            bytes += self._recv(remaining)
-            remaining = bufsize - len(bytes)
+        shortage = bufsize - sum(len(x) for x in self._recv_buffer)
+        while shortage > 0:
+            bytes = self._recv(shortage)
+            self._recv_buffer.append(bytes)
+            shortage -= len(bytes)
+        unified = "".join(self._recv_buffer)
+        if shortage == 0:
+            self._recv_buffer = []
+            return unified
+        else:
+            self._recv_buffer = [unified[bufsize:]]
+            return unified[:bufsize]
 
-        return bytes
 
     def _recv_line(self):
         line = []
