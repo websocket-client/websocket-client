@@ -695,16 +695,16 @@ class WebSocket(object):
     def _recv(self, bufsize):
         try:
             bytes = self.sock.recv(bufsize)
-            if not bytes:
-                raise WebSocketConnectionClosedException()
-            return bytes
         except socket.timeout as e:
             raise WebSocketTimeoutException(e.message)
-        except Exception as e:
-            if "timed out" in e.message:
+        except ssl.SSLError as e:
+            if e.message == "The read operation timed out":
                 raise WebSocketTimeoutException(e.message)
             else:
-                raise e
+                raise
+        if not bytes:
+            raise WebSocketConnectionClosedException()
+        return bytes
 
 
     def _recv_strict(self, bufsize):
