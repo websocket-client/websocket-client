@@ -367,7 +367,13 @@ class WebSocket(object):
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
         self.get_mask_key = get_mask_key
+        # Buffers over the packets from the layer beneath until desired amount
+        # bytes of bytes are received.
         self._recv_buffer = []
+        # These buffer over the build-up of a single frame.
+        self._frame_header = None
+        self._frame_length = None
+        self._frame_mask = None
 
     def fileno(self):
         return self.sock.fileno()
@@ -601,40 +607,41 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
-        header_bytes = self._recv_strict(2)
-        if not header_bytes:
-            return
-        b1 = ord(header_bytes[0])
+        # Header
+        if self._frame_header is None:
+            self._frame_header = self._recv_strict(2)
+        b1 = ord(self._frame_header[0])
         fin = b1 >> 7 & 1
         rsv1 = b1 >> 6 & 1
         rsv2 = b1 >> 5 & 1
         rsv3 = b1 >> 4 & 1
         opcode = b1 & 0xf
-        b2 = ord(header_bytes[1])
-        mask = b2 >> 7 & 1
-        length = b2 & 0x7f
+        b2 = ord(self._frame_header[1])
+        has_mask = b2 >> 7 & 1
+        # Frame length
+        if self._frame_length is None:
+            length_bits = b2 & 0x7f
+            if length_bits == 0x7e:
+                length_data = self._recv_strict(2)
+                self._frame_length = struct.unpack("!H", length_data)[0]
+            elif length_bits == 0x7f:
+                length_data = self._recv_strict(8)
+                self._frame_length = struct.unpack("!Q", length_data)[0]
+            else:
+                self._frame_length = length_bits
+        # Mask
+        if self._frame_mask is None:
+            self._frame_mask = self._recv_strict(4) if has_mask else ""
+        # Payload
+        payload = self._recv_strict(self._frame_length)
+        if has_mask:
+            payload = ABNF.mask(self._frame_mask, payload)
+        # Reset for next frame
+        self._frame_header = None
+        self._frame_length = None
+        self._frame_mask = None
+        return ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
 
-        length_data = ""
-        if length == 0x7e:
-            length_data = self._recv_strict(2)
-            length = struct.unpack("!H", length_data)[0]
-        elif length == 0x7f:
-            length_data = self._recv_strict(8)
-            length = struct.unpack("!Q", length_data)[0]
-
-        mask_key = ""
-        if mask:
-            mask_key = self._recv_strict(4)
-        data = self._recv_strict(length)
-        if traceEnabled:
-            recieved = header_bytes + length_data + mask_key + data
-            logger.debug("recv: " + repr(recieved))
-
-        if mask:
-            data = ABNF.mask(mask_key, data)
-
-        frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, mask, data)
-        return frame
 
     def send_close(self, status=STATUS_NORMAL, reason=""):
         """
