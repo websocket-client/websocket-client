@@ -3,7 +3,12 @@
 
 import base64
 import socket
-import ssl
+try:
+    from ssl import SSLError
+except ImportError:
+    # dummy class of SSLError for ssl none-support environment.
+    class SSLError(Exception):
+        pass
 import unittest
 import uuid
 
@@ -191,7 +196,7 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet("foo")
         s.add_packet(socket.timeout())
         s.add_packet("bar")
-        s.add_packet(ssl.SSLError("The read operation timed out"))
+        s.add_packet(SSLError("The read operation timed out"))
         s.add_packet("baz")
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock._recv_strict(9)

@@ -24,8 +24,13 @@ import socket
 
 try:
     import ssl
+    from ssl import SSLError
     HAVE_SSL = True
 except ImportError:
+    # dummy class of SSLError for ssl none-support environment.
+    class SSLError(Exception):
+        pass
+
     HAVE_SSL = False
 
 from urlparse import urlparse
@@ -705,7 +710,7 @@ class WebSocket(object):
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
             raise WebSocketTimeoutException(e.message)
-        except ssl.SSLError as e:
+        except SSLError as e:
             if e.message == "The read operation timed out":
                 raise WebSocketTimeoutException(e.message)
             else:
