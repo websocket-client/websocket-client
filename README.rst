@@ -74,7 +74,7 @@ JavaScript websocket-like API example::
           time.sleep(1)
           ws.close()
           print("thread terminating...")
-      thread.start_new_thread(run, ())
+      threading.Thread(target=run, args=()).start()
   
   
   if __name__ == "__main__":
