@@ -709,7 +709,7 @@ class WebSocket(object):
                 raise WebSocketConnectionClosedException()
             return bytes
         except socket.timeout as e:
-            raise WebSocketTimeoutException(e.message)
+            raise WebSocketTimeoutException(*e.args)
         except SSLError as e:
             if "timed out" in e.args[0]:
                 raise WebSocketTimeoutException(*e.args)
