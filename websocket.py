@@ -23,9 +23,14 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import socket
 try:
     import ssl
+    from ssl import SSLError
     HAVE_SSL = True
 except ImportError:
     HAVE_SSL = False
+
+    # dummy class for SSLError
+    class SSLError(Exception):
+        pass
 
 from urllib.parse import urlparse
 import os
@@ -80,6 +85,12 @@ class WebSocketConnectionClosedException(WebSocketException):
     """
     If remote host closed the connection or some network error happened,
     this exception will be raised.
+    """
+    pass
+
+class WebSocketTimeoutException(WebSocketException):
+    """
+    WebSocketTimeoutException will be raised at socket timeout during read/write data.
     """
     pass
 
@@ -456,7 +467,7 @@ class WebSocket(object):
         headers.append("")
 
         header_str = "\r\n".join(headers)
-        sock.send(bytes(header_str, "utf-8"))
+        self._send(bytes(header_str, "utf-8"))
         if traceEnabled:
             logger.debug("--- request header ---")
             logger.debug(header_str)
@@ -540,7 +551,7 @@ class WebSocket(object):
         if traceEnabled:
             logger.debug("send: " + repr(data))
         while data:
-            l = self.sock.send(data)
+            l = self._send(data)
             data = data[l:]
 
     def send_binary(self, payload):
@@ -680,11 +691,31 @@ class WebSocket(object):
         self.connected = False
         self.sock.close()
 
+    def _send(self, data):
+        try:
+            return self.sock.send(data)
+        except socket.timeout as e:
+            raise WebSocketTimeoutException(*e.args)
+        except SSLError as e:
+            if "timed out" in e.args[0]:
+                raise WebSocketTimeoutException(*e.args)
+            else:
+                raise
+
     def _recv(self, bufsize):
-        bytes = self.sock.recv(bufsize)
-        if not bytes:
-            raise WebSocketConnectionClosedException()
-        return bytes
+        try:
+            bytes = self.sock.recv(bufsize)
+            if not bytes:
+                raise WebSocketConnectionClosedException()
+            return bytes
+        except socket.timeout as e:
+            raise WebSocketTimeoutException(e.message)
+        except SSLError as e:
+            if "timed out" in e.args[0]:
+                raise WebSocketTimeoutException(*e.args)
+            else:
+                raise
+
 
     def _recv_strict(self, bufsize):
         remaining = bufsize
@@ -813,7 +844,7 @@ class WebSocketApp(object):
             except Exception as e:
                 logger.error(e)
                 if logger.isEnabledFor(logging.DEBUG):
-                    _, _, tb = sys_exc_info()
+                    _, _, tb = sys.exc_info()
                     traceback.print_tb(tb)
 
 
