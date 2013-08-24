@@ -54,7 +54,7 @@ sockopt example:
 JavaScript websocket-like API example::
 
   import websocket
-  import thread
+  import threading
   import time
   
   def on_message(ws, message):
