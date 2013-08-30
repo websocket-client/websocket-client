@@ -23,8 +23,13 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import socket
 try:
     import ssl
+    from ssl import SSLError
     HAVE_SSL = True
 except ImportError:
+    # dummy class of SSLError for ssl none-support environment.
+    class SSLError(Exception):
+        pass
+
     HAVE_SSL = False
 
 from urllib.parse import urlparse
@@ -80,6 +85,12 @@ class WebSocketConnectionClosedException(WebSocketException):
     """
     If remote host closed the connection or some network error happened,
     this exception will be raised.
+    """
+    pass
+
+class WebSocketTimeoutException(WebSocketException):
+    """
+    WebSocketTimeoutException will be raised at socket timeout during read/write data.
     """
     pass
 
@@ -362,6 +373,13 @@ class WebSocket(object):
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
         self.get_mask_key = get_mask_key
+        # Buffers over the packets from the layer beneath until desired amount
+        # bytes of bytes are received.
+        self._recv_buffer = []
+        # These buffer over the build-up of a single frame.
+        self._frame_header = None
+        self._frame_length = None
+        self._frame_mask = None
 
     def fileno(self):
         return self.sock.fileno()
@@ -430,7 +448,6 @@ class WebSocket(object):
         self._handshake(hostname, port, resource, **options)
 
     def _handshake(self, host, port, resource, **options):
-        sock = self.sock
         headers = []
         headers.append("GET %s HTTP/1.1" % resource)
         headers.append("Upgrade: websocket")
@@ -456,7 +473,7 @@ class WebSocket(object):
         headers.append("")
 
         header_str = "\r\n".join(headers)
-        sock.send(bytes(header_str, "utf-8"))
+        self._send(bytes(header_str, "utf-8"))
         if traceEnabled:
             logger.debug("--- request header ---")
             logger.debug(header_str)
@@ -540,7 +557,7 @@ class WebSocket(object):
         if traceEnabled:
             logger.debug("send: " + repr(data))
         while data:
-            l = self.sock.send(data)
+            l = self._send(data)
             data = data[l:]
 
     def send_binary(self, payload):
@@ -599,40 +616,46 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
-        header_bytes = self._recv_strict(2)
-        if not header_bytes:
-            return
-        b1 = header_bytes[0]
+        # Header
+        if self._frame_header is None:
+            self._frame_header = self._recv_strict(2)
+        b1 = self._frame_header[0]
         fin = b1 >> 7 & 1
         rsv1 = b1 >> 6 & 1
         rsv2 = b1 >> 5 & 1
         rsv3 = b1 >> 4 & 1
         opcode = b1 & 0xf
-        b2 = header_bytes[1]
-        mask = b2 >> 7 & 1
-        length = b2 & 0x7f
 
-        length_data = b""
-        if length == 0x7e:
-            length_data = self._recv_strict(2)
-            length = struct.unpack("!H", length_data)[0]
-        elif length == 0x7f:
-            length_data = self._recv_strict(8)
-            length = struct.unpack("!Q", length_data)[0]
+        b2 = self._frame_header[1]
+        has_mask = b2 >> 7 & 1
 
-        mask_key = b""
-        if mask:
-            mask_key = self._recv_strict(4)
-        data = self._recv_strict(length)
-        if traceEnabled:
-            recieved = header_bytes + length_data + mask_key + data
-            logger.debug("recv: " + repr(recieved))
+        # Frame length
+        if self._frame_length is None:
+            length_bits = b2 & 0x7f
+            if length_bits == 0x7e:
+                length_data = self._recv_strict(2)
+                self._frame_length = struct.unpack("!H", length_data)[0]
+            elif length_bits == 0x7f:
+                length_data = self._recv_strict(8)
+                self._frame_length = struct.unpack("!Q", length_data)[0]
+            else:
+                self._frame_length = length_bits
 
-        if mask:
-            data = ABNF.mask(mask_key, data)
+        # Mask
+        if self._frame_mask is None:
+            self._frame_mask = self._recv_strict(4) if has_mask else ""
 
-        frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, mask, data)
-        return frame
+        # Payload
+        payload = self._recv_strict(self._frame_length)
+        if has_mask:
+            payload = ABNF.mask(self._frame_mask, payload)
+
+        # Reset for next frame
+        self._frame_header = None
+        self._frame_length = None
+        self._frame_mask = None
+
+        return ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
 
     def send_close(self, status=STATUS_NORMAL, reason=""):
         """
@@ -680,20 +703,46 @@ class WebSocket(object):
         self.connected = False
         self.sock.close()
 
+    def _send(self, data):
+        try:
+            return self.sock.send(data)
+        except socket.timeout as e:
+            raise WebSocketTimeoutException(*e.args)
+        except Exception as e:
+            if "timed out" in e.args:
+                raise WebSocketTimeoutException(*e.args)
+            else:
+                raise e
+
     def _recv(self, bufsize):
-        bytes = self.sock.recv(bufsize)
+        try:
+            bytes = self.sock.recv(bufsize)
+        except socket.timeout as e:
+            raise WebSocketTimeoutException(*e.args)
+        except SSLError as e:
+            if e.args[0] == "The read operation timed out":
+                raise WebSocketTimeoutException(*e.args)
+            else:
+                raise
         if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes
 
     def _recv_strict(self, bufsize):
-        remaining = bufsize
-        bytes = b""
-        while remaining:
-            bytes += self._recv(remaining)
-            remaining = bufsize - len(bytes)
+        shortage = bufsize - sum(len(x) for x in self._recv_buffer)
+        while shortage > 0:
+            bytes = self._recv(shortage)
+            self._recv_buffer.append(bytes)
+            shortage -= len(bytes)
 
-        return bytes
+        unified = b"".join(self._recv_buffer)
+        if shortage == 0:
+            self._recv_buffer = []
+            return unified
+        else:
+            self._recv_buffer = [unified[bufsize:]]
+            return unified[:bufsize]
+
 
     def _recv_line(self):
         line = []
@@ -813,7 +862,7 @@ class WebSocketApp(object):
             except Exception as e:
                 logger.error(e)
                 if logger.isEnabledFor(logging.DEBUG):
-                    _, _, tb = sys_exc_info()
+                    _, _, tb = sys.exc_info()
                     traceback.print_tb(tb)
 
 

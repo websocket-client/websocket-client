@@ -2,9 +2,15 @@
 #
 
 import base64
-import uuid
-import unittest
 import socket
+try:
+    from ssl import SSLError
+except ImportError:
+    # dummy class of SSLError for ssl none-support environment.
+    class SSLError(Exception):
+        pass
+import unittest
+import uuid
 
 # websocket-client
 import websocket as ws
@@ -14,22 +20,25 @@ TRACABLE=False
 def create_mask_key(n):
     return b"abcd"
 
-class StringSockMock:
+class SockMock(object):
+
     def __init__(self):
-        self.set_data("")
+        self.data = []
         self.sent = []
 
-    def set_data(self, data):
-        self.data = data
-        self.pos = 0
-        self.len = len(data)
+    def add_packet(self, data):
+        if isinstance(data, str):
+            data = bytes(data, "utf-8")
+        self.data.append(data)
 
     def recv(self, bufsize):
-        if self.len < self.pos:
-            return
-        buf = self.data[self.pos: self.pos + bufsize]
-        self.pos += bufsize
-        return buf
+        if self.data:
+            e = self.data.pop(0)
+            if isinstance(e, Exception):
+                raise e
+            if len(e) > bufsize:
+                self.data.insert(0, e[bufsize:])
+            return e[:bufsize]
 
     def send(self, data):
         self.sent.append(data)
@@ -39,11 +48,12 @@ class StringSockMock:
         pass
 
 
-class HeaderSockMock(StringSockMock):
+class HeaderSockMock(SockMock):
+
     def __init__(self, fname):
+        SockMock.__init__(self)
         with open(fname, "rb") as f:
-            self.set_data(f.read())
-        self.sent = []
+            self.add_packet(f.read())
 
 
 class WebSocketTest(unittest.TestCase):
@@ -181,14 +191,50 @@ class WebSocketTest(unittest.TestCase):
         # TODO: add longer frame data
         sock = ws.WebSocket()
         sock.sock.close()
-        s = sock.sock = StringSockMock()
-        s.set_data(b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        s = sock.sock = SockMock()
+        s.add_packet(b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
         data = sock.recv()
         self.assertEqual(data, "こんにちは")
 
-        s.set_data(b"\x81\x85abcd)\x07\x0f\x08\x0e")
+        s.add_packet(b"\x81\x85abcd)\x07\x0f\x08\x0e")
         data = sock.recv()
         self.assertEqual(data, "Hello")
+
+    def testInternalRecvStrict(self):
+        sock = ws.WebSocket()
+        sock.sock.close()
+        s = sock.sock = SockMock()
+        s.add_packet(b"foo")
+        s.add_packet(socket.timeout())
+        s.add_packet(b"bar")
+        s.add_packet(SSLError("The read operation timed out"))
+        s.add_packet(b"baz")
+        with self.assertRaises(ws.WebSocketTimeoutException):
+            data = sock._recv_strict(9)
+        with self.assertRaises(ws.WebSocketTimeoutException):
+            data = sock._recv_strict(9)
+        data = sock._recv_strict(9)
+        self.assertEqual(data, b"foobarbaz")
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            data = sock._recv_strict(1)
+
+    def testRecvTimeout(self):
+        sock = ws.WebSocket()
+        sock.sock.close()
+        s = sock.sock = SockMock()
+        s.add_packet(b"\x81")
+        s.add_packet(socket.timeout())
+        s.add_packet(b"\x8dabcd\x29\x07\x0f\x08\x0e")
+        s.add_packet(socket.timeout())
+        s.add_packet(b"\x4e\x43\x33\x0e\x10\x0f\x00\x40")
+        with self.assertRaises(ws.WebSocketTimeoutException):
+            data = sock.recv()
+        with self.assertRaises(ws.WebSocketTimeoutException):
+            data = sock.recv()
+        data = sock.recv()
+        self.assertEqual(data, "Hello, World!")
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            data = sock.recv()
 
     def testWebSocket(self):
         s = ws.create_connection("ws://echo.websocket.org/")
@@ -240,12 +286,22 @@ class WebSocketTest(unittest.TestCase):
         s.close()
 
     def testAfterClose(self):
-        from socket import error
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEqual(s, None)
         s.close()
-        self.assertRaises(error, s.send, "Hello")
-        self.assertRaises(error, s.recv)
+        try:
+            s.send("Hello")
+            #never reach here
+            self.assertEqual(1, 0)
+        except OSError:
+            pass
+
+        try:
+            s.recv()
+            #never reach here
+            self.assertEqual(1, 0)
+        except OSError:
+            pass
 
     def testUUID4(self):
         """ WebSocket key should be a UUID4.
