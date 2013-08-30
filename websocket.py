@@ -26,11 +26,11 @@ try:
     from ssl import SSLError
     HAVE_SSL = True
 except ImportError:
-    # dummy class of SSLError for ssl none-support environment.
+    HAVE_SSL = False
+
+    # dummy class for SSLError
     class SSLError(Exception):
         pass
-
-    HAVE_SSL = False
 
 from urllib.parse import urlparse
 import os
@@ -708,11 +708,11 @@ class WebSocket(object):
             return self.sock.send(data)
         except socket.timeout as e:
             raise WebSocketTimeoutException(*e.args)
-        except Exception as e:
-            if "timed out" in e.args:
+        except SSLError as e:
+            if "timed out" in e.args[0]:
                 raise WebSocketTimeoutException(*e.args)
             else:
-                raise e
+                raise
 
     def _recv(self, bufsize):
         try:
