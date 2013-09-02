@@ -657,16 +657,18 @@ class WebSocket(object):
 
         return ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
 
-    def send_close(self, status=STATUS_NORMAL, reason=""):
+    def send_close(self, status=STATUS_NORMAL, reason=b""):
         """
         send close data to the server.
 
         status: status code to send. see STATUS_XXX.
 
-        reason: the reason to close. This must be string.
+        reason: the reason to close. This must be string or bytes
         """
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
+        if isinstance(reason, str):
+            reason = bytes(reason, "utf-8")
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
     def close(self, status=STATUS_NORMAL, reason=""):
