@@ -15,6 +15,16 @@ import uuid
 # websocket-client
 import websocket as ws
 
+# There are three tests to test the library's behaviour when the received
+# message is fragmented (please see [1] for details). They fail currently as
+# the library doesn't yet support fragmentation. Therefore the tests are
+# skipped unless the flag below is set.
+#
+# [1]: https://tools.ietf.org/html/rfc6455#section-5.4
+#      "RFC6455: 5.4. Fragmentation"
+#
+TEST_FRAGMENTATION=False
+
 TRACABLE=False
 
 def create_mask_key(n):
@@ -53,7 +63,7 @@ class HeaderSockMock(SockMock):
 class WebSocketTest(unittest.TestCase):
     def setUp(self):
         ws.enableTrace(TRACABLE)
-    
+
     def tearDown(self):
         pass
 
@@ -223,6 +233,56 @@ class WebSocketTest(unittest.TestCase):
         self.assertEquals(data, "Hello, World!")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             data = sock.recv()
+
+    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
+    def testRecvWithSimpleFragmentation(self):
+        sock = ws.WebSocket()
+        s = sock.sock = SockMock()
+        # OPCODE=TEXT, FIN=0, MSG="Brevity is "
+        s.add_packet("\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C")
+        # OPCODE=CONT, FIN=1, MSG="the soul of wit"
+        s.add_packet("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
+        data = sock.recv()
+        self.assertEqual(data, "Brevity is the soul of wit")
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            sock.recv()
+
+    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
+    def testRecvWithProlongedFragmentation(self):
+        sock = ws.WebSocket()
+        s = sock.sock = SockMock()
+        # OPCODE=TEXT, FIN=0, MSG="Once more unto the breach, "
+        s.add_packet("\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15" \
+                     "\rC\x10\t\x07C\x06\x13\x07\x02\x07\tNC")
+        # OPCODE=CONT, FIN=0, MSG="dear friends, "
+        s.add_packet("\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07" \
+                     "\x17MB")
+        # OPCODE=CONT, FIN=1, MSG="once more"
+        s.add_packet("\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04")
+        data = sock.recv()
+        self.assertEqual(data, "Once more unto the breach, dear friends, " \
+                               "once more")
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            sock.recv()
+
+    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
+    def testRecvWithFragmentationAndControlFrame(self):
+        sock = ws.WebSocket()
+        sock.set_mask_key(create_mask_key)
+        s = sock.sock = SockMock()
+        # OPCODE=TEXT, FIN=0, MSG="Too much "
+        s.add_packet("\x01\x89abcd5\r\x0cD\x0c\x17\x00\x0cA")
+        # OPCODE=PING, FIN=1, MSG="Please PONG this"
+        s.add_packet("\x89\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17")
+        # OPCODE=CONT, FIN=1, MSG="of a good thing"
+        s.add_packet("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
+                     "\x08\x0c\x04")
+        data = sock.recv()
+        self.assertEqual(data, "Too much of a good thing")
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            sock.recv()
+        self.assertEqual(s.sent[0], "\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
+                                    "\x15\n\n\x17")
 
     def testWebSocket(self):
         s = ws.create_connection("ws://echo.websocket.org/")
