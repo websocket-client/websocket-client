@@ -6,11 +6,11 @@ websocket-client module  is WebSocket client for python. This provide the low le
 
 websocket-client supports only hybi-13.
 
-How about Python 3
+How about Python 2
 ===========================
 
-py3( https://github.com/liris/websocket-client/tree/py3 ) branch is for python 3.3. Every test case is passed.
-If you are using python3, please check it.
+py2( https://github.com/liris/websocket-client ) branch is for python 2. Every test case is passed.
+If you are using python2, please check it.
 
 
 License
@@ -54,7 +54,7 @@ sockopt example:
 JavaScript websocket-like API example::
 
   import websocket
-  import thread
+  import threading
   import time
   
   def on_message(ws, message):
@@ -74,7 +74,7 @@ JavaScript websocket-like API example::
           time.sleep(1)
           ws.close()
           print("thread terminating...")
-      thread.start_new_thread(run, ())
+      threading.Thread(target=run, args=()).start()
   
   
   if __name__ == "__main__":
