@@ -228,6 +228,7 @@ class ABNF(object):
     """
 
     # operation code values.
+    OPCODE_CONT   = 0x0
     OPCODE_TEXT   = 0x1
     OPCODE_BINARY = 0x2
     OPCODE_CLOSE  = 0x8
@@ -235,11 +236,12 @@ class ABNF(object):
     OPCODE_PONG   = 0xa
 
     # available operation code value tuple
-    OPCODES = (OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
+    OPCODES = (OPCODE_CONT, OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
                 OPCODE_PING, OPCODE_PONG)
 
     # opcode human readable string
     OPCODE_MAP = {
+        OPCODE_CONT: "cont",
         OPCODE_TEXT: "text",
         OPCODE_BINARY: "binary",
         OPCODE_CLOSE: "close",
@@ -266,6 +268,11 @@ class ABNF(object):
         self.mask = mask
         self.data = data
         self.get_mask_key = os.urandom
+
+    def __str__(self):
+        return "fin=" + str(self.fin) \
+                + " opcode=" + str(self.opcode) \
+                + " data=" + str(self.data)
 
     @staticmethod
     def create_frame(data, opcode):
@@ -379,6 +386,7 @@ class WebSocket(object):
         self._frame_header = None
         self._frame_length = None
         self._frame_mask = None
+        self._cont_data = None
 
     def fileno(self):
         return self.sock.fileno()
@@ -552,11 +560,13 @@ class WebSocket(object):
         if self.get_mask_key:
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
+        length = len(data)
         if traceEnabled:
             logger.debug("send: " + repr(data))
         while data:
             l = self._send(data)
             data = data[l:]
+        return length
 
     def send_binary(self, payload):
         return self.send(payload, ABNF.OPCODE_BINARY)
@@ -598,8 +608,18 @@ class WebSocket(object):
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketException("Not a valid frame %s" % frame)
-            elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
-                return (frame.opcode, frame.data)
+            elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
+                if frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
+                    raise WebSocketException("Illegal frame")
+                if self._cont_data:
+                    self._cont_data[1] += frame.data
+                else:
+                    self._cont_data = [frame.opcode, frame.data]
+                
+                if frame.fin:
+                    data = self._cont_data
+                    self._cont_data = None
+                    return data
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
                 return (frame.opcode, None)

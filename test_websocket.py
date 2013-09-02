@@ -23,15 +23,16 @@ import websocket as ws
 # [1]: https://tools.ietf.org/html/rfc6455#section-5.4
 #      "RFC6455: 5.4. Fragmentation"
 #
-TEST_FRAGMENTATION=False
+TEST_FRAGMENTATION = True
 
-TRACABLE=False
+TRACABLE = False
+
 
 def create_mask_key(n):
     return "abcd"
 
-class SockMock(object):
 
+class SockMock(object):
     def __init__(self):
         self.data = []
         self.sent = []
@@ -246,6 +247,14 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(data, "Brevity is the soul of wit")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
+
+    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
+    def testRecvContFragmentation(self):
+        sock = ws.WebSocket()
+        s = sock.sock = SockMock()
+        # OPCODE=CONT, FIN=1, MSG="the soul of wit"
+        s.add_packet("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
+        self.assertRaises(ws.WebSocketException, sock.recv)
 
     @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvWithProlongedFragmentation(self):
