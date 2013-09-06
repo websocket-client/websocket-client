@@ -250,11 +250,12 @@ class WebSocketTest(unittest.TestCase):
     @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvWithSimpleFragmentation(self):
         sock = ws.WebSocket()
+        sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Brevity is "
-        s.add_packet("\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C")
+        s.add_packet(b"\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C")
         # OPCODE=CONT, FIN=1, MSG="the soul of wit"
-        s.add_packet("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
+        s.add_packet(b"\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
         data = sock.recv()
         self.assertEqual(data, "Brevity is the soul of wit")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
@@ -263,23 +264,25 @@ class WebSocketTest(unittest.TestCase):
     @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvContFragmentation(self):
         sock = ws.WebSocket()
+        sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=CONT, FIN=1, MSG="the soul of wit"
-        s.add_packet("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
+        s.add_packet(b"\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
         self.assertRaises(ws.WebSocketException, sock.recv)
 
     @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvWithProlongedFragmentation(self):
         sock = ws.WebSocket()
+        sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Once more unto the breach, "
-        s.add_packet("\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15" \
-                     "\rC\x10\t\x07C\x06\x13\x07\x02\x07\tNC")
+        s.add_packet(b"\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15" \
+                     b"\rC\x10\t\x07C\x06\x13\x07\x02\x07\tNC")
         # OPCODE=CONT, FIN=0, MSG="dear friends, "
-        s.add_packet("\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07" \
-                     "\x17MB")
+        s.add_packet(b"\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07" \
+                     b"\x17MB")
         # OPCODE=CONT, FIN=1, MSG="once more"
-        s.add_packet("\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04")
+        s.add_packet(b"\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04")
         data = sock.recv()
         self.assertEqual(data, "Once more unto the breach, dear friends, " \
                                "once more")
@@ -290,20 +293,21 @@ class WebSocketTest(unittest.TestCase):
     def testRecvWithFragmentationAndControlFrame(self):
         sock = ws.WebSocket()
         sock.set_mask_key(create_mask_key)
+        sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Too much "
-        s.add_packet("\x01\x89abcd5\r\x0cD\x0c\x17\x00\x0cA")
+        s.add_packet(b"\x01\x89abcd5\r\x0cD\x0c\x17\x00\x0cA")
         # OPCODE=PING, FIN=1, MSG="Please PONG this"
-        s.add_packet("\x89\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17")
+        s.add_packet(b"\x89\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17")
         # OPCODE=CONT, FIN=1, MSG="of a good thing"
-        s.add_packet("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
-                     "\x08\x0c\x04")
+        s.add_packet(b"\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
+                     b"\x08\x0c\x04")
         data = sock.recv()
         self.assertEqual(data, "Too much of a good thing")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
-        self.assertEqual(s.sent[0], "\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
-                                    "\x15\n\n\x17")
+        self.assertEqual(s.sent[0], b"\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
+                                    b"\x15\n\n\x17")
 
     def testWebSocket(self):
         s = ws.create_connection("ws://echo.websocket.org/")

@@ -765,7 +765,6 @@ class WebSocket(object):
             self._recv_buffer = [unified[bufsize:]]
             return unified[:bufsize]
 
-
     def _recv_line(self):
         line = []
         while True:
