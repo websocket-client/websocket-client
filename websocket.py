@@ -730,22 +730,13 @@ class WebSocket(object):
             return self.sock.send(data)
         except socket.timeout as e:
             raise WebSocketTimeoutException(*e.args)
-        except SSLError as e:
-            if "timed out" in e.args[0]:
-                raise WebSocketTimeoutException(*e.args)
-            else:
-                raise
 
     def _recv(self, bufsize):
         try:
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
             raise WebSocketTimeoutException(*e.args)
-        except SSLError as e:
-            if e.args[0] == "The read operation timed out":
-                raise WebSocketTimeoutException(*e.args)
-            else:
-                raise
+
         if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes
