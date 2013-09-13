@@ -127,6 +127,17 @@ example::
 ChangeLog
 ============
 
+- v0.12.0
+
+  - support keep alive for WebSocketApp(ISSUE#34)
+  - fix some SSL bugs(ISSUE#35, #36)
+  - fix "Timing out leaves websocket library in bad state"(ISSUE#37)
+  - fix "WebSocketApp.run_with_no_err() silently eats all exceptions"(ISSUE#38)
+  - WebSocketTimeoutException will be raised for ws/wss timeout(ISSUE#40)
+  - improve wsdump message(ISSUE#42)
+  - support fragmentation message(ISSUE#43)
+  - fix some bugs
+
 - v0.11.0
 
   - Only log non-normal close status(ISSUE#31)
