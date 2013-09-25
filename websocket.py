@@ -844,6 +844,7 @@ class WebSocketApp(object):
 
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt)
+            self.sock.settimeout(default_timeout)
             self.sock.connect(self.url, header=self.header)
             self._callback(self.on_open)
 
