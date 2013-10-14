@@ -820,8 +820,11 @@ class WebSocketApp(object):
         self.sock.close()
 
     def _send_ping(self, interval):
-        while self.keep_running:
-            time.sleep(interval)
+        while True:
+            for i in range(interval):
+                time.sleep(1)
+                if not self.keep_running:
+                    return
             self.sock.ping()
 
     def run_forever(self, sockopt=None, sslopt=None, ping_interval=0):
@@ -844,6 +847,7 @@ class WebSocketApp(object):
 
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt)
+            self.sock.settimeout(default_timeout)
             self.sock.connect(self.url, header=self.header)
             self._callback(self.on_open)
 
@@ -861,6 +865,7 @@ class WebSocketApp(object):
             self._callback(self.on_error, e)
         finally:
             if thread:
+                self.keep_running = False
                 thread.join()
             self.sock.close()
             self._callback(self.on_close)
