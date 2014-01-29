@@ -781,7 +781,8 @@ class WebSocketApp(object):
     """
     def __init__(self, url, header=[],
                  on_open=None, on_message=None, on_error=None,
-                 on_close=None, keep_running=True, get_mask_key=None):
+                 on_close=None, on_ping=None, on_pong=None,
+                 keep_running=True, get_mask_key=None):
         """
         url: websocket url.
         header: custom header for websocket handshake.
@@ -808,6 +809,8 @@ class WebSocketApp(object):
         self.on_message = on_message
         self.on_error = on_error
         self.on_close = on_close
+        self.on_ping = on_ping
+        self.on_pong = on_pong
         self.keep_running = keep_running
         self.get_mask_key = get_mask_key
         self.sock = None
@@ -873,9 +876,9 @@ class WebSocketApp(object):
                 if op_code == ABNF.OPCODE_CLOSE:
                     break
                 elif op_code == ABNF.OPCODE_PING:
-                    pass
+                    self._callback(self.on_ping, data)
                 elif op_code == ABNF.OPCODE_PONG:
-                    pass
+                    self._callback(self.on_pong, data)
                 else:
                     self._callback(self.on_message, data)
         except Exception, e:
