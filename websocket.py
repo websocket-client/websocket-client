@@ -45,6 +45,7 @@ import time
 import logging
 import traceback
 import sys
+import select
 
 """
 websocket python client.
@@ -615,7 +616,7 @@ class WebSocket(object):
                     self._cont_data[1] += frame.data
                 else:
                     self._cont_data = [frame.opcode, frame.data]
-                
+
                 if frame.fin:
                     data = self._cont_data
                     self._cont_data = None
@@ -856,7 +857,10 @@ class WebSocketApp(object):
                 thread.setDaemon(True)
                 thread.start()
 
-            while self.keep_running:
+            while True:
+                select.select((self.sock.sock, ), (), ())
+                if not self.keep_running:
+                   break
                 data = self.sock.recv()
                 if data is None:
                     break
