@@ -702,6 +702,7 @@ class WebSocket(object):
                 raise ValueError("code is invalid range")
 
             try:
+                self.connected = False
                 self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
                 timeout = self.sock.gettimeout()
                 self.sock.settimeout(3)
@@ -717,10 +718,9 @@ class WebSocket(object):
                 self.sock.shutdown(socket.SHUT_RDWR)
             except:
                 pass
-        self._closeInternal()
+            self._closeInternal()
 
     def _closeInternal(self):
-        self.connected = False
         self.sock.close()
 
     def _send(self, data):
@@ -871,7 +871,7 @@ class WebSocketApp(object):
             while True:
                 select.select((self.sock.sock, ), (), ())
                 if not self.keep_running:
-                   break
+                    break
                 op_code, data = self.sock.recv_data(True)
                 if op_code == ABNF.OPCODE_CLOSE:
                     break
