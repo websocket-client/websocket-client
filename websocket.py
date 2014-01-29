@@ -597,9 +597,12 @@ class WebSocket(object):
         opcode, data = self.recv_data()
         return data
 
-    def recv_data(self):
+    def recv_data(self, control_frame=False):
         """
         Recieve data with operation code.
+
+        control_frame: a boolean flag indicating whether to return control frame
+        data, defaults to False
 
         return  value: tuple of operation code and string(byte array) value.
         """
@@ -626,9 +629,11 @@ class WebSocket(object):
                 return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_PING:
                 self.pong(frame.data)
-                return (frame.opcode, frame.data)
+                if control_frame:
+                    return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_PONG:
-                return (frame.opcode, frame.data)
+                if control_frame:
+                    return (frame.opcode, frame.data)
 
     def recv_frame(self):
         """
@@ -864,7 +869,7 @@ class WebSocketApp(object):
                 select.select((self.sock.sock, ), (), ())
                 if not self.keep_running:
                    break
-                op_code, data = self.sock.recv_data()
+                op_code, data = self.sock.recv_data(True)
                 if op_code == ABNF.OPCODE_CLOSE:
                     break
                 elif op_code == ABNF.OPCODE_PING:
