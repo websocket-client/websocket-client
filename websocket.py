@@ -623,7 +623,7 @@ class WebSocket(object):
                     return data
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
-                return (frame.opcode, None)
+                return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_PING:
                 self.pong(frame.data)
 
@@ -861,8 +861,8 @@ class WebSocketApp(object):
                 select.select((self.sock.sock, ), (), ())
                 if not self.keep_running:
                    break
-                data = self.sock.recv()
-                if data is None:
+                op_code, data = self.sock.recv_data()
+                if op_code == ABNF.OPCODE_CLOSE:
                     break
                 self._callback(self.on_message, data)
         except Exception, e:
