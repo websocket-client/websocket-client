@@ -626,6 +626,9 @@ class WebSocket(object):
                 return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_PING:
                 self.pong(frame.data)
+                return (frame.opcode, frame.data)
+            elif frame.opcode == ABNF.OPCODE_PONG:
+                return (frame.opcode, frame.data)
 
     def recv_frame(self):
         """
@@ -864,7 +867,12 @@ class WebSocketApp(object):
                 op_code, data = self.sock.recv_data()
                 if op_code == ABNF.OPCODE_CLOSE:
                     break
-                self._callback(self.on_message, data)
+                elif op_code == ABNF.OPCODE_PING:
+                    pass
+                elif op_code == ABNF.OPCODE_PONG:
+                    pass
+                else:
+                    self._callback(self.on_message, data)
         except Exception, e:
             self._callback(self.on_error, e)
         finally:
