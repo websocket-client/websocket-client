@@ -861,7 +861,7 @@ class WebSocketApp(object):
                 if data is None:
                     break
                 self._callback(self.on_message, data)
-        except Exception, e:
+        except Exception as e:
             self._callback(self.on_error, e)
         finally:
             if thread:
