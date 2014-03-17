@@ -24,6 +24,7 @@ import websocket as ws
 #      "RFC6455: 5.4. Fragmentation"
 #
 TEST_FRAGMENTATION = True
+TEST_WITH_INTERNET = False
 
 TRACABLE = False
 
@@ -293,6 +294,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(s.sent[0], "\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
                                     "\x15\n\n\x17")
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocket(self):
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEquals(s, None)
@@ -305,6 +307,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEquals(result, "こにゃにゃちは、世界")
         s.close()
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testPingPong(self):
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEquals(s, None)
@@ -328,6 +331,7 @@ class WebSocketTest(unittest.TestCase):
         except:
             pass
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocketWihtCustomHeader(self):
         s = ws.create_connection("ws://echo.websocket.org/",
                                  headers={"User-Agent": "PythonWebsocketClient"})
@@ -337,6 +341,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEquals(result, "Hello, World")
         s.close()
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testAfterClose(self):
         from socket import error
         s = ws.create_connection("ws://echo.websocket.org/")
@@ -371,6 +376,7 @@ class WebSocketAppTest(unittest.TestCase):
         WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testKeepRunning(self):
         """ A WebSocketApp should keep running as long as its self.keep_running
         is not False (in the boolean context).
@@ -400,6 +406,7 @@ class WebSocketAppTest(unittest.TestCase):
         self.assertEquals(True, WebSocketAppTest.keep_running_open)
         self.assertEquals(False, WebSocketAppTest.keep_running_close)
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockMaskKey(self):
         """ A WebSocketApp should forward the received mask_key function down
         to the actual socket.
@@ -423,6 +430,7 @@ class WebSocketAppTest(unittest.TestCase):
 
 
 class SockOptTest(unittest.TestCase):
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockOpt(self):
         sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         s = ws.WebSocket(sockopt=sockopt)
