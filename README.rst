@@ -18,7 +18,9 @@ This module is tested on only Python 2.7.
 
 Type "python setup.py install" or "pip install websocket-client" to install.
 
-This module does not depend on any other module.
+This module depend on
+
+ - backports.ssl_match_hostname
 
 How about Python 3
 ===========================
