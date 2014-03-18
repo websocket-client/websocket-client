@@ -28,7 +28,7 @@ import websocket as ws
 #      "RFC6455: 5.4. Fragmentation"
 #
 TEST_FRAGMENTATION = True
-TEST_WITH_INTERNET = True
+TEST_WITH_INTERNET = False
 
 TRACABLE = False
 
