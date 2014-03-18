@@ -126,6 +126,15 @@ example::
 ChangeLog
 ============
 
+- v0.13.0
+
+  - server certificate validation(ISSUE#56)
+  - PyPI tarball is missing test_websocket.py(ISSUE#65)
+  - Payload length encoding bug(ISSUE#58)
+  - disable Nagle algorithm by default(ISSUE#41)
+  - Better event loop in WebSocketApp(ISSUE#63)
+  - Skip tests that require Internet access by default(ISSUE#66)
+
 - v0.12.0
 
   - support keep alive for WebSocketApp(ISSUE#34)
