@@ -25,5 +25,7 @@ setup(
     ],
     keywords='websockets',
     py_modules=["websocket"],
-    scripts=["bin/wsdump.py"]
+    scripts=["bin/wsdump.py"],
+    packages=["tests"],
+    package_data={'tests': ['data/*.txt']},
 )

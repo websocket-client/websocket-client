@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 #
 
+import sys
+sys.path[0:0] = [""]
+
+import os.path
 import base64
 import socket
 try:
@@ -24,7 +28,7 @@ import websocket as ws
 #      "RFC6455: 5.4. Fragmentation"
 #
 TEST_FRAGMENTATION = True
-TEST_WITH_INTERNET = False
+TEST_WITH_INTERNET = True
 
 TRACABLE = False
 
@@ -59,7 +63,8 @@ class HeaderSockMock(SockMock):
 
     def __init__(self, fname):
         SockMock.__init__(self)
-        self.add_packet(open(fname).read())
+        path = os.path.join(os.path.dirname(__file__), fname)
+        self.add_packet(open(path).read())
 
 
 class WebSocketTest(unittest.TestCase):
