@@ -130,6 +130,7 @@ ChangeLog
 
 - v0.13.0
 
+  -  Controlling fragmentation(ISSUE#55)
   - server certificate validation(ISSUE#56)
   - PyPI tarball is missing test_websocket.py(ISSUE#65)
   - Payload length encoding bug(ISSUE#58)
