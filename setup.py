@@ -27,6 +27,9 @@ setup(
     py_modules=["websocket"],
     scripts=["bin/wsdump.py"],
     install_requires=['backports.ssl_match_hostname'],
-    packages=["tests"],
-    package_data={'tests': ['data/*.txt']},
+    packages=["tests", "websocket"],
+    package_data={
+        'tests': ['data/*.txt'],
+        'websocket': ["cacert.pem"]
+    },
 )
