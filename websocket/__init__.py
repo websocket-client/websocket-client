@@ -198,7 +198,8 @@ def create_connection(url, timeout=None, **options):
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
-    websock = WebSocket(sockopt=sockopt, sslopt=sslopt)
+    fire_cont_frame = options.get("fire_cont_frame", False)
+    websock = WebSocket(sockopt=sockopt, sslopt=sslopt, fire_cont_frame = fire_cont_frame)
     websock.settimeout(timeout if timeout is not None else default_timeout)
     websock.connect(url, **options)
     return websock
@@ -367,9 +368,11 @@ class WebSocket(object):
     sockopt: values for socket.setsockopt.
         sockopt must be tuple and each element is argument of sock.setscokopt.
     sslopt: dict object for ssl socket option.
+    fire_cont_frame: fire recv event for each cont frame. default is False
     """
 
-    def __init__(self, get_mask_key=None, sockopt=None, sslopt=None):
+    def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
+        fire_cont_frame=False):
         """
         Initalize WebSocket object.
         """
@@ -384,6 +387,7 @@ class WebSocket(object):
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
         self.get_mask_key = get_mask_key
+        self.fire_cont_frame = fire_cont_frame
         # Buffers over the packets from the layer beneath until desired amount
         # bytes of bytes are received.
         self._recv_buffer = []
@@ -641,7 +645,7 @@ class WebSocket(object):
                 else:
                     self._cont_data = [frame.opcode, frame.data]
 
-                if frame.fin:
+                if frame.fin or self.fire_cont_frame:
                     data = self._cont_data
                     self._cont_data = None
                     return data
@@ -655,6 +659,44 @@ class WebSocket(object):
             elif frame.opcode == ABNF.OPCODE_PONG:
                 if control_frame:
                     return (frame.opcode, frame.data)
+
+    def recv_data_frame(self, control_frame=False):
+        """
+        Recieve data with operation code.
+
+        control_frame: a boolean flag indicating whether to return control frame
+        data, defaults to False
+
+        return  value: tuple of operation code and string(byte array) value.
+        """
+        while True:
+            frame = self.recv_frame()
+            if not frame:
+                # handle error:
+                # 'NoneType' object has no attribute 'opcode'
+                raise WebSocketException("Not a valid frame %s" % frame)
+            elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
+                if frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
+                    raise WebSocketException("Illegal frame")
+                if self._cont_data:
+                    self._cont_data[1].data += frame.data
+                else:
+                    self._cont_data = [frame.opcode, frame]
+
+                if frame.fin or self.fire_cont_frame:
+                    data = self._cont_data
+                    self._cont_data = None
+                    return data
+            elif frame.opcode == ABNF.OPCODE_CLOSE:
+                self.send_close()
+                return (frame.opcode, frame)
+            elif frame.opcode == ABNF.OPCODE_PING:
+                self.pong(frame.data)
+                if control_frame:
+                    return (frame.opcode, frame)
+            elif frame.opcode == ABNF.OPCODE_PONG:
+                if control_frame:
+                    return (frame.opcode, frame)
 
     def recv_frame(self):
         """
@@ -803,6 +845,7 @@ class WebSocketApp(object):
     def __init__(self, url, header=[],
                  on_open=None, on_message=None, on_error=None,
                  on_close=None, on_ping=None, on_pong=None,
+                 on_cont_message=None,
                  keep_running=True, get_mask_key=None):
         """
         url: websocket url.
@@ -819,6 +862,11 @@ class WebSocketApp(object):
          The passing 2nd arugment is exception object.
        on_close: callable object which is called when closed the connection.
          this function has one argument. The arugment is this class object.
+       on_cont_message: callback object which is called when recieve continued frame data.
+         on_message has 3 arguments.
+         The 1st arugment is this class object.
+         The passing 2nd arugment is utf-8 string which we get from the server.
+         The 3rd arugment is continue flag. if 0, the data continue to next frame data
        keep_running: a boolean flag indicating whether the app's main loop should
          keep running, defaults to True
        get_mask_key: a callable to produce new mask keys, see the WebSocket.set_mask_key's
@@ -832,6 +880,7 @@ class WebSocketApp(object):
         self.on_close = on_close
         self.on_ping = on_ping
         self.on_pong = on_pong
+        self.on_cont_message = on_cont_message
         self.keep_running = keep_running
         self.get_mask_key = get_mask_key
         self.sock = None
@@ -893,15 +942,17 @@ class WebSocketApp(object):
                 select.select((self.sock.sock, ), (), ())
                 if not self.keep_running:
                     break
-                op_code, data = self.sock.recv_data(True)
+                op_code, frame = self.sock.recv_data_frame(True)
                 if op_code == ABNF.OPCODE_CLOSE:
                     break
                 elif op_code == ABNF.OPCODE_PING:
-                    self._callback(self.on_ping, data)
+                    self._callback(self.on_ping, frame.data)
                 elif op_code == ABNF.OPCODE_PONG:
-                    self._callback(self.on_pong, data)
+                    self._callback(self.on_pong, frame.data)
+                elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
+                    self._callback(self.on_cont_message, frame.data, frame.fin)
                 else:
-                    self._callback(self.on_message, data)
+                    self._callback(self.on_message, frame.data)
         except Exception as e:
             self._callback(self.on_error, e)
         finally:
