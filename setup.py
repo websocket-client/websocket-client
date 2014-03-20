@@ -24,7 +24,6 @@ setup(
         "Intended Audience :: Developers",
     ],
     keywords='websockets',
-#    py_modules=["websocket"],
     scripts=["bin/wsdump.py"],
     install_requires=['backports.ssl_match_hostname'],
     packages=["tests", "websocket"],
