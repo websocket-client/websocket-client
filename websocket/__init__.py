@@ -145,8 +145,8 @@ def _parse_url(url):
     scheme, url = url.split(":", 1)
 
     parsed = urlparse(url, scheme="http")
-    if parsed.hostname:
-        hostname = parsed.hostname
+    if parsed.netloc:
+        hostname = parsed.netloc
     else:
         raise ValueError("hostname is invalid")
     port = 0
