@@ -42,7 +42,6 @@ import uuid
 import hashlib
 import base64
 import threading
-import time
 import logging
 import traceback
 import sys
@@ -73,6 +72,14 @@ STATUS_MESSAGE_TOO_BIG = 1009
 STATUS_INVALID_EXTENSION = 1010
 STATUS_UNEXPECTED_CONDITION = 1011
 STATUS_TLS_HANDSHAKE_ERROR = 1015
+
+DEFAULT_SOCKET_OPTION = (
+    (socket.SOL_TCP, socket.TCP_NODELAY, 1),
+    (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+    (socket.SOL_TCP, socket.TCP_KEEPIDLE, 30),
+    (socket.SOL_TCP, socket.TCP_KEEPINTVL, 10),
+    (socket.SOL_TCP, socket.TCP_KEEPCNT, 3)    
+  )
 
 logger = logging.getLogger()
 
@@ -382,7 +389,8 @@ class WebSocket(object):
             sslopt = {}
         self.connected = False
         self.sock = socket.socket()
-        self.sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
+        for opts in DEFAULT_SOCKET_OPTION:
+            self.sock.setsockopt(*opts)
         for opts in sockopt:
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
