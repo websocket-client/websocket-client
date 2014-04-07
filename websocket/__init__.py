@@ -954,7 +954,7 @@ class WebSocketApp(object):
                 r, w, e = select.select((self.sock.sock, ), (), (), ping_timeout)
                 if not self.keep_running:
                     break
-                if ping_timeout and  time.time() - self.last_ping_tm > ping_timeout:
+                if ping_timeout and self.last_ping_tm and time.time() - self.last_ping_tm > ping_timeout:
                     self.last_ping_tm = 0
                     raise WebSocketTimeoutException()
                     
