@@ -862,7 +862,7 @@ class WebSocketApp(object):
             self._callback(self.on_error, e)
         finally:
             if thread:
-                thread.join()
+                self.keep_running = False
             self.sock.close()
             self._callback(self.on_close)
             self.sock = None
