@@ -903,8 +903,7 @@ class WebSocketApp(object):
         self.sock.close()
 
     def _send_ping(self, interval):
-        while self.keep_running:
-            time.sleep(interval)
+        while not event.wait(interval):
             self.sock.ping()
 
     def run_forever(self, sockopt=None, sslopt=None, ping_interval=0):
@@ -932,7 +931,8 @@ class WebSocketApp(object):
             self._callback(self.on_open)
 
             if ping_interval:
-                thread = threading.Thread(target=self._send_ping, args=(ping_interval,))
+                event  = threading.Event()
+                thread = threading.Thread(target=self._send_ping, args=(ping_interval, event))
                 thread.setDaemon(True)
                 thread.start()
 
@@ -955,6 +955,8 @@ class WebSocketApp(object):
             self._callback(self.on_error, e)
         finally:
             if thread:
+                event.set()
+                thread.join()
                 self.keep_running = False
             self.sock.close()
             self._callback(self.on_close)
