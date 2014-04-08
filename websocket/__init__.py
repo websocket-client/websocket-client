@@ -45,6 +45,7 @@ import time
 import logging
 import traceback
 import sys
+import select
 
 """
 websocket python client.
@@ -601,9 +602,12 @@ class WebSocket(object):
             return data.decode("utf-8")
         return data
 
-    def recv_data(self):
+    def recv_data(self, control_frame=False):
         """
         Recieve data with operation code.
+
+        control_frame: a boolean flag indicating whether to return control frame
+        data, defaults to False
 
         return  value: tuple of operation code and string(byte array) value.
         """
@@ -620,16 +624,21 @@ class WebSocket(object):
                     self._cont_data[1] += frame.data
                 else:
                     self._cont_data = [frame.opcode, frame.data]
-                
+
                 if frame.fin:
                     data = self._cont_data
                     self._cont_data = None
                     return data
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
-                return (frame.opcode, None)
+                return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_PING:
                 self.pong(frame.data)
+                if control_frame:
+                    return (frame.opcode, frame.data)
+            elif frame.opcode == ABNF.OPCODE_PONG:
+                if control_frame:
+                    return (frame.opcode, frame.data)
 
     def recv_frame(self):
         """
@@ -705,6 +714,7 @@ class WebSocket(object):
                 raise ValueError("code is invalid range")
 
             try:
+                self.connected = False
                 self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
                 timeout = self.sock.gettimeout()
                 self.sock.settimeout(3)
@@ -720,10 +730,9 @@ class WebSocket(object):
                 self.sock.shutdown(socket.SHUT_RDWR)
             except:
                 pass
-        self._closeInternal()
+            self._closeInternal()
 
     def _closeInternal(self):
-        self.connected = False
         self.sock.close()
 
     def _send(self, data):
@@ -774,7 +783,8 @@ class WebSocketApp(object):
     """
     def __init__(self, url, header=[],
                  on_open=None, on_message=None, on_error=None,
-                 on_close=None, keep_running=True, get_mask_key=None):
+                 on_close=None, on_ping=None, on_pong=None,
+                 keep_running=True, get_mask_key=None):
         """
         url: websocket url.
         header: custom header for websocket handshake.
@@ -801,6 +811,8 @@ class WebSocketApp(object):
         self.on_message = on_message
         self.on_error = on_error
         self.on_close = on_close
+        self.on_ping = on_ping
+        self.on_pong = on_pong
         self.keep_running = keep_running
         self.get_mask_key = get_mask_key
         self.sock = None
@@ -854,11 +866,19 @@ class WebSocketApp(object):
                 thread.setDaemon(True)
                 thread.start()
 
-            while self.keep_running:
-                data = self.sock.recv()
-                if data is None:
+            while True:
+                select.select((self.sock.sock, ), (), ())
+                if not self.keep_running:
                     break
-                self._callback(self.on_message, data)
+                op_code, data = self.sock.recv_data(True)
+                if op_code == ABNF.OPCODE_CLOSE:
+                    break
+                elif op_code == ABNF.OPCODE_PING:
+                    self._callback(self.on_ping, data)
+                elif op_code == ABNF.OPCODE_PONG:
+                    self._callback(self.on_pong, data)
+                else:
+                    self._callback(self.on_message, data)
         except Exception as e:
             self._callback(self.on_error, e)
         finally:
