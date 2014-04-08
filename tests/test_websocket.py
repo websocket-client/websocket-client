@@ -143,6 +143,30 @@ class WebSocketTest(unittest.TestCase):
 
         self.assertRaises(ValueError, ws._parse_url, "http://www.example.com/r")
 
+        p = ws._parse_url("ws://[2a03:4000:123:83::3]/r")
+        self.assertEquals(p[0], "2a03:4000:123:83::3")
+        self.assertEquals(p[1], 80)
+        self.assertEquals(p[2], "/r")
+        self.assertEquals(p[3], False)
+
+        p = ws._parse_url("ws://[2a03:4000:123:83::3]:8080/r")
+        self.assertEquals(p[0], "2a03:4000:123:83::3")
+        self.assertEquals(p[1], 8080)
+        self.assertEquals(p[2], "/r")
+        self.assertEquals(p[3], False)
+
+        p = ws._parse_url("wss://[2a03:4000:123:83::3]/r")
+        self.assertEquals(p[0], "2a03:4000:123:83::3")
+        self.assertEquals(p[1], 443)
+        self.assertEquals(p[2], "/r")
+        self.assertEquals(p[3], True)
+
+        p = ws._parse_url("wss://[2a03:4000:123:83::3]:8080/r")
+        self.assertEquals(p[0], "2a03:4000:123:83::3")
+        self.assertEquals(p[1], 8080)
+        self.assertEquals(p[2], "/r")
+        self.assertEquals(p[3], True)
+
     def testWSKey(self):
         key = ws._create_sec_websocket_key()
         self.assertTrue(key != 24)
