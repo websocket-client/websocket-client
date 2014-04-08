@@ -115,7 +115,7 @@ positional arguments:
 
 optional arguments:
   -h, --help                           show this help message and exit
-
+WebSocketApp
   -v VERBOSE, --verbose VERBOSE    set verbose mode. If set to 1, show opcode. If set to 2, enable to trace websocket module
 
 example::
@@ -129,6 +129,7 @@ ChangeLog
 
 - v0.13.0
 
+  - MemoryError when receiving large amount of data (~60 MB) at once(ISSUE#59)
   - Controlling fragmentation(ISSUE#55)
   - server certificate validation(ISSUE#56)
   - PyPI tarball is missing test_websocket.py(ISSUE#65)
