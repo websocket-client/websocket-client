@@ -251,7 +251,7 @@ class ABNF(object):
         }
 
     # data length threashold.
-    LENGTH_7  = 0x7d
+    LENGTH_7  = 0x7e
     LENGTH_16 = 1 << 16
     LENGTH_63 = 1 << 63
 
