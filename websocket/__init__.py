@@ -73,6 +73,14 @@ STATUS_INVALID_EXTENSION = 1010
 STATUS_UNEXPECTED_CONDITION = 1011
 STATUS_TLS_HANDSHAKE_ERROR = 1015
 
+DEFAULT_SOCKET_OPTION = (
+    (socket.SOL_TCP, socket.TCP_NODELAY, 1),
+    (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+    (socket.SOL_TCP, socket.TCP_KEEPIDLE, 30),
+    (socket.SOL_TCP, socket.TCP_KEEPINTVL, 10),
+    (socket.SOL_TCP, socket.TCP_KEEPCNT, 3)    
+  )
+
 logger = logging.getLogger()
 
 
@@ -383,7 +391,8 @@ class WebSocket(object):
             sslopt = {}
         self.connected = False
         self.sock = socket.socket()
-        self.sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
+        for opts in DEFAULT_SOCKET_OPTION:
+            self.sock.setsockopt(*opts)
         for opts in sockopt:
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
@@ -885,6 +894,7 @@ class WebSocketApp(object):
         self.keep_running = keep_running
         self.get_mask_key = get_mask_key
         self.sock = None
+        self.last_ping_tm = 0
 
     def send(self, data, opcode=ABNF.OPCODE_TEXT):
         """
@@ -904,9 +914,10 @@ class WebSocketApp(object):
 
     def _send_ping(self, interval, event):
         while not event.wait(interval):
+            self.last_ping_tm = time.time()
             self.sock.ping()
 
-    def run_forever(self, sockopt=None, sslopt=None, ping_interval=0):
+    def run_forever(self, sockopt=None, sslopt=None, ping_interval=0, ping_timeout=None):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -915,7 +926,10 @@ class WebSocketApp(object):
         sslopt: ssl socket optional dict.
         ping_interval: automatically send "ping" command every specified period(second)
             if set to 0, not send automatically.
+        ping_timeout: timeout(second) if the pong message is not recieved.
         """
+        if ping_timeout<=0:
+            ping_timeout = None
         if sockopt is None:
             sockopt = []
         if sslopt is None:
@@ -937,20 +951,25 @@ class WebSocketApp(object):
                 thread.start()
 
             while True:
-                select.select((self.sock.sock, ), (), ())
+                r, w, e = select.select((self.sock.sock, ), (), (), ping_timeout)
                 if not self.keep_running:
                     break
-                op_code, frame = self.sock.recv_data_frame(True)
-                if op_code == ABNF.OPCODE_CLOSE:
-                    break
-                elif op_code == ABNF.OPCODE_PING:
-                    self._callback(self.on_ping, frame.data)
-                elif op_code == ABNF.OPCODE_PONG:
-                    self._callback(self.on_pong, frame.data)
-                elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
-                    self._callback(self.on_cont_message, frame.data, frame.fin)
-                else:
-                    self._callback(self.on_message, frame.data)
+                if ping_timeout and self.last_ping_tm and time.time() - self.last_ping_tm > ping_timeout:
+                    self.last_ping_tm = 0
+                    raise WebSocketTimeoutException()
+                    
+                if r:
+                    op_code, frame = self.sock.recv_data_frame(True)
+                    if op_code == ABNF.OPCODE_CLOSE:
+                        break
+                    elif op_code == ABNF.OPCODE_PING:
+                        self._callback(self.on_ping, frame.data)
+                    elif op_code == ABNF.OPCODE_PONG:
+                        self._callback(self.on_pong, frame.data)
+                    elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
+                        self._callback(self.on_cont_message, frame.data, frame.fin)
+                    else:
+                        self._callback(self.on_message, frame.data)
         except Exception as e:
             self._callback(self.on_error, e)
         finally:
