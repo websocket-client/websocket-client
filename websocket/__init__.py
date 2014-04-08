@@ -276,7 +276,7 @@ class ABNF(object):
                 + " data=" + str(self.data)
 
     @staticmethod
-    def create_frame(data, opcode):
+    def create_frame(data, opcode, fin=1):
         """
         create frame to send text, binary and other data.
 
@@ -285,11 +285,13 @@ class ABNF(object):
             data value is conveted into unicode string, automatically.
 
         opcode: operation code. please see OPCODE_XXX.
+
+        fin: fin flag. if set to 0, create continue fragmentation.
         """
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, str):
             data = data.encode("utf-8")
         # mask must be set if send data from client
-        return ABNF(1, 0, 0, 0, opcode, 1, data)
+        return ABNF(fin, 0, 0, 0, opcode, 1, data)
 
     def format(self):
         """
@@ -562,6 +564,23 @@ class WebSocket(object):
         if isinstance(payload, str):
             payload = bytes(payload, "utf-8")
         frame = ABNF.create_frame(payload, opcode)
+        return self.send_frame(frame)
+
+    def send_frame(self, frame):
+        """
+        Send the data frame.
+
+        frame: frame data created  by ABNF.create_frame
+
+        >>> ws = create_connection("ws://echo.websocket.org/")
+        >>> frame = ABNF.create_frame("Hello", ABNF.OPCODE_TEXT)
+        >>> ws.send_frame(frame)
+        >>> cont_frame = ABNF.create_frame("My name is ", ABNF.OPCODE_CONT, 0)
+        >>> ws.send_frame(frame)
+        >>> cont_frame = ABNF.create_frame("Foo Bar", ABNF.OPCODE_CONT, 1)
+        >>> ws.send_frame(frame)
+
+        """
         if self.get_mask_key:
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
