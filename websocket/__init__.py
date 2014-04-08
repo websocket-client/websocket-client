@@ -902,7 +902,7 @@ class WebSocketApp(object):
         self.keep_running = False
         self.sock.close()
 
-    def _send_ping(self, interval):
+    def _send_ping(self, interval, event):
         while not event.wait(interval):
             self.sock.ping()
 
