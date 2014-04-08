@@ -9,7 +9,7 @@ websocket-client supports only hybi-13.
 How about Python 2
 ===========================
 
-py2( https://github.com/liris/websocket-client ) branch is for python 2. Every test case is passed.
+py3( https://github.com/liris/websocket-client ) branch is for python 3. Every test case is passed.
 If you are using python2, please check it.
 
 
@@ -25,7 +25,7 @@ This module is tested on Python 3.3.
 
 Check out git repository of py3 branch, and type "python3 setup.py install".
 
-This module does not depend on any other module.
+This module does not depend on any other modules.
 
 Example
 ============
@@ -126,6 +126,16 @@ example::
 
 ChangeLog
 ============
+
+- v0.13.0
+
+  -  Controlling fragmentation(ISSUE#55)
+  - server certificate validation(ISSUE#56)
+  - PyPI tarball is missing test_websocket.py(ISSUE#65)
+  - Payload length encoding bug(ISSUE#58)
+  - disable Nagle algorithm by default(ISSUE#41)
+  - Better event loop in WebSocketApp(ISSUE#63)
+  - Skip tests that require Internet access by default(ISSUE#66)
 
 - v0.12.0
 

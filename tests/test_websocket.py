@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 #
 
+import sys
+sys.path[0:0] = [""]
+
 import base64
 import socket
 try:

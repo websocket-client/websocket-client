@@ -24,6 +24,7 @@ import socket
 try:
     import ssl
     from ssl import SSLError
+    from ssl import match_hostname
     HAVE_SSL = True
 except ImportError:
     HAVE_SSL = False
@@ -445,11 +446,11 @@ class WebSocket(object):
         self.sock.connect((hostname, port))
         if is_secure:
             if HAVE_SSL:
-                if self.sslopt is None:
-                    sslopt = {}
-                else:
-                    sslopt = self.sslopt
+                sslopt = dict(cert_reqs=ssl.CERT_REQUIRED,
+                    ca_certs=os.path.join(os.path.dirname(__file__), "cacert.pem"))
+                sslopt.update(self.sslopt)
                 self.sock = ssl.wrap_socket(self.sock, **sslopt)
+                match_hostname(self.sock.getpeercert(), hostname)
             else:
                 raise WebSocketException("SSL not available.")
 
