@@ -928,7 +928,7 @@ class WebSocketApp(object):
             if set to 0, not send automatically.
         ping_timeout: timeout(second) if the pong message is not recieved.
         """
-        if ping_timeout<=0:
+        if not ping_timeout or ping_timeout<=0:
             ping_timeout = None
         if sockopt is None:
             sockopt = []
