@@ -378,6 +378,7 @@ class WebSocket(object):
             sslopt = {}
         self.connected = False
         self.sock = socket.socket()
+        self.sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         for opts in sockopt:
             self.sock.setsockopt(*opts)
         self.sslopt = sslopt
