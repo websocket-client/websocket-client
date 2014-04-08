@@ -4,6 +4,7 @@
 import sys
 sys.path[0:0] = [""]
 
+import os.path
 import base64
 import socket
 try:
@@ -27,6 +28,7 @@ import websocket as ws
 #      "RFC6455: 5.4. Fragmentation"
 #
 TEST_FRAGMENTATION = True
+TEST_WITH_INTERNET = False
 
 TRACABLE = False
 
@@ -66,7 +68,8 @@ class HeaderSockMock(SockMock):
 
     def __init__(self, fname):
         SockMock.__init__(self)
-        with open(fname, "rb") as f:
+        path = os.path.join(os.path.dirname(__file__), fname)
+        with open(path, "rb") as f:
             self.add_packet(f.read())
 
 
@@ -221,7 +224,7 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet(b"foo")
         s.add_packet(socket.timeout())
         s.add_packet(b"bar")
-        s.add_packet(SSLError("The read operation timed out"))
+        s.add_packet(socket.timeout("The read operation timed out"))
         s.add_packet(b"baz")
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock._recv_strict(9)
@@ -312,6 +315,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(s.sent[0], b"\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
                                     b"\x15\n\n\x17")
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocket(self):
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEqual(s, None)
@@ -324,6 +328,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(result, "こにゃにゃちは、世界")
         s.close()
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testPingPong(self):
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEqual(s, None)
@@ -347,11 +352,7 @@ class WebSocketTest(unittest.TestCase):
         except:
             pass
 
-    def testWebSocketWihtCustomHeader(self):
-        s = ws.create_connection("ws://echo.websocket.org/",
-                                  headers={"User-Agent": "PythonWebsocketClient"})
-        self.assertNotEqual(s, None)
-
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocketWihtCustomHeader(self):
         s = ws.create_connection("ws://echo.websocket.org/",
                                  headers={"User-Agent": "PythonWebsocketClient"})
@@ -361,6 +362,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(result, "Hello, World")
         s.close()
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testAfterClose(self):
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEqual(s, None)
@@ -405,6 +407,7 @@ class WebSocketAppTest(unittest.TestCase):
         WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testKeepRunning(self):
         """ A WebSocketApp should keep running as long as its self.keep_running
         is not False (in the boolean context).
@@ -434,6 +437,7 @@ class WebSocketAppTest(unittest.TestCase):
         self.assertEqual(True, WebSocketAppTest.keep_running_open)
         self.assertEqual(False, WebSocketAppTest.keep_running_close)
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockMaskKey(self):
         """ A WebSocketApp should forward the received mask_key function down
         to the actual socket.
