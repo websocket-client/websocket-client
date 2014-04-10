@@ -985,7 +985,7 @@ class WebSocketApp(object):
         if callback:
             try:
                 callback(self, *args)
-            except Exception, e:
+            except Exception as e:
                 logger.error(e)
                 if logger.isEnabledFor(logging.DEBUG):
                     _, _, tb = sys.exc_info()
