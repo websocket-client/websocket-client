@@ -790,7 +790,7 @@ class WebSocket(object):
                 self.sock.shutdown(socket.SHUT_RDWR)
             except:
                 pass
-            self._closeInternal()
+        self._closeInternal()
 
     def _closeInternal(self):
         self.sock.close()

@@ -344,12 +344,13 @@ class WebSocketTest(unittest.TestCase):
         s.pong("Hi")
         s.close()
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSecureWebSocket(self):
-        try:
+        if 1:
             import ssl
             s = ws.create_connection("wss://echo.websocket.org/")
             self.assertNotEquals(s, None)
-            self.assert_(isinstance(s.sock, ssl.SSLSock))
+            self.assert_(isinstance(s.sock, ssl.SSLSocket))
             s.send("Hello, World")
             result = s.recv()
             self.assertEquals(result, "Hello, World")
@@ -357,8 +358,8 @@ class WebSocketTest(unittest.TestCase):
             result = s.recv()
             self.assertEquals(result, "こにゃにゃちは、世界")
             s.close()
-        except:
-            pass
+        #except:
+        #    pass
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocketWihtCustomHeader(self):
