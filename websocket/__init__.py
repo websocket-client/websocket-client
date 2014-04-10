@@ -391,6 +391,7 @@ class WebSocket(object):
             sslopt = {}
         self.connected = False
         self.sock = socket.socket()
+        self.raw_sock = None
         for opts in DEFAULT_SOCKET_OPTION:
             self.sock.setsockopt(*opts)
         for opts in sockopt:
@@ -801,7 +802,7 @@ class WebSocket(object):
                 self.sock.shutdown(socket.SHUT_RDWR)
             except:
                 pass
-            self._closeInternal()
+        self._closeInternal()
 
     def _closeInternal(self):
         self.sock.close()
