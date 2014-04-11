@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 #
+from __future__ import with_statement
+
+import six
 
 import sys
 sys.path[0:0] = [""]
@@ -34,7 +37,7 @@ TRACABLE = False
 
 
 def create_mask_key(n):
-    return b"abcd"
+    return six.b("abcd")
 
 
 class SockMock(object):
@@ -43,8 +46,8 @@ class SockMock(object):
         self.sent = []
 
     def add_packet(self, data):
-        if isinstance(data, str):
-            data = bytes(data, "utf-8")
+        if isinstance(data, six.string_types):
+            data = six.b(data)
         self.data.append(data)
 
     def recv(self, bufsize):
@@ -170,7 +173,7 @@ class WebSocketTest(unittest.TestCase):
     def testWSKey(self):
         key = ws._create_sec_websocket_key()
         self.assertTrue(key != 24)
-        self.assertTrue("¥n" not in key)
+        self.assertTrue(six.b("¥n") not in key)
 
     def testWsUtils(self):
         sock = ws.WebSocket()
@@ -220,24 +223,24 @@ class WebSocketTest(unittest.TestCase):
         sock.sock.close()
         s = sock.sock = HeaderSockMock("data/header01.txt")
         sock.send("Hello")
-        self.assertEqual(s.sent[0], b"\x81\x85abcd)\x07\x0f\x08\x0e")
+        self.assertEqual(s.sent[0], six.b("\x81\x85abcd)\x07\x0f\x08\x0e"))
 
         sock.send("こんにちは")
-        self.assertEqual(s.sent[1], b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        self.assertEqual(s.sent[1], six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
 
         sock.send(u"こんにちは")
-        self.assertEqual(s.sent[1], b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        self.assertEqual(s.sent[1], six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
 
     def testRecv(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
         sock.sock.close()
         s = sock.sock = SockMock()
-        s.add_packet(b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        s.add_packet(six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
         data = sock.recv()
         self.assertEqual(data, "こんにちは")
 
-        s.add_packet(b"\x81\x85abcd)\x07\x0f\x08\x0e")
+        s.add_packet(six.b("\x81\x85abcd)\x07\x0f\x08\x0e"))
         data = sock.recv()
         self.assertEqual(data, "Hello")
 
@@ -245,17 +248,17 @@ class WebSocketTest(unittest.TestCase):
         sock = ws.WebSocket()
         sock.sock.close()
         s = sock.sock = SockMock()
-        s.add_packet(b"foo")
+        s.add_packet(six.b("foo"))
         s.add_packet(socket.timeout())
-        s.add_packet(b"bar")
-        s.add_packet(socket.timeout("The read operation timed out"))
-        s.add_packet(b"baz")
+        s.add_packet(six.b("bar"))
+        s.add_packet(SSLError("The read operation timed out"))
+        s.add_packet(six.b("baz"))
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock._recv_strict(9)
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock._recv_strict(9)
         data = sock._recv_strict(9)
-        self.assertEqual(data, b"foobarbaz")
+        self.assertEqual(data, six.b("foobarbaz"))
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             data = sock._recv_strict(1)
 
@@ -263,11 +266,11 @@ class WebSocketTest(unittest.TestCase):
         sock = ws.WebSocket()
         sock.sock.close()
         s = sock.sock = SockMock()
-        s.add_packet(b"\x81")
+        s.add_packet(six.b("\x81"))
         s.add_packet(socket.timeout())
-        s.add_packet(b"\x8dabcd\x29\x07\x0f\x08\x0e")
+        s.add_packet(six.b("\x8dabcd\x29\x07\x0f\x08\x0e"))
         s.add_packet(socket.timeout())
-        s.add_packet(b"\x4e\x43\x33\x0e\x10\x0f\x00\x40")
+        s.add_packet(six.b("\x4e\x43\x33\x0e\x10\x0f\x00\x40"))
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock.recv()
         with self.assertRaises(ws.WebSocketTimeoutException):
@@ -283,9 +286,9 @@ class WebSocketTest(unittest.TestCase):
         sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Brevity is "
-        s.add_packet(b"\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C")
+        s.add_packet(six.b("\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
         # OPCODE=CONT, FIN=1, MSG="the soul of wit"
-        s.add_packet(b"\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
+        s.add_packet(six.b("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17"))
         data = sock.recv()
         self.assertEqual(data, "Brevity is the soul of wit")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
@@ -297,7 +300,7 @@ class WebSocketTest(unittest.TestCase):
         sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=CONT, FIN=1, MSG="the soul of wit"
-        s.add_packet(b"\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
+        s.add_packet(six.b("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17"))
         self.assertRaises(ws.WebSocketException, sock.recv)
 
     @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
@@ -306,13 +309,13 @@ class WebSocketTest(unittest.TestCase):
         sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Once more unto the breach, "
-        s.add_packet(b"\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15" \
-                     b"\rC\x10\t\x07C\x06\x13\x07\x02\x07\tNC")
+        s.add_packet(six.b("\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15" \
+                     "\rC\x10\t\x07C\x06\x13\x07\x02\x07\tNC"))
         # OPCODE=CONT, FIN=0, MSG="dear friends, "
-        s.add_packet(b"\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07" \
-                     b"\x17MB")
+        s.add_packet(six.b("\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07" \
+                     "\x17MB"))
         # OPCODE=CONT, FIN=1, MSG="once more"
-        s.add_packet(b"\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04")
+        s.add_packet(six.b("\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04"))
         data = sock.recv()
         self.assertEqual(data, "Once more unto the breach, dear friends, " \
                                "once more")
@@ -326,18 +329,18 @@ class WebSocketTest(unittest.TestCase):
         sock.sock.close()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Too much "
-        s.add_packet(b"\x01\x89abcd5\r\x0cD\x0c\x17\x00\x0cA")
+        s.add_packet(six.b("\x01\x89abcd5\r\x0cD\x0c\x17\x00\x0cA"))
         # OPCODE=PING, FIN=1, MSG="Please PONG this"
-        s.add_packet(b"\x89\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17")
+        s.add_packet(six.b("\x89\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17"))
         # OPCODE=CONT, FIN=1, MSG="of a good thing"
-        s.add_packet(b"\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
-                     b"\x08\x0c\x04")
+        s.add_packet(six.b("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
+                     "\x08\x0c\x04"))
         data = sock.recv()
         self.assertEqual(data, "Too much of a good thing")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
-        self.assertEqual(s.sent[0], b"\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
-                                    b"\x15\n\n\x17")
+        self.assertEqual(s.sent[0], six.b("\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
+                                    "\x15\n\n\x17"))
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocket(self):
