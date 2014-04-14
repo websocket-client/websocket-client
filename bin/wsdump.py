@@ -2,6 +2,7 @@
 
 import argparse
 import code
+import six
 import sys
 import threading
 import websocket
@@ -45,11 +46,15 @@ class InteractiveConsole(code.InteractiveConsole):
         sys.stdout.flush()
 
     def raw_input(self, prompt):
-        line = raw_input(prompt)
-        if ENCODING and ENCODING != "utf-8" and not isinstance(line, unicode):
+        if six.PY3:
+            line = input(prompt)
+        else:
+            line = raw_input(prompt)
+
+        if ENCODING and ENCODING != "utf-8" and not isinstance(line, six.text_type):
             line = line.decode(ENCODING).encode("utf-8")
-        elif isinstance(line, unicode):
-            line = encode("utf-8")
+        elif isinstance(line, six.text_type):
+            line = line.encode("utf-8")
 
         return line
 
