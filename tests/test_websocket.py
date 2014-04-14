@@ -486,6 +486,7 @@ class WebSocketAppTest(unittest.TestCase):
 
 
 class SockOptTest(unittest.TestCase):
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockOpt(self):
         sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         s = ws.WebSocket(sockopt=sockopt)
