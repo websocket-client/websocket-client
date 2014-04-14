@@ -564,7 +564,7 @@ class WebSocket(object):
 
         while True:
             line = self._recv_line()
-            if line == "\r\n":
+            if line == "\r\n" or line == "\n":
                 break
             line = line.strip()
             if traceEnabled:
@@ -821,10 +821,12 @@ class WebSocket(object):
         try:
             return self.sock.send(data)
         except socket.timeout as e:
-            raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            raise WebSocketTimeoutException(message)
         except Exception as e:
-            if "timed out" in e.message:
-                raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            if "timed out" in message:
+                raise WebSocketTimeoutException(message)
             else:
                 raise
 
@@ -832,16 +834,17 @@ class WebSocket(object):
         try:
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
-            raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            raise WebSocketTimeoutException(message)
         except SSLError as e:
-            if e.message == "The read operation timed out":
-                raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            if message == "The read operation timed out":
+                raise WebSocketTimeoutException(message)
             else:
                 raise
         if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes
-
 
     def _recv_strict(self, bufsize):
         shortage = bufsize - sum(len(x) for x in self._recv_buffer)
