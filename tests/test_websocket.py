@@ -241,7 +241,7 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet("baz")
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock._recv_strict(9)
-        with self.assertRaises(ws.WebSocketTimeoutException):
+        with self.assertRaises(SSLError):
             data = sock._recv_strict(9)
         data = sock._recv_strict(9)
         self.assertEquals(data, "foobarbaz")
