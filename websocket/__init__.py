@@ -229,7 +229,7 @@ _MAX_CHAR_BYTE = (1<<8) -1
 
 def _create_sec_websocket_key():
     uid = uuid.uuid4()
-    return base64.encodestring(uid.bytes).strip()
+    return base64.encodebytes(uid.bytes).strip()
 
 
 _HEADERS_TO_CHECK = {
@@ -327,12 +327,12 @@ class ABNF(object):
                               | self.rsv1 << 6 | self.rsv2 << 5 | self.rsv3 << 4
                               | self.opcode,))
         if length < ABNF.LENGTH_7:
-            frame_header += bytes(self.mask << 7 | length)
+            frame_header += bytes((self.mask << 7 | length,))
         elif length < ABNF.LENGTH_16:
-            frame_header += bytes(self.mask << 7 | 0x7e)
+            frame_header += bytes((self.mask << 7 | 0x7e,))
             frame_header += struct.pack("!H", length)
         else:
-            frame_header += bytes(self.mask << 7 | 0x7f)
+            frame_header += bytes((self.mask << 7 | 0x7f,))
             frame_header += struct.pack("!Q", length)
 
         if not self.mask:
@@ -500,7 +500,7 @@ class WebSocket(object):
             headers.append("Origin: http://%s" % hostport)
 
         key = _create_sec_websocket_key()
-        headers.append("Sec-WebSocket-Key: %s" % key)
+        headers.append("Sec-WebSocket-Key: %s" % key.decode("utf-8"))
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
         if "header" in options:
             headers.extend(options["header"])
@@ -509,6 +509,8 @@ class WebSocket(object):
         headers.append("")
 
         header_str = "\r\n".join(headers)
+        print(header_str)
+
         self._send(six.b(header_str))
         if traceEnabled:
             logger.debug("--- request header ---")
@@ -529,24 +531,25 @@ class WebSocket(object):
 
     def _validate_header(self, headers, key):
         for k, v in six.iteritems(_HEADERS_TO_CHECK):
-            r = headers.get(k, None)
+            r = headers.get(six.b(k), None)
             if not r:
                 return False
             r = r.lower()
-            if v != r:
+            if six.b(v) != r:
                 return False
 
-        result = headers.get("sec-websocket-accept", None)
+        result = headers.get(six.b("sec-websocket-accept")  , None)
         if not result:
             return False
         result = result.lower()
 
-        value = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-        digest = hashlib.sha1(six.b(value)).digest()
+        value = key + six.b("258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+        digest = hashlib.sha1(value).digest()
         if six.PY3:
-            hashed = base64.encodebytes(digest).strip().decode("utf-8").lower()
+            hashed = base64.encodebytes(digest).strip().lower()
         else:
-            hashed = base64.encodestring(digest).strip().lower()
+            hashed = base64.encode(digest).strip().lower()
+
         return hashed == result
 
     def _read_headers(self):
@@ -556,7 +559,7 @@ class WebSocket(object):
             logger.debug("--- response header ---")
         while True:
             line = self._recv_line()
-            if line == "\r\n":
+            if line == six.b("\r\n"):
                 break
             line = line.strip()
             if traceEnabled:
@@ -588,7 +591,7 @@ class WebSocket(object):
         opcode: operation code to send. Please see OPCODE_XXX.
         """
         if isinstance(payload, six.string_types):
-            payload = six.b(payload)
+            payload = payload.encode("utf-8")
         frame = ABNF.create_frame(payload, opcode)
         return self.send_frame(frame)
 
@@ -990,7 +993,7 @@ class WebSocketApp(object):
                 if ping_timeout and self.last_ping_tm and time.time() - self.last_ping_tm > ping_timeout:
                     self.last_ping_tm = 0
                     raise WebSocketTimeoutException()
-                    
+
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)
                     if op_code == ABNF.OPCODE_CLOSE:

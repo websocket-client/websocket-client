@@ -31,7 +31,7 @@ import websocket as ws
 #      "RFC6455: 5.4. Fragmentation"
 #
 TEST_FRAGMENTATION = True
-TEST_WITH_INTERNET = False
+TEST_WITH_INTERNET = True
 
 TRACABLE = False
 
@@ -178,30 +178,30 @@ class WebSocketTest(unittest.TestCase):
     def testWsUtils(self):
         sock = ws.WebSocket()
 
-        key = "c6b8hTg4EeGb2gQMztV1/g=="
+        key = six.b("c6b8hTg4EeGb2gQMztV1/g==")
         required_header = {
-            "upgrade": "websocket",
-            "connection": "upgrade",
-            "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0=",
+            six.b("upgrade"): six.b("websocket"),
+            six.b("connection"): six.b("upgrade"),
+            six.b("sec-websocket-accept"): six.b("Kxep+hNu9n51529fGidYu7a3wO0="),
             }
         self.assertEqual(sock._validate_header(required_header, key), True)
 
         header = required_header.copy()
-        header["upgrade"] = "http"
+        header[six.b("upgrade")] = six.b("http")
         self.assertEqual(sock._validate_header(header, key), False)
-        del header["upgrade"]
-        self.assertEqual(sock._validate_header(header, key), False)
-
-        header = required_header.copy()
-        header["connection"] = "something"
-        self.assertEqual(sock._validate_header(header, key), False)
-        del header["connection"]
+        del header[six.b("upgrade")]
         self.assertEqual(sock._validate_header(header, key), False)
 
         header = required_header.copy()
-        header["sec-websocket-accept"] = "something"
+        header[six.b("connection")] = six.b("something")
         self.assertEqual(sock._validate_header(header, key), False)
-        del header["sec-websocket-accept"]
+        del header[six.b("connection")]
+        self.assertEqual(sock._validate_header(header, key), False)
+
+        header = required_header.copy()
+        header[six.b("sec-websocket-accept")] = six.b("something")
+        self.assertEqual(sock._validate_header(header, key), False)
+        del header[six.b("sec-websocket-accept")]
         self.assertEqual(sock._validate_header(header, key), False)
         sock.close()
 
@@ -211,7 +211,7 @@ class WebSocketTest(unittest.TestCase):
         sock.sock = HeaderSockMock("data/header01.txt")
         status, header = sock._read_headers()
         self.assertEqual(status, 101)
-        self.assertEqual(header["connection"], "upgrade")
+        self.assertEqual(header[six.b("connection")], six.b("upgrade"))
 
         sock.sock = HeaderSockMock("data/header02.txt")
         self.assertRaises(ws.WebSocketException, sock._read_headers)
@@ -251,7 +251,10 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet(six.b("foo"))
         s.add_packet(socket.timeout())
         s.add_packet(six.b("bar"))
-        s.add_packet(SSLError("The read operation timed out"))
+        # python2 raise SSLError for ssl socket timeout.
+        # but python3 raise socket.timeout.
+        # s.add_packet(SSLError("The read operation timed out"))
+        s.add_packet(socket.timeout("The read operation timed out"))
         s.add_packet(six.b("baz"))
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock._recv_strict(9)
