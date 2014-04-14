@@ -232,7 +232,7 @@ _MAX_CHAR_BYTE = (1<<8) -1
 
 def _create_sec_websocket_key():
     uid = uuid.uuid4()
-    return base64.encodestring(uid.bytes).strip()
+    return base64.encodestring(uid.bytes).decode('utf-8').strip()
 
 
 _HEADERS_TO_CHECK = {

@@ -165,7 +165,7 @@ class WebSocketTest(unittest.TestCase):
     def testWSKey(self):
         key = ws._create_sec_websocket_key()
         self.assert_(key != 24)
-        self.assert_("¥n".encode('utf-8') not in key)
+        self.assert_("¥n" not in key)
 
     def testWsUtils(self):
         sock = ws.WebSocket()
