@@ -818,6 +818,10 @@ class WebSocket(object):
         self.sock.close()
 
     def _send(self, data):
+
+        if isinstance(data, six.text_type):
+            data = data.encode('utf-8')
+
         try:
             return self.sock.send(data)
         except socket.timeout as e:
