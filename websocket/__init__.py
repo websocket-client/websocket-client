@@ -347,7 +347,11 @@ class ABNF(object):
 
     def _get_masked(self, mask_key):
         s = ABNF.mask(mask_key, self.data)
-        return six.b(mask_key) + s
+
+        if isinstance(mask_key, six.text_type):
+            mask_key = mask_key.encode('utf-8')
+
+        return mask_key + s
 
     @staticmethod
     def mask(mask_key, data):
@@ -564,6 +568,7 @@ class WebSocket(object):
 
         while True:
             line = self._recv_line()
+            line = line.decode('utf-8')
             if line == "\r\n" or line == "\n":
                 break
             line = line.strip()
@@ -595,6 +600,7 @@ class WebSocket(object):
 
         opcode: operation code to send. Please see OPCODE_XXX.
         """
+
         frame = ABNF.create_frame(payload, opcode)
         return self.send_frame(frame)
 
@@ -870,9 +876,9 @@ class WebSocket(object):
         while True:
             c = self._recv(1)
             line.append(c)
-            if c == "\n":
+            if c == six.b("\n"):
                 break
-        return "".join(line)
+        return six.b("").join(line)
 
 
 class WebSocketApp(object):
@@ -930,6 +936,7 @@ class WebSocketApp(object):
         data: message to send. If you set opcode to OPCODE_TEXT, data must be utf-8 string or unicode.
         opcode: operation code of data. default is OPCODE_TEXT.
         """
+
         if self.sock.send(data, opcode) == 0:
             raise WebSocketConnectionClosedException()
 

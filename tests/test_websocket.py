@@ -65,7 +65,7 @@ class HeaderSockMock(SockMock):
     def __init__(self, fname):
         SockMock.__init__(self)
         path = os.path.join(os.path.dirname(__file__), fname)
-        self.add_packet(open(path).read())
+        self.add_packet(open(path).read().encode('utf-8'))
 
 
 class WebSocketTest(unittest.TestCase):
@@ -165,7 +165,7 @@ class WebSocketTest(unittest.TestCase):
     def testWSKey(self):
         key = ws._create_sec_websocket_key()
         self.assert_(key != 24)
-        self.assert_("¥n" not in key)
+        self.assert_(six.u("¥n") not in key)
 
     def testWsUtils(self):
         sock = ws.WebSocket()
@@ -227,7 +227,8 @@ class WebSocketTest(unittest.TestCase):
         something = "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"
         s.add_packet(something)
         data = sock.recv()
-        self.assertEquals(data.decode('utf-8'), "こんにちは")
+        data = data.decode('utf-8')
+        self.assertEquals(data, u"こんにちは")
 
         s.add_packet("\x81\x85abcd)\x07\x0f\x08\x0e")
         data = sock.recv()
