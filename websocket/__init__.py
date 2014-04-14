@@ -223,7 +223,7 @@ def create_connection(url, timeout=None, **options):
     return websock
 
 _MAX_INTEGER = (1 << 32) -1
-_AVAILABLE_KEY_CHARS = range(0x21, 0x2f + 1) + range(0x3a, 0x7e + 1)
+_AVAILABLE_KEY_CHARS = list(range(0x21, 0x2f + 1)) + list(range(0x3a, 0x7e + 1))
 _MAX_CHAR_BYTE = (1<<8) -1
 
 # ref. Websocket gets an update, and it breaks stuff.
@@ -337,6 +337,8 @@ class ABNF(object):
             frame_header += chr(self.mask << 7 | 0x7f)
             frame_header += struct.pack("!Q", length)
 
+        frame_header = six.b(frame_header)
+
         if not self.mask:
             return frame_header + self.data
         else:
@@ -345,7 +347,7 @@ class ABNF(object):
 
     def _get_masked(self, mask_key):
         s = ABNF.mask(mask_key, self.data)
-        return mask_key + "".join(s)
+        return six.b(mask_key) + s
 
     @staticmethod
     def mask(mask_key, data):
@@ -356,9 +358,16 @@ class ABNF(object):
 
         data: data to mask/unmask.
         """
+
+        if isinstance(mask_key, six.text_type):
+            mask_key = six.b(mask_key)
+
+        if isinstance(data, six.text_type):
+            data = six.b(data)
+
         _m = array.array("B", mask_key)
         _d = array.array("B", data)
-        for i in xrange(len(_d)):
+        for i in range(len(_d)):
             _d[i] ^= _m[i % 4]
         return _d.tostring()
 
@@ -540,7 +549,10 @@ class WebSocket(object):
             return False
         result = result.lower()
 
-        value = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        if isinstance(result, six.text_type):
+            result = result.encode('utf-8')
+
+        value = (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode('utf-8')
         hashed = base64.encodestring(hashlib.sha1(value).digest()).strip().lower()
         return hashed == result
 

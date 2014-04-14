@@ -165,7 +165,7 @@ class WebSocketTest(unittest.TestCase):
     def testWSKey(self):
         key = ws._create_sec_websocket_key()
         self.assert_(key != 24)
-        self.assert_("¥n" not in key)
+        self.assert_("¥n".encode('utf-8') not in key)
 
     def testWsUtils(self):
         sock = ws.WebSocket()
@@ -212,25 +212,26 @@ class WebSocketTest(unittest.TestCase):
         sock.set_mask_key(create_mask_key)
         s = sock.sock = HeaderSockMock("data/header01.txt")
         sock.send("Hello")
-        self.assertEquals(s.sent[0], "\x81\x85abcd)\x07\x0f\x08\x0e")
+        self.assertEquals(s.sent[0], six.b("\x81\x85abcd)\x07\x0f\x08\x0e"))
 
         sock.send("こんにちは")
-        self.assertEquals(s.sent[1], "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        self.assertEquals(s.sent[1], six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
 
         sock.send(u"こんにちは")
-        self.assertEquals(s.sent[1], "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        self.assertEquals(s.sent[1], six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
 
     def testRecv(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
-        s.add_packet("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
+        something = "\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"
+        s.add_packet(something)
         data = sock.recv()
-        self.assertEquals(data, "こんにちは")
+        self.assertEquals(data.decode('utf-8'), "こんにちは")
 
         s.add_packet("\x81\x85abcd)\x07\x0f\x08\x0e")
         data = sock.recv()
-        self.assertEquals(data, "Hello")
+        self.assertEquals(data.decode('utf-8'), "Hello")
 
     def testInternalRecvStrict(self):
         sock = ws.WebSocket()
@@ -262,7 +263,7 @@ class WebSocketTest(unittest.TestCase):
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock.recv()
         data = sock.recv()
-        self.assertEquals(data, "Hello, World!")
+        self.assertEquals(data.decode('utf-8'), "Hello, World!")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             data = sock.recv()
 
@@ -275,7 +276,7 @@ class WebSocketTest(unittest.TestCase):
         # OPCODE=CONT, FIN=1, MSG="the soul of wit"
         s.add_packet("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
         data = sock.recv()
-        self.assertEqual(data, "Brevity is the soul of wit")
+        self.assertEqual(data.decode('utf-8'), "Brevity is the soul of wit")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
 
@@ -300,8 +301,9 @@ class WebSocketTest(unittest.TestCase):
         # OPCODE=CONT, FIN=1, MSG="once more"
         s.add_packet("\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04")
         data = sock.recv()
-        self.assertEqual(data, "Once more unto the breach, dear friends, " \
-                               "once more")
+        self.assertEqual(
+            data.decode('utf-8'),
+            "Once more unto the breach, dear friends, once more")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
 
@@ -318,11 +320,12 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
                      "\x08\x0c\x04")
         data = sock.recv()
-        self.assertEqual(data, "Too much of a good thing")
+        self.assertEqual(data.decode('utf-8'), "Too much of a good thing")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
-        self.assertEqual(s.sent[0], "\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D" \
-                                    "\x15\n\n\x17")
+        self.assertEqual(
+            s.sent[0],
+            six.b("\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17"))
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocket(self):
