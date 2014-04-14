@@ -821,10 +821,10 @@ class WebSocket(object):
         try:
             return self.sock.send(data)
         except socket.timeout as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
             raise WebSocketTimeoutException(message)
         except Exception as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
             if "timed out" in message:
                 raise WebSocketTimeoutException(message)
             else:
@@ -834,10 +834,10 @@ class WebSocket(object):
         try:
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
             raise WebSocketTimeoutException(message)
         except SSLError as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', None))
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
             if message == "The read operation timed out":
                 raise WebSocketTimeoutException(message)
             else:
