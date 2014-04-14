@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 
+import six
 import sys
 sys.path[0:0] = [""]
 

@@ -18,8 +18,10 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
+from __future__ import print_function
 
 
+import six
 import socket
 
 try:
@@ -34,7 +36,13 @@ except ImportError:
 
     HAVE_SSL = False
 
-from urlparse import urlparse
+try:
+    # python 3
+    from urllib.parse import urlparse
+except ImportError:
+    # python 2
+    from urlparse import urlparse
+
 import os
 import array
 import struct
@@ -300,7 +308,7 @@ class ABNF(object):
 
         fin: fin flag. if set to 0, create continue fragmentation.
         """
-        if opcode == ABNF.OPCODE_TEXT and isinstance(data, unicode):
+        if opcode == ABNF.OPCODE_TEXT and isinstance(data, six.text_type):
             data = data.encode("utf-8")
         # mask must be set if send data from client
         return ABNF(fin, 0, 0, 0, opcode, 1, data)
@@ -519,7 +527,7 @@ class WebSocket(object):
         self.connected = True
 
     def _validate_header(self, headers, key):
-        for k, v in _HEADERS_TO_CHECK.iteritems():
+        for k, v in _HEADERS_TO_CHECK.items():
             r = headers.get(k, None)
             if not r:
                 return False

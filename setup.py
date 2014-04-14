@@ -25,7 +25,10 @@ setup(
     ],
     keywords='websockets',
     scripts=["bin/wsdump.py"],
-    install_requires=['backports.ssl_match_hostname'],
+    install_requires=[
+        'backports.ssl_match_hostname',
+        'six',
+    ],
     packages=["tests", "websocket"],
     package_data={
         'tests': ['data/*.txt'],
