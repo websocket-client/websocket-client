@@ -741,17 +741,28 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
+
         # Header
         if self._frame_header is None:
             self._frame_header = self._recv_strict(2)
-        b1 = ord(self._frame_header[0])
+
+        b1 = self._frame_header[0]
+
+        if six.PY2:
+            b1 = ord(b1)
+
         fin = b1 >> 7 & 1
         rsv1 = b1 >> 6 & 1
         rsv2 = b1 >> 5 & 1
         rsv3 = b1 >> 4 & 1
         opcode = b1 & 0xf
-        b2 = ord(self._frame_header[1])
+        b2 = self._frame_header[1]
+
+        if six.PY2:
+            b2 = ord(b2)
+
         has_mask = b2 >> 7 & 1
+
         # Frame length
         if self._frame_length is None:
             length_bits = b2 & 0x7f
@@ -763,13 +774,16 @@ class WebSocket(object):
                 self._frame_length = struct.unpack("!Q", length_data)[0]
             else:
                 self._frame_length = length_bits
+
         # Mask
         if self._frame_mask is None:
             self._frame_mask = self._recv_strict(4) if has_mask else ""
+
         # Payload
         payload = self._recv_strict(self._frame_length)
         if has_mask:
             payload = ABNF.mask(self._frame_mask, payload)
+
         # Reset for next frame
         self._frame_header = None
         self._frame_length = None
@@ -862,7 +876,9 @@ class WebSocket(object):
             bytes = self._recv(shortage)
             self._recv_buffer.append(bytes)
             shortage -= len(bytes)
-        unified = "".join(self._recv_buffer)
+
+        unified = six.b("").join(self._recv_buffer)
+
         if shortage == 0:
             self._recv_buffer = []
             return unified
@@ -993,7 +1009,7 @@ class WebSocketApp(object):
                 if ping_timeout and self.last_ping_tm and time.time() - self.last_ping_tm > ping_timeout:
                     self.last_ping_tm = 0
                     raise WebSocketTimeoutException()
-                    
+
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)
                     if op_code == ABNF.OPCODE_CLOSE:
