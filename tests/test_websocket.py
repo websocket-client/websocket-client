@@ -27,7 +27,6 @@ import websocket as ws
 # [1]: https://tools.ietf.org/html/rfc6455#section-5.4
 #      "RFC6455: 5.4. Fragmentation"
 #
-TEST_FRAGMENTATION = True
 TEST_WITH_INTERNET = False
 
 TRACABLE = False
@@ -265,7 +264,6 @@ class WebSocketTest(unittest.TestCase):
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             data = sock.recv()
 
-    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvWithSimpleFragmentation(self):
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
@@ -278,7 +276,6 @@ class WebSocketTest(unittest.TestCase):
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
 
-    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvContFragmentation(self):
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
@@ -286,7 +283,6 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17")
         self.assertRaises(ws.WebSocketException, sock.recv)
 
-    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvWithProlongedFragmentation(self):
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
@@ -304,7 +300,6 @@ class WebSocketTest(unittest.TestCase):
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
 
-    @unittest.skipUnless(TEST_FRAGMENTATION, "fragmentation not implemented")
     def testRecvWithFragmentationAndControlFrame(self):
         sock = ws.WebSocket()
         sock.set_mask_key(create_mask_key)
