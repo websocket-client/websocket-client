@@ -36,12 +36,7 @@ except ImportError:
 
     HAVE_SSL = False
 
-try:
-    # python 3
-    from urllib.parse import urlparse
-except ImportError:
-    # python 2
-    from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 
 import os
 import array

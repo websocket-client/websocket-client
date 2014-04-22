@@ -329,11 +329,11 @@ class WebSocketTest(unittest.TestCase):
         self.assertNotEquals(s, None)
         s.send("Hello, World")
         result = s.recv()
-        self.assertEquals(result, "Hello, World")
+        self.assertEquals(result.decode('utf-8'), "Hello, World")
 
-        s.send("こにゃにゃちは、世界")
+        s.send(u"こにゃにゃちは、世界")
         result = s.recv()
-        self.assertEquals(result, "こにゃにゃちは、世界")
+        self.assertEquals(result.decode('utf-8'), u"こにゃにゃちは、世界")
         s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
@@ -353,10 +353,10 @@ class WebSocketTest(unittest.TestCase):
             self.assert_(isinstance(s.sock, ssl.SSLSocket))
             s.send("Hello, World")
             result = s.recv()
-            self.assertEquals(result, "Hello, World")
-            s.send("こにゃにゃちは、世界")
+            self.assertEquals(result.decode('utf-8'), "Hello, World")
+            s.send(u"こにゃにゃちは、世界")
             result = s.recv()
-            self.assertEquals(result, "こにゃにゃちは、世界")
+            self.assertEquals(result.decode('utf-8'), u"こにゃにゃちは、世界")
             s.close()
         #except:
         #    pass
@@ -368,7 +368,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertNotEquals(s, None)
         s.send("Hello, World")
         result = s.recv()
-        self.assertEquals(result, "Hello, World")
+        self.assertEquals(result.decode('utf-8'), "Hello, World")
         s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
