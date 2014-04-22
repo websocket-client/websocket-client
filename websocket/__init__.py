@@ -27,7 +27,11 @@ import socket
 try:
     import ssl
     from ssl import SSLError
-    from backports.ssl_match_hostname import match_hostname
+    if hasattr(ssl, "match_hostname"):
+        from ssl import match_hostname
+    else:
+        from backports.ssl_match_hostname import match_hostname
+
     HAVE_SSL = True
 except ImportError:
     # dummy class of SSLError for ssl none-support environment.
