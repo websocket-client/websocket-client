@@ -18,14 +18,20 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
+from __future__ import print_function
 
 
+import six
 import socket
 
 try:
     import ssl
     from ssl import SSLError
-    from backports.ssl_match_hostname import match_hostname
+    if hasattr(ssl, "match_hostname"):
+        from ssl import match_hostname
+    else:
+        from backports.ssl_match_hostname import match_hostname
+
     HAVE_SSL = True
 except ImportError:
     # dummy class of SSLError for ssl none-support environment.
@@ -34,7 +40,8 @@ except ImportError:
 
     HAVE_SSL = False
 
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
+
 import os
 import array
 import struct
@@ -215,7 +222,7 @@ def create_connection(url, timeout=None, **options):
     return websock
 
 _MAX_INTEGER = (1 << 32) -1
-_AVAILABLE_KEY_CHARS = range(0x21, 0x2f + 1) + range(0x3a, 0x7e + 1)
+_AVAILABLE_KEY_CHARS = list(range(0x21, 0x2f + 1)) + list(range(0x3a, 0x7e + 1))
 _MAX_CHAR_BYTE = (1<<8) -1
 
 # ref. Websocket gets an update, and it breaks stuff.
@@ -224,7 +231,7 @@ _MAX_CHAR_BYTE = (1<<8) -1
 
 def _create_sec_websocket_key():
     uid = uuid.uuid4()
-    return base64.encodestring(uid.bytes).strip()
+    return base64.encodestring(uid.bytes).decode('utf-8').strip()
 
 
 _HEADERS_TO_CHECK = {
@@ -300,7 +307,7 @@ class ABNF(object):
 
         fin: fin flag. if set to 0, create continue fragmentation.
         """
-        if opcode == ABNF.OPCODE_TEXT and isinstance(data, unicode):
+        if opcode == ABNF.OPCODE_TEXT and isinstance(data, six.text_type):
             data = data.encode("utf-8")
         # mask must be set if send data from client
         return ABNF(fin, 0, 0, 0, opcode, 1, data)
@@ -329,6 +336,8 @@ class ABNF(object):
             frame_header += chr(self.mask << 7 | 0x7f)
             frame_header += struct.pack("!Q", length)
 
+        frame_header = six.b(frame_header)
+
         if not self.mask:
             return frame_header + self.data
         else:
@@ -337,7 +346,11 @@ class ABNF(object):
 
     def _get_masked(self, mask_key):
         s = ABNF.mask(mask_key, self.data)
-        return mask_key + "".join(s)
+
+        if isinstance(mask_key, six.text_type):
+            mask_key = mask_key.encode('utf-8')
+
+        return mask_key + s
 
     @staticmethod
     def mask(mask_key, data):
@@ -348,9 +361,16 @@ class ABNF(object):
 
         data: data to mask/unmask.
         """
+
+        if isinstance(mask_key, six.text_type):
+            mask_key = six.b(mask_key)
+
+        if isinstance(data, six.text_type):
+            data = six.b(data)
+
         _m = array.array("B", mask_key)
         _d = array.array("B", data)
-        for i in xrange(len(_d)):
+        for i in range(len(_d)):
             _d[i] ^= _m[i % 4]
         return _d.tostring()
 
@@ -519,7 +539,7 @@ class WebSocket(object):
         self.connected = True
 
     def _validate_header(self, headers, key):
-        for k, v in _HEADERS_TO_CHECK.iteritems():
+        for k, v in _HEADERS_TO_CHECK.items():
             r = headers.get(k, None)
             if not r:
                 return False
@@ -532,7 +552,10 @@ class WebSocket(object):
             return False
         result = result.lower()
 
-        value = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        if isinstance(result, six.text_type):
+            result = result.encode('utf-8')
+
+        value = (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode('utf-8')
         hashed = base64.encodestring(hashlib.sha1(value).digest()).strip().lower()
         return hashed == result
 
@@ -544,7 +567,8 @@ class WebSocket(object):
 
         while True:
             line = self._recv_line()
-            if line == "\r\n":
+            line = line.decode('utf-8')
+            if line == "\r\n" or line == "\n":
                 break
             line = line.strip()
             if traceEnabled:
@@ -575,6 +599,7 @@ class WebSocket(object):
 
         opcode: operation code to send. Please see OPCODE_XXX.
         """
+
         frame = ABNF.create_frame(payload, opcode)
         return self.send_frame(frame)
 
@@ -715,17 +740,28 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
+
         # Header
         if self._frame_header is None:
             self._frame_header = self._recv_strict(2)
-        b1 = ord(self._frame_header[0])
+
+        b1 = self._frame_header[0]
+
+        if six.PY2:
+            b1 = ord(b1)
+
         fin = b1 >> 7 & 1
         rsv1 = b1 >> 6 & 1
         rsv2 = b1 >> 5 & 1
         rsv3 = b1 >> 4 & 1
         opcode = b1 & 0xf
-        b2 = ord(self._frame_header[1])
+        b2 = self._frame_header[1]
+
+        if six.PY2:
+            b2 = ord(b2)
+
         has_mask = b2 >> 7 & 1
+
         # Frame length
         if self._frame_length is None:
             length_bits = b2 & 0x7f
@@ -737,13 +773,16 @@ class WebSocket(object):
                 self._frame_length = struct.unpack("!Q", length_data)[0]
             else:
                 self._frame_length = length_bits
+
         # Mask
         if self._frame_mask is None:
             self._frame_mask = self._recv_strict(4) if has_mask else ""
+
         # Payload
         payload = self._recv_strict(self._frame_length)
         if has_mask:
             payload = ABNF.mask(self._frame_mask, payload)
+
         # Reset for next frame
         self._frame_header = None
         self._frame_length = None
@@ -798,13 +837,19 @@ class WebSocket(object):
         self.sock.close()
 
     def _send(self, data):
+
+        if isinstance(data, six.text_type):
+            data = data.encode('utf-8')
+
         try:
             return self.sock.send(data)
         except socket.timeout as e:
-            raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            raise WebSocketTimeoutException(message)
         except Exception as e:
-            if "timed out" in e.message:
-                raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            if "timed out" in message:
+                raise WebSocketTimeoutException(message)
             else:
                 raise
 
@@ -812,16 +857,17 @@ class WebSocket(object):
         try:
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
-            raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            raise WebSocketTimeoutException(message)
         except SSLError as e:
-            if e.message == "The read operation timed out":
-                raise WebSocketTimeoutException(e.message)
+            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            if message == "The read operation timed out":
+                raise WebSocketTimeoutException(message)
             else:
                 raise
         if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes
-
 
     def _recv_strict(self, bufsize):
         shortage = bufsize - sum(len(x) for x in self._recv_buffer)
@@ -829,7 +875,9 @@ class WebSocket(object):
             bytes = self._recv(shortage)
             self._recv_buffer.append(bytes)
             shortage -= len(bytes)
-        unified = "".join(self._recv_buffer)
+
+        unified = six.b("").join(self._recv_buffer)
+
         if shortage == 0:
             self._recv_buffer = []
             return unified
@@ -843,9 +891,9 @@ class WebSocket(object):
         while True:
             c = self._recv(1)
             line.append(c)
-            if c == "\n":
+            if c == six.b("\n"):
                 break
-        return "".join(line)
+        return six.b("").join(line)
 
 
 class WebSocketApp(object):
@@ -903,6 +951,7 @@ class WebSocketApp(object):
         data: message to send. If you set opcode to OPCODE_TEXT, data must be utf-8 string or unicode.
         opcode: operation code of data. default is OPCODE_TEXT.
         """
+
         if self.sock.send(data, opcode) == 0:
             raise WebSocketConnectionClosedException()
 
@@ -959,7 +1008,7 @@ class WebSocketApp(object):
                 if ping_timeout and self.last_ping_tm and time.time() - self.last_ping_tm > ping_timeout:
                     self.last_ping_tm = 0
                     raise WebSocketTimeoutException()
-                    
+
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)
                     if op_code == ABNF.OPCODE_CLOSE:
