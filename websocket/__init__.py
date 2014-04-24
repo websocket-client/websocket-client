@@ -372,6 +372,7 @@ class ABNF(object):
         _d = array.array("B", data)
         for i in range(len(_d)):
             _d[i] ^= _m[i % 4]
+
         return _d.tostring()
 
 
@@ -656,6 +657,8 @@ class WebSocket(object):
         return value: string(byte array) value.
         """
         opcode, data = self.recv_data()
+        if six.PY3 and opcode == ABNF.OPCODE_TEXT:
+            return data.decode("utf-8")
         return data
 
     def recv_data(self, control_frame=False):
@@ -787,6 +790,7 @@ class WebSocket(object):
         self._frame_header = None
         self._frame_length = None
         self._frame_mask = None
+
         return ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
 
 
@@ -865,6 +869,7 @@ class WebSocket(object):
                 raise WebSocketTimeoutException(message)
             else:
                 raise
+
         if not bytes:
             raise WebSocketConnectionClosedException()
         return bytes

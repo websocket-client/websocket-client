@@ -1,7 +1,11 @@
 from setuptools import setup
+import sys
 
 VERSION = "0.14.0"
 
+install_requires = ["six"]
+if sys.version_info.major == 2:
+    install_requires.append('backports.ssl_match_hostname')
 
 setup(
     name="websocket-client",
@@ -25,10 +29,7 @@ setup(
     ],
     keywords='websockets',
     scripts=["bin/wsdump.py"],
-    install_requires=[
-        'backports.ssl_match_hostname',
-        'six',
-    ],
+    install_requires=install_requires,
     packages=["tests", "websocket"],
     package_data={
         'tests': ['data/*.txt'],

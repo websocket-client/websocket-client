@@ -14,19 +14,19 @@ License
 Installation
 =============
 
-This module is tested on only Python 2.7.
+This module is tested on Python 2.7 and Python 3.x.
 
 Type "python setup.py install" or "pip install websocket-client" to install.
 
 This module depend on
 
- - backports.ssl_match_hostname
+ - six
+ - backports.ssl_match_hostname for Python 2.x
 
 How about Python 3
 ===========================
 
-py3( https://github.com/liris/websocket-client/tree/py3 ) branch is for python 3.3. Every test case is passed.
-If you are using python3, please check it.
+Now, we support python 3 on  single source code from version 0.14.0. Thanks, @battlemidge.
 
 Example
 ============
@@ -127,6 +127,9 @@ example::
 
 ChangeLog
 ============
+
+- v0.14.0
+  - Support python 3(#73)
 
 - v0.13.0
   

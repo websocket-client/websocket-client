@@ -20,15 +20,8 @@ import uuid
 # websocket-client
 import websocket as ws
 
-# There are three tests to test the library's behaviour when the received
-# message is fragmented (please see [1] for details). They fail currently as
-# the library doesn't yet support fragmentation. Therefore the tests are
-# skipped unless the flag below is set.
-#
-# [1]: https://tools.ietf.org/html/rfc6455#section-5.4
-#      "RFC6455: 5.4. Fragmentation"
-#
-TEST_WITH_INTERNET = False
+# Skip test to access the internet.
+TEST_WITH_INTERNET = True
 
 TRACABLE = False
 
@@ -226,12 +219,11 @@ class WebSocketTest(unittest.TestCase):
         something = six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
         s.add_packet(something)
         data = sock.recv()
-        data = data.decode('utf-8')
-        self.assertEquals(data, u"こんにちは")
+        self.assertEquals(data, "こんにちは")
 
         s.add_packet(six.b("\x81\x85abcd)\x07\x0f\x08\x0e"))
         data = sock.recv()
-        self.assertEquals(data.decode('utf-8'), "Hello")
+        self.assertEquals(data, "Hello")
 
     def testInternalRecvStrict(self):
         sock = ws.WebSocket()
@@ -246,7 +238,7 @@ class WebSocketTest(unittest.TestCase):
         with self.assertRaises(SSLError):
             data = sock._recv_strict(9)
         data = sock._recv_strict(9)
-        self.assertEquals(data.decode('utf-8'), "foobarbaz")
+        self.assertEquals(data, six.b("foobarbaz"))
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             data = sock._recv_strict(1)
 
@@ -263,7 +255,7 @@ class WebSocketTest(unittest.TestCase):
         with self.assertRaises(ws.WebSocketTimeoutException):
             data = sock.recv()
         data = sock.recv()
-        self.assertEquals(data.decode('utf-8'), "Hello, World!")
+        self.assertEquals(data, "Hello, World!")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             data = sock.recv()
 
@@ -275,7 +267,7 @@ class WebSocketTest(unittest.TestCase):
         # OPCODE=CONT, FIN=1, MSG="the soul of wit"
         s.add_packet(six.b("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17"))
         data = sock.recv()
-        self.assertEqual(data.decode('utf-8'), "Brevity is the soul of wit")
+        self.assertEqual(data, "Brevity is the soul of wit")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
 
@@ -299,7 +291,7 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet(six.b("\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04"))
         data = sock.recv()
         self.assertEqual(
-            data.decode('utf-8'),
+            data,
             "Once more unto the breach, dear friends, once more")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
@@ -316,7 +308,7 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet(six.b("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
                            "\x08\x0c\x04"))
         data = sock.recv()
-        self.assertEqual(data.decode('utf-8'), "Too much of a good thing")
+        self.assertEqual(data, "Too much of a good thing")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
         self.assertEqual(
@@ -329,11 +321,11 @@ class WebSocketTest(unittest.TestCase):
         self.assertNotEquals(s, None)
         s.send("Hello, World")
         result = s.recv()
-        self.assertEquals(result.decode('utf-8'), "Hello, World")
+        self.assertEquals(result, "Hello, World")
 
         s.send(u"こにゃにゃちは、世界")
         result = s.recv()
-        self.assertEquals(result.decode('utf-8'), u"こにゃにゃちは、世界")
+        self.assertEquals(result, "こにゃにゃちは、世界")
         s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
@@ -353,10 +345,10 @@ class WebSocketTest(unittest.TestCase):
             self.assert_(isinstance(s.sock, ssl.SSLSocket))
             s.send("Hello, World")
             result = s.recv()
-            self.assertEquals(result.decode('utf-8'), "Hello, World")
+            self.assertEquals(result, "Hello, World")
             s.send(u"こにゃにゃちは、世界")
             result = s.recv()
-            self.assertEquals(result.decode('utf-8'), u"こにゃにゃちは、世界")
+            self.assertEquals(result, "こにゃにゃちは、世界")
             s.close()
         #except:
         #    pass
@@ -368,7 +360,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertNotEquals(s, None)
         s.send("Hello, World")
         result = s.recv()
-        self.assertEquals(result.decode('utf-8'), "Hello, World")
+        self.assertEquals(result, "Hello, World")
         s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
