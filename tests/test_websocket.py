@@ -21,7 +21,7 @@ import uuid
 import websocket as ws
 
 # Skip test to access the internet.
-TEST_WITH_INTERNET = True
+TEST_WITH_INTERNET = False
 
 TRACABLE = False
 
