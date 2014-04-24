@@ -129,6 +129,7 @@ ChangeLog
 ============
 
 - v0.14.0
+
   - Support python 3(#73)
 
 - v0.13.0
