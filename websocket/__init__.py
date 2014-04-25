@@ -972,7 +972,10 @@ class WebSocketApp(object):
                     elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
                         self._callback(self.on_cont_message, frame.data, frame.fin)
                     else:
-                        self._callback(self.on_message, frame.data)
+                        data = frame.data
+                        if frame.opcode == ABNF.OPCODE_TEXT:
+                            data = data.decode("utf-8")
+                        self._callback(self.on_message, data)
         except Exception as e:
             self._callback(self.on_error, e)
         finally:

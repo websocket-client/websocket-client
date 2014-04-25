@@ -127,6 +127,11 @@ example::
 ChangeLog
 ============
 
+
+- v0.13.1
+
+  - fix backword compatibility for WebSocketApp on Python 3(ISSUE#80)
+
 - v0.13.0
 
   - MemoryError when receiving large amount of data (~60 MB) at once(ISSUE#59)
