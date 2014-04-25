@@ -26,7 +26,7 @@ This module depend on
 How about Python 3
 ===========================
 
-Now, we support python 3 on  single source code from version 0.14.0. Thanks, @battlemidge.
+Now, we support python 3 on  single source code from version 0.14.0. Thanks, @battlemidget and @ralphbean.
 
 Example
 ============
