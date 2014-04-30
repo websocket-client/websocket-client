@@ -479,13 +479,21 @@ class WebSocket(object):
                  if you set None for this value,
                  it means "use default_timeout value"
 
-        options: current support option is only "header".
-                 if you set header as dict value,
-                 the custom HTTP headers are added.
+        options: "header" -> custom http header.
+                     value is dict.
+                 "http_proxy_host" - http proxy host name.
+                 "http_proxy_port" - http proxy port. If not set, set to 80.
 
         """
+
         hostname, port, resource, is_secure = _parse_url(url)
-        addrinfo_list = socket.getaddrinfo(hostname, 80, 0, 0, socket.SOL_TCP)
+        proxy_host, proxy_port = options.get("http_proxy_host", None), options.get("http_proxy_port", 0)
+        if not proxy_host:
+            addrinfo_list = socket.getaddrinfo(hostname, 80, 0, 0, socket.SOL_TCP)
+        else:
+            proxy_port = proxy_port and proxy_port or 80
+            addrinfo_list = socket.getaddrinfo(proxy_host, proxy_port, 0, 0, socket.SOL_TCP)
+
         if not addrinfo_list:
             raise WebSocketException("Host not found.: " + hostname + ":" + str(port))
 
@@ -500,6 +508,9 @@ class WebSocket(object):
         address = addrinfo_list[0][4]
         self.sock.connect(address)
 
+        if proxy_host:
+            self._tunnel(hostname, port)
+
         if is_secure:
             if HAVE_SSL:
                 sslopt = dict(cert_reqs=ssl.CERT_REQUIRED,
@@ -511,6 +522,21 @@ class WebSocket(object):
                 raise WebSocketException("SSL not available.")
 
         self._handshake(hostname, port, resource, **options)
+
+    def _tunnel(self, host, port):
+        logger.debug("Connecting proxy...")
+        connect_header = "CONNECT %s:%d HTTP/1.0\r\n" % (host, port)
+        connect_header += "\r\n"
+        if traceEnabled:
+            logger.debug("--- request header ---")
+            logger.debug(connect_header)
+            logger.debug("-----------------------")
+
+        self._send(connect_header)
+
+        status, resp_headers = self._read_headers()
+        if status != 200:
+            raise WebSocketException("failed CONNECT via proxy")
 
     def _handshake(self, host, port, resource, **options):
         headers = []

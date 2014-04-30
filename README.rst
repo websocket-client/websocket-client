@@ -34,8 +34,17 @@ How about Python 3
 
 Now, we support python 3 on  single source code from version 0.14.0. Thanks, @battlemidget and @ralphbean.
 
+HTTP Proxy
+=============
+
+Support websocket access via http proxy.
+The proxy server must allow "CONNECT" method to websocket port.
+Default squid setting is "ALLOWED TO CONNECT ONLY HTTPS PORT".
+
+Current implementation of websocket-client is using "CONNECT" method via proxy.
+
 Example
-============
+=============
 
 Low Level API example::
 
@@ -138,6 +147,7 @@ ChangeLog
 
   - Support python 3(#73)
   - Support IPv6(#77)
+  - Support explicit web proxy(#57)
 
 - v0.13.0
 
