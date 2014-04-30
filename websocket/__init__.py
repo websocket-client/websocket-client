@@ -418,11 +418,9 @@ class WebSocket(object):
         if sslopt is None:
             sslopt = {}
         self.connected = False
-        self.sock = socket.socket()
-        for opts in DEFAULT_SOCKET_OPTION:
-            self.sock.setsockopt(*opts)
-        for opts in sockopt:
-            self.sock.setsockopt(*opts)
+        self.sock = None
+        self._timeout = None
+        self.sockopt = sockopt
         self.sslopt = sslopt
         self.get_mask_key = get_mask_key
         self.fire_cont_frame = fire_cont_frame
@@ -454,7 +452,7 @@ class WebSocket(object):
         """
         Get the websocket timeout(second).
         """
-        return self.sock.gettimeout()
+        return self._timeout
 
     def settimeout(self, timeout):
         """
@@ -462,7 +460,7 @@ class WebSocket(object):
 
         timeout: timeout time(second).
         """
-        self.sock.settimeout(timeout)
+        self._timeout = timeout
 
     timeout = property(gettimeout, settimeout)
 
@@ -487,8 +485,21 @@ class WebSocket(object):
 
         """
         hostname, port, resource, is_secure = _parse_url(url)
+        addrinfo_list = socket.getaddrinfo(hostname, 80, 0, 0, socket.SOL_TCP)
+        if not addrinfo_list:
+            raise WebSocketException("Host not found.: " + hostname + ":" + str(port))
+
+        family = addrinfo_list[0][0]
+        self.sock = socket.socket(family)
+        self.sock.settimeout(self.timeout)
+        for opts in DEFAULT_SOCKET_OPTION:
+            self.sock.setsockopt(*opts)
+        for opts in self.sockopt:
+            self.sock.setsockopt(*opts)
         # TODO: we need to support proxy
-        self.sock.connect((hostname, port))
+        address = addrinfo_list[0][4]
+        self.sock.connect(address)
+
         if is_secure:
             if HAVE_SSL:
                 sslopt = dict(cert_reqs=ssl.CERT_REQUIRED,
