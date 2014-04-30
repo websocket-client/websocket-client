@@ -137,6 +137,7 @@ ChangeLog
 - v0.14.0
 
   - Support python 3(#73)
+  - Support IPv6(#77)
 
 - v0.13.0
 
