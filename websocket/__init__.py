@@ -41,13 +41,16 @@ except ImportError:
     HAVE_SSL = False
 
 from six.moves.urllib.parse import urlparse
+if six.PY3:
+    from base64 import encodebytes as base64encode
+else:
+    from base64 import encodestring as base64encode
 
 import os
 import array
 import struct
 import uuid
 import hashlib
-import base64
 import threading
 import time
 import logging
@@ -231,7 +234,7 @@ _MAX_CHAR_BYTE = (1<<8) -1
 
 def _create_sec_websocket_key():
     uid = uuid.uuid4()
-    return base64.encodestring(uid.bytes).decode('utf-8').strip()
+    return base64encode(uid.bytes).decode('utf-8').strip()
 
 
 _HEADERS_TO_CHECK = {
@@ -373,7 +376,10 @@ class ABNF(object):
         for i in range(len(_d)):
             _d[i] ^= _m[i % 4]
 
-        return _d.tostring()
+        if six.PY3:
+            return _d.tobytes()
+        else:
+            return _d.tostring()
 
 
 class WebSocket(object):
@@ -557,7 +563,7 @@ class WebSocket(object):
             result = result.encode('utf-8')
 
         value = (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode('utf-8')
-        hashed = base64.encodestring(hashlib.sha1(value).digest()).strip().lower()
+        hashed = base64encode(hashlib.sha1(value).digest()).strip().lower()
         return hashed == result
 
     def _read_headers(self):
