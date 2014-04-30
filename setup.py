@@ -5,10 +5,14 @@ VERSION = "0.14.0"
 
 install_requires = ["six"]
 if sys.version_info.major == 2:
+    name="websocket-client"
     install_requires.append('backports.ssl_match_hostname')
+else:
+    # for backword compatible.
+    name="websocket-client-py3"
 
 setup(
-    name="websocket-client",
+    name=name,
     version=VERSION,
     description="WebSocket client for python. hybi13 is supported.",
     long_description=open("README.rst").read(),
