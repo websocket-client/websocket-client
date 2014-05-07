@@ -213,8 +213,10 @@ def create_connection(url, timeout=None, **options):
     timeout: socket timeout time. This value is integer.
              if you set None for this value, it means "use default_timeout value"
 
-    options: current support option is only "header".
-             if you set header as dict value, the custom HTTP headers are added.
+
+    options: "header" -> custom http header list.
+             "http_proxy_host" - http proxy host name.
+             "http_proxy_port" - http proxy port. If not set, set to 80.
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
@@ -468,19 +470,18 @@ class WebSocket(object):
         """
         Connect to url. url is websocket url scheme. ie. ws://host:port/resource
         You can customize using 'options'.
-        If you set "header" dict object, you can set your own custom header.
+        If you set "header" list object, you can set your own custom header.
 
         >>> ws = WebSocket()
         >>> ws.connect("ws://echo.websocket.org/",
-                ...     header={"User-Agent: MyProgram",
-                ...             "x-custom: header"})
+                ...     header=["User-Agent: MyProgram",
+                ...             "x-custom: header"])
 
         timeout: socket timeout time. This value is integer.
                  if you set None for this value,
                  it means "use default_timeout value"
 
-        options: "header" -> custom http header.
-                     value is dict.
+        options: "header" -> custom http header list.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
 
@@ -1038,9 +1039,11 @@ class WebSocketApp(object):
 
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
-                fire_cont_frame=self.on_cont_message and True or False)
+                fire_cont_frame=self.on_cont_message and True or False,
+                http_proxy_host=None, http_proxy_port=0)
             self.sock.settimeout(default_timeout)
-            self.sock.connect(self.url, header=self.header)
+            self.sock.connect(self.url, header=self.header,
+                http_proxy_host=http_proxy_host, http_proxy_port=http_proxy_port)
             self._callback(self.on_open)
 
             if ping_interval:
