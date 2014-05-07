@@ -490,7 +490,7 @@ class WebSocket(object):
         hostname, port, resource, is_secure = _parse_url(url)
         proxy_host, proxy_port = options.get("http_proxy_host", None), options.get("http_proxy_port", 0)
         if not proxy_host:
-            addrinfo_list = socket.getaddrinfo(hostname, 80, 0, 0, socket.SOL_TCP)
+            addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
         else:
             proxy_port = proxy_port and proxy_port or 80
             addrinfo_list = socket.getaddrinfo(proxy_host, proxy_port, 0, 0, socket.SOL_TCP)
@@ -554,6 +554,9 @@ class WebSocket(object):
             headers.append("Origin: %s" % options["origin"])
         else:
             headers.append("Origin: http://%s" % hostport)
+
+        if "cookie" in options:
+          headers.append("Cookie: %s" % options["cookie"])
 
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
