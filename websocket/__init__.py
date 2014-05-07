@@ -506,7 +506,6 @@ class WebSocket(object):
             self.sock.setsockopt(*opts)
         # TODO: we need to support proxy
         address = addrinfo_list[0][4]
-        print(address)
         self.sock.connect(address)
 
         if proxy_host:
