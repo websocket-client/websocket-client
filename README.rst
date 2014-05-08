@@ -154,6 +154,7 @@ ChangeLog
   - Support python 3(#73)
   - Support IPv6(#77)
   - Support explicit web proxy(#57)
+  - specify cookie in connect method option(#82)
 
 - v0.13.0
 

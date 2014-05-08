@@ -215,6 +215,7 @@ def create_connection(url, timeout=None, **options):
 
 
     options: "header" -> custom http header list.
+             "cookie" -> cookie value.
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
     """
@@ -482,6 +483,7 @@ class WebSocket(object):
                  it means "use default_timeout value"
 
         options: "header" -> custom http header list.
+                 "cookie" -> cookie value.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
 
@@ -555,14 +557,15 @@ class WebSocket(object):
         else:
             headers.append("Origin: http://%s" % hostport)
 
-        if "cookie" in options:
-          headers.append("Cookie: %s" % options["cookie"])
-
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
+        
         if "header" in options:
             headers.extend(options["header"])
+        cookie = options.get("cookie", None)
+        if cookie:
+          headers.append("Cookie: %s" % cookie)
 
         headers.append("")
         headers.append("")
@@ -957,7 +960,7 @@ class WebSocketApp(object):
                  on_open=None, on_message=None, on_error=None,
                  on_close=None, on_ping=None, on_pong=None,
                  on_cont_message=None,
-                 keep_running=True, get_mask_key=None):
+                 keep_running=True, get_mask_key=None, cookie=None):
         """
         url: websocket url.
         header: custom header for websocket handshake.
@@ -985,6 +988,7 @@ class WebSocketApp(object):
         """
         self.url = url
         self.header = header
+        self.cookie = cookie
         self.on_open = on_open
         self.on_message = on_message
         self.on_error = on_error
@@ -1019,7 +1023,8 @@ class WebSocketApp(object):
             self.last_ping_tm = time.time()
             self.sock.ping()
 
-    def run_forever(self, sockopt=None, sslopt=None, ping_interval=0, ping_timeout=None):
+    def run_forever(self, sockopt=None, sslopt=None, ping_interval=0, ping_timeout=None,
+        http_proxy_host=None, http_proxy_port=None):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -1029,7 +1034,10 @@ class WebSocketApp(object):
         ping_interval: automatically send "ping" command every specified period(second)
             if set to 0, not send automatically.
         ping_timeout: timeout(second) if the pong message is not recieved.
+        http_proxy_host: http proxy host name.
+        http_proxy_port: http proxy port. If not set, set to 80.
         """
+
         if not ping_timeout or ping_timeout<=0:
             ping_timeout = None
         if sockopt is None:
@@ -1042,10 +1050,9 @@ class WebSocketApp(object):
 
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
-                fire_cont_frame=self.on_cont_message and True or False,
-                http_proxy_host=None, http_proxy_port=0)
+                fire_cont_frame=self.on_cont_message and True or False)
             self.sock.settimeout(default_timeout)
-            self.sock.connect(self.url, header=self.header,
+            self.sock.connect(self.url, header=self.header, cookie=self.cookie,
                 http_proxy_host=http_proxy_host, http_proxy_port=http_proxy_port)
             self._callback(self.on_open)
 
