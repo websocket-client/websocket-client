@@ -557,6 +557,9 @@ class WebSocket(object):
         else:
             headers.append("Origin: http://%s" % hostport)
 
+        if "cookie" in options:
+          headers.append("Cookie: %s" % options["cookie"])
+
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
