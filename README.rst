@@ -10,13 +10,7 @@ CAUTION
 ============
 
 We have a big change on version 0.14.0.
-So, please test on trunk repository.
-
-v0.14 release schedule
-=======================
-
-Now, under testing.
-v0.14 will be released on May 15.
+So, please test carefully.
 
 
 License
