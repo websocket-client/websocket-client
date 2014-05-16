@@ -4,9 +4,12 @@ import sys
 VERSION = "0.14.0"
 
 install_requires = ["six"]
-if sys.version_info.major == 2:
+if sys.version_info[0] == 2:
     name="websocket-client"
     install_requires.append('backports.ssl_match_hostname')
+    if sys.version_info[1] < 7:
+        install_requires.append('unittest2')
+        install_requires.append('argparse')
 else:
     # for backword compatible.
     name="websocket-client-py3"
