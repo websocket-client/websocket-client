@@ -1,7 +1,7 @@
 from setuptools import setup
 import sys
 
-VERSION = "0.14.0"
+VERSION = "0.14.1"
 
 install_requires = ["six"]
 if sys.version_info[0] == 2:

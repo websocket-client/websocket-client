@@ -143,6 +143,10 @@ example::
 ChangeLog
 ============
 
+- v0.14.1
+
+  - fixed to work on Python2.6 (#83)
+
 - v0.14.0
 
   - Support python 3(#73)
