@@ -223,6 +223,8 @@ class WebSocketTest(unittest.TestCase):
         sock.send(u"こんにちは")
         self.assertEqual(s.sent[1], six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
 
+        sock.send("x" * 127)
+
     def testRecv(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()

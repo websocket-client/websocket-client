@@ -335,14 +335,15 @@ class ABNF(object):
                            | self.opcode)
         if length < ABNF.LENGTH_7:
             frame_header += chr(self.mask << 7 | length)
+            frame_header = six.b(frame_header)
         elif length < ABNF.LENGTH_16:
             frame_header += chr(self.mask << 7 | 0x7e)
+            frame_header = six.b(frame_header)
             frame_header += struct.pack("!H", length)
         else:
             frame_header += chr(self.mask << 7 | 0x7f)
+            frame_header = six.b(frame_header)
             frame_header += struct.pack("!Q", length)
-
-        frame_header = six.b(frame_header)
 
         if not self.mask:
             return frame_header + self.data

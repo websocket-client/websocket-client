@@ -143,6 +143,10 @@ example::
 ChangeLog
 ============
 
+- v0.15.0
+
+  - fixed exception when send a large message (#84)
+
 - v0.14.1
 
   - fixed to work on Python2.6 (#83)
