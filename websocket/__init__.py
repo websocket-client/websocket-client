@@ -174,10 +174,10 @@ def _parse_url(url):
         port = parsed.port
 
     is_secure = False
-    if scheme == "ws":
+    if scheme == "ws" or scheme = "http":
         if not port:
             port = 80
-    elif scheme == "wss":
+    elif scheme == "wss" or scheme == "https":
         is_secure = True
         if not port:
             port = 443
