@@ -164,7 +164,7 @@ def _parse_url(url):
 
     scheme, url = url.split(":", 1)
 
-    parsed = urlparse(url, scheme="http")
+    parsed = urlparse(url, scheme="ws")
     if parsed.hostname:
         hostname = parsed.hostname
     else:
