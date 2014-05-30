@@ -24,9 +24,12 @@ import uuid
 
 # websocket-client
 import websocket as ws
+from websocket._core import _parse_url, _create_sec_websocket_key
+
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = False
+# TEST_WITH_INTERNET = True
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = False
@@ -82,91 +85,91 @@ class WebSocketTest(unittest.TestCase):
         ws.setdefaulttimeout(None)
 
     def testParseUrl(self):
-        p = ws._parse_url("ws://www.example.com/r")
+        p = _parse_url("ws://www.example.com/r")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("ws://www.example.com/r/")
+        p = _parse_url("ws://www.example.com/r/")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/r/")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("ws://www.example.com/")
+        p = _parse_url("ws://www.example.com/")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("ws://www.example.com")
+        p = _parse_url("ws://www.example.com")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("ws://www.example.com:8080/r")
+        p = _parse_url("ws://www.example.com:8080/r")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("ws://www.example.com:8080/")
+        p = _parse_url("ws://www.example.com:8080/")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("ws://www.example.com:8080")
+        p = _parse_url("ws://www.example.com:8080")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("wss://www.example.com:8080/r")
+        p = _parse_url("wss://www.example.com:8080/r")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], True)
 
-        p = ws._parse_url("wss://www.example.com:8080/r?key=value")
+        p = _parse_url("wss://www.example.com:8080/r?key=value")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r?key=value")
         self.assertEqual(p[3], True)
 
-        self.assertRaises(ValueError, ws._parse_url, "http://www.example.com/r")
+        self.assertRaises(ValueError, _parse_url, "http://www.example.com/r")
 
         if sys.version_info[0] == 2 and sys.version_info[1] < 7:
             return
 
-        p = ws._parse_url("ws://[2a03:4000:123:83::3]/r")
+        p = _parse_url("ws://[2a03:4000:123:83::3]/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("ws://[2a03:4000:123:83::3]:8080/r")
+        p = _parse_url("ws://[2a03:4000:123:83::3]:8080/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = ws._parse_url("wss://[2a03:4000:123:83::3]/r")
+        p = _parse_url("wss://[2a03:4000:123:83::3]/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 443)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], True)
 
-        p = ws._parse_url("wss://[2a03:4000:123:83::3]:8080/r")
+        p = _parse_url("wss://[2a03:4000:123:83::3]:8080/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], True)
 
     def testWSKey(self):
-        key = ws._create_sec_websocket_key()
+        key = _create_sec_websocket_key()
         self.assertTrue(key != 24)
         self.assertTrue(six.u("¥n") not in key)
 
@@ -389,7 +392,7 @@ class WebSocketTest(unittest.TestCase):
     def testUUID4(self):
         """ WebSocket key should be a UUID4.
         """
-        key = ws._create_sec_websocket_key()
+        key = _create_sec_websocket_key()
         u = uuid.UUID(bytes=base64.b64decode(key))
         self.assertEqual(4, u.version)
 
@@ -423,6 +426,7 @@ class WebSocketAppTest(unittest.TestCase):
             close the connection.
             """
             WebSocketAppTest.keep_running_open = self.keep_running
+            
             self.close()
 
         def on_close(self, *args, **kwargs):

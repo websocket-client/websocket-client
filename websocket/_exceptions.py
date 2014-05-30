@@ -18,5 +18,29 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-from ._core import *
-from ._app import WebSocketApp
+
+
+"""
+define websocket exceptions
+"""
+
+class WebSocketException(Exception):
+    """
+    websocket exeception class.
+    """
+    pass
+
+
+class WebSocketConnectionClosedException(WebSocketException):
+    """
+    If remote host closed the connection or some network error happened,
+    this exception will be raised.
+    """
+    pass
+
+class WebSocketTimeoutException(WebSocketException):
+    """
+    WebSocketTimeoutException will be raised at socket timeout during read/write data.
+    """
+    pass
+
