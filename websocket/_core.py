@@ -419,8 +419,12 @@ class WebSocket(object):
 
         if is_secure:
             if HAVE_SSL:
-                sslopt = dict(cert_reqs=ssl.CERT_REQUIRED,
-                              ca_certs=os.path.join(os.path.dirname(__file__), "cacert.pem"))
+                sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
+                certPath = os.path.join(
+                    os.path.dirname(__file__), "cacert.pem")
+                )
+                if os.path.isfile(certPath):
+                    sslopt['ca_certs'] = certPath
                 sslopt.update(self.sslopt)
                 self.sock = ssl.wrap_socket(self.sock, **sslopt)
                 match_hostname(self.sock.getpeercert(), hostname)
