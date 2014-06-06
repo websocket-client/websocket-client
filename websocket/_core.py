@@ -593,6 +593,8 @@ class WebSocket(object):
 
         payload: data payload to send server.
         """
+        if isinstance(payload, six.text_type):
+            payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PING)
 
     def pong(self, payload):
@@ -601,6 +603,8 @@ class WebSocket(object):
 
         payload: data payload to send server.
         """
+        if isinstance(payload, six.text_type):
+            payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PONG)
 
     def recv(self):
@@ -723,7 +727,7 @@ class WebSocket(object):
         return ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
 
 
-    def send_close(self, status=STATUS_NORMAL, reason=b""):
+    def send_close(self, status=STATUS_NORMAL, reason=six.b("")):
         """
         send close data to the server.
 
@@ -735,7 +739,7 @@ class WebSocket(object):
             raise ValueError("code is invalid range")
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status=STATUS_NORMAL, reason=""):
+    def close(self, status=STATUS_NORMAL, reason=six.b("")):
         """
         Close Websocket object
 
