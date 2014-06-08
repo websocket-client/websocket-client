@@ -427,7 +427,8 @@ class WebSocket(object):
                     sslopt['ca_certs'] = certPath
                 sslopt.update(self.sslopt)
                 self.sock = ssl.wrap_socket(self.sock, **sslopt)
-                match_hostname(self.sock.getpeercert(), hostname)
+                if sslopt["cert_reqs"] != ssl.CERT_NONE:
+                    match_hostname(self.sock.getpeercert(), hostname)
             else:
                 raise WebSocketException("SSL not available.")
 
