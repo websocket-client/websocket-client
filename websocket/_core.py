@@ -422,7 +422,6 @@ class WebSocket(object):
                 sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
                 certPath = os.path.join(
                     os.path.dirname(__file__), "cacert.pem")
-                )
                 if os.path.isfile(certPath):
                     sslopt['ca_certs'] = certPath
                 sslopt.update(self.sslopt)
