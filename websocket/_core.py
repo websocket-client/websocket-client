@@ -201,7 +201,10 @@ def create_connection(url, timeout=None, **options):
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
     fire_cont_frame = options.get("fire_cont_frame", False)
-    websock = WebSocket(sockopt=sockopt, sslopt=sslopt, fire_cont_frame = fire_cont_frame)
+    support_socket_io = options.get("support_socket_io", False)
+    websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
+            fire_cont_frame=fire_cont_frame,
+            support_socket_io=support_socket_io)
     websock.settimeout(timeout if timeout is not None else default_timeout)
     websock.connect(url, **options)
     return websock
@@ -317,7 +320,7 @@ class WebSocket(object):
     """
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
-        fire_cont_frame=False):
+        fire_cont_frame=False, support_socket_io=False):
         """
         Initalize WebSocket object.
         """
@@ -338,6 +341,7 @@ class WebSocket(object):
         # These buffer over the build-up of a single frame.
         self._frame_buffer = _FrameBuffer()
         self._cont_data = None
+        self.support_socket_io = support_socket_io
 
     def fileno(self):
         return self.sock.fileno()
@@ -448,7 +452,7 @@ class WebSocket(object):
         if status != 200:
             raise WebSocketException("failed CONNECT via proxy")
 
-    def _handshake(self, host, port, resource, **options):
+    def _handshake_headers(self, resource, host, port, options):
         headers = []
         headers.append("GET %s HTTP/1.1" % resource)
         headers.append("Upgrade: websocket")
@@ -467,15 +471,22 @@ class WebSocket(object):
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
-        
+
         if "header" in options:
             headers.extend(options["header"])
+
         cookie = options.get("cookie", None)
+
         if cookie:
           headers.append("Cookie: %s" % cookie)
 
         headers.append("")
         headers.append("")
+
+        return headers, key
+
+    def _handshake(self, host, port, resource, **options):
+        headers, key = self._handshake_headers(resource, host, port, options)
 
         header_str = "\r\n".join(headers)
         self._send(header_str)
@@ -484,10 +495,14 @@ class WebSocket(object):
             logger.debug(header_str)
             logger.debug("-----------------------")
 
+        if self.support_socket_io:
+            key = self._handshake_socket_io(host, port, resource, **options)
+
         status, resp_headers = self._read_headers()
+
         if status != 101:
             self.close()
-            raise WebSocketException("Handshake Status %d" % status)
+            raise WebSocketException("Handshake status %d" % status)
 
         success = self._validate_header(resp_headers, key)
         if not success:
@@ -495,6 +510,39 @@ class WebSocket(object):
             raise WebSocketException("Invalid WebSocket Header")
 
         self.connected = True
+
+    def _handshake_socket_io(self, host, port, resource, **options):
+        status, resp_headers = self._read_headers()
+
+        if status != 200:
+            self.close()
+            raise WebSocketException("Handshake status %d" % status)
+
+        body_length = int(resp_headers['content-length'])
+        body = self._recv(body_length)
+        body = body.decode('utf-8')
+
+        if traceEnabled:
+            logger.debug("--- response body ---")
+            logger.debug(body)
+            logger.debug("-----------------------")
+
+        sessid, heartbeat, close, transports = body.split(':', 4)
+        transport = transports.split(',')[0]
+
+        resource += transport + '/' + sessid
+
+        headers, key = self._handshake_headers(resource, host, port, options)
+
+        header_str = "\r\n".join(headers)
+        self._send(header_str)
+
+        if traceEnabled:
+            logger.debug("--- request header ---")
+            logger.debug(header_str)
+            logger.debug("-----------------------")
+
+        return key
 
     def _validate_header(self, headers, key):
         for k, v in _HEADERS_TO_CHECK.items():
@@ -551,7 +599,7 @@ class WebSocket(object):
         """
         Send the data as string.
 
-        payload: Payload must be utf-8 string or unicoce,
+        payload: Payload must be utf-8 string or unicode,
                   if the opcode is OPCODE_TEXT.
                   Otherwise, it must be string(byte array)
 
