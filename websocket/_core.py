@@ -50,11 +50,13 @@ import os
 import struct
 import uuid
 import hashlib
+import threading
 import logging
 
 # websocket modules
 from ._exceptions import *
 from ._abnf import ABNF
+from ._utils import NoLock
 
 """
 websocket python client.
@@ -197,11 +199,14 @@ def create_connection(url, timeout=None, **options):
              "cookie" -> cookie value.
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
+             "enable_multithread" -> enable lock for multithread.
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
     fire_cont_frame = options.get("fire_cont_frame", False)
-    websock = WebSocket(sockopt=sockopt, sslopt=sslopt, fire_cont_frame = fire_cont_frame)
+    enable_multithread = options.get("enable_multithread", False)
+    websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
+        fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread)
     websock.settimeout(timeout if timeout is not None else default_timeout)
     websock.connect(url, **options)
     return websock
@@ -231,7 +236,7 @@ class _FrameBuffer(object):
 
     def __init__(self):
         self.clear()
-    
+
     def clear(self):
         self.header = None
         self.length = None
@@ -239,7 +244,7 @@ class _FrameBuffer(object):
 
     def has_received_header(self):
         return  self.header is None
-    
+
     def recv_header(self, recv_fn):
         header = recv_fn(2)
         b1 = header[0]
@@ -314,10 +319,11 @@ class WebSocket(object):
         sockopt must be tuple and each element is argument of sock.setscokopt.
     sslopt: dict object for ssl socket option.
     fire_cont_frame: fire recv event for each cont frame. default is False
+    enable_multithread: if set to True, lock send method.
     """
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
-        fire_cont_frame=False):
+        fire_cont_frame=False, enable_multithread=False):
         """
         Initalize WebSocket object.
         """
@@ -338,6 +344,10 @@ class WebSocket(object):
         # These buffer over the build-up of a single frame.
         self._frame_buffer = _FrameBuffer()
         self._cont_data = None
+        if enable_multithread:
+            self.lock = threading.Lock()
+        else:
+            self.lock = NoLock()
 
     def fileno(self):
         return self.sock.fileno()
@@ -467,7 +477,7 @@ class WebSocket(object):
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
-        
+
         if "header" in options:
             headers.extend(options["header"])
         cookie = options.get("cookie", None)
@@ -582,9 +592,12 @@ class WebSocket(object):
         length = len(data)
         if traceEnabled:
             logger.debug("send: " + repr(data))
-        while data:
-            l = self._send(data)
-            data = data[l:]
+
+        with self.lock:
+            while data:
+                l = self._send(data)
+                data = data[l:]
+
         return length
 
 
@@ -709,7 +722,7 @@ class WebSocket(object):
         if frame_buffer.has_received_header():
             frame_buffer.recv_header(self._recv_strict)
         (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = frame_buffer.header
-        
+
         # Frame length
         if frame_buffer.has_received_length():
             frame_buffer.recv_length(self._recv_strict)
