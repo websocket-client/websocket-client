@@ -115,6 +115,11 @@ def enableTrace(tracable):
             logger.addHandler(logging.StreamHandler())
         logger.setLevel(logging.DEBUG)
 
+def _dump(title, message):
+    if traceEnabled:
+        logger.debug("--- " + title + " ---")
+        logger.debug(message)
+        logger.debug("-----------------------")
 
 def setdefaulttimeout(timeout):
     """
@@ -205,7 +210,7 @@ def create_connection(url, timeout=None, **options):
     sslopt = options.get("sslopt", {})
     fire_cont_frame = options.get("fire_cont_frame", False)
     enable_multithread = options.get("enable_multithread", False)
-    support_socket_io = options.get("support_socket_io", False)
+    support_socket_io = options.get("support_socket_io", None)
     websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
         fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread,
         support_socket_io=support_socket_io)
@@ -326,7 +331,7 @@ class WebSocket(object):
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
         fire_cont_frame=False, enable_multithread=False,
-        support_socket_io=False):
+        support_socket_io=None):
         """
         Initalize WebSocket object.
         """
@@ -451,16 +456,20 @@ class WebSocket(object):
         logger.debug("Connecting proxy...")
         connect_header = "CONNECT %s:%d HTTP/1.0\r\n" % (host, port)
         connect_header += "\r\n"
-        if traceEnabled:
-            logger.debug("--- request header ---")
-            logger.debug(connect_header)
-            logger.debug("-----------------------")
+        _dump("request header", connect_header)
 
         self._send(connect_header)
 
         status, resp_headers = self._read_headers()
         if status != 200:
             raise WebSocketException("failed CONNECT via proxy")
+
+    def _get_resp_headers(self, success_status = 101):
+        status, resp_headers = self._read_headers()
+        if status != success_status:
+            self.close()
+            raise WebSocketException("Handshake status %d" % status)
+        return resp_headers
 
     def _get_handshake_headers(self, resource, host, port, options):
         headers = []
@@ -495,64 +504,39 @@ class WebSocket(object):
 
         return headers, key
 
+    def _get_handshake_socket_io(self, host, port, resource, resp_headers, **options):
+        body_length = int(resp_headers['content-length'])
+        body = self._recv_strict(body_length)
+        body = body.decode('utf-8')
+        _dump("response body", body)
+
+        sessid, heartbeat, close, transports = body.split(':', 4)
+        transport = transports.split(',')[0]
+        resource += transport + '/' + sessid
+
+        return self._get_handshake_headers(resource, host, port, options)
+
     def _handshake(self, host, port, resource, **options):
         headers, key = self._get_handshake_headers(resource, host, port, options)
 
         header_str = "\r\n".join(headers)
         self._send(header_str)
-        if traceEnabled:
-            logger.debug("--- request header ---")
-            logger.debug(header_str)
-            logger.debug("-----------------------")
+        _dump("request header", header_str)
 
-        if self.support_socket_io:
-            key = self._handshake_socket_io(host, port, resource, **options)
+        if self.support_socket_io == "0.9":
+            resp_headers = self._get_resp_headers(200)
+            headers, key = self._get_handshake_socket_io(host, port, resource, resp_headers, **options)
+            header_str = "\r\n".join(headers)
+            self._send(header_str)
+            _dump("request header", header_str)
 
-        status, resp_headers = self._read_headers()
-
-        if status != 101:
-            self.close()
-            raise WebSocketException("Handshake status %d" % status)
-
+        resp_headers = self._get_resp_headers()
         success = self._validate_header(resp_headers, key)
         if not success:
             self.close()
             raise WebSocketException("Invalid WebSocket Header")
 
         self.connected = True
-
-    def _handshake_socket_io(self, host, port, resource, **options):
-        status, resp_headers = self._read_headers()
-
-        if status != 200:
-            self.close()
-            raise WebSocketException("Handshake status %d" % status)
-
-        body_length = int(resp_headers['content-length'])
-        body = self._recv(body_length)
-        body = body.decode('utf-8')
-
-        if traceEnabled:
-            logger.debug("--- response body ---")
-            logger.debug(body)
-            logger.debug("-----------------------")
-
-        sessid, heartbeat, close, transports = body.split(':', 4)
-        transport = transports.split(',')[0]
-
-        resource += transport + '/' + sessid
-
-        headers, key = self._get_handshake_headers(resource, host, port, options)
-
-        header_str = "\r\n".join(headers)
-        self._send(header_str)
-
-        if traceEnabled:
-            logger.debug("--- request header ---")
-            logger.debug(header_str)
-            logger.debug("-----------------------")
-
-        return key
 
     def _validate_header(self, headers, key):
         for k, v in _HEADERS_TO_CHECK.items():

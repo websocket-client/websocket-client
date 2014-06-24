@@ -44,6 +44,21 @@ Default squid setting is "ALLOWED TO CONNECT ONLY HTTPS PORT".
 
 Current implementation of websocket-client is using "CONNECT" method via proxy.
 
+Socket IO support
+==================
+
+We have experimental support for socket io 0.9, not 1.0 since websocket client v0.16.0.
+This implementation is experimetal and API migth be changed.
+
+expamle::
+-------------
+
+    import websocket
+    ws = websocket.WebSocket(support_socket_io="0.9")
+      :
+
+
+
 Example
 =============
 
@@ -142,6 +157,9 @@ example::
 
 ChangeLog
 ============
+
+- v0.16.0
+  - experimental support for socket io 0.9 (#91)
 
 - v0.15.0
 
