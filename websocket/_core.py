@@ -210,10 +210,8 @@ def create_connection(url, timeout=None, **options):
     sslopt = options.get("sslopt", {})
     fire_cont_frame = options.get("fire_cont_frame", False)
     enable_multithread = options.get("enable_multithread", False)
-    support_socket_io = options.get("support_socket_io", None)
     websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
-        fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread,
-        support_socket_io=support_socket_io)
+        fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread)
     websock.settimeout(timeout if timeout is not None else default_timeout)
     websock.connect(url, **options)
     return websock
@@ -330,8 +328,7 @@ class WebSocket(object):
     """
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
-        fire_cont_frame=False, enable_multithread=False,
-        support_socket_io=None):
+        fire_cont_frame=False, enable_multithread=False):
         """
         Initalize WebSocket object.
         """
@@ -356,7 +353,6 @@ class WebSocket(object):
             self.lock = threading.Lock()
         else:
             self.lock = NoLock()
-        self.support_socket_io = support_socket_io
 
     def fileno(self):
         return self.sock.fileno()
@@ -504,31 +500,12 @@ class WebSocket(object):
 
         return headers, key
 
-    def _get_handshake_socket_io(self, host, port, resource, resp_headers, **options):
-        body_length = int(resp_headers['content-length'])
-        body = self._recv_strict(body_length)
-        body = body.decode('utf-8')
-        _dump("response body", body)
-
-        sessid, heartbeat, close, transports = body.split(':', 4)
-        transport = transports.split(',')[0]
-        resource += transport + '/' + sessid
-
-        return self._get_handshake_headers(resource, host, port, options)
-
     def _handshake(self, host, port, resource, **options):
         headers, key = self._get_handshake_headers(resource, host, port, options)
 
         header_str = "\r\n".join(headers)
         self._send(header_str)
         _dump("request header", header_str)
-
-        if self.support_socket_io == "0.9":
-            resp_headers = self._get_resp_headers(200)
-            headers, key = self._get_handshake_socket_io(host, port, resource, resp_headers, **options)
-            header_str = "\r\n".join(headers)
-            self._send(header_str)
-            _dump("request header", header_str)
 
         resp_headers = self._get_resp_headers()
         success = self._validate_header(resp_headers, key)
