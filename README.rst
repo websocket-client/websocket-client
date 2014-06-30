@@ -153,6 +153,10 @@ example::
 ChangeLog
 ============
 
+- v0.16.0
+  - lock some method for multithread. (#92)
+  - disable cert verification. (#89)
+
 - v0.15.0
 
   - fixed exception when send a large message (#84)
