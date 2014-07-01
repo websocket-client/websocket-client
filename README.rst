@@ -154,6 +154,7 @@ ChangeLog
 ============
 
 - v0.16.0
+
   - lock some method for multithread. (#92)
   - disable cert verification. (#89)
 
