@@ -47,6 +47,7 @@ else:
     from base64 import encodestring as base64encode
 
 import os
+import errno
 import struct
 import uuid
 import hashlib
@@ -418,16 +419,27 @@ class WebSocket(object):
         if not addrinfo_list:
             raise WebSocketException("Host not found.: " + hostname + ":" + str(port))
 
-        family = addrinfo_list[0][0]
-        self.sock = socket.socket(family)
-        self.sock.settimeout(self.timeout)
-        for opts in DEFAULT_SOCKET_OPTION:
-            self.sock.setsockopt(*opts)
-        for opts in self.sockopt:
-            self.sock.setsockopt(*opts)
-        # TODO: we need to support proxy
-        address = addrinfo_list[0][4]
-        self.sock.connect(address)
+        for addrinfo in addrinfo_list:
+            family = addrinfo[0]
+            self.sock = socket.socket(family)
+            self.sock.settimeout(self.timeout)
+            for opts in DEFAULT_SOCKET_OPTION:
+                self.sock.setsockopt(*opts)
+            for opts in self.sockopt:
+                self.sock.setsockopt(*opts)
+            # TODO: we need to support proxy
+            address = addrinfo[4]
+            try:
+                self.sock.connect(address)
+            except socket.error as error:
+                if error.errno in (errno.ECONNREFUSED, ):
+                    continue
+                else:
+                    raise
+            else:
+                break
+        else:
+            raise error
 
         if proxy_host:
             self._tunnel(hostname, port)
