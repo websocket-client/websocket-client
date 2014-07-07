@@ -27,6 +27,7 @@ import time
 import traceback
 import sys
 import select
+import six
 
 
 from ._core import WebSocket, getdefaulttimeout, logger
