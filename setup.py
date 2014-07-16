@@ -21,7 +21,7 @@ setup(
     license="LGPL",
     url="https://github.com/liris/websocket-client",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Programming Language :: Python",
         "Operating System :: MacOS :: MacOS X",
