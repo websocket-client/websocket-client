@@ -25,6 +25,10 @@ This module is tested on Python 2.7 and Python 3.x.
 
 Type "python setup.py install" or "pip install websocket-client" to install.
 
+.. CAUTION::
+
+  from v0.16.0, we can install by "pip install websocket-client" for python 3.
+
 This module depend on
 
  - six
