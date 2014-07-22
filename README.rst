@@ -49,7 +49,7 @@ Default squid setting is "ALLOWED TO CONNECT ONLY HTTPS PORT".
 Current implementation of websocket-client is using "CONNECT" method via proxy.
 
 
-expamle::
+example::
 -------------
 
     import websocket
