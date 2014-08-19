@@ -157,6 +157,10 @@ example::
 ChangeLog
 ============
 
+- v0.17.0
+
+  - can't set timeout on a standing websocket connection (#102)
+
 - v0.16.0
 
   - lock some method for multithread. (#92)

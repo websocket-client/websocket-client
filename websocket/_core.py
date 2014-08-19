@@ -383,6 +383,8 @@ class WebSocket(object):
         timeout: timeout time(second).
         """
         self._timeout = timeout
+        if self.sock:
+            self.sock.settimeout(timeout)
 
     timeout = property(gettimeout, settimeout)
 

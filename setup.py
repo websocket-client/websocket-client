@@ -1,7 +1,7 @@
 from setuptools import setup
 import sys
 
-VERSION = "0.16.0a"
+VERSION = "0.17.0"
 NAME="websocket-client"
 
 install_requires = ["six"]
