@@ -207,6 +207,7 @@ def create_connection(url, timeout=None, **options):
              "http_proxy_port" - http proxy port. If not set, set to 80.
              "enable_multithread" -> enable lock for multithread.
              "no_ssl_verify" - don't match cert to hostname.
+             "remote_ip" - dict to contain the remote IP for connection attempt
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
@@ -409,6 +410,8 @@ class WebSocket(object):
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
                  "no_ssl_verify" - don't match cert to hostname.
+                 "remote_ip" - dict to contain the remote IP for connection
+                               attempt
 
         """
 
@@ -433,6 +436,8 @@ class WebSocket(object):
                 self.sock.setsockopt(*opts)
             # TODO: we need to support proxy
             address = addrinfo[4]
+            if options.get("remote_ip") is not None:
+                options["remote_ip"]["remote_ip"] = str(address[0])
             try:
                 self.sock.connect(address)
             except socket.error as error:
