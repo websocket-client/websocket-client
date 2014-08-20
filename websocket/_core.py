@@ -206,6 +206,7 @@ def create_connection(url, timeout=None, **options):
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
              "enable_multithread" -> enable lock for multithread.
+             "no_ssl_verify" - don't match cert to hostname.
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
@@ -407,6 +408,7 @@ class WebSocket(object):
                  "cookie" -> cookie value.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
+                 "no_ssl_verify" - don't match cert to hostname.
 
         """
 
@@ -448,7 +450,11 @@ class WebSocket(object):
 
         if is_secure:
             if HAVE_SSL:
-                sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
+                no_ssl_verify = options.get("no_ssl_verify", False)
+                if no_ssl_verify:
+                    sslopt = dict(cert_reqs=ssl.CERT_NONE)
+                else:
+                    sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
                 certPath = os.path.join(
                     os.path.dirname(__file__), "cacert.pem")
                 if os.path.isfile(certPath):
