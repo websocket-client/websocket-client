@@ -421,6 +421,7 @@ class WebSocket(object):
         if not addrinfo_list:
             raise WebSocketException("Host not found.: " + hostname + ":" + str(port))
 
+        err = None
         for addrinfo in addrinfo_list:
             family = addrinfo[0]
             self.sock = socket.socket(family)
@@ -434,14 +435,16 @@ class WebSocket(object):
             try:
                 self.sock.connect(address)
             except socket.error as error:
+                error.remote_ip = str(address[0])
                 if error.errno in (errno.ECONNREFUSED, ):
+                    err = error
                     continue
                 else:
                     raise
             else:
                 break
         else:
-            raise error
+            raise err
 
         if proxy_host:
             self._tunnel(hostname, port)
