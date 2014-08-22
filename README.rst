@@ -160,6 +160,7 @@ ChangeLog
 - v0.17.0
 
   - can't set timeout on a standing websocket connection (#102)
+  - fixed local variable 'error' referenced before assignment (#102, #98)
 
 - v0.16.0
 
