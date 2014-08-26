@@ -206,6 +206,8 @@ def create_connection(url, timeout=None, **options):
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
              "enable_multithread" -> enable lock for multithread.
+             "sockopt" -> socket options
+             "sslopt" -> ssl option
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})

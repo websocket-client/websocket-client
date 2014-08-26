@@ -118,6 +118,25 @@ JavaScript websocket-like API example::
         ws.run_forever()
 
 
+FAQ
+============
+
+How to disable ssl cert verification?
+----------------------------------------
+
+Please set sslopt to {"cert_reqs": ssl.CERT_NONE}.
+
+    ws = websocket.WebSocketApp("https://echo.websocket.org")
+    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+
+    ws = websocket.create_connection("https://echo.websocket.org",
+      sslopt={"cert_reqs": ssl.CERT_NONE})
+
+    ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
+    ws.connect("https://echo.websocket.org")
+
+
+
 wsdump.py
 ============
 
