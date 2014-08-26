@@ -136,6 +136,22 @@ Please set sslopt to {"cert_reqs": ssl.CERT_NONE}.
     ws.connect("https://echo.websocket.org")
 
 
+How to disable hostname verification.
+----------------------------------------
+
+Please set sslopt to {"check_hostname": False}.
+(since v0.18.0)
+
+    ws = websocket.WebSocketApp("https://echo.websocket.org")
+    ws.run_forever(sslopt={"check_hostname": False})
+
+    ws = websocket.create_connection("https://echo.websocket.org",
+      sslopt={"check_hostname": False})
+
+    ws = websocket.WebSocket(sslopt={"check_hostname": False})
+    ws.connect("https://echo.websocket.org")
+
+
 
 wsdump.py
 ============
@@ -175,6 +191,9 @@ example::
 
 ChangeLog
 ============
+
+- v0.18.0
+  -  allow override of match_hostname usage on ssl (#105)
 
 - v0.17.0
 
