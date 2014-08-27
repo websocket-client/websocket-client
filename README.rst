@@ -193,6 +193,7 @@ ChangeLog
 ============
 
 - v0.18.0
+
   -  allow override of match_hostname usage on ssl (#105)
 
 - v0.17.0
