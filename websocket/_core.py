@@ -663,7 +663,10 @@ class WebSocket(object):
         opcode, data = self.recv_data()
         if six.PY3 and opcode == ABNF.OPCODE_TEXT:
             return data.decode("utf-8")
-        return data
+        elif opcode == ABNF.OPCODE_TEXT or opcode == ABNF.OPCODE_BINARY:
+            return data
+        else:
+            return ''
 
     def recv_data(self, control_frame=False):
         """
