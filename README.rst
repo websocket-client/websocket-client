@@ -204,6 +204,10 @@ example::
 ChangeLog
 ============
 
+- v0.19.0
+
+  -suppress close event message(#107) 
+
 - v0.18.0
 
   -  allow override of match_hostname usage on ssl (#105)
