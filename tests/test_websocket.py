@@ -29,7 +29,6 @@ from websocket._core import _parse_url, _create_sec_websocket_key
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = False
-# TEST_WITH_INTERNET = True
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = False
@@ -61,6 +60,9 @@ class SockMock(object):
     def send(self, data):
         self.sent.append(data)
         return len(data)
+
+    def close(self):
+        pass
 
 
 class HeaderSockMock(SockMock):
@@ -286,6 +288,20 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(data, "Brevity is the soul of wit")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
+
+    def testClose(self):
+        sock = ws.WebSocket()
+        sock.sock = SockMock()
+        sock.connected = True
+        sock.close()
+        self.assertEqual(sock.connected, False)
+
+        sock = ws.WebSocket()
+        s = sock.sock = SockMock()
+        sock.connected = True
+        s.add_packet(six.b('\x88\x80\x17\x98p\x84'))
+        sock.recv()
+        self.assertEqual(sock.connected, False)
 
     def testRecvContFragmentation(self):
         sock = ws.WebSocket()

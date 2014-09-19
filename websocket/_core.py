@@ -787,6 +787,7 @@ class WebSocket(object):
         """
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
+        self.connected = False
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
     def close(self, status=STATUS_NORMAL, reason=six.b("")):

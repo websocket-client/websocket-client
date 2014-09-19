@@ -206,7 +206,8 @@ ChangeLog
 
 - v0.19.0
 
-  -suppress close event message(#107) 
+  - suppress close event message(#107)
+  - detect socket connection state(#109)
 
 - v0.18.0
 
