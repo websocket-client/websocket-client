@@ -22,9 +22,6 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 WebSocketApp provides higher level APIs.
 """
-
-print 'INTERNAL VERSION'
-
 import threading
 import time
 import traceback
