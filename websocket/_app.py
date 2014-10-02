@@ -16,12 +16,15 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
+>
 """
 
 """
 WebSocketApp provides higher level APIs.
 """
+
+print 'INTERNAL VERSION'
+
 import threading
 import time
 import traceback
@@ -177,8 +180,25 @@ class WebSocketApp(object):
                 thread.join()
                 self.keep_running = False
             self.sock.close()
-            self._callback(self.on_close)
+            try:
+                data = frame.data
+            except NameError:
+                data = None
+            self._callback(self.on_close,*self._get_close_args(data))
             self.sock = None
+
+    def _get_close_args(self,data):
+        """ this functions extracts the code, reason from the close body
+        if they exists, and if the self.on_close except three arguments """
+        import inspect
+        if len(data) >=2:
+            code = 256*six.byte2int(data[0]) + six.byte2int(data[1])
+            reason = data[2:].decode('utf-8')
+            if self.on_close and len(inspect.getargspec(self.on_close).args) == 3:
+                return [code,reason]
+            else:
+                return []
+        return []
 
     def _callback(self, callback, *args):
         if callback:
