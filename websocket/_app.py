@@ -177,8 +177,24 @@ class WebSocketApp(object):
                 thread.join()
                 self.keep_running = False
             self.sock.close()
-            self._callback(self.on_close)
+            try:
+                data = frame.data
+            except NameError:
+                data = None
+            self._callback(self.on_close,*self._get_close_args(data))
             self.sock = None
+
+    def _get_close_args(self,data):
+        """ this functions extracts the code, reason from the close body
+        if they exists, and if the self.on_close except three arguments """
+        import inspect
+        if not self.on_close and len(inspect.getargspec(self.on_close).args) == 3:
+            return []
+        if data and len(data) >=2:
+            code = 256*six.byte2int(data[0]) + six.byte2int(data[1])
+            reason = data[2:].decode('utf-8')
+            return [code,reason]
+        return [None,None]
 
     def _callback(self, callback, *args):
         if callback:
