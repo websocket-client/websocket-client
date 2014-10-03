@@ -193,7 +193,7 @@ class WebSocketApp(object):
         if data and len(data) >=2:
             code = 256*six.byte2int(data[0]) + six.byte2int(data[1])
             reason = data[2:].decode('utf-8')
-                return [code,reason]
+            return [code,reason]
         return [None,None]
 
     def _callback(self, callback, *args):
