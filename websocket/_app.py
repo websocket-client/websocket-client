@@ -188,7 +188,7 @@ class WebSocketApp(object):
         """ this functions extracts the code, reason from the close body
         if they exists, and if the self.on_close except three arguments """
         import inspect
-        if len(data) >=2:
+        if data and len(data) >=2:
             code = 256*six.byte2int(data[0]) + six.byte2int(data[1])
             reason = data[2:].decode('utf-8')
             if self.on_close and len(inspect.getargspec(self.on_close).args) == 3:
