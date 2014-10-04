@@ -131,6 +131,7 @@ class WebSocketApp(object):
         if self.sock:
             raise WebSocketException("socket is already opened")
         thread = None
+        break_on_close_op = False
 
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
@@ -157,6 +158,7 @@ class WebSocketApp(object):
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)
                     if op_code == ABNF.OPCODE_CLOSE:
+                        break_on_close_op = True
                         break
                     elif op_code == ABNF.OPCODE_PING:
                         self._callback(self.on_ping, frame.data)
@@ -176,12 +178,8 @@ class WebSocketApp(object):
                 event.set()
                 thread.join()
                 self.keep_running = False
-            self.sock.close()
-            try:
-                data = frame.data
-            except NameError:
-                data = None
-            self._callback(self.on_close,*self._get_close_args(data))
+                self.sock.close()
+            self._callback(self.on_close,*self._get_close_args(frame.data if break_on_close_op else None))
             self.sock = None
 
     def _get_close_args(self,data):
