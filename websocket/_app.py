@@ -178,7 +178,7 @@ class WebSocketApp(object):
                 event.set()
                 thread.join()
                 self.keep_running = False
-                self.sock.close()
+            self.sock.close()
             self._callback(self.on_close,*self._get_close_args(frame.data if break_on_close_op else None))
             self.sock = None
 
@@ -186,7 +186,8 @@ class WebSocketApp(object):
         """ this functions extracts the code, reason from the close body
         if they exists, and if the self.on_close except three arguments """
         import inspect
-        if not self.on_close and len(inspect.getargspec(self.on_close).args) == 3:
+        # if the on_close callback is "old", just return empty list
+        if not self.on_close or len(inspect.getargspec(self.on_close).args) != 3:
             return []
         if data and len(data) >=2:
             code = 256*six.byte2int(data[0]) + six.byte2int(data[1])
