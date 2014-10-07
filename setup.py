@@ -41,4 +41,5 @@ setup(
         'websocket.tests': ['data/*.txt'],
         'websocket': ["cacert.pem"]
     },
+    test_suite = "websocket.tests.test_websocket",
 )
