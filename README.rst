@@ -208,7 +208,8 @@ ChangeLog
 
   - suppress close event message(#107)
   - detect socket connection state(#109)
-  - support for code and reason in on_close callback(#111 )
+  - support for code and reason in on_close callback(#111)
+  - continuation frame handling seems suspicious(#113)
 
 - v0.18.0
 

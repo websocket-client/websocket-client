@@ -684,7 +684,7 @@ class WebSocket(object):
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketException("Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
-                if frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
+                if not self.fire_cont_frame and frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
                     raise WebSocketException("Illegal frame")
                 if self._cont_data:
                     self._cont_data[1] += frame.data
