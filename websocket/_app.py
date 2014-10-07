@@ -131,7 +131,7 @@ class WebSocketApp(object):
         if self.sock:
             raise WebSocketException("socket is already opened")
         thread = None
-        break_on_close_op = False
+        close_frmae = None
 
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
@@ -158,7 +158,7 @@ class WebSocketApp(object):
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)
                     if op_code == ABNF.OPCODE_CLOSE:
-                        break_on_close_op = True
+                        close_frmae = frame
                         break
                     elif op_code == ABNF.OPCODE_PING:
                         self._callback(self.on_ping, frame.data)
@@ -179,7 +179,8 @@ class WebSocketApp(object):
                 thread.join()
                 self.keep_running = False
             self.sock.close()
-            self._callback(self.on_close,*self._get_close_args(frame.data if break_on_close_op else None))
+            self._callback(self.on_close,
+                *self._get_close_args(close_frame.data if close_frame else None))
             self.sock = None
 
     def _get_close_args(self,data):
@@ -189,10 +190,12 @@ class WebSocketApp(object):
         # if the on_close callback is "old", just return empty list
         if not self.on_close or len(inspect.getargspec(self.on_close).args) != 3:
             return []
+
         if data and len(data) >=2:
             code = 256*six.byte2int(data[0]) + six.byte2int(data[1])
             reason = data[2:].decode('utf-8')
             return [code,reason]
+        
         return [None,None]
 
     def _callback(self, callback, *args):
