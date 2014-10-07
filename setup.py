@@ -36,9 +36,9 @@ setup(
     keywords='websockets',
     scripts=["bin/wsdump.py"],
     install_requires=install_requires,
-    packages=["tests", "websocket"],
+    packages=["websocket", "websocket.tests"],
     package_data={
-        'tests': ['data/*.txt'],
+        'websocket.tests': ['data/*.txt'],
         'websocket': ["cacert.pem"]
     },
 )
