@@ -352,6 +352,7 @@ class WebSocket(object):
         # These buffer over the build-up of a single frame.
         self._frame_buffer = _FrameBuffer()
         self._cont_data = None
+        self._recving_frames = None
         if enable_multithread:
             self.lock = threading.Lock()
         else:
@@ -684,17 +685,24 @@ class WebSocket(object):
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketException("Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
-                if not self.fire_cont_frame and frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
+                if frame.opcode == ABNF.OPCODE_CONT and not self._recving_frames:
                     raise WebSocketException("Illegal frame")
+
                 if self._cont_data:
                     self._cont_data[1] += frame.data
                 else:
+                    if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+                        self._recving_frames = frame.opcode
                     self._cont_data = [frame.opcode, frame.data]
 
+                if frame.fin:
+                    self._recving_frames = None
+                
                 if frame.fin or self.fire_cont_frame:
                     data = self._cont_data
                     self._cont_data = None
                     return data
+
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
                 return (frame.opcode, frame.data)

@@ -294,8 +294,8 @@ class WebSocketTest(unittest.TestCase):
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Brevity is "
         s.add_packet(six.b("\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
-        # OPCODE=TEXT, FIN=0, MSG="Brevity is "
-        s.add_packet(six.b("\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
+        # OPCODE=CONT, FIN=0, MSG="Brevity is "
+        s.add_packet(six.b("\x00\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
         # OPCODE=CONT, FIN=1, MSG="the soul of wit"
         s.add_packet(six.b("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17"))
 
@@ -306,6 +306,11 @@ class WebSocketTest(unittest.TestCase):
         _, data = sock.recv_data()
         self.assertEqual(data, six.b("the soul of wit"))
 
+        # OPCODE=CONT, FIN=0, MSG="Brevity is "
+        s.add_packet(six.b("\x80\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
+
+        with self.assertRaises(ws.WebSocketException):
+            sock.recv_data()
 
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
