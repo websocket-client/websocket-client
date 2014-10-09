@@ -433,7 +433,7 @@ class WebSocket(object):
                 self.sock.setsockopt(*opts)
             for opts in self.sockopt:
                 self.sock.setsockopt(*opts)
-            # TODO: we need to support proxy
+            
             address = addrinfo[4]
             try:
                 self.sock.connect(address)
