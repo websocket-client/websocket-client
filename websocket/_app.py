@@ -131,7 +131,7 @@ class WebSocketApp(object):
         if self.sock:
             raise WebSocketException("socket is already opened")
         thread = None
-        close_frmae = None
+        close_frame = None
 
         try:
             self.sock = WebSocket(self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
