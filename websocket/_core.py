@@ -831,7 +831,8 @@ class WebSocket(object):
         self._closeInternal()
 
     def _closeInternal(self):
-        self.sock.close()
+        if self.sock:
+            self.sock.close()
 
     def _send(self, data):
         if isinstance(data, six.text_type):
