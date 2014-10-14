@@ -359,6 +359,8 @@ class WebSocket(object):
         else:
             self.lock = NoLock()
 
+        self.subprotocol = None
+
     def fileno(self):
         return self.sock.fileno()
 
@@ -557,6 +559,7 @@ class WebSocket(object):
             if not subproto or subproto not in subprotocols:
                 logger.error("Invalid subprotocol: " + str(subprotocols))
                 return False
+            self.subprotocol = subproto
 
 
         result = headers.get("sec-websocket-accept", None)
