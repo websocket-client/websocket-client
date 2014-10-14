@@ -22,7 +22,7 @@ import six
 import array
 import struct
 import os
-
+from ._exceptions import *
 
 
 
@@ -75,8 +75,15 @@ class ABNF(object):
         self.data = data
         self.get_mask_key = os.urandom
 
-        if rsv1 or rsv2 or rsv3:
+    def validate(self):
+        """
+        validate the ABNF frame.
+        """
+        if self.rsv1 or self.rsv2 or self.rsv3:
             raise NotImplementedError("rsv is not implemented, yet")
+
+        if self.opcode == ABNF.OPCODE_PING and not self.fin:
+            raise WebSocketException("Invalid ping frame.")
 
     def __str__(self):
         return "fin=" + str(self.fin) \

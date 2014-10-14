@@ -430,12 +430,11 @@ class WebSocketTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testAfterClose(self):
-        from socket import error
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEqual(s, None)
         s.close()
-        self.assertRaises(error, s.send, "Hello")
-        self.assertRaises(error, s.recv)
+        self.assertRaises(ws.WebSocketConnectionClosedException, s.send, "Hello")
+        self.assertRaises(ws.WebSocketConnectionClosedException, s.recv)
 
     def testUUID4(self):
         """ WebSocket key should be a UUID4.
