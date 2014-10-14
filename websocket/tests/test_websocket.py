@@ -184,25 +184,31 @@ class WebSocketTest(unittest.TestCase):
             "connection": "upgrade",
             "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0=",
             }
-        self.assertEqual(sock._validate_header(required_header, key), True)
+        self.assertEqual(sock._validate_header(required_header, key, None), True)
 
         header = required_header.copy()
         header["upgrade"] = "http"
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
         del header["upgrade"]
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
 
         header = required_header.copy()
         header["connection"] = "something"
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
         del header["connection"]
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
 
         header = required_header.copy()
         header["sec-websocket-accept"] = "something"
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
         del header["sec-websocket-accept"]
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
+
+
+        header = required_header.copy()
+        header["sec-websocket-protocol"] = "sub1"
+        self.assertEqual(sock._validate_header(header, key, ["sub1", "sub2"]), True)
+        self.assertEqual(sock._validate_header(header, key, ["sub2", "sub3"]), False)
 
     def testReadHeader(self):
         sock = ws.WebSocket()

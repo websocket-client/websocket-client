@@ -43,7 +43,8 @@ class WebSocketApp(object):
                  on_open=None, on_message=None, on_error=None,
                  on_close=None, on_ping=None, on_pong=None,
                  on_cont_message=None,
-                 keep_running=True, get_mask_key=None, cookie=None):
+                 keep_running=True, get_mask_key=None, cookie=None,
+                 subprotocols=None):
         """
         url: websocket url.
         header: custom header for websocket handshake.
@@ -53,21 +54,22 @@ class WebSocketApp(object):
          on_message has 2 arguments.
          The 1st arugment is this class object.
          The passing 2nd arugment is utf-8 string which we get from the server.
-       on_error: callable object which is called when we get error.
+        on_error: callable object which is called when we get error.
          on_error has 2 arguments.
          The 1st arugment is this class object.
          The passing 2nd arugment is exception object.
-       on_close: callable object which is called when closed the connection.
+        on_close: callable object which is called when closed the connection.
          this function has one argument. The arugment is this class object.
-       on_cont_message: callback object which is called when recieve continued frame data.
+        on_cont_message: callback object which is called when recieve continued frame data.
          on_message has 3 arguments.
          The 1st arugment is this class object.
          The passing 2nd arugment is utf-8 string which we get from the server.
          The 3rd arugment is continue flag. if 0, the data continue to next frame data
-       keep_running: a boolean flag indicating whether the app's main loop should
+        keep_running: a boolean flag indicating whether the app's main loop should
          keep running, defaults to True
-       get_mask_key: a callable to produce new mask keys, see the WebSocket.set_mask_key's
+        get_mask_key: a callable to produce new mask keys, see the WebSocket.set_mask_key's
          docstring for more information
+        subprotocols: array of available sub protocols. default is None.
         """
         self.url = url
         self.header = header
@@ -83,6 +85,7 @@ class WebSocketApp(object):
         self.get_mask_key = get_mask_key
         self.sock = None
         self.last_ping_tm = 0
+        self.subprotocols =subprotocols
 
     def send(self, data, opcode=ABNF.OPCODE_TEXT):
         """
@@ -138,7 +141,8 @@ class WebSocketApp(object):
                 fire_cont_frame=self.on_cont_message and True or False)
             self.sock.settimeout(getdefaulttimeout())
             self.sock.connect(self.url, header=self.header, cookie=self.cookie,
-                http_proxy_host=http_proxy_host, http_proxy_port=http_proxy_port)
+                http_proxy_host=http_proxy_host, http_proxy_port=http_proxy_port,
+                subprotocols=self.subprotocols)
             self._callback(self.on_open)
 
             if ping_interval:
@@ -158,7 +162,7 @@ class WebSocketApp(object):
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)
                     if op_code == ABNF.OPCODE_CLOSE:
-                        close_frmae = frame
+                        close_frame = frame
                         break
                     elif op_code == ABNF.OPCODE_PING:
                         self._callback(self.on_ping, frame.data)

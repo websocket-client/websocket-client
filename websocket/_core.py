@@ -208,6 +208,7 @@ def create_connection(url, timeout=None, **options):
              "enable_multithread" -> enable lock for multithread.
              "sockopt" -> socket options
              "sslopt" -> ssl option
+             "subprotocols" - array of available sub protocols. default is None.
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
@@ -410,6 +411,7 @@ class WebSocket(object):
                  "cookie" -> cookie value.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
+                 "subprotocols" - array of available sub protocols. default is None.
 
         """
 
@@ -509,6 +511,10 @@ class WebSocket(object):
         headers.append("Sec-WebSocket-Key: %s" % key)
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
 
+        subprotocols = options.get("subprotocols")
+        if subprotocols:
+            headers.append("Sec-WebSocket-Protocol: %s" % ",".join(subprotocols))
+
         if "header" in options:
             headers.extend(options["header"])
 
@@ -530,14 +536,14 @@ class WebSocket(object):
         _dump("request header", header_str)
 
         resp_headers = self._get_resp_headers()
-        success = self._validate_header(resp_headers, key)
+        success = self._validate_header(resp_headers, key, options.get("subprotocols"))
         if not success:
             self.close()
             raise WebSocketException("Invalid WebSocket Header")
 
         self.connected = True
 
-    def _validate_header(self, headers, key):
+    def _validate_header(self, headers, key, subprotocols):
         for k, v in _HEADERS_TO_CHECK.items():
             r = headers.get(k, None)
             if not r:
@@ -545,6 +551,13 @@ class WebSocket(object):
             r = r.lower()
             if v != r:
                 return False
+        
+        if subprotocols:
+            subproto = headers.get("sec-websocket-protocol", None)
+            if not subproto or subproto not in subprotocols:
+                logger.error("Invalid subprotocol: " + str(subprotocols))
+                return False
+
 
         result = headers.get("sec-websocket-accept", None)
         if not result:
