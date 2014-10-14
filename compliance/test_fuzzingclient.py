@@ -20,8 +20,13 @@ for case in range(1, count+1):
 	try:
 		ws = websocket.create_connection(url)
 		opcode, msg = ws.recv_data()
+		if opcode == websocket.ABNF.OPCODE_TEXT:
+			msg.decode("utf-8")
 		if opcode  in (websocket.ABNF.OPCODE_TEXT, websocket.ABNF.OPCODE_BINARY):
 			ws.send(msg, opcode)
+		success += 1
+	except UnicodeDecodeError:
+		# this case is ok.
 		success += 1
 	except Exception as e:
 		failed += 1

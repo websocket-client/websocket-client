@@ -75,6 +75,9 @@ class ABNF(object):
         self.data = data
         self.get_mask_key = os.urandom
 
+        if rsv1 or rsv2 or rsv3:
+            raise NotImplementedError("rsv is not implemented, yet")
+
     def __str__(self):
         return "fin=" + str(self.fin) \
                 + " opcode=" + str(self.opcode) \

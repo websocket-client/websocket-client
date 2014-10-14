@@ -723,7 +723,8 @@ class WebSocket(object):
                 self.send_close()
                 return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_PING:
-                self.pong(frame.data)
+                if len(frame.data) < 126:
+                    self.pong(frame.data)
                 if control_frame:
                     return (frame.opcode, frame.data)
             elif frame.opcode == ABNF.OPCODE_PONG:
@@ -746,17 +747,24 @@ class WebSocket(object):
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketException("Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
-                if frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
+                if frame.opcode == ABNF.OPCODE_CONT and not self._recving_frames:
                     raise WebSocketException("Illegal frame")
-                if self._cont_data:
-                    self._cont_data[1].data += frame.data
-                else:
-                    self._cont_data = [frame.opcode, frame]
 
+                if self._cont_data:
+                    self._cont_data[1] += frame.data
+                else:
+                    if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+                        self._recving_frames = frame.opcode
+                    self._cont_data = [frame.opcode, frame.data]
+
+                if frame.fin:
+                    self._recving_frames = None
+                
                 if frame.fin or self.fire_cont_frame:
                     data = self._cont_data
                     self._cont_data = None
                     return data
+
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
                 return (frame.opcode, frame)
@@ -844,11 +852,13 @@ class WebSocket(object):
             except:
                 pass
 
-        self._closeInternal()
+        self.shutdown()
 
-    def _closeInternal(self):
+    def shutdown(self):
+        "close socket, immediately."
         if self.sock:
             self.sock.close()
+            self.sock = None
 
     def _send(self, data):
         if isinstance(data, six.text_type):
