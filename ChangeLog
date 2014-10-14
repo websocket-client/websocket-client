@@ -1,6 +1,12 @@
 ChangeLog
 ============
 
+- 0.21.0
+
+  - Check for socket before attempting to close (#115)
+  - Enable turning off SSL verification in wsdump.py(#116)
+  - Enable to set subprotocol(#118)
+
 - v0.19.0
 
   - suppress close event message(#107)
