@@ -3,6 +3,11 @@
 import websocket
 import json
 import traceback
+import six
+
+
+
+
 
 SERVER = 'ws://127.0.0.1:8642'
 AGENT = 'py-websockets-cleint'
@@ -30,8 +35,8 @@ for case in range(1, count+1):
 		success += 1
 	except Exception as e:
 		failed += 1
-		print("[Faield] Test Case: " + str(case))
-		print(traceback.format_exc())
+		# print("[Faield] Test Case: " + str(case))
+		#print(traceback.format_exc())
 	finally:
 		ws.close()
 
