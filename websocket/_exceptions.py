@@ -30,6 +30,11 @@ class WebSocketException(Exception):
     """
     pass
 
+class WebSocketProtocolException(WebSocketException):
+    """
+    If the webscoket protocol is invalid, this exception will be raised.
+    """
+    pass
 
 class WebSocketConnectionClosedException(WebSocketException):
     """

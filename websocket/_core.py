@@ -698,12 +698,12 @@ class WebSocket(object):
             if not frame:
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
-                raise WebSocketException("Not a valid frame %s" % frame)
+                raise WebSocketProtocolException("Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
                 if not self._recving_frames and frame.opcode == ABNF.OPCODE_CONT:
-                    raise WebSocketException("Illegal frame")
+                    raise WebSocketProtocolException("Illegal frame")
                 if self._recving_frames and frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
-                    raise WebSocketException("Illegal frame")
+                    raise WebSocketProtocolException("Illegal frame")
 
                 if self._cont_data:
                     self._cont_data[1] += frame.data
@@ -720,7 +720,7 @@ class WebSocket(object):
                     self._cont_data = None
                     frame.data = data[1]
                     if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not validate_utf8(frame.data):
-                        raise WebSocketException("cannot decode: " + repr(frame.data))
+                        raise WebSocketProtocolException("cannot decode: " + repr(frame.data))
                     return [data[0], frame]
 
             elif frame.opcode == ABNF.OPCODE_CLOSE:
@@ -730,7 +730,7 @@ class WebSocket(object):
                 if len(frame.data) < 126:
                     self.pong(frame.data)
                 else:
-                    raise WebSocketException("Protocol Error")
+                    raise WebSocketProtocolException("Ping message is too long")
                 if control_frame:
                     return (frame.opcode, frame)
             elif frame.opcode == ABNF.OPCODE_PONG:

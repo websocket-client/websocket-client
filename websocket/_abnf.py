@@ -105,22 +105,22 @@ class ABNF(object):
         validate the ABNF frame.
         """
         if self.rsv1 or self.rsv2 or self.rsv3:
-            raise NotImplementedError("rsv is not implemented, yet")
+            raise WebSocketProtocolException("rsv is not implemented, yet")
 
         if self.opcode == ABNF.OPCODE_PING and not self.fin:
-            raise WebSocketException("Invalid ping frame.")
+            raise WebSocketProtocolException("Invalid ping frame.")
 
         if self.opcode == ABNF.OPCODE_CLOSE:
             l = len(self.data)
             if not l:
                 return
             if l == 1 or l >= 126:
-                raise WebSocketException("Invalid close frame.")
+                raise WebSocketProtocolException("Invalid close frame.")
             if l > 2 and not validate_utf8(self.data[2:]):
-                raise WebSocketException("Invalid close frame.")
+                raise WebSocketProtocolException("Invalid close frame.")
             code = 256*six.byte2int(self.data[0]) + six.byte2int(self.data[1])
             if not self._is_valid_close_status(code):
-                raise WebSocketException("Invalid close opcode.")
+                raise WebSocketProtocolException("Invalid close opcode.")
 
     def _is_valid_close_status(self, code):
         return code in VALID_CLOSE_STATUS or (3000 <= code <5000)
