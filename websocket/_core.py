@@ -56,7 +56,7 @@ import logging
 
 # websocket modules
 from ._exceptions import *
-from ._abnf import ABNF
+from ._abnf import *
 from ._utils import NoLock, validate_utf8
 
 """
@@ -71,19 +71,6 @@ Please see http://tools.ietf.org/html/rfc6455 for protocol.
 # websocket supported version.
 VERSION = 13
 
-# closing frame status codes.
-STATUS_NORMAL = 1000
-STATUS_GOING_AWAY = 1001
-STATUS_PROTOCOL_ERROR = 1002
-STATUS_UNSUPPORTED_DATA_TYPE = 1003
-STATUS_STATUS_NOT_AVAILABLE = 1005
-STATUS_ABNORMAL_CLOSED = 1006
-STATUS_INVALID_PAYLOAD = 1007
-STATUS_POLICY_VIOLATION = 1008
-STATUS_MESSAGE_TOO_BIG = 1009
-STATUS_INVALID_EXTENSION = 1010
-STATUS_UNEXPECTED_CONDITION = 1011
-STATUS_TLS_HANDSHAKE_ERROR = 1015
 
 DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1),]
 if hasattr(socket, "SO_KEEPALIVE"):
@@ -733,7 +720,7 @@ class WebSocket(object):
                     self._cont_data = None
                     frame.data = data[1]
                     if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not validate_utf8(frame.data):
-                        raise UnicodeDecodeError("cannot decode: " + repr(frame.data))
+                        raise WebSocketException("cannot decode: " + repr(frame.data))
                     return [data[0], frame]
 
             elif frame.opcode == ABNF.OPCODE_CLOSE:
@@ -742,6 +729,8 @@ class WebSocket(object):
             elif frame.opcode == ABNF.OPCODE_PING:
                 if len(frame.data) < 126:
                     self.pong(frame.data)
+                else:
+                    raise WebSocketException("Protocol Error")
                 if control_frame:
                     return (frame.opcode, frame)
             elif frame.opcode == ABNF.OPCODE_PONG:

@@ -530,6 +530,8 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(state, True) 
         state = validate_utf8(six.b('\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5\xed\xa0\x80edited'))
         self.assertEqual(state, False)
+        state = validate_utf8(six.b(''))
+        self.assertEqual(state, True)
 
 if __name__ == "__main__":
     unittest.main()

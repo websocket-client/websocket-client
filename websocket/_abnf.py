@@ -23,8 +23,33 @@ import array
 import struct
 import os
 from ._exceptions import *
+from ._utils import validate_utf8
 
+# closing frame status codes.
+STATUS_NORMAL = 1000
+STATUS_GOING_AWAY = 1001
+STATUS_PROTOCOL_ERROR = 1002
+STATUS_UNSUPPORTED_DATA_TYPE = 1003
+STATUS_STATUS_NOT_AVAILABLE = 1005
+STATUS_ABNORMAL_CLOSED = 1006
+STATUS_INVALID_PAYLOAD = 1007
+STATUS_POLICY_VIOLATION = 1008
+STATUS_MESSAGE_TOO_BIG = 1009
+STATUS_INVALID_EXTENSION = 1010
+STATUS_UNEXPECTED_CONDITION = 1011
+STATUS_TLS_HANDSHAKE_ERROR = 1015
 
+VALID_CLOSE_STATUS = (
+    STATUS_NORMAL,
+    STATUS_GOING_AWAY,
+    STATUS_PROTOCOL_ERROR,
+    STATUS_UNSUPPORTED_DATA_TYPE,
+    STATUS_INVALID_PAYLOAD,
+    STATUS_POLICY_VIOLATION,
+    STATUS_MESSAGE_TOO_BIG,
+    STATUS_INVALID_EXTENSION,
+    STATUS_UNEXPECTED_CONDITION,
+    )
 
 class ABNF(object):
     """
@@ -84,6 +109,21 @@ class ABNF(object):
 
         if self.opcode == ABNF.OPCODE_PING and not self.fin:
             raise WebSocketException("Invalid ping frame.")
+
+        if self.opcode == ABNF.OPCODE_CLOSE:
+            l = len(self.data)
+            if not l:
+                return
+            if l == 1 or l >= 126:
+                raise WebSocketException("Invalid close frame.")
+            if l > 2 and not validate_utf8(self.data[2:]):
+                raise WebSocketException("Invalid close frame.")
+            code = 256*six.byte2int(self.data[0]) + six.byte2int(self.data[1])
+            if not self._is_valid_close_status(code):
+                raise WebSocketException("Invalid close opcode.")
+
+    def _is_valid_close_status(self, code):
+        return code in VALID_CLOSE_STATUS or (3000 <= code <5000)
 
     def __str__(self):
         return "fin=" + str(self.fin) \

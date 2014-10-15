@@ -22,6 +22,7 @@ failed = 0
 
 for case in range(1, count+1):
 	url = SERVER + '/runCase?case={}&agent={}'.format(case, AGENT)
+	status = websocket.STATUS_NORMAL
 	try:
 		ws = websocket.create_connection(url)
 		opcode, msg = ws.recv_data()
@@ -33,12 +34,13 @@ for case in range(1, count+1):
 	except UnicodeDecodeError:
 		# this case is ok.
 		success += 1
+		status = websocket.STATUS_PROTOCOL_ERROR
 	except Exception as e:
 		failed += 1
-		# print("[Faield] Test Case: " + str(case))
-		#print(traceback.format_exc())
+		status = websocket.STATUS_PROTOCOL_ERROR
+		print(traceback.format_exc())
 	finally:
-		ws.close()
+		ws.close(status)
 
 print("Ran {} test cases. success: {}, faield: {}".format(case, success, failed))
 url = SERVER + '/updateReports?agent={}'.format(AGENT)
