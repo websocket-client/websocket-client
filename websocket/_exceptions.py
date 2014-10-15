@@ -36,6 +36,12 @@ class WebSocketProtocolException(WebSocketException):
     """
     pass
 
+class WebSocketPayloadException(WebSocketException):
+    """
+    If the webscoket payload is invalid, this exception will be raised.
+    """
+    pass
+
 class WebSocketConnectionClosedException(WebSocketException):
     """
     If remote host closed the connection or some network error happened,

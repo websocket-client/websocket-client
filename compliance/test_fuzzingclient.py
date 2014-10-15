@@ -34,6 +34,8 @@ for case in range(1, count+1):
 		status = websocket.STATUS_PROTOCOL_ERROR
 	except websocket.WebSocketProtocolException:
 		status = websocket.STATUS_PROTOCOL_ERROR
+	except websocket.WebSocketPayloadException:
+		status = websocket.STATUS_INVALID_PAYLOAD
 	except Exception as e:
 		# status = websocket.STATUS_PROTOCOL_ERROR
 		print(traceback.format_exc())

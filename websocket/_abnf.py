@@ -107,6 +107,9 @@ class ABNF(object):
         if self.rsv1 or self.rsv2 or self.rsv3:
             raise WebSocketProtocolException("rsv is not implemented, yet")
 
+        if self.opcode not in ABNF.OPCODES:
+            raise WebSocketProtocolException("Invalid opcode " + self.opcode)
+
         if self.opcode == ABNF.OPCODE_PING and not self.fin:
             raise WebSocketProtocolException("Invalid ping frame.")
 
