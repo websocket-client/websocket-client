@@ -6,6 +6,11 @@ ChangeLog
   - Check for socket before attempting to close (#115)
   - Enable turning off SSL verification in wsdump.py(#116)
   - Enable to set subprotocol(#118)
+  - Better support for Autobahn test suite (http://autobahn.ws/testsuite) (#117)
+
+- v0.20.0
+
+  - fix typo.
 
 - v0.19.0
 

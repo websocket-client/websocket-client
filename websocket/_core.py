@@ -720,7 +720,7 @@ class WebSocket(object):
                     self._cont_data = None
                     frame.data = data[1]
                     if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not validate_utf8(frame.data):
-                        raise WebSocketProtocolException("cannot decode: " + repr(frame.data))
+                        raise WebSocketPayloadException("cannot decode: " + repr(frame.data))
                     return [data[0], frame]
 
             elif frame.opcode == ABNF.OPCODE_CLOSE:
