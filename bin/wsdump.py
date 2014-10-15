@@ -2,6 +2,7 @@
 
 import argparse
 import code
+import six
 import sys
 import threading
 import websocket
@@ -32,6 +33,8 @@ def parse_args():
                         dest="verbose",
                         help="set verbose mode. If set to 1, show opcode. "
                         "If set to 2, enable to trace  websocket module")
+    parser.add_argument("-n", "--nocert", action='store_true',
+                        help="Ignore invalid SSL cert")
 
     return parser.parse_args()
 
@@ -45,11 +48,15 @@ class InteractiveConsole(code.InteractiveConsole):
         sys.stdout.flush()
 
     def raw_input(self, prompt):
-        line = raw_input(prompt)
-        if ENCODING and ENCODING != "utf-8" and not isinstance(line, unicode):
+        if six.PY3:
+            line = input(prompt)
+        else:
+            line = raw_input(prompt)
+
+        if ENCODING and ENCODING != "utf-8" and not isinstance(line, six.text_type):
             line = line.decode(ENCODING).encode("utf-8")
-        elif isinstance(line, unicode):
-            line = encode("utf-8")
+        elif isinstance(line, six.text_type):
+            line = line.encode("utf-8")
 
         return line
 
@@ -59,7 +66,10 @@ def main():
     console = InteractiveConsole()
     if args.verbose > 1:
         websocket.enableTrace(True)
-    ws = websocket.create_connection(args.url)
+    opts = {}
+    if (args.nocert):
+        opts = { "cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False }
+    ws = websocket.create_connection(args.url, sslopt=opts)
     print("Press Ctrl+C to quit")
 
     def recv():

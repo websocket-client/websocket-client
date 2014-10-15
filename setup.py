@@ -1,10 +1,18 @@
 from setuptools import setup
+import sys
 
-VERSION = "0.13.0"
+VERSION = "0.21.0"
+NAME="websocket-client"
 
+install_requires = ["six"]
+if sys.version_info[0] == 2:
+    install_requires.append('backports.ssl_match_hostname')
+    if sys.version_info[1] < 7:
+        install_requires.append('unittest2')
+        install_requires.append('argparse')
 
 setup(
-    name="websocket-client",
+    name=NAME,
     version=VERSION,
     description="WebSocket client for python. hybi13 is supported.",
     long_description=open("README.rst").read(),
@@ -13,9 +21,11 @@ setup(
     license="LGPL",
     url="https://github.com/liris/websocket-client",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3 ",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
         "Operating System :: Microsoft :: Windows",
@@ -24,6 +34,12 @@ setup(
         "Intended Audience :: Developers",
     ],
     keywords='websockets',
-    py_modules=["websocket"],
-    scripts=["bin/wsdump.py"]
+    scripts=["bin/wsdump.py"],
+    install_requires=install_requires,
+    packages=["websocket", "websocket.tests"],
+    package_data={
+        'websocket.tests': ['data/*.txt'],
+        'websocket': ["cacert.pem"]
+    },
+    test_suite = "websocket.tests.test_websocket",
 )
