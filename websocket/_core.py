@@ -818,11 +818,19 @@ class WebSocket(object):
 
         self.shutdown()
 
+    def abort(self):
+        """
+        Low-level asynchonous abort, wakes up other threads that are waiting in recv_*
+        """
+        if self.connected:
+            self.sock.shutdown(socket.SHUT_RDWR)
+
     def shutdown(self):
         "close socket, immediately."
         if self.sock:
             self.sock.close()
             self.sock = None
+            self.connected = False
 
     def _send(self, data):
         if isinstance(data, six.text_type):
@@ -860,6 +868,9 @@ class WebSocket(object):
                 raise
 
         if not bytes:
+            self.sock.close()
+            self.sock = None
+            self.connected = False
             raise WebSocketConnectionClosedException()
         return bytes
 
