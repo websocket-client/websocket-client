@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.22.0
+
+  -  fix not thread-safe of Websocket.close() (#120)
+
 - 0.21.0
 
   - Check for socket before attempting to close (#115)
