@@ -169,6 +169,34 @@ def _parse_url(url):
     return (hostname, port, resource, is_secure)
 
 
+def _get_proxy_info(is_secure, **options):
+    """
+    try to retrieve proxy host and port from environment if not provided in options.
+    result is (proxy_host, proxy_port)
+    
+    is_secure:  is the connection secure? (wss)
+                looks for "https_proxy" in env before falling back to "http_proxy"
+
+    options:    "http_proxy_host" - http proxy host name.
+                "http_proxy_port" - http proxy port.
+    """
+    http_proxy_host = options.get("http_proxy_host", None)
+    if http_proxy_host:
+        return http_proxy_host, options.get("http_proxy_port", 0)
+
+    try_env_keys = ["http_proxy"]
+    if is_secure:
+        try_env_keys.insert(0, "https_proxy")
+
+    for env_key in try_env_keys:
+        env_value = os.environ.get(env_key, None)
+        if env_value:
+            proxy = urlparse(env_value)
+            return proxy.hostname, proxy.port
+
+    return None, 0
+
+
 def create_connection(url, timeout=None, **options):
     """
     connect to url and return websocket object.
@@ -405,7 +433,7 @@ class WebSocket(object):
         """
 
         hostname, port, resource, is_secure = _parse_url(url)
-        proxy_host, proxy_port = options.get("http_proxy_host", None), options.get("http_proxy_port", 0)
+        proxy_host, proxy_port = _get_proxy_info(is_secure, **options)
         if not proxy_host:
             addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
         else:
