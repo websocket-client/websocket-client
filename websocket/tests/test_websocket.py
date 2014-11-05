@@ -5,6 +5,7 @@ import six
 import sys
 sys.path[0:0] = [""]
 
+import os
 import os.path
 import base64
 import socket
@@ -25,6 +26,7 @@ import uuid
 # websocket-client
 import websocket as ws
 from websocket._core import _parse_url, _create_sec_websocket_key
+from websocket._core import _get_proxy_info
 from websocket._utils import validate_utf8
 
 
@@ -533,5 +535,39 @@ class UtilsTest(unittest.TestCase):
         state = validate_utf8(six.b(''))
         self.assertEqual(state, True)
 
+class ProxyInfoTest(unittest.TestCase):
+    def setUp(self):
+        if "http_proxy" in os.environ:
+            del os.environ["http_proxy"]
+        if "https_proxy" in os.environ:
+            del os.environ["https_proxy"]
+
+    def testProxyFromArgs(self):
+        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost"), ("localhost", 0))
+        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128))
+        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost"), ("localhost", 0))
+        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128))
+
+    def testProxyFromEnv(self):
+        os.environ["http_proxy"] = "http://localhost/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", None))
+        os.environ["http_proxy"] = "http://localhost:3128/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", 3128))
+
+        os.environ["http_proxy"] = "http://localhost/"
+        os.environ["https_proxy"] = "http://localhost2/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", None))
+        os.environ["http_proxy"] = "http://localhost:3128/"
+        os.environ["https_proxy"] = "http://localhost2:3128/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", 3128))
+
+        os.environ["http_proxy"] = "http://localhost/"
+        os.environ["https_proxy"] = "http://localhost2/"
+        self.assertEqual(_get_proxy_info(True), ("localhost2", None))
+        os.environ["http_proxy"] = "http://localhost:3128/"
+        os.environ["https_proxy"] = "http://localhost2:3128/"
+        self.assertEqual(_get_proxy_info(True), ("localhost2", 3128))
+
+        
 if __name__ == "__main__":
     unittest.main()

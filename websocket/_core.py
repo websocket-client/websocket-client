@@ -184,14 +184,14 @@ def _get_proxy_info(is_secure, **options):
     if http_proxy_host:
         return http_proxy_host, options.get("http_proxy_port", 0)
 
-    try_env_keys = ["http_proxy"]
+    env_keys = ["http_proxy"]
     if is_secure:
-        try_env_keys.insert(0, "https_proxy")
+        env_keys.insert(0, "https_proxy")
 
-    for env_key in try_env_keys:
-        env_value = os.environ.get(env_key, None)
-        if env_value:
-            proxy = urlparse(env_value)
+    for key in env_keys:
+        value = os.environ.get(key, None)
+        if value:
+            proxy = urlparse(value)
             return proxy.hostname, proxy.port
 
     return None, 0
