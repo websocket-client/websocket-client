@@ -537,10 +537,24 @@ class UtilsTest(unittest.TestCase):
 
 class ProxyInfoTest(unittest.TestCase):
     def setUp(self):
+        self.http_proxy = os.environ.get("http_proxy", None)
+        self.https_proxy = os.environ.get("https_proxy", None)
         if "http_proxy" in os.environ:
             del os.environ["http_proxy"]
         if "https_proxy" in os.environ:
             del os.environ["https_proxy"]
+
+    def tearDown(self):
+        if self.http_proxy:
+            os.environ["http_proxy"] = self.http_proxy
+        elif "http_proxy" in os.environ:
+            del os.environ["http_proxy"]
+
+        if self.https_proxy:
+            os.environ["https_proxy"] = self.https_proxy
+        elif "https_proxy" in os.environ:
+            del os.environ["https_proxy"]
+
 
     def testProxyFromArgs(self):
         self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost"), ("localhost", 0, None))
