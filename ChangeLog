@@ -3,8 +3,9 @@ ChangeLog
 
 - 0.22.0
 
-  -  Fix not thread-safe of Websocket.close() (#120)
-  -  Try to get proxy info from environment if not explicitly provided (#124)
+  - Fix not thread-safe of Websocket.close() (#120)
+  - Try to get proxy info from environment if not explicitly provided (#124)
+  - support proxy basic authenticaiton. (#125)
 
 - 0.21.0
 

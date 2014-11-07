@@ -543,30 +543,61 @@ class ProxyInfoTest(unittest.TestCase):
             del os.environ["https_proxy"]
 
     def testProxyFromArgs(self):
-        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost"), ("localhost", 0))
-        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128))
-        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost"), ("localhost", 0))
-        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128))
+        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
+        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
+
+        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost", http_proxy_auth=("a", "b")),
+            ("localhost", 0, ("a", "b")))
+        self.assertEqual(_get_proxy_info(False, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")), 
+            ("localhost", 3128, ("a", "b")))
+        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost", http_proxy_auth=("a", "b")), 
+            ("localhost", 0, ("a", "b")))
+        self.assertEqual(_get_proxy_info(True, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")),
+            ("localhost", 3128, ("a", "b")))
+
 
     def testProxyFromEnv(self):
         os.environ["http_proxy"] = "http://localhost/"
-        self.assertEqual(_get_proxy_info(False), ("localhost", None))
+        self.assertEqual(_get_proxy_info(False), ("localhost", None, None))
         os.environ["http_proxy"] = "http://localhost:3128/"
-        self.assertEqual(_get_proxy_info(False), ("localhost", 3128))
+        self.assertEqual(_get_proxy_info(False), ("localhost", 3128, None))
 
         os.environ["http_proxy"] = "http://localhost/"
         os.environ["https_proxy"] = "http://localhost2/"
-        self.assertEqual(_get_proxy_info(False), ("localhost", None))
+        self.assertEqual(_get_proxy_info(False), ("localhost", None, None))
         os.environ["http_proxy"] = "http://localhost:3128/"
         os.environ["https_proxy"] = "http://localhost2:3128/"
-        self.assertEqual(_get_proxy_info(False), ("localhost", 3128))
+        self.assertEqual(_get_proxy_info(False), ("localhost", 3128, None))
 
         os.environ["http_proxy"] = "http://localhost/"
         os.environ["https_proxy"] = "http://localhost2/"
-        self.assertEqual(_get_proxy_info(True), ("localhost2", None))
+        self.assertEqual(_get_proxy_info(True), ("localhost2", None, None))
         os.environ["http_proxy"] = "http://localhost:3128/"
         os.environ["https_proxy"] = "http://localhost2:3128/"
-        self.assertEqual(_get_proxy_info(True), ("localhost2", 3128))
+        self.assertEqual(_get_proxy_info(True), ("localhost2", 3128, None))
+
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", 3128, ("a", "b")))
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        os.environ["https_proxy"] = "http://a:b@localhost2/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
+        self.assertEqual(_get_proxy_info(False), ("localhost", 3128, ("a", "b")))
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        os.environ["https_proxy"] = "http://a:b@localhost2/"
+        self.assertEqual(_get_proxy_info(True), ("localhost2", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
+        self.assertEqual(_get_proxy_info(True), ("localhost2", 3128, ("a", "b")))
+
 
         
 if __name__ == "__main__":
