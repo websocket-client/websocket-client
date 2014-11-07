@@ -120,7 +120,7 @@ How to disable ssl cert verification?
 
 Please set sslopt to {"cert_reqs": ssl.CERT_NONE}.
 
-WebScoketApp sample::
+WebSocketApp sample::
 
     ws = websocket.WebSocketApp("https://echo.websocket.org")
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
@@ -142,7 +142,7 @@ How to disable hostname verification.
 Please set sslopt to {"check_hostname": False}.
 (since v0.18.0)
 
-WebScoketApp sample::
+WebSocketApp sample::
 
     ws = websocket.WebSocketApp("https://echo.websocket.org")
     ws.run_forever(sslopt={"check_hostname": False})
