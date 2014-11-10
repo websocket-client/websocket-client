@@ -94,7 +94,7 @@ class WebSocketApp(object):
         opcode: operation code of data. default is OPCODE_TEXT.
         """
 
-        if self.sock.send(data, opcode) == 0:
+        if not self.sock or self.sock.send(data, opcode) == 0:
             raise WebSocketConnectionClosedException()
 
     def close(self):
@@ -108,7 +108,8 @@ class WebSocketApp(object):
     def _send_ping(self, interval, event):
         while not event.wait(interval):
             self.last_ping_tm = time.time()
-            self.sock.ping()
+            if self.sock:
+                self.sock.ping()
 
     def run_forever(self, sockopt=None, sslopt=None, ping_interval=0, ping_timeout=None,
         http_proxy_host=None, http_proxy_port=None):
