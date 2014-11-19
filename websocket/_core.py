@@ -889,7 +889,7 @@ class WebSocket(object):
             raise WebSocketTimeoutException(message)
         except Exception as e:
             message = getattr(e, 'strerror', getattr(e, 'message', ''))
-            if "timed out" in message:
+            if message and isinstance(message, six.text_type) and "timed out" in message:
                 raise WebSocketTimeoutException(message)
             else:
                 raise
