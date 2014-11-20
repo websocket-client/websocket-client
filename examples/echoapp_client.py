@@ -1,5 +1,8 @@
 import websocket
-import thread
+try:
+    import thread
+except ImportError:  #TODO use Threading instead of _thread in python3
+    import _thread
 import time
 import sys
 
@@ -29,7 +32,11 @@ def on_open(ws):
         ws.close()
         print("Thread terminating...")
 
-    thread.start_new_thread(run, ())
+    try:
+        thread.start_new_thread(run, ())
+    except:
+        _thread.start_new_thread(run, ())
+
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
