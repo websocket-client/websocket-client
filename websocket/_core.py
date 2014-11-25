@@ -169,20 +169,37 @@ def _parse_url(url):
     return (hostname, port, resource, is_secure)
 
 
-def _get_proxy_info(is_secure, **options):
+DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
+
+def _is_no_proxy_host(hostname, no_proxy):
+    if not no_proxy:
+        v = os.environ.get("no_proxy", "").replace(" ", "")
+        no_proxy = v.split(",")
+    if not no_proxy:
+        no_proxy = DEFAULT_NO_PROXY_HOST
+
+    return hostname in no_proxy
+
+def _get_proxy_info(hostname, is_secure, **options):
     """
     try to retrieve proxy host and port from environment if not provided in options.
     result is (proxy_host, proxy_port, proxy_auth).
     proxy_auth is tuple of username and password of proxy authentication information.
     
+    hostname: websocket server name.
+
     is_secure:  is the connection secure? (wss)
                 looks for "https_proxy" in env before falling back to "http_proxy"
 
     options:    "http_proxy_host" - http proxy host name.
                 "http_proxy_port" - http proxy port.
+                "http_no_proxy"   - host names, which doesn't use proxy.
                 "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
                                     defualt is None
     """
+    if _is_no_proxy_host(hostname, options.get("http_no_proxy", None)):
+        return None, 0, None
+
     http_proxy_host = options.get("http_proxy_host", None)
     if http_proxy_host:
         return http_proxy_host, options.get("http_proxy_port", 0), options.get("http_proxy_auth", None)
@@ -224,6 +241,7 @@ def create_connection(url, timeout=None, **options):
              "cookie" -> cookie value.
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
+             "http_no_proxy"   - host names, which doesn't use proxy.
              "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
                                     defualt is None
              "enable_multithread" -> enable lock for multithread.
@@ -434,6 +452,7 @@ class WebSocket(object):
                  "cookie" -> cookie value.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
+                 "http_no_proxy"   - host names, which doesn't use proxy.
                  "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
                                     defualt is None
                  "subprotocols" - array of available sub protocols. default is None.
@@ -441,7 +460,7 @@ class WebSocket(object):
         """
 
         hostname, port, resource, is_secure = _parse_url(url)
-        proxy_host, proxy_port, proxy_auth = _get_proxy_info(is_secure, **options)
+        proxy_host, proxy_port, proxy_auth = _get_proxy_info(hostname, is_secure, **options)
         if not proxy_host:
             addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
         else:

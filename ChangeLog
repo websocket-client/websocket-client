@@ -7,6 +7,7 @@ ChangeLog
   - Try to get proxy info from environment if not explicitly provided (#124)
   - support proxy basic authenticaiton. (#125)
   - Fix NoneType exception at WebsocketApp.send (#126)
+  - not use proxy for localhost (#132)
 
 - 0.21.0
 
