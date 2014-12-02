@@ -217,6 +217,13 @@ def _get_proxy_info(hostname, is_secure, **options):
 
     return None, 0, None
 
+def _extract_err_message(exception):
+        message = getattr(exception, 'strerror', '')
+        if not message:
+            message = getattr(exception, 'message', '')
+
+        return message
+
 
 def create_connection(url, timeout=None, **options):
     """
@@ -904,11 +911,11 @@ class WebSocket(object):
         try:
             return self.sock.send(data)
         except socket.timeout as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            message = _extract_err_message(e)
             raise WebSocketTimeoutException(message)
         except Exception as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
-            if message and isinstance(message, six.text_type) and "timed out" in message:
+            message = _extract_err_message(e)
+            if message and "timed out" in message:
                 raise WebSocketTimeoutException(message)
             else:
                 raise
@@ -920,10 +927,10 @@ class WebSocket(object):
         try:
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            message = _extract_err_message(e)
             raise WebSocketTimeoutException(message)
         except SSLError as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            message = _extract_err_message(e)
             if message == "The read operation timed out":
                 raise WebSocketTimeoutException(message)
             else:
