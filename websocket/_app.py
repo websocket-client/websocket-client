@@ -178,8 +178,9 @@ class WebSocketApp(object):
                         if six.PY3 and frame.opcode == ABNF.OPCODE_TEXT:
                             data = data.decode("utf-8")
                         self._callback(self.on_message, data)
-        except Exception as e:
-            self._callback(self.on_error, e)
+        # except Exception as e:
+        #     print(e)
+        #     self._callback(self.on_error, e)
         finally:
             if thread:
                 event.set()
@@ -199,7 +200,7 @@ class WebSocketApp(object):
             return []
 
         if data and len(data) >=2:
-            code = 256*six.byte2int(data[0]) + six.byte2int(data[1])
+            code = 256*six.byte2int(data[0:1]) + six.byte2int(data[1:2])
             reason = data[2:].decode('utf-8')
             return [code,reason]
         
