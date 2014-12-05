@@ -44,11 +44,10 @@ Current implementation of websocket-client is using "CONNECT" method via proxy.
 
 
 example::
--------------
 
     import websocket
     ws = websocket.WebSocket(support_socket_io="0.9")
-      :
+    :
 
 
 
@@ -69,11 +68,11 @@ Low Level API example::
 
 If you want to customize socket options, set sockopt.
 
-sockopt example:
+sockopt example::
 
     from websocket import create_connection
-    ws = create_connection("ws://echo.websocket.org/".
-                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),) )
+    ws = create_connection("ws://echo.websocket.org/",
+                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
 
 
 JavaScript websocket-like API example::
