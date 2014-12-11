@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.23.0
+
+  - Remove spurious print statement. (#135)
+
 - 0.22.0
 
   - Fix not thread-safe of Websocket.close() (#120)

@@ -121,7 +121,7 @@ class ABNF(object):
                 raise WebSocketProtocolException("Invalid close frame.")
             if l > 2 and not validate_utf8(self.data[2:]):
                 raise WebSocketProtocolException("Invalid close frame.")
-            print(self.data)
+
             code = 256*six.byte2int(self.data[0:1]) + six.byte2int(self.data[1:2])
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode.")
