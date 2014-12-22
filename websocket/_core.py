@@ -638,12 +638,13 @@ class WebSocket(object):
 
         while True:
             line = self._recv_line()
-            line = line.decode('utf-8')
-            if line == "\r\n" or line == "\n":
+            line = line.decode('utf-8').strip()
+            if not line:
                 break
-            line = line.strip()
+            
             if traceEnabled:
                 logger.debug(line)
+            
             if not status:
                 status_info = line.split(" ", 2)
                 status = int(status_info[1])
