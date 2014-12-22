@@ -46,7 +46,8 @@ Current implementation of websocket-client is using "CONNECT" method via proxy.
 example::
 
     import websocket
-    ws = websocket.WebSocket(support_socket_io="0.9")
+    ws = websocket.WebSocket()
+    ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http_proxy_port=3128)
     :
 
 
