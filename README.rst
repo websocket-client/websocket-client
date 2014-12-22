@@ -158,6 +158,17 @@ WebSocket sample::
     ws.connect("https://echo.websocket.org")
 
 
+Sub Protocols.
+----------------------------------------
+
+The server needs to support sub protocols, please set the subprotcol like this.
+
+
+Subprotocol sample::
+
+    ws = websocket.create_connection("ws://exapmle.com/websocket", subprotocols=["binary", "base64"])
+
+
 
 wsdump.py
 ============
