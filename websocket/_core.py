@@ -56,8 +56,8 @@ import logging
 
 # websocket modules
 from ._exceptions import *
-from ._abnf import ABNF
-from ._utils import NoLock
+from ._abnf import *
+from ._utils import NoLock, validate_utf8
 
 """
 websocket python client.
@@ -71,19 +71,6 @@ Please see http://tools.ietf.org/html/rfc6455 for protocol.
 # websocket supported version.
 VERSION = 13
 
-# closing frame status codes.
-STATUS_NORMAL = 1000
-STATUS_GOING_AWAY = 1001
-STATUS_PROTOCOL_ERROR = 1002
-STATUS_UNSUPPORTED_DATA_TYPE = 1003
-STATUS_STATUS_NOT_AVAILABLE = 1005
-STATUS_ABNORMAL_CLOSED = 1006
-STATUS_INVALID_PAYLOAD = 1007
-STATUS_POLICY_VIOLATION = 1008
-STATUS_MESSAGE_TOO_BIG = 1009
-STATUS_INVALID_EXTENSION = 1010
-STATUS_UNEXPECTED_CONDITION = 1011
-STATUS_TLS_HANDSHAKE_ERROR = 1015
 
 DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1),]
 if hasattr(socket, "SO_KEEPALIVE"):
@@ -182,6 +169,62 @@ def _parse_url(url):
     return (hostname, port, resource, is_secure)
 
 
+DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
+
+def _is_no_proxy_host(hostname, no_proxy):
+    if not no_proxy:
+        v = os.environ.get("no_proxy", "").replace(" ", "")
+        no_proxy = v.split(",")
+    if not no_proxy:
+        no_proxy = DEFAULT_NO_PROXY_HOST
+
+    return hostname in no_proxy
+
+def _get_proxy_info(hostname, is_secure, **options):
+    """
+    try to retrieve proxy host and port from environment if not provided in options.
+    result is (proxy_host, proxy_port, proxy_auth).
+    proxy_auth is tuple of username and password of proxy authentication information.
+    
+    hostname: websocket server name.
+
+    is_secure:  is the connection secure? (wss)
+                looks for "https_proxy" in env before falling back to "http_proxy"
+
+    options:    "http_proxy_host" - http proxy host name.
+                "http_proxy_port" - http proxy port.
+                "http_no_proxy"   - host names, which doesn't use proxy.
+                "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
+                                    defualt is None
+    """
+    if _is_no_proxy_host(hostname, options.get("http_no_proxy", None)):
+        return None, 0, None
+
+    http_proxy_host = options.get("http_proxy_host", None)
+    if http_proxy_host:
+        return http_proxy_host, options.get("http_proxy_port", 0), options.get("http_proxy_auth", None)
+
+    env_keys = ["http_proxy"]
+    if is_secure:
+        env_keys.insert(0, "https_proxy")
+
+    for key in env_keys:
+        value = os.environ.get(key, None)
+        if value:
+            proxy = urlparse(value)
+            auth = (proxy.username, proxy.password) if proxy.username else None
+            return proxy.hostname, proxy.port, auth
+
+    return None, 0, None
+
+def _extract_err_message(exception):
+        message = getattr(exception, 'strerror', '')
+        if not message:
+            message = getattr(exception, 'message', '')
+
+        return message
+
+
 def create_connection(url, timeout=None, **options):
     """
     connect to url and return websocket object.
@@ -205,7 +248,13 @@ def create_connection(url, timeout=None, **options):
              "cookie" -> cookie value.
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
+             "http_no_proxy"   - host names, which doesn't use proxy.
+             "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
+                                    defualt is None
              "enable_multithread" -> enable lock for multithread.
+             "sockopt" -> socket options
+             "sslopt" -> ssl option
+             "subprotocols" - array of available sub protocols. default is None.
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
@@ -350,10 +399,13 @@ class WebSocket(object):
         # These buffer over the build-up of a single frame.
         self._frame_buffer = _FrameBuffer()
         self._cont_data = None
+        self._recving_frames = None
         if enable_multithread:
             self.lock = threading.Lock()
         else:
             self.lock = NoLock()
+
+        self.subprotocol = None
 
     def fileno(self):
         return self.sock.fileno()
@@ -383,6 +435,8 @@ class WebSocket(object):
         timeout: timeout time(second).
         """
         self._timeout = timeout
+        if self.sock:
+            self.sock.settimeout(timeout)
 
     timeout = property(gettimeout, settimeout)
 
@@ -405,11 +459,15 @@ class WebSocket(object):
                  "cookie" -> cookie value.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
+                 "http_no_proxy"   - host names, which doesn't use proxy.
+                 "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
+                                    defualt is None
+                 "subprotocols" - array of available sub protocols. default is None.
 
         """
 
         hostname, port, resource, is_secure = _parse_url(url)
-        proxy_host, proxy_port = options.get("http_proxy_host", None), options.get("http_proxy_port", 0)
+        proxy_host, proxy_port, proxy_auth = _get_proxy_info(hostname, is_secure, **options)
         if not proxy_host:
             addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
         else:
@@ -419,6 +477,7 @@ class WebSocket(object):
         if not addrinfo_list:
             raise WebSocketException("Host not found.: " + hostname + ":" + str(port))
 
+        err = None
         for addrinfo in addrinfo_list:
             family = addrinfo[0]
             self.sock = socket.socket(family)
@@ -427,22 +486,24 @@ class WebSocket(object):
                 self.sock.setsockopt(*opts)
             for opts in self.sockopt:
                 self.sock.setsockopt(*opts)
-            # TODO: we need to support proxy
+            
             address = addrinfo[4]
             try:
                 self.sock.connect(address)
             except socket.error as error:
+                error.remote_ip = str(address[0])
                 if error.errno in (errno.ECONNREFUSED, ):
+                    err = error
                     continue
                 else:
                     raise
             else:
                 break
         else:
-            raise error
+            raise err
 
         if proxy_host:
-            self._tunnel(hostname, port)
+            self._tunnel(hostname, port, proxy_auth)
 
         if is_secure:
             if HAVE_SSL:
@@ -452,17 +513,26 @@ class WebSocket(object):
                 if os.path.isfile(certPath):
                     sslopt['ca_certs'] = certPath
                 sslopt.update(self.sslopt)
+                check_hostname = sslopt.pop('check_hostname', True)
                 self.sock = ssl.wrap_socket(self.sock, **sslopt)
-                if sslopt["cert_reqs"] != ssl.CERT_NONE:
+                if (sslopt["cert_reqs"] != ssl.CERT_NONE
+                        and check_hostname):
                     match_hostname(self.sock.getpeercert(), hostname)
             else:
                 raise WebSocketException("SSL not available.")
 
         self._handshake(hostname, port, resource, **options)
 
-    def _tunnel(self, host, port):
+    def _tunnel(self, host, port, auth):
         logger.debug("Connecting proxy...")
         connect_header = "CONNECT %s:%d HTTP/1.0\r\n" % (host, port)
+        # TODO: support digest auth.
+        if auth and auth[0]:
+            auth_str = auth[0]
+            if auth[1]:
+                auth_str += ":" + auth[1]
+            encoded_str = base64encode(auth_str.encode()).strip().decode()
+            connect_header += "Proxy-Authorization: Basic %s\r\n" % encoded_str
         connect_header += "\r\n"
         _dump("request header", connect_header)
 
@@ -499,6 +569,10 @@ class WebSocket(object):
         headers.append("Sec-WebSocket-Key: %s" % key)
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
 
+        subprotocols = options.get("subprotocols")
+        if subprotocols:
+            headers.append("Sec-WebSocket-Protocol: %s" % ",".join(subprotocols))
+
         if "header" in options:
             headers.extend(options["header"])
 
@@ -520,14 +594,14 @@ class WebSocket(object):
         _dump("request header", header_str)
 
         resp_headers = self._get_resp_headers()
-        success = self._validate_header(resp_headers, key)
+        success = self._validate_header(resp_headers, key, options.get("subprotocols"))
         if not success:
             self.close()
             raise WebSocketException("Invalid WebSocket Header")
 
         self.connected = True
 
-    def _validate_header(self, headers, key):
+    def _validate_header(self, headers, key, subprotocols):
         for k, v in _HEADERS_TO_CHECK.items():
             r = headers.get(k, None)
             if not r:
@@ -535,6 +609,14 @@ class WebSocket(object):
             r = r.lower()
             if v != r:
                 return False
+        
+        if subprotocols:
+            subproto = headers.get("sec-websocket-protocol", None)
+            if not subproto or subproto not in subprotocols:
+                logger.error("Invalid subprotocol: " + str(subprotocols))
+                return False
+            self.subprotocol = subproto
+
 
         result = headers.get("sec-websocket-accept", None)
         if not result:
@@ -556,12 +638,13 @@ class WebSocket(object):
 
         while True:
             line = self._recv_line()
-            line = line.decode('utf-8')
-            if line == "\r\n" or line == "\n":
+            line = line.decode('utf-8').strip()
+            if not line:
                 break
-            line = line.strip()
+            
             if traceEnabled:
                 logger.debug(line)
+            
             if not status:
                 status_info = line.split(" ", 2)
                 status = int(status_info[1])
@@ -654,7 +737,10 @@ class WebSocket(object):
         opcode, data = self.recv_data()
         if six.PY3 and opcode == ABNF.OPCODE_TEXT:
             return data.decode("utf-8")
-        return data
+        elif opcode == ABNF.OPCODE_TEXT or opcode == ABNF.OPCODE_BINARY:
+            return data
+        else:
+            return ''
 
     def recv_data(self, control_frame=False):
         """
@@ -665,34 +751,8 @@ class WebSocket(object):
 
         return  value: tuple of operation code and string(byte array) value.
         """
-        while True:
-            frame = self.recv_frame()
-            if not frame:
-                # handle error:
-                # 'NoneType' object has no attribute 'opcode'
-                raise WebSocketException("Not a valid frame %s" % frame)
-            elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
-                if frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
-                    raise WebSocketException("Illegal frame")
-                if self._cont_data:
-                    self._cont_data[1] += frame.data
-                else:
-                    self._cont_data = [frame.opcode, frame.data]
-
-                if frame.fin or self.fire_cont_frame:
-                    data = self._cont_data
-                    self._cont_data = None
-                    return data
-            elif frame.opcode == ABNF.OPCODE_CLOSE:
-                self.send_close()
-                return (frame.opcode, frame.data)
-            elif frame.opcode == ABNF.OPCODE_PING:
-                self.pong(frame.data)
-                if control_frame:
-                    return (frame.opcode, frame.data)
-            elif frame.opcode == ABNF.OPCODE_PONG:
-                if control_frame:
-                    return (frame.opcode, frame.data)
+        opcode, frame = self.recv_data_frame(control_frame)
+        return opcode, frame.data
 
     def recv_data_frame(self, control_frame=False):
         """
@@ -708,24 +768,39 @@ class WebSocket(object):
             if not frame:
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
-                raise WebSocketException("Not a valid frame %s" % frame)
+                raise WebSocketProtocolException("Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
-                if frame.opcode == ABNF.OPCODE_CONT and not self._cont_data:
-                    raise WebSocketException("Illegal frame")
-                if self._cont_data:
-                    self._cont_data[1].data += frame.data
-                else:
-                    self._cont_data = [frame.opcode, frame]
+                if not self._recving_frames and frame.opcode == ABNF.OPCODE_CONT:
+                    raise WebSocketProtocolException("Illegal frame")
+                if self._recving_frames and frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+                    raise WebSocketProtocolException("Illegal frame")
 
+                if self._cont_data:
+                    self._cont_data[1] += frame.data
+                else:
+                    if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+                        self._recving_frames = frame.opcode
+                    self._cont_data = [frame.opcode, frame.data]
+
+                if frame.fin:
+                    self._recving_frames = None
+                
                 if frame.fin or self.fire_cont_frame:
                     data = self._cont_data
                     self._cont_data = None
-                    return data
+                    frame.data = data[1]
+                    if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not validate_utf8(frame.data):
+                        raise WebSocketPayloadException("cannot decode: " + repr(frame.data))
+                    return [data[0], frame]
+
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
                 return (frame.opcode, frame)
             elif frame.opcode == ABNF.OPCODE_PING:
-                self.pong(frame.data)
+                if len(frame.data) < 126:
+                    self.pong(frame.data)
+                else:
+                    raise WebSocketProtocolException("Ping message is too long")
                 if control_frame:
                     return (frame.opcode, frame)
             elif frame.opcode == ABNF.OPCODE_PONG:
@@ -762,7 +837,10 @@ class WebSocket(object):
         # Reset for next frame
         frame_buffer.clear()
 
-        return ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
+        frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
+        frame.validate()
+
+        return frame
 
 
     def send_close(self, status=STATUS_NORMAL, reason=six.b("")):
@@ -775,6 +853,7 @@ class WebSocket(object):
         """
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
+        self.connected = False
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
     def close(self, status=STATUS_NORMAL, reason=six.b("")):
@@ -807,41 +886,61 @@ class WebSocket(object):
             except:
                 pass
 
-        self._closeInternal()
+        self.shutdown()
 
-    def _closeInternal(self):
-        self.sock.close()
+    def abort(self):
+        """
+        Low-level asynchonous abort, wakes up other threads that are waiting in recv_*
+        """
+        if self.connected:
+            self.sock.shutdown(socket.SHUT_RDWR)
+
+    def shutdown(self):
+        "close socket, immediately."
+        if self.sock:
+            self.sock.close()
+            self.sock = None
+            self.connected = False
 
     def _send(self, data):
         if isinstance(data, six.text_type):
             data = data.encode('utf-8')
 
+        if not self.sock:
+            raise WebSocketConnectionClosedException("socket is already closed.")
+
         try:
             return self.sock.send(data)
         except socket.timeout as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            message = _extract_err_message(e)
             raise WebSocketTimeoutException(message)
         except Exception as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
-            if "timed out" in message:
+            message = _extract_err_message(e)
+            if message and "timed out" in message:
                 raise WebSocketTimeoutException(message)
             else:
                 raise
 
     def _recv(self, bufsize):
+        if not self.sock:
+            raise WebSocketConnectionClosedException("socket is already closed.")
+
         try:
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            message = _extract_err_message(e)
             raise WebSocketTimeoutException(message)
         except SSLError as e:
-            message = getattr(e, 'strerror', getattr(e, 'message', ''))
+            message = _extract_err_message(e)
             if message == "The read operation timed out":
                 raise WebSocketTimeoutException(message)
             else:
                 raise
 
         if not bytes:
+            self.sock.close()
+            self.sock = None
+            self.connected = False
             raise WebSocketConnectionClosedException()
         return bytes
 

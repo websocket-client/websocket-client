@@ -5,6 +5,7 @@ import six
 import sys
 sys.path[0:0] = [""]
 
+import os
 import os.path
 import base64
 import socket
@@ -25,15 +26,15 @@ import uuid
 # websocket-client
 import websocket as ws
 from websocket._core import _parse_url, _create_sec_websocket_key
+from websocket._core import _get_proxy_info
+from websocket._utils import validate_utf8
 
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = False
-# TEST_WITH_INTERNET = True
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = False
-
 TRACABLE = False
 
 
@@ -61,6 +62,9 @@ class SockMock(object):
     def send(self, data):
         self.sent.append(data)
         return len(data)
+
+    def close(self):
+        pass
 
 
 class HeaderSockMock(SockMock):
@@ -182,25 +186,31 @@ class WebSocketTest(unittest.TestCase):
             "connection": "upgrade",
             "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0=",
             }
-        self.assertEqual(sock._validate_header(required_header, key), True)
+        self.assertEqual(sock._validate_header(required_header, key, None), True)
 
         header = required_header.copy()
         header["upgrade"] = "http"
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
         del header["upgrade"]
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
 
         header = required_header.copy()
         header["connection"] = "something"
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
         del header["connection"]
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
 
         header = required_header.copy()
         header["sec-websocket-accept"] = "something"
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
         del header["sec-websocket-accept"]
-        self.assertEqual(sock._validate_header(header, key), False)
+        self.assertEqual(sock._validate_header(header, key, None), False)
+
+
+        header = required_header.copy()
+        header["sec-websocket-protocol"] = "sub1"
+        self.assertEqual(sock._validate_header(header, key, ["sub1", "sub2"]), True)
+        self.assertEqual(sock._validate_header(header, key, ["sub2", "sub3"]), False)
 
     def testReadHeader(self):
         sock = ws.WebSocket()
@@ -286,6 +296,46 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(data, "Brevity is the soul of wit")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
+
+    def testRecvWithFireEventOfFragmentation(self):
+        sock = ws.WebSocket(fire_cont_frame=True)
+        s = sock.sock = SockMock()
+        # OPCODE=TEXT, FIN=0, MSG="Brevity is "
+        s.add_packet(six.b("\x01\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
+        # OPCODE=CONT, FIN=0, MSG="Brevity is "
+        s.add_packet(six.b("\x00\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
+        # OPCODE=CONT, FIN=1, MSG="the soul of wit"
+        s.add_packet(six.b("\x80\x8fabcd\x15\n\x06D\x12\r\x16\x08A\r\x05D\x16\x0b\x17"))
+
+        _, data = sock.recv_data()
+        self.assertEqual(data, six.b("Brevity is "))
+        _, data = sock.recv_data()
+        self.assertEqual(data, six.b("Brevity is "))
+        _, data = sock.recv_data()
+        self.assertEqual(data, six.b("the soul of wit"))
+
+        # OPCODE=CONT, FIN=0, MSG="Brevity is "
+        s.add_packet(six.b("\x80\x8babcd#\x10\x06\x12\x08\x16\x1aD\x08\x11C"))
+
+        with self.assertRaises(ws.WebSocketException):
+            sock.recv_data()
+
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            sock.recv()
+
+    def testClose(self):
+        sock = ws.WebSocket()
+        sock.sock = SockMock()
+        sock.connected = True
+        sock.close()
+        self.assertEqual(sock.connected, False)
+
+        sock = ws.WebSocket()
+        s = sock.sock = SockMock()
+        sock.connected = True
+        s.add_packet(six.b('\x88\x80\x17\x98p\x84'))
+        sock.recv()
+        self.assertEqual(sock.connected, False)
 
     def testRecvContFragmentation(self):
         sock = ws.WebSocket()
@@ -382,12 +432,11 @@ class WebSocketTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testAfterClose(self):
-        from socket import error
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEqual(s, None)
         s.close()
-        self.assertRaises(error, s.send, "Hello")
-        self.assertRaises(error, s.recv)
+        self.assertRaises(ws.WebSocketConnectionClosedException, s.send, "Hello")
+        self.assertRaises(ws.WebSocketConnectionClosedException, s.recv)
 
     def testUUID4(self):
         """ WebSocket key should be a UUID4.
@@ -477,6 +526,109 @@ class SockOptTest(unittest.TestCase):
         self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
         s.close()
 
+class UtilsTest(unittest.TestCase):
+    def testUtf8Validator(self):
+        state = validate_utf8(six.b('\xf0\x90\x80\x80'))
+        self.assertEqual(state, True) 
+        state = validate_utf8(six.b('\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5\xed\xa0\x80edited'))
+        self.assertEqual(state, False)
+        state = validate_utf8(six.b(''))
+        self.assertEqual(state, True)
 
+class ProxyInfoTest(unittest.TestCase):
+    def setUp(self):
+        self.http_proxy = os.environ.get("http_proxy", None)
+        self.https_proxy = os.environ.get("https_proxy", None)
+        if "http_proxy" in os.environ:
+            del os.environ["http_proxy"]
+        if "https_proxy" in os.environ:
+            del os.environ["https_proxy"]
+
+    def tearDown(self):
+        if self.http_proxy:
+            os.environ["http_proxy"] = self.http_proxy
+        elif "http_proxy" in os.environ:
+            del os.environ["http_proxy"]
+
+        if self.https_proxy:
+            os.environ["https_proxy"] = self.https_proxy
+        elif "https_proxy" in os.environ:
+            del os.environ["https_proxy"]
+
+
+    def testProxyFromArgs(self):
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
+
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_auth=("a", "b")),
+            ("localhost", 0, ("a", "b")))
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")), 
+            ("localhost", 3128, ("a", "b")))
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_auth=("a", "b")), 
+            ("localhost", 0, ("a", "b")))
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")),
+            ("localhost", 3128, ("a", "b")))
+
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["example.com"], http_proxy_auth=("a", "b")),
+            ("localhost", 3128, ("a", "b")))
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["echo.websocket.org"], http_proxy_auth=("a", "b")),
+            (None, 0, None))
+
+
+    def testProxyFromEnv(self):
+        os.environ["http_proxy"] = "http://localhost/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, None))
+        os.environ["http_proxy"] = "http://localhost:3128/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, None))
+
+        os.environ["http_proxy"] = "http://localhost/"
+        os.environ["https_proxy"] = "http://localhost2/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, None))
+        os.environ["http_proxy"] = "http://localhost:3128/"
+        os.environ["https_proxy"] = "http://localhost2:3128/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, None))
+
+        os.environ["http_proxy"] = "http://localhost/"
+        os.environ["https_proxy"] = "http://localhost2/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", None, None))
+        os.environ["http_proxy"] = "http://localhost:3128/"
+        os.environ["https_proxy"] = "http://localhost2:3128/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, None))
+
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, ("a", "b")))
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        os.environ["https_proxy"] = "http://a:b@localhost2/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, ("a", "b")))
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        os.environ["https_proxy"] = "http://a:b@localhost2/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, ("a", "b")))
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        os.environ["https_proxy"] = "http://a:b@localhost2/"
+        os.environ["no_proxy"] = "example1.com,example2.com"
+        self.assertEqual(_get_proxy_info("example.1.com", True), ("localhost2", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
+        os.environ["no_proxy"] = "example1.com,example2.com, echo.websocket.org"
+        self.assertEqual(_get_proxy_info("echo.websocket.org", True), (None, 0, None))
+
+
+
+
+        
 if __name__ == "__main__":
     unittest.main()

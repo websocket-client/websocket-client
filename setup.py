@@ -1,7 +1,7 @@
 from setuptools import setup
 import sys
 
-VERSION = "0.16.0a"
+VERSION = "0.23.0"
 NAME="websocket-client"
 
 install_requires = ["six"]
@@ -36,9 +36,10 @@ setup(
     keywords='websockets',
     scripts=["bin/wsdump.py"],
     install_requires=install_requires,
-    packages=["tests", "websocket"],
+    packages=["websocket", "websocket.tests"],
     package_data={
-        'tests': ['data/*.txt'],
+        'websocket.tests': ['data/*.txt'],
         'websocket': ["cacert.pem"]
     },
+    test_suite = "websocket.tests.test_websocket",
 )

@@ -1,0 +1,133 @@
+ChangeLog
+============
+
+- 0.23.0
+
+  - Remove spurious print statement. (#135)
+
+- 0.22.0
+
+  - Fix not thread-safe of Websocket.close() (#120)
+  - Try to get proxy info from environment if not explicitly provided (#124)
+  - support proxy basic authenticaiton. (#125)
+  - Fix NoneType exception at WebsocketApp.send (#126)
+  - not use proxy for localhost (#132)
+
+- 0.21.0
+
+  - Check for socket before attempting to close (#115)
+  - Enable turning off SSL verification in wsdump.py(#116)
+  - Enable to set subprotocol(#118)
+  - Better support for Autobahn test suite (http://autobahn.ws/testsuite) (#117)
+
+- v0.20.0
+
+  - fix typo.
+
+- v0.19.0
+
+  - suppress close event message(#107)
+  - detect socket connection state(#109)
+  - support for code and reason in on_close callback(#111)
+  - continuation frame handling seems suspicious(#113)
+
+- v0.18.0
+
+  -  allow override of match_hostname usage on ssl (#105)
+
+- v0.17.0
+
+  - can't set timeout on a standing websocket connection (#102)
+  - fixed local variable 'error' referenced before assignment (#102, #98)
+
+- v0.16.0
+
+  - lock some method for multithread. (#92)
+  - disable cert verification. (#89)
+
+- v0.15.0
+
+  - fixed exception when send a large message (#84)
+
+- v0.14.1
+
+  - fixed to work on Python2.6 (#83)
+
+- v0.14.0
+
+  - Support python 3(#73)
+  - Support IPv6(#77)
+  - Support explicit web proxy(#57)
+  - specify cookie in connect method option(#82)
+
+- v0.13.0
+
+  - MemoryError when receiving large amount of data (~60 MB) at once(ISSUE#59)
+  - Controlling fragmentation(ISSUE#55)
+  - server certificate validation(ISSUE#56)
+  - PyPI tarball is missing test_websocket.py(ISSUE#65)
+  - Payload length encoding bug(ISSUE#58)
+  - disable Nagle algorithm by default(ISSUE#41)
+  - Better event loop in WebSocketApp(ISSUE#63)
+  - Skip tests that require Internet access by default(ISSUE#66)
+
+- v0.12.0
+
+  - support keep alive for WebSocketApp(ISSUE#34)
+  - fix some SSL bugs(ISSUE#35, #36)
+  - fix "Timing out leaves websocket library in bad state"(ISSUE#37)
+  - fix "WebSocketApp.run_with_no_err() silently eats all exceptions"(ISSUE#38)
+  - WebSocketTimeoutException will be raised for ws/wss timeout(ISSUE#40)
+  - improve wsdump message(ISSUE#42)
+  - support fragmentation message(ISSUE#43)
+  - fix some bugs
+
+- v0.11.0
+
+  - Only log non-normal close status(ISSUE#31)
+  - Fix default Origin isn't URI(ISSUE#32)
+  - fileno support(ISSUE#33)
+
+- v0.10.0
+
+  - allow to set HTTP Header to WebSocketApp(ISSUE#27)
+  - fix typo in pydoc(ISSUE#28)
+  - Passing a socketopt flag to the websocket constructor(ISSUE#29)
+  - websocket.send fails with long data(ISSUE#30)
+
+
+- v0.9.0
+
+  - allow to set opcode in WebSocketApp.send(ISSUE#25)
+  - allow to modify Origin(ISSUE#26)
+
+- v0.8.0
+
+  - many bug fix
+  - some performance improvement
+
+- v0.7.0
+
+  - fixed problem to read long data.(ISSUE#12)
+  - fix buffer size boundary violation
+
+- v0.6.0
+
+  - Patches: UUID4, self.keep_running, mask_key (ISSUE#11)
+  - add wsdump.py tool
+
+- v0.5.2
+
+  - fix Echo App Demo Throw Error: 'NoneType' object has no attribute 'opcode  (ISSUE#10)
+
+- v0.5.1
+
+  - delete invalid print statement.
+
+- v0.5.0
+
+  - support hybi-13 protocol.
+
+- v0.4.1
+
+  - fix incorrect custom header order(ISSUE#1)
