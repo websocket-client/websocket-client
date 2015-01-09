@@ -122,18 +122,18 @@ Please set sslopt to {"cert_reqs": ssl.CERT_NONE}.
 
 WebSocketApp sample::
 
-    ws = websocket.WebSocketApp("https://echo.websocket.org")
+    ws = websocket.WebSocketApp("wss://echo.websocket.org")
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 create_connection sample::
 
-    ws = websocket.create_connection("https://echo.websocket.org",
+    ws = websocket.create_connection("wss://echo.websocket.org",
       sslopt={"cert_reqs": ssl.CERT_NONE})
 
 WebSocket sample::
 
     ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
-    ws.connect("https://echo.websocket.org")
+    ws.connect("wss://echo.websocket.org")
 
 
 How to disable hostname verification.
@@ -144,18 +144,18 @@ Please set sslopt to {"check_hostname": False}.
 
 WebSocketApp sample::
 
-    ws = websocket.WebSocketApp("https://echo.websocket.org")
+    ws = websocket.WebSocketApp("wss://echo.websocket.org")
     ws.run_forever(sslopt={"check_hostname": False})
 
 create_connection sample::
 
-    ws = websocket.create_connection("https://echo.websocket.org",
+    ws = websocket.create_connection("wss://echo.websocket.org",
       sslopt={"check_hostname": False})
 
 WebSocket sample::
 
     ws = websocket.WebSocket(sslopt={"check_hostname": False})
-    ws.connect("https://echo.websocket.org")
+    ws.connect("wss://echo.websocket.org")
 
 
 Sub Protocols.
