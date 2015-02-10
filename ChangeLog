@@ -4,6 +4,7 @@ ChangeLog
 - 0.24.0
 
   - Supporting http-basic auth in WebSocketApp (#143)
+  - fix failer of test.testInternalRecvStrict(#141)
 
 - 0.23.0
 
