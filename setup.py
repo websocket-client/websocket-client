@@ -6,7 +6,7 @@ NAME="websocket-client"
 
 install_requires = ["six"]
 if sys.version_info.major == 2:
-    if sys.version_info.minor == 7 and sys.version_info.micro < 9:
+    if sys.version_info.minor < 7 or (sys.version_info.minor == 7 and sys.version_info.micro < 9):
         install_requires.append('backports.ssl_match_hostname')
     if sys.version_info.minor < 7:
         install_requires.append('unittest2')
