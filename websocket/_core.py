@@ -256,13 +256,16 @@ def create_connection(url, timeout=None, **options):
              "sockopt" -> socket options
              "sslopt" -> ssl option
              "subprotocols" - array of available sub protocols. default is None.
+             "skip_utf8_validation" - skip utf8 validation.
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
     fire_cont_frame = options.get("fire_cont_frame", False)
     enable_multithread = options.get("enable_multithread", False)
+    skip_utf8_validation = options.get("skip_utf8_validation", False)
     websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
-        fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread)
+        fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread,
+        skip_utf8_validation=skip_utf8_validation)
     websock.settimeout(timeout if timeout is not None else default_timeout)
     websock.connect(url, **options)
     return websock
@@ -376,10 +379,11 @@ class WebSocket(object):
     sslopt: dict object for ssl socket option.
     fire_cont_frame: fire recv event for each cont frame. default is False
     enable_multithread: if set to True, lock send method.
+    skip_utf8_validation: skip utf8 validation.
     """
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
-        fire_cont_frame=False, enable_multithread=False):
+        fire_cont_frame=False, enable_multithread=False, skip_utf8_validation=False):
         """
         Initalize WebSocket object.
         """
@@ -394,6 +398,7 @@ class WebSocket(object):
         self.sslopt = sslopt
         self.get_mask_key = get_mask_key
         self.fire_cont_frame = fire_cont_frame
+        self.skip_utf8_validation = skip_utf8_validation
         # Buffers over the packets from the layer beneath until desired amount
         # bytes of bytes are received.
         self._recv_buffer = []
@@ -790,7 +795,7 @@ class WebSocket(object):
                     data = self._cont_data
                     self._cont_data = None
                     frame.data = data[1]
-                    if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not validate_utf8(frame.data):
+                    if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not self.skip_utf8_validation and not validate_utf8(frame.data):
                         raise WebSocketPayloadException("cannot decode: " + repr(frame.data))
                     return [data[0], frame]
 
@@ -839,7 +844,7 @@ class WebSocket(object):
         frame_buffer.clear()
 
         frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
-        frame.validate()
+        frame.validate(self.skip_utf8_validation)
 
         return frame
 

@@ -101,9 +101,10 @@ class ABNF(object):
         self.data = data
         self.get_mask_key = os.urandom
 
-    def validate(self):
+    def validate(self, skip_utf8_validation=False):
         """
         validate the ABNF frame.
+        skip_utf8_validation: skip utf8 validation.
         """
         if self.rsv1 or self.rsv2 or self.rsv3:
             raise WebSocketProtocolException("rsv is not implemented, yet")
@@ -120,7 +121,7 @@ class ABNF(object):
                 return
             if l == 1 or l >= 126:
                 raise WebSocketProtocolException("Invalid close frame.")
-            if l > 2 and not validate_utf8(self.data[2:]):
+            if l > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
                 raise WebSocketProtocolException("Invalid close frame.")
 
             code = 256*six.byte2int(self.data[0:1]) + six.byte2int(self.data[1:2])
