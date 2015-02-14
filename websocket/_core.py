@@ -20,8 +20,15 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 from __future__ import print_function
 
+try:
+	import six	#try to import an installed library
+except ImportError:
+	try:
+		from ..websocket import six	#try to import six.py at ../websocket
+	except ValueError:
+		print('Please install six')
+		exit()
 
-import six
 import socket
 
 try:
