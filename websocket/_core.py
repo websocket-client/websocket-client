@@ -944,7 +944,8 @@ class WebSocket(object):
                 raise
 
         if not bytes:
-            self.sock.close()
+            if self.sock:
+                self.sock.close()
             self.sock = None
             self.connected = False
             raise WebSocketConnectionClosedException()
