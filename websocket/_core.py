@@ -544,9 +544,13 @@ class WebSocket(object):
 
         self._send(connect_header)
 
-        status, resp_headers = self._read_headers()
+        try:
+            status, resp_headers = self._read_headers()
+        except Exepiton as e:
+            raise WebSocketProxyException(str(e))
+
         if status != 200:
-            raise WebSocketException("failed CONNECT via proxy")
+            raise WebSocketProxyException("failed CONNECT via proxy status: " + str(status))
 
     def _get_resp_headers(self, success_status = 101):
         status, resp_headers = self._read_headers()

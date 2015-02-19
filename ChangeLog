@@ -6,6 +6,7 @@ ChangeLog
   - Supporting http-basic auth in WebSocketApp (#143)
   - fix failer of test.testInternalRecvStrict(#141)
   - skip utf8 validation by skip_utf8_validation argument (#137)
+  - WebsocketProxyException will be raised if we got error about proxy.(#138)
 
 - 0.23.0
 

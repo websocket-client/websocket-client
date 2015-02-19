@@ -56,3 +56,10 @@ class WebSocketTimeoutException(WebSocketException):
     """
     pass
 
+class WebSocketProxyException(WebSocketException):
+    """
+    WebSocketProxyException will be raised when proxy error occured.
+    """
+    pass
+
+
