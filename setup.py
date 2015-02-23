@@ -1,14 +1,14 @@
 from setuptools import setup
 import sys
 
-VERSION = "0.24.0"
+VERSION = "0.25.0"
 NAME="websocket-client"
 
 install_requires = ["six"]
-if sys.version_info.major == 2:
-    if sys.version_info.minor < 7 or (sys.version_info.minor == 7 and sys.version_info.micro < 9):
+if sys.version_info[0] == 2:
+    if sys.version_info[1] < 7 or (sys.version_info[1] == 7 and sys.version_info[2]< 9):
         install_requires.append('backports.ssl_match_hostname')
-    if sys.version_info.minor < 7:
+    if sys.version_info[1] < 7:
         install_requires.append('unittest2')
         install_requires.append('argparse')
 

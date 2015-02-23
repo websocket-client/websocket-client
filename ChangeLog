@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.25.0
+
+  - fixed for Python 2.6(#151)
+
 - 0.24.0
 
   - Supporting http-basic auth in WebSocketApp (#143)
