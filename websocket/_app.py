@@ -96,7 +96,7 @@ class WebSocketApp(object):
         """
 
         if not self.sock or self.sock.send(data, opcode) == 0:
-            raise WebSocketConnectionClosedException()
+            raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def close(self):
         """
@@ -164,7 +164,7 @@ class WebSocketApp(object):
                     break
                 if ping_timeout and self.last_ping_tm and time.time() - self.last_ping_tm > ping_timeout:
                     self.last_ping_tm = 0
-                    raise WebSocketTimeoutException()
+                    raise WebSocketTimeoutException("ping timed out")
 
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)

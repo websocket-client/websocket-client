@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.26.0
+
+  - all WebSocketException provide message string (#152)
+
 - 0.25.0
 
   - fixed for Python 2.6(#151)

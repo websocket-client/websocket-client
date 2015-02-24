@@ -952,7 +952,7 @@ class WebSocket(object):
                 self.sock.close()
             self.sock = None
             self.connected = False
-            raise WebSocketConnectionClosedException()
+            raise WebSocketConnectionClosedException("Connection is already closed.")
         return bytes
 
     def _recv_strict(self, bufsize):
