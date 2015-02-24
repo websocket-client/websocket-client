@@ -22,4 +22,4 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 from ._core import *
 from ._app import WebSocketApp
 
-__version__ = "0.25.0"
+__version__ = "0.26.0"
