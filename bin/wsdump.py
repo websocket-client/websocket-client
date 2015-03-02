@@ -72,14 +72,15 @@ def main():
     console = InteractiveConsole()
     if args.verbose > 1:
         websocket.enableTrace(True)
-    opts = {}
+    options = {}
     if (args.origin):
-        opts = { "origin": args.origin }
+        options["origin"] = args.origin
     if (args.subprotocols):
-        opts = { "subprotocols": args.subprotocols }
+        options["subprotocols"] = args.subprotocols
+    opts = {}
     if (args.nocert):
         opts = { "cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False }
-    ws = websocket.create_connection(args.url, sslopt=opts)
+    ws = websocket.create_connection(args.url, sslopt=opts, **options)
     print("Press Ctrl+C to quit")
 
     def recv():
