@@ -31,8 +31,7 @@ from websocket._utils import validate_utf8
 
 
 # Skip test to access the internet.
-# TEST_WITH_INTERNET = False
-TEST_WITH_INTERNET = True
+TEST_WITH_INTERNET = False
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = False

@@ -4,6 +4,7 @@ ChangeLog
 - 0.26.0
 
   - all WebSocketException provide message string (#152)
+  - fixed tests fail when not connected to the network (#155)
 
 - 0.25.0
 
