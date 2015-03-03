@@ -35,6 +35,12 @@ def parse_args():
                         "If set to 2, enable to trace  websocket module")
     parser.add_argument("-n", "--nocert", action='store_true',
                         help="Ignore invalid SSL cert")
+    parser.add_argument("-s", "--subprotocols", nargs='*',
+                        help="Set subprotocols")
+    parser.add_argument("-o", "--origin",
+                        help="Set origin")
+    parser.add_argument("-t", "--text",
+                        help="Send initial text")
 
     return parser.parse_args()
 
@@ -66,14 +72,22 @@ def main():
     console = InteractiveConsole()
     if args.verbose > 1:
         websocket.enableTrace(True)
+    options = {}
+    if (args.origin):
+        options["origin"] = args.origin
+    if (args.subprotocols):
+        options["subprotocols"] = args.subprotocols
     opts = {}
     if (args.nocert):
         opts = { "cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False }
-    ws = websocket.create_connection(args.url, sslopt=opts)
+    ws = websocket.create_connection(args.url, sslopt=opts, **options)
     print("Press Ctrl+C to quit")
 
     def recv():
-        frame = ws.recv_frame()
+        try:
+            frame = ws.recv_frame()
+        except websocket.WebSocketException:
+            return (websocket.ABNF.OPCODE_CLOSE, None)
         if not frame:
             raise websocket.WebSocketException("Not a valid frame %s" % frame)
         elif frame.opcode in OPCODE_DATA:
@@ -82,7 +96,7 @@ def main():
             ws.send_close()
             return (frame.opcode, None)
         elif frame.opcode == websocket.ABNF.OPCODE_PING:
-            ws.pong("Hi!")
+            ws.pong(frame.data)
             return frame.opcode, frame.data
 
         return frame.opcode, frame.data
@@ -100,9 +114,15 @@ def main():
             if msg:
                 console.write(msg)
 
+            if opcode == websocket.ABNF.OPCODE_CLOSE:
+                break
+
     thread = threading.Thread(target=recv_ws)
     thread.daemon = True
     thread.start()
+
+    if args.text:
+        ws.send(args.text)
 
     while True:
         try:
