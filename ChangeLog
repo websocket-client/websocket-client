@@ -5,6 +5,7 @@ ChangeLog
 
   - all WebSocketException provide message string (#152)
   - fixed tests fail when not connected to the network (#155)
+  - Add command line options and handle closed socket to wsdump.py (#153)
 
 - 0.25.0
 
