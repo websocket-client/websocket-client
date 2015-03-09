@@ -9,7 +9,7 @@ if sys.version_info[0] == 2:
     if sys.version_info[1] < 7 or (sys.version_info[1] == 7 and sys.version_info[2]< 9):
         install_requires.append('backports.ssl_match_hostname')
     if sys.version_info[1] < 7:
-        install_requires.append('unittest2')
+        install_requires.append('unittest2==0.8.0')
         install_requires.append('argparse')
 
 setup(
