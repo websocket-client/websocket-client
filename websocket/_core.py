@@ -143,7 +143,7 @@ def create_connection(url, timeout=None, **options):
     websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
         fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread,
         skip_utf8_validation=skip_utf8_validation)
-    websock.settimeout(timeout if timeout is not None else default_timeout)
+    websock.settimeout(timeout if timeout is not None else getdefaulttimeout())
     websock.connect(url, **options)
     return websock
 

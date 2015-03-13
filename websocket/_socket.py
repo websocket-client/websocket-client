@@ -36,7 +36,7 @@ if hasattr(socket, "TCP_KEEPINTVL"):
 if hasattr(socket, "TCP_KEEPCNT"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPCNT, 3))
 
-default_timeout = None
+_default_timeout = None
 
 def setdefaulttimeout(timeout):
     """
@@ -44,15 +44,15 @@ def setdefaulttimeout(timeout):
 
     timeout: default socket timeout time. This value is second.
     """
-    global default_timeout
-    default_timeout = timeout
+    global _default_timeout
+    _default_timeout = timeout
 
 
 def getdefaulttimeout():
     """
     Return the global timeout setting(second) to connect.
     """
-    return default_timeout
+    return _default_timeout
 
 
 def recv(sock, bufsize):
