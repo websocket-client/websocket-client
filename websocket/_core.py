@@ -58,6 +58,7 @@ import logging
 # websocket modules
 from ._exceptions import *
 from ._abnf import *
+from ._socket import *
 from ._utils import *
 from ._url import *
 
@@ -74,21 +75,10 @@ Please see http://tools.ietf.org/html/rfc6455 for protocol.
 VERSION = 13
 
 
-DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1),]
-if hasattr(socket, "SO_KEEPALIVE"):
-    DEFAULT_SOCKET_OPTION.append((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1))
-if hasattr(socket, "TCP_KEEPIDLE"):
-    DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPIDLE, 30))
-if hasattr(socket, "TCP_KEEPINTVL"):
-    DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPINTVL, 10))
-if hasattr(socket, "TCP_KEEPCNT"):
-    DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPCNT, 3))
 
 logger = logging.getLogger()
 
 
-
-default_timeout = None
 traceEnabled = False
 
 
@@ -111,23 +101,6 @@ def _dump(title, message):
         logger.debug("--- " + title + " ---")
         logger.debug(message)
         logger.debug("-----------------------")
-
-
-def setdefaulttimeout(timeout):
-    """
-    Set the global timeout setting to connect.
-
-    timeout: default socket timeout time. This value is second.
-    """
-    global default_timeout
-    default_timeout = timeout
-
-
-def getdefaulttimeout():
-    """
-    Return the global timeout setting(second) to connect.
-    """
-    return default_timeout
 
 
 def create_connection(url, timeout=None, **options):
@@ -745,47 +718,19 @@ class WebSocket(object):
             self.connected = False
 
     def _send(self, data):
-        if isinstance(data, six.text_type):
-            data = data.encode('utf-8')
-
-        if not self.sock:
-            raise WebSocketConnectionClosedException("socket is already closed.")
-
-        try:
-            return self.sock.send(data)
-        except socket.timeout as e:
-            message = extract_err_message(e)
-            raise WebSocketTimeoutException(message)
-        except Exception as e:
-            message = extract_err_message(e)
-            if message and "timed out" in message:
-                raise WebSocketTimeoutException(message)
-            else:
-                raise
+        return send(self.sock, data)
 
     def _recv(self, bufsize):
-        if not self.sock:
-            raise WebSocketConnectionClosedException("socket is already closed.")
-
         try:
-            bytes = self.sock.recv(bufsize)
-        except socket.timeout as e:
-            message = extract_err_message(e)
-            raise WebSocketTimeoutException(message)
-        except SSLError as e:
-            message = extract_err_message(e)
-            if message == "The read operation timed out":
-                raise WebSocketTimeoutException(message)
-            else:
-                raise
-
-        if not bytes:
+            return recv(self.sock, bufsize)
+        except WebSocketConnectionClosedException:
             if self.sock:
                 self.sock.close()
             self.sock = None
             self.connected = False
-            raise WebSocketConnectionClosedException("Connection is already closed.")
-        return bytes
+            raise
+        except:
+            raise
 
     def _recv_strict(self, bufsize):
         shortage = bufsize - sum(len(x) for x in self._recv_buffer)
@@ -805,13 +750,16 @@ class WebSocket(object):
 
 
     def _recv_line(self):
-        line = []
-        while True:
-            c = self._recv(1)
-            line.append(c)
-            if c == six.b("\n"):
-                break
-        return six.b("").join(line)
+        try:
+            return recv_line(self.sock)
+        except WebSocketConnectionClosedException:
+            if self.sock:
+                self.sock.close()
+            self.sock = None
+            self.connected = False
+            raise
+        except:
+            raise
 
 
 
