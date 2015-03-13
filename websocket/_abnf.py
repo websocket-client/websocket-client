@@ -220,3 +220,68 @@ class ABNF(object):
             return _d.tobytes()
         else:
             return _d.tostring()
+
+
+class FrameBuffer(object):
+    _HEADER_MASK_INDEX = 5
+    _HEADER_LENGHT_INDEX = 6
+
+    def __init__(self):
+        self.clear()
+
+    def clear(self):
+        self.header = None
+        self.length = None
+        self.mask = None
+
+    def has_received_header(self):
+        return  self.header is None
+
+    def recv_header(self, recv_fn):
+        header = recv_fn(2)
+        b1 = header[0]
+
+        if six.PY2:
+            b1 = ord(b1)
+
+        fin = b1 >> 7 & 1
+        rsv1 = b1 >> 6 & 1
+        rsv2 = b1 >> 5 & 1
+        rsv3 = b1 >> 4 & 1
+        opcode = b1 & 0xf
+        b2 = header[1]
+
+        if six.PY2:
+            b2 = ord(b2)
+
+        has_mask = b2 >> 7 & 1
+        length_bits = b2 & 0x7f
+
+        self.header = (fin, rsv1, rsv2, rsv3, opcode, has_mask, length_bits)
+
+    def has_mask(self):
+        if not self.header:
+            return False
+        return self.header[FrameBuffer._HEADER_MASK_INDEX]
+
+
+    def has_received_length(self):
+        return self.length is None
+
+    def recv_length(self, recv_fn):
+        bits = self.header[FrameBuffer._HEADER_LENGHT_INDEX]
+        length_bits = bits & 0x7f
+        if length_bits == 0x7e:
+            v = recv_fn(2)
+            self.length = struct.unpack("!H", v)[0]
+        elif length_bits == 0x7f:
+            v = recv_fn(8)
+            self.length = struct.unpack("!Q", v)[0]
+        else:
+            self.length = length_bits
+
+    def has_received_mask(self):
+        return self.mask is None
+
+    def recv_mask(self, recv_fn):
+        self.mask = recv_fn(4) if self.has_mask() else ""

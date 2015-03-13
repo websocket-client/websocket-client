@@ -25,8 +25,8 @@ import uuid
 
 # websocket-client
 import websocket as ws
-from websocket._core import _parse_url, _create_sec_websocket_key
-from websocket._core import _get_proxy_info
+from websocket._core import _create_sec_websocket_key
+from websocket._url import parse_url, get_proxy_info
 from websocket._utils import validate_utf8
 
 
@@ -89,84 +89,84 @@ class WebSocketTest(unittest.TestCase):
         ws.setdefaulttimeout(None)
 
     def testParseUrl(self):
-        p = _parse_url("ws://www.example.com/r")
+        p = parse_url("ws://www.example.com/r")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("ws://www.example.com/r/")
+        p = parse_url("ws://www.example.com/r/")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/r/")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("ws://www.example.com/")
+        p = parse_url("ws://www.example.com/")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("ws://www.example.com")
+        p = parse_url("ws://www.example.com")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("ws://www.example.com:8080/r")
+        p = parse_url("ws://www.example.com:8080/r")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("ws://www.example.com:8080/")
+        p = parse_url("ws://www.example.com:8080/")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("ws://www.example.com:8080")
+        p = parse_url("ws://www.example.com:8080")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("wss://www.example.com:8080/r")
+        p = parse_url("wss://www.example.com:8080/r")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], True)
 
-        p = _parse_url("wss://www.example.com:8080/r?key=value")
+        p = parse_url("wss://www.example.com:8080/r?key=value")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r?key=value")
         self.assertEqual(p[3], True)
 
-        self.assertRaises(ValueError, _parse_url, "http://www.example.com/r")
+        self.assertRaises(ValueError, parse_url, "http://www.example.com/r")
 
         if sys.version_info[0] == 2 and sys.version_info[1] < 7:
             return
 
-        p = _parse_url("ws://[2a03:4000:123:83::3]/r")
+        p = parse_url("ws://[2a03:4000:123:83::3]/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 80)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("ws://[2a03:4000:123:83::3]:8080/r")
+        p = parse_url("ws://[2a03:4000:123:83::3]:8080/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], False)
 
-        p = _parse_url("wss://[2a03:4000:123:83::3]/r")
+        p = parse_url("wss://[2a03:4000:123:83::3]/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 443)
         self.assertEqual(p[2], "/r")
         self.assertEqual(p[3], True)
 
-        p = _parse_url("wss://[2a03:4000:123:83::3]:8080/r")
+        p = parse_url("wss://[2a03:4000:123:83::3]:8080/r")
         self.assertEqual(p[0], "2a03:4000:123:83::3")
         self.assertEqual(p[1], 8080)
         self.assertEqual(p[2], "/r")
@@ -561,74 +561,74 @@ class ProxyInfoTest(unittest.TestCase):
 
 
     def testProxyFromArgs(self):
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost"), ("localhost", 0, None))
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost"), ("localhost", 0, None))
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
 
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_auth=("a", "b")),
             ("localhost", 0, ("a", "b")))
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")), 
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")), 
             ("localhost", 3128, ("a", "b")))
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_auth=("a", "b")), 
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_auth=("a", "b")), 
             ("localhost", 0, ("a", "b")))
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")),
             ("localhost", 3128, ("a", "b")))
 
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["example.com"], http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["example.com"], http_proxy_auth=("a", "b")),
             ("localhost", 3128, ("a", "b")))
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["echo.websocket.org"], http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["echo.websocket.org"], http_proxy_auth=("a", "b")),
             (None, 0, None))
 
 
     def testProxyFromEnv(self):
         os.environ["http_proxy"] = "http://localhost/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", None, None))
         os.environ["http_proxy"] = "http://localhost:3128/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", 3128, None))
 
         os.environ["http_proxy"] = "http://localhost/"
         os.environ["https_proxy"] = "http://localhost2/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", None, None))
         os.environ["http_proxy"] = "http://localhost:3128/"
         os.environ["https_proxy"] = "http://localhost2:3128/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", 3128, None))
 
         os.environ["http_proxy"] = "http://localhost/"
         os.environ["https_proxy"] = "http://localhost2/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", None, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", True), ("localhost2", None, None))
         os.environ["http_proxy"] = "http://localhost:3128/"
         os.environ["https_proxy"] = "http://localhost2:3128/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, None))
 
 
         os.environ["http_proxy"] = "http://a:b@localhost/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, ("a", "b")))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", None, ("a", "b")))
         os.environ["http_proxy"] = "http://a:b@localhost:3128/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, ("a", "b")))
-
-        os.environ["http_proxy"] = "http://a:b@localhost/"
-        os.environ["https_proxy"] = "http://a:b@localhost2/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", None, ("a", "b")))
-        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
-        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", False), ("localhost", 3128, ("a", "b")))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", 3128, ("a", "b")))
 
         os.environ["http_proxy"] = "http://a:b@localhost/"
         os.environ["https_proxy"] = "http://a:b@localhost2/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", None, ("a", "b")))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", None, ("a", "b")))
         os.environ["http_proxy"] = "http://a:b@localhost:3128/"
         os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, ("a", "b")))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False), ("localhost", 3128, ("a", "b")))
+
+        os.environ["http_proxy"] = "http://a:b@localhost/"
+        os.environ["https_proxy"] = "http://a:b@localhost2/"
+        self.assertEqual(get_proxy_info("echo.websocket.org", True), ("localhost2", None, ("a", "b")))
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
+        self.assertEqual(get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, ("a", "b")))
 
         os.environ["http_proxy"] = "http://a:b@localhost/"
         os.environ["https_proxy"] = "http://a:b@localhost2/"
         os.environ["no_proxy"] = "example1.com,example2.com"
-        self.assertEqual(_get_proxy_info("example.1.com", True), ("localhost2", None, ("a", "b")))
+        self.assertEqual(get_proxy_info("example.1.com", True), ("localhost2", None, ("a", "b")))
         os.environ["http_proxy"] = "http://a:b@localhost:3128/"
         os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
         os.environ["no_proxy"] = "example1.com,example2.com, echo.websocket.org"
-        self.assertEqual(_get_proxy_info("echo.websocket.org", True), (None, 0, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", True), (None, 0, None))
 
 
 

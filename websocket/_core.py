@@ -41,7 +41,7 @@ except ImportError:
 
     HAVE_SSL = False
 
-from six.moves.urllib.parse import urlparse
+
 if six.PY3:
     from base64 import encodebytes as base64encode
 else:
@@ -58,7 +58,8 @@ import logging
 # websocket modules
 from ._exceptions import *
 from ._abnf import *
-from ._utils import NoLock, validate_utf8
+from ._utils import *
+from ._url import *
 
 """
 websocket python client.
@@ -104,11 +105,13 @@ def enableTrace(tracable):
             logger.addHandler(logging.StreamHandler())
         logger.setLevel(logging.DEBUG)
 
+
 def _dump(title, message):
     if traceEnabled:
         logger.debug("--- " + title + " ---")
         logger.debug(message)
         logger.debug("-----------------------")
+
 
 def setdefaulttimeout(timeout):
     """
@@ -125,105 +128,6 @@ def getdefaulttimeout():
     Return the global timeout setting(second) to connect.
     """
     return default_timeout
-
-
-def _parse_url(url):
-    """
-    parse url and the result is tuple of
-    (hostname, port, resource path and the flag of secure mode)
-
-    url: url string.
-    """
-    if ":" not in url:
-        raise ValueError("url is invalid")
-
-    scheme, url = url.split(":", 1)
-
-    parsed = urlparse(url, scheme="ws")
-    if parsed.hostname:
-        hostname = parsed.hostname
-    else:
-        raise ValueError("hostname is invalid")
-    port = 0
-    if parsed.port:
-        port = parsed.port
-
-    is_secure = False
-    if scheme == "ws":
-        if not port:
-            port = 80
-    elif scheme == "wss":
-        is_secure = True
-        if not port:
-            port = 443
-    else:
-        raise ValueError("scheme %s is invalid" % scheme)
-
-    if parsed.path:
-        resource = parsed.path
-    else:
-        resource = "/"
-
-    if parsed.query:
-        resource += "?" + parsed.query
-
-    return (hostname, port, resource, is_secure)
-
-
-DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
-
-def _is_no_proxy_host(hostname, no_proxy):
-    if not no_proxy:
-        v = os.environ.get("no_proxy", "").replace(" ", "")
-        no_proxy = v.split(",")
-    if not no_proxy:
-        no_proxy = DEFAULT_NO_PROXY_HOST
-
-    return hostname in no_proxy
-
-def _get_proxy_info(hostname, is_secure, **options):
-    """
-    try to retrieve proxy host and port from environment if not provided in options.
-    result is (proxy_host, proxy_port, proxy_auth).
-    proxy_auth is tuple of username and password of proxy authentication information.
-    
-    hostname: websocket server name.
-
-    is_secure:  is the connection secure? (wss)
-                looks for "https_proxy" in env before falling back to "http_proxy"
-
-    options:    "http_proxy_host" - http proxy host name.
-                "http_proxy_port" - http proxy port.
-                "http_no_proxy"   - host names, which doesn't use proxy.
-                "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
-                                    defualt is None
-    """
-    if _is_no_proxy_host(hostname, options.get("http_no_proxy", None)):
-        return None, 0, None
-
-    http_proxy_host = options.get("http_proxy_host", None)
-    if http_proxy_host:
-        return http_proxy_host, options.get("http_proxy_port", 0), options.get("http_proxy_auth", None)
-
-    env_keys = ["http_proxy"]
-    if is_secure:
-        env_keys.insert(0, "https_proxy")
-
-    for key in env_keys:
-        value = os.environ.get(key, None)
-        if value:
-            proxy = urlparse(value)
-            auth = (proxy.username, proxy.password) if proxy.username else None
-            return proxy.hostname, proxy.port, auth
-
-    return None, 0, None
-
-def _extract_err_message(exception):
-        message = getattr(exception, 'strerror', '')
-        if not message:
-            message = getattr(exception, 'message', '')
-
-        return message
 
 
 def create_connection(url, timeout=None, **options):
@@ -270,13 +174,6 @@ def create_connection(url, timeout=None, **options):
     websock.connect(url, **options)
     return websock
 
-_MAX_INTEGER = (1 << 32) -1
-_AVAILABLE_KEY_CHARS = list(range(0x21, 0x2f + 1)) + list(range(0x3a, 0x7e + 1))
-_MAX_CHAR_BYTE = (1<<8) -1
-
-# ref. Websocket gets an update, and it breaks stuff.
-# http://axod.blogspot.com/2010/06/websocket-gets-update-and-it-breaks.html
-
 
 def _create_sec_websocket_key():
     uid = uuid.uuid4()
@@ -287,71 +184,6 @@ _HEADERS_TO_CHECK = {
     "upgrade": "websocket",
     "connection": "upgrade",
     }
-
-
-class _FrameBuffer(object):
-    _HEADER_MASK_INDEX = 5
-    _HEADER_LENGHT_INDEX = 6
-
-    def __init__(self):
-        self.clear()
-
-    def clear(self):
-        self.header = None
-        self.length = None
-        self.mask = None
-
-    def has_received_header(self):
-        return  self.header is None
-
-    def recv_header(self, recv_fn):
-        header = recv_fn(2)
-        b1 = header[0]
-
-        if six.PY2:
-            b1 = ord(b1)
-
-        fin = b1 >> 7 & 1
-        rsv1 = b1 >> 6 & 1
-        rsv2 = b1 >> 5 & 1
-        rsv3 = b1 >> 4 & 1
-        opcode = b1 & 0xf
-        b2 = header[1]
-
-        if six.PY2:
-            b2 = ord(b2)
-
-        has_mask = b2 >> 7 & 1
-        length_bits = b2 & 0x7f
-
-        self.header = (fin, rsv1, rsv2, rsv3, opcode, has_mask, length_bits)
-
-    def has_mask(self):
-        if not self.header:
-            return False
-        return self.header[_FrameBuffer._HEADER_MASK_INDEX]
-
-
-    def has_received_length(self):
-        return self.length is None
-
-    def recv_length(self, recv_fn):
-        bits = self.header[_FrameBuffer._HEADER_LENGHT_INDEX]
-        length_bits = bits & 0x7f
-        if length_bits == 0x7e:
-            v = recv_fn(2)
-            self.length = struct.unpack("!H", v)[0]
-        elif length_bits == 0x7f:
-            v = recv_fn(8)
-            self.length = struct.unpack("!Q", v)[0]
-        else:
-            self.length = length_bits
-
-    def has_received_mask(self):
-        return self.mask is None
-
-    def recv_mask(self, recv_fn):
-        self.mask = recv_fn(4) if self.has_mask() else ""
 
 
 class WebSocket(object):
@@ -403,7 +235,7 @@ class WebSocket(object):
         # bytes of bytes are received.
         self._recv_buffer = []
         # These buffer over the build-up of a single frame.
-        self._frame_buffer = _FrameBuffer()
+        self._frame_buffer = FrameBuffer()
         self._cont_data = None
         self._recving_frames = None
         if enable_multithread:
@@ -472,8 +304,8 @@ class WebSocket(object):
 
         """
 
-        hostname, port, resource, is_secure = _parse_url(url)
-        proxy_host, proxy_port, proxy_auth = _get_proxy_info(hostname, is_secure, **options)
+        hostname, port, resource, is_secure = parse_url(url)
+        proxy_host, proxy_port, proxy_auth = get_proxy_info(hostname, is_secure, **options)
         if not proxy_host:
             addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
         else:
@@ -922,10 +754,10 @@ class WebSocket(object):
         try:
             return self.sock.send(data)
         except socket.timeout as e:
-            message = _extract_err_message(e)
+            message = extract_err_message(e)
             raise WebSocketTimeoutException(message)
         except Exception as e:
-            message = _extract_err_message(e)
+            message = extract_err_message(e)
             if message and "timed out" in message:
                 raise WebSocketTimeoutException(message)
             else:
@@ -938,10 +770,10 @@ class WebSocket(object):
         try:
             bytes = self.sock.recv(bufsize)
         except socket.timeout as e:
-            message = _extract_err_message(e)
+            message = extract_err_message(e)
             raise WebSocketTimeoutException(message)
         except SSLError as e:
-            message = _extract_err_message(e)
+            message = extract_err_message(e)
             if message == "The read operation timed out":
                 raise WebSocketTimeoutException(message)
             else:
