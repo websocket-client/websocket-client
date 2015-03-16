@@ -297,7 +297,7 @@ class WebSocket(object):
                 self.sock.setsockopt(*opts)
             for opts in self.sockopt:
                 self.sock.setsockopt(*opts)
-            
+
             address = addrinfo[4]
             try:
                 self.sock.connect(address)
@@ -424,7 +424,7 @@ class WebSocket(object):
             r = r.lower()
             if v != r:
                 return False
-        
+
         if subprotocols:
             subproto = headers.get("sec-websocket-protocol", None)
             if not subproto or subproto not in subprotocols:
@@ -456,10 +456,10 @@ class WebSocket(object):
             line = line.decode('utf-8').strip()
             if not line:
                 break
-            
+
             if traceEnabled:
                 logger.debug(line)
-            
+
             if not status:
                 status_info = line.split(" ", 2)
                 status = int(status_info[1])
@@ -599,7 +599,7 @@ class WebSocket(object):
 
                 if frame.fin:
                     self._recving_frames = None
-                
+
                 if frame.fin or self.fire_cont_frame:
                     data = self._cont_data
                     self._cont_data = None
