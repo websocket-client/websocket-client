@@ -62,3 +62,7 @@ def trace(msg):
 
 def isEnableForError():
     return _logger.isEnableFor(logging.ERROR)
+
+
+def isEnableForDebug():
+    return _logger.isEnableFor(logging.DEBUG)
