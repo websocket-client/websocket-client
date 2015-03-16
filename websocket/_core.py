@@ -53,7 +53,6 @@ import struct
 import uuid
 import hashlib
 import threading
-import logging
 
 # websocket modules
 from ._exceptions import *
@@ -61,6 +60,7 @@ from ._abnf import *
 from ._socket import *
 from ._utils import *
 from ._url import *
+from ._logging import *
 
 """
 websocket python client.
@@ -75,41 +75,14 @@ Please see http://tools.ietf.org/html/rfc6455 for protocol.
 VERSION = 13
 
 
-
-logger = logging.getLogger()
-
-
-traceEnabled = False
-
-
-def enableTrace(tracable):
-    """
-    turn on/off the tracability.
-
-    tracable: boolean value. if set True, tracability is enabled.
-    """
-    global traceEnabled
-    traceEnabled = tracable
-    if tracable:
-        if not logger.handlers:
-            logger.addHandler(logging.StreamHandler())
-        logger.setLevel(logging.DEBUG)
-
-
-def _dump(title, message):
-    if traceEnabled:
-        logger.debug("--- " + title + " ---")
-        logger.debug(message)
-        logger.debug("-----------------------")
-
-
 def create_connection(url, timeout=None, **options):
     """
     connect to url and return websocket object.
 
     Connect to url and return the WebSocket object.
     Passing optional timeout parameter will set the timeout on the socket.
-    If no timeout is supplied, the global default timeout setting returned by getdefauttimeout() is used.
+    If no timeout is supplied,
+    the global default timeout setting returned by getdefauttimeout() is used.
     You can customize using 'options'.
     If you set "header" list object, you can set your own custom header.
 
@@ -119,7 +92,8 @@ def create_connection(url, timeout=None, **options):
 
 
     timeout: socket timeout time. This value is integer.
-             if you set None for this value, it means "use default_timeout value"
+             if you set None for this value,
+             it means "use default_timeout value"
 
 
     options: "header" -> custom http header list.
@@ -127,12 +101,14 @@ def create_connection(url, timeout=None, **options):
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
              "http_no_proxy"   - host names, which doesn't use proxy.
-             "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
+             "http_proxy_auth" - http proxy auth infomation.
+                                    tuple of username and password.
                                     defualt is None
              "enable_multithread" -> enable lock for multithread.
              "sockopt" -> socket options
              "sslopt" -> ssl option
-             "subprotocols" - array of available sub protocols. default is None.
+             "subprotocols" - array of available sub protocols.
+                              default is None.
              "skip_utf8_validation" - skip utf8 validation.
     """
     sockopt = options.get("sockopt", [])
@@ -141,8 +117,9 @@ def create_connection(url, timeout=None, **options):
     enable_multithread = options.get("enable_multithread", False)
     skip_utf8_validation = options.get("skip_utf8_validation", False)
     websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
-        fire_cont_frame = fire_cont_frame, enable_multithread=enable_multithread,
-        skip_utf8_validation=skip_utf8_validation)
+                        fire_cont_frame=fire_cont_frame,
+                        enable_multithread=enable_multithread,
+                        skip_utf8_validation=skip_utf8_validation)
     websock.settimeout(timeout if timeout is not None else getdefaulttimeout())
     websock.connect(url, **options)
     return websock
@@ -188,7 +165,8 @@ class WebSocket(object):
     """
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
-        fire_cont_frame=False, enable_multithread=False, skip_utf8_validation=False):
+                 fire_cont_frame=False, enable_multithread=False,
+                 skip_utf8_validation=False):
         """
         Initalize WebSocket object.
         """
@@ -253,7 +231,8 @@ class WebSocket(object):
 
     def connect(self, url, **options):
         """
-        Connect to url. url is websocket url scheme. ie. ws://host:port/resource
+        Connect to url. url is websocket url scheme.
+        ie. ws://host:port/resource
         You can customize using 'options'.
         If you set "header" list object, you can set your own custom header.
 
@@ -271,9 +250,11 @@ class WebSocket(object):
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
                  "http_no_proxy"   - host names, which doesn't use proxy.
-                 "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
-                                    defualt is None
-                 "subprotocols" - array of available sub protocols. default is None.
+                 "http_proxy_auth" - http proxy auth infomation.
+                                     tuple of username and password.
+                                     defualt is None
+                 "subprotocols" - array of available sub protocols.
+                                  default is None.
 
         """
 
@@ -335,7 +316,7 @@ class WebSocket(object):
         self._handshake(hostname, port, resource, **options)
 
     def _tunnel(self, host, port, auth):
-        logger.debug("Connecting proxy...")
+        debug("Connecting proxy...")
         connect_header = "CONNECT %s:%d HTTP/1.0\r\n" % (host, port)
         # TODO: support digest auth.
         if auth and auth[0]:
@@ -345,7 +326,7 @@ class WebSocket(object):
             encoded_str = base64encode(auth_str.encode()).strip().decode()
             connect_header += "Proxy-Authorization: Basic %s\r\n" % encoded_str
         connect_header += "\r\n"
-        _dump("request header", connect_header)
+        dump("request header", connect_header)
 
         self._send(connect_header)
 
@@ -357,7 +338,7 @@ class WebSocket(object):
         if status != 200:
             raise WebSocketProxyException("failed CONNECT via proxy status: " + str(status))
 
-    def _get_resp_headers(self, success_status = 101):
+    def _get_resp_headers(self, success_status=101):
         status, resp_headers = self._read_headers()
         if status != success_status:
             self.close()
@@ -394,7 +375,7 @@ class WebSocket(object):
         cookie = options.get("cookie", None)
 
         if cookie:
-          headers.append("Cookie: %s" % cookie)
+            headers.append("Cookie: %s" % cookie)
 
         headers.append("")
         headers.append("")
@@ -406,7 +387,7 @@ class WebSocket(object):
 
         header_str = "\r\n".join(headers)
         self._send(header_str)
-        _dump("request header", header_str)
+        dump("request header", header_str)
 
         resp_headers = self._get_resp_headers()
         success = self._validate_header(resp_headers, key, options.get("subprotocols"))
@@ -428,10 +409,9 @@ class WebSocket(object):
         if subprotocols:
             subproto = headers.get("sec-websocket-protocol", None)
             if not subproto or subproto not in subprotocols:
-                logger.error("Invalid subprotocol: " + str(subprotocols))
+                error("Invalid subprotocol: " + str(subprotocols))
                 return False
             self.subprotocol = subproto
-
 
         result = headers.get("sec-websocket-accept", None)
         if not result:
@@ -448,17 +428,14 @@ class WebSocket(object):
     def _read_headers(self):
         status = None
         headers = {}
-        if traceEnabled:
-            logger.debug("--- response header ---")
+        trace("--- response header ---")
 
         while True:
             line = self._recv_line()
             line = line.decode('utf-8').strip()
             if not line:
                 break
-
-            if traceEnabled:
-                logger.debug(line)
+            trace(line)
 
             if not status:
                 status_info = line.split(" ", 2)
@@ -471,8 +448,7 @@ class WebSocket(object):
                 else:
                     raise WebSocketException("Invalid header")
 
-        if traceEnabled:
-            logger.debug("-----------------------")
+        trace("-----------------------")
 
         return status, headers
 
@@ -509,8 +485,7 @@ class WebSocket(object):
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
         length = len(data)
-        if traceEnabled:
-            logger.debug("send: " + repr(data))
+        trace("send: " + repr(data))
 
         with self.lock:
             while data:
@@ -518,7 +493,6 @@ class WebSocket(object):
                 data = data[l:]
 
         return length
-
 
     def send_binary(self, payload):
         return self.send(payload, ABNF.OPCODE_BINARY)
@@ -657,7 +631,6 @@ class WebSocket(object):
 
         return frame
 
-
     def send_close(self, status=STATUS_NORMAL, reason=six.b("")):
         """
         send close data to the server.
@@ -690,10 +663,10 @@ class WebSocket(object):
                 self.sock.settimeout(3)
                 try:
                     frame = self.recv_frame()
-                    if logger.isEnabledFor(logging.ERROR):
+                    if isEnableForError():
                         recv_status = struct.unpack("!H", frame.data)[0]
                         if recv_status != STATUS_NORMAL:
-                            logger.error("close status: " + repr(recv_status))
+                            error("close status: " + repr(recv_status))
                 except:
                     pass
                 self.sock.settimeout(timeout)
@@ -748,7 +721,6 @@ class WebSocket(object):
             self._recv_buffer = [unified[bufsize:]]
             return unified[:bufsize]
 
-
     def _recv_line(self):
         try:
             return recv_line(self.sock)
@@ -760,17 +732,3 @@ class WebSocket(object):
             raise
         except:
             raise
-
-
-
-
-if __name__ == "__main__":
-    enableTrace(True)
-    ws = create_connection("ws://echo.websocket.org/")
-    print("Sending 'Hello, World'...")
-    ws.send("Hello, World")
-    print("Sent")
-    print("Receiving...")
-    result = ws.recv()
-    print("Received '%s'" % result)
-    ws.close()
