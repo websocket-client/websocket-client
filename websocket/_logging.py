@@ -22,7 +22,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import logging
 
-logger = logging.getLogger()
+_logger = logging.getLogger()
 _traceEnabled = False
 
 
@@ -35,30 +35,30 @@ def enableTrace(tracable):
     global _traceEnabled
     _traceEnabled = tracable
     if tracable:
-        if not logger.handlers:
-            logger.addHandler(logging.StreamHandler())
-        logger.setLevel(logging.DEBUG)
+        if not _logger.handlers:
+            _logger.addHandler(logging.StreamHandler())
+        _logger.setLevel(logging.DEBUG)
 
 
 def dump(title, message):
     if _traceEnabled:
-        logger.debug("--- " + title + " ---")
-        logger.debug(message)
-        logger.debug("-----------------------")
+        _logger.debug("--- " + title + " ---")
+        _logger.debug(message)
+        _logger.debug("-----------------------")
 
 
 def error(msg):
-    logger.error(msg)
+    _logger.error(msg)
 
 
 def debug(msg):
-    logger.debug(msg)
+    _logger.debug(msg)
 
 
 def trace(msg):
     if _traceEnabled:
-        logger.debug(msg)
+        _logger.debug(msg)
 
 
 def isEnableForError():
-    return logger.isEnableFor(logging.ERROR)
+    return _logger.isEnableFor(logging.ERROR)
