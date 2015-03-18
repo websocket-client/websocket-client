@@ -73,7 +73,7 @@ def recv(sock, bufsize):
 
     if not bytes:
         raise WebSocketConnectionClosedException("Connection is already closed.")
-    
+
     return bytes
 
 def recv_line(sock):
@@ -89,10 +89,10 @@ def recv_line(sock):
 def send(sock, data):
     if isinstance(data, six.text_type):
         data = data.encode('utf-8')
-    
+
     if not sock:
         raise WebSocketConnectionClosedException("socket is already closed.")
-    
+
     try:
         return sock.send(data)
     except socket.timeout as e:
@@ -104,4 +104,3 @@ def send(sock, data):
             raise WebSocketTimeoutException(message)
         else:
             raise
-

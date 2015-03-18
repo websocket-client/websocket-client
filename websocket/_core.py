@@ -50,8 +50,6 @@ else:
 import os
 import errno
 import struct
-import uuid
-import hashlib
 import threading
 
 # websocket modules
@@ -61,6 +59,8 @@ from ._socket import *
 from ._utils import *
 from ._url import *
 from ._logging import *
+from ._http import *
+from ._handshake import *
 
 """
 websocket python client.
@@ -69,10 +69,6 @@ websocket python client.
 This version support only hybi-13.
 Please see http://tools.ietf.org/html/rfc6455 for protocol.
 """
-
-
-# websocket supported version.
-VERSION = 13
 
 
 def create_connection(url, timeout=None, **options):
@@ -123,17 +119,6 @@ def create_connection(url, timeout=None, **options):
     websock.settimeout(timeout if timeout is not None else getdefaulttimeout())
     websock.connect(url, **options)
     return websock
-
-
-def _create_sec_websocket_key():
-    uid = uuid.uuid4()
-    return base64encode(uid.bytes).decode('utf-8').strip()
-
-
-_HEADERS_TO_CHECK = {
-    "upgrade": "websocket",
-    "connection": "upgrade",
-    }
 
 
 class WebSocket(object):
@@ -257,200 +242,17 @@ class WebSocket(object):
                                   default is None.
 
         """
-
-        hostname, port, resource, is_secure = parse_url(url)
-        proxy_host, proxy_port, proxy_auth = get_proxy_info(hostname, is_secure, **options)
-        if not proxy_host:
-            addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
-        else:
-            proxy_port = proxy_port and proxy_port or 80
-            addrinfo_list = socket.getaddrinfo(proxy_host, proxy_port, 0, 0, socket.SOL_TCP)
-
-        if not addrinfo_list:
-            raise WebSocketException("Host not found.: " + hostname + ":" + str(port))
-
-        err = None
-        for addrinfo in addrinfo_list:
-            family = addrinfo[0]
-            self.sock = socket.socket(family)
-            self.sock.settimeout(self.timeout)
-            for opts in DEFAULT_SOCKET_OPTION:
-                self.sock.setsockopt(*opts)
-            for opts in self.sockopt:
-                self.sock.setsockopt(*opts)
-
-            address = addrinfo[4]
-            try:
-                self.sock.connect(address)
-            except socket.error as error:
-                error.remote_ip = str(address[0])
-                if error.errno in (errno.ECONNREFUSED, ):
-                    err = error
-                    continue
-                else:
-                    raise
-            else:
-                break
-        else:
-            raise err
-
-        if proxy_host:
-            self._tunnel(hostname, port, proxy_auth)
-
-        if is_secure:
-            if HAVE_SSL:
-                sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
-                certPath = os.path.join(
-                    os.path.dirname(__file__), "cacert.pem")
-                if os.path.isfile(certPath):
-                    sslopt['ca_certs'] = certPath
-                sslopt.update(self.sslopt)
-                check_hostname = sslopt.pop('check_hostname', True)
-                self.sock = ssl.wrap_socket(self.sock, **sslopt)
-                if (sslopt["cert_reqs"] != ssl.CERT_NONE
-                        and check_hostname):
-                    match_hostname(self.sock.getpeercert(), hostname)
-            else:
-                raise WebSocketException("SSL not available.")
-
-        self._handshake(hostname, port, resource, **options)
-
-    def _tunnel(self, host, port, auth):
-        debug("Connecting proxy...")
-        connect_header = "CONNECT %s:%d HTTP/1.0\r\n" % (host, port)
-        # TODO: support digest auth.
-        if auth and auth[0]:
-            auth_str = auth[0]
-            if auth[1]:
-                auth_str += ":" + auth[1]
-            encoded_str = base64encode(auth_str.encode()).strip().decode()
-            connect_header += "Proxy-Authorization: Basic %s\r\n" % encoded_str
-        connect_header += "\r\n"
-        dump("request header", connect_header)
-
-        self._send(connect_header)
+        if "sockopt" in options:
+            del options["sockopt"]
+        self.sock, addrs = connect(url, self.sockopt, self.sslopt, self.timeout, **options)
 
         try:
-            status, resp_headers = self._read_headers()
-        except Exepiton as e:
-            raise WebSocketProxyException(str(e))
-
-        if status != 200:
-            raise WebSocketProxyException("failed CONNECT via proxy status: " + str(status))
-
-    def _get_resp_headers(self, success_status=101):
-        status, resp_headers = self._read_headers()
-        if status != success_status:
-            self.close()
-            raise WebSocketException("Handshake status %d" % status)
-        return resp_headers
-
-    def _get_handshake_headers(self, resource, host, port, options):
-        headers = []
-        headers.append("GET %s HTTP/1.1" % resource)
-        headers.append("Upgrade: websocket")
-        headers.append("Connection: Upgrade")
-        if port == 80:
-            hostport = host
-        else:
-            hostport = "%s:%d" % (host, port)
-        headers.append("Host: %s" % hostport)
-
-        if "origin" in options:
-            headers.append("Origin: %s" % options["origin"])
-        else:
-            headers.append("Origin: http://%s" % hostport)
-
-        key = _create_sec_websocket_key()
-        headers.append("Sec-WebSocket-Key: %s" % key)
-        headers.append("Sec-WebSocket-Version: %s" % VERSION)
-
-        subprotocols = options.get("subprotocols")
-        if subprotocols:
-            headers.append("Sec-WebSocket-Protocol: %s" % ",".join(subprotocols))
-
-        if "header" in options:
-            headers.extend(options["header"])
-
-        cookie = options.get("cookie", None)
-
-        if cookie:
-            headers.append("Cookie: %s" % cookie)
-
-        headers.append("")
-        headers.append("")
-
-        return headers, key
-
-    def _handshake(self, host, port, resource, **options):
-        headers, key = self._get_handshake_headers(resource, host, port, options)
-
-        header_str = "\r\n".join(headers)
-        self._send(header_str)
-        dump("request header", header_str)
-
-        resp_headers = self._get_resp_headers()
-        success = self._validate_header(resp_headers, key, options.get("subprotocols"))
-        if not success:
-            self.close()
-            raise WebSocketException("Invalid WebSocket Header")
-
-        self.connected = True
-
-    def _validate_header(self, headers, key, subprotocols):
-        for k, v in _HEADERS_TO_CHECK.items():
-            r = headers.get(k, None)
-            if not r:
-                return False
-            r = r.lower()
-            if v != r:
-                return False
-
-        if subprotocols:
-            subproto = headers.get("sec-websocket-protocol", None)
-            if not subproto or subproto not in subprotocols:
-                error("Invalid subprotocol: " + str(subprotocols))
-                return False
-            self.subprotocol = subproto
-
-        result = headers.get("sec-websocket-accept", None)
-        if not result:
-            return False
-        result = result.lower()
-
-        if isinstance(result, six.text_type):
-            result = result.encode('utf-8')
-
-        value = (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode('utf-8')
-        hashed = base64encode(hashlib.sha1(value).digest()).strip().lower()
-        return hashed == result
-
-    def _read_headers(self):
-        status = None
-        headers = {}
-        trace("--- response header ---")
-
-        while True:
-            line = self._recv_line()
-            line = line.decode('utf-8').strip()
-            if not line:
-                break
-            trace(line)
-
-            if not status:
-                status_info = line.split(" ", 2)
-                status = int(status_info[1])
-            else:
-                kv = line.split(":", 1)
-                if len(kv) == 2:
-                    key, value = kv
-                    headers[key.lower()] = value.strip().lower()
-                else:
-                    raise WebSocketException("Invalid header")
-
-        trace("-----------------------")
-
-        return status, headers
+            self.subprotocol = handshake(self.sock, *addrs, **options)
+            self.connected = True
+        except:
+            self.sock.close()
+            self.sock = None
+            raise
 
     def send(self, payload, opcode=ABNF.OPCODE_TEXT):
         """
@@ -720,15 +522,3 @@ class WebSocket(object):
         else:
             self._recv_buffer = [unified[bufsize:]]
             return unified[:bufsize]
-
-    def _recv_line(self):
-        try:
-            return recv_line(self.sock)
-        except WebSocketConnectionClosedException:
-            if self.sock:
-                self.sock.close()
-            self.sock = None
-            self.connected = False
-            raise
-        except:
-            raise
