@@ -35,6 +35,8 @@ from ._exceptions import *
 from ._logging import *
 from websocket._abnf import ABNF
 
+__all__ = ["WebSocketApp"]
+
 
 class WebSocketApp(object):
     """

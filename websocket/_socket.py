@@ -26,7 +26,7 @@ import six
 from ._exceptions import *
 from ._utils import *
 
-DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1),]
+DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1)]
 if hasattr(socket, "SO_KEEPALIVE"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1))
 if hasattr(socket, "TCP_KEEPIDLE"):
@@ -37,6 +37,10 @@ if hasattr(socket, "TCP_KEEPCNT"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPCNT, 3))
 
 _default_timeout = None
+
+__all__ = ["DEFAULT_SOCKET_OPTION", "setdefaulttimeout", "getdefaulttimeout",
+           "recv", "recv_line", "send"]
+
 
 def setdefaulttimeout(timeout):
     """
@@ -75,6 +79,7 @@ def recv(sock, bufsize):
         raise WebSocketConnectionClosedException("Connection is already closed.")
 
     return bytes
+
 
 def recv_line(sock):
     line = []

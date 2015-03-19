@@ -22,6 +22,8 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import six
 
+__all__ = ["NoLock", "validate_utf8", "extract_err_message"]
+
 class NoLock(object):
     def __enter__(self):
         pass
