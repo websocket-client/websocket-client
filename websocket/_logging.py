@@ -25,6 +25,9 @@ import logging
 _logger = logging.getLogger()
 _traceEnabled = False
 
+__all__ = ["enableTrace", "dump", "error", "debug", "trace",
+           "isEnableForError", "isEnableForDebug"]
+
 
 def enableTrace(tracable):
     """

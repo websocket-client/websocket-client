@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.27.0
+
+  - refactoring.
+
 - 0.26.0
 
   - all WebSocketException provide message string (#152)

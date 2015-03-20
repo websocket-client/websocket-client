@@ -25,13 +25,16 @@ import uuid
 
 # websocket-client
 import websocket as ws
-from websocket._core import _create_sec_websocket_key
+from websocket._handshake import _create_sec_websocket_key
 from websocket._url import parse_url, get_proxy_info
 from websocket._utils import validate_utf8
+from websocket._handshake import _validate as _validate_header
+from websocket._http import read_headers
 
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = False
+# TEST_WITH_INTERNET = True
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = False
@@ -74,6 +77,7 @@ class HeaderSockMock(SockMock):
         path = os.path.join(os.path.dirname(__file__), fname)
         with open(path, "rb") as f:
             self.add_packet(f.read())
+
 
 class WebSocketTest(unittest.TestCase):
     def setUp(self):
@@ -178,49 +182,44 @@ class WebSocketTest(unittest.TestCase):
         self.assertTrue(six.u("¥n") not in key)
 
     def testWsUtils(self):
-        sock = ws.WebSocket()
-
         key = "c6b8hTg4EeGb2gQMztV1/g=="
         required_header = {
             "upgrade": "websocket",
             "connection": "upgrade",
             "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0=",
             }
-        self.assertEqual(sock._validate_header(required_header, key, None), True)
+        self.assertEqual(_validate_header(required_header, key, None), (True, None))
 
         header = required_header.copy()
         header["upgrade"] = "http"
-        self.assertEqual(sock._validate_header(header, key, None), False)
+        self.assertEqual(_validate_header(header, key, None), (False, None))
         del header["upgrade"]
-        self.assertEqual(sock._validate_header(header, key, None), False)
+        self.assertEqual(_validate_header(header, key, None), (False, None))
 
         header = required_header.copy()
         header["connection"] = "something"
-        self.assertEqual(sock._validate_header(header, key, None), False)
+        self.assertEqual(_validate_header(header, key, None), (False, None))
         del header["connection"]
-        self.assertEqual(sock._validate_header(header, key, None), False)
+        self.assertEqual(_validate_header(header, key, None), (False, None))
 
         header = required_header.copy()
         header["sec-websocket-accept"] = "something"
-        self.assertEqual(sock._validate_header(header, key, None), False)
+        self.assertEqual(_validate_header(header, key, None), (False, None))
         del header["sec-websocket-accept"]
-        self.assertEqual(sock._validate_header(header, key, None), False)
-
+        self.assertEqual(_validate_header(header, key, None), (False, None))
 
         header = required_header.copy()
         header["sec-websocket-protocol"] = "sub1"
-        self.assertEqual(sock._validate_header(header, key, ["sub1", "sub2"]), True)
-        self.assertEqual(sock._validate_header(header, key, ["sub2", "sub3"]), False)
+        self.assertEqual(_validate_header(header, key, ["sub1", "sub2"]), (True, "sub1"))
+        self.assertEqual(_validate_header(header, key, ["sub2", "sub3"]), (False, None))
 
     def testReadHeader(self):
-        sock = ws.WebSocket()
-        sock.sock = HeaderSockMock("data/header01.txt")
-        status, header = sock._read_headers()
+        status, header = read_headers(HeaderSockMock("data/header01.txt"))
         self.assertEqual(status, 101)
         self.assertEqual(header["connection"], "upgrade")
 
-        sock.sock = HeaderSockMock("data/header02.txt")
-        self.assertRaises(ws.WebSocketException, sock._read_headers)
+        HeaderSockMock("data/header02.txt")
+        self.assertRaises(ws.WebSocketException, read_headers, HeaderSockMock("data/header02.txt"))
 
     def testSend(self):
         # TODO: add longer frame data

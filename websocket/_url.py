@@ -23,6 +23,9 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 from six.moves.urllib.parse import urlparse
 import os
 
+__all__ = ["parse_url", "get_proxy_info"]
+
+
 def parse_url(url):
     """
     parse url and the result is tuple of
@@ -68,6 +71,7 @@ def parse_url(url):
 
 DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
 
+
 def _is_no_proxy_host(hostname, no_proxy):
     if not no_proxy:
         v = os.environ.get("no_proxy", "").replace(" ", "")
@@ -77,21 +81,26 @@ def _is_no_proxy_host(hostname, no_proxy):
 
     return hostname in no_proxy
 
+
 def get_proxy_info(hostname, is_secure, **options):
     """
-    try to retrieve proxy host and port from environment if not provided in options.
+    try to retrieve proxy host and port from environment
+    if not provided in options.
     result is (proxy_host, proxy_port, proxy_auth).
-    proxy_auth is tuple of username and password of proxy authentication information.
-    
+    proxy_auth is tuple of username and password
+     of proxy authentication information.
+
     hostname: websocket server name.
 
     is_secure:  is the connection secure? (wss)
-                looks for "https_proxy" in env before falling back to "http_proxy"
+                looks for "https_proxy" in env
+                before falling back to "http_proxy"
 
     options:    "http_proxy_host" - http proxy host name.
                 "http_proxy_port" - http proxy port.
                 "http_no_proxy"   - host names, which doesn't use proxy.
-                "http_proxy_auth" - http proxy auth infomation. tuple of username and password.
+                "http_proxy_auth" - http proxy auth infomation.
+                                    tuple of username and password.
                                     defualt is None
     """
     if _is_no_proxy_host(hostname, options.get("http_no_proxy", None)):
@@ -99,7 +108,9 @@ def get_proxy_info(hostname, is_secure, **options):
 
     http_proxy_host = options.get("http_proxy_host", None)
     if http_proxy_host:
-        return http_proxy_host, options.get("http_proxy_port", 0), options.get("http_proxy_auth", None)
+        port = options.get("http_proxy_port", 0)
+        auth = options.get("http_proxy_auth", None)
+        return http_proxy_host, port, auth
 
     env_keys = ["http_proxy"]
     if is_secure:
@@ -113,6 +124,3 @@ def get_proxy_info(hostname, is_secure, **options):
             return proxy.hostname, proxy.port, auth
 
     return None, 0, None
-
-
-

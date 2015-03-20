@@ -1,0 +1,185 @@
+"""
+websocket - WebSocket client library for Python
+
+Copyright (C) 2010 Hiroki Ohtani(liris)
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor,
+    Boston, MA  02110-1335  USA
+
+"""
+
+import six
+import socket
+
+try:
+    import ssl
+    from ssl import SSLError
+    if hasattr(ssl, "match_hostname"):
+        from ssl import match_hostname
+    else:
+        from backports.ssl_match_hostname import match_hostname
+
+    HAVE_SSL = True
+except ImportError:
+    # dummy class of SSLError for ssl none-support environment.
+    class SSLError(Exception):
+        pass
+
+    HAVE_SSL = False
+
+if six.PY3:
+    from base64 import encodebytes as base64encode
+else:
+    from base64 import encodestring as base64encode
+
+from ._logging import *
+from ._url import *
+from ._socket import*
+from ._exceptions import *
+
+__all__ = ["connect", "read_headers"]
+
+
+def connect(url, sockopt, sslopt, timeout, **options):
+    hostname, port, resource, is_secure = parse_url(url)
+    addrinfo_list, need_tunnel, auth = _get_addrinfo_list(hostname, port, is_secure, **options)
+    if not addrinfo_list:
+        raise WebSocketException(
+            "Host not found.: " + hostname + ":" + str(port))
+
+    sock = None
+    try:
+        sock = _open_socket(addrinfo_list, sockopt, timeout)
+        if need_tunnel:
+            sock = _tunnel(sock, hostname, port, auth)
+
+        if is_secure:
+            if HAVE_SSL:
+                sock = _ssl_socket(sock, sslopt)
+            else:
+                raise WebSocketException("SSL not available.")
+
+        return sock, (hostname, port, resource)
+    except:
+        if sock:
+            sock.close()
+        raise
+
+
+def _get_addrinfo_list(hostname, port, is_secure, **options):
+    phost, pport, pauth = get_proxy_info(hostname, is_secure, **options)
+    if not phost:
+        addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
+        return addrinfo_list, False, None
+    else:
+        pport = pport and pport or 80
+        addrinfo_list = socket.getaddrinfo(phost, pport, 0, 0, socket.SOL_TCP)
+        return addrinfo_list, True, pauth
+
+
+def _open_socket(addrinfo_list, sockopt, timeout):
+    err = None
+    for addrinfo in addrinfo_list:
+        family = addrinfo[0]
+        sock = socket.socket(family)
+        sock.settimeout(timeout)
+        for opts in DEFAULT_SOCKET_OPTION:
+            sock.setsockopt(*opts)
+        for opts in sockopt:
+            sock.setsockopt(*opts)
+
+        address = addrinfo[4]
+        try:
+            sock.connect(address)
+        except socket.error as error:
+            error.remote_ip = str(address[0])
+            if error.errno in (errno.ECONNREFUSED, ):
+                err = error
+                continue
+            else:
+                raise
+        else:
+            break
+    else:
+        raise err
+
+    return sock
+
+
+def _ssl_socket(sock, sslopt):
+    sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
+    certPath = os.path.join(
+        os.path.dirname(__file__), "cacert.pem")
+    if os.path.isfile(certPath):
+        sslopt['ca_certs'] = certPath
+    sslopt.update(sslopt)
+    check_hostname = sslopt.pop('check_hostname', True)
+    sock = ssl.wrap_socket(sock, **sslopt)
+    if (sslopt["cert_reqs"] != ssl.CERT_NONE
+            and check_hostname):
+        match_hostname(sock.getpeercert(), hostname)
+
+
+def _tunnel(sock, host, port, auth):
+    debug("Connecting proxy...")
+    connect_header = "CONNECT %s:%d HTTP/1.0\r\n" % (host, port)
+    # TODO: support digest auth.
+    if auth and auth[0]:
+        auth_str = auth[0]
+        if auth[1]:
+            auth_str += ":" + auth[1]
+        encoded_str = base64encode(auth_str.encode()).strip().decode()
+        connect_header += "Proxy-Authorization: Basic %s\r\n" % encoded_str
+    connect_header += "\r\n"
+    dump("request header", connect_header)
+
+    send(sock, connect_header)
+
+    try:
+        status, resp_headers = read_headers()
+    except Exepiton as e:
+        raise WebSocketProxyException(str(e))
+
+    if status != 200:
+        raise WebSocketProxyException(
+            "failed CONNECT via proxy status: " + str(status))
+
+
+def read_headers(sock):
+    status = None
+    headers = {}
+    trace("--- response header ---")
+
+    while True:
+        line = recv_line(sock)
+        line = line.decode('utf-8').strip()
+        if not line:
+            break
+        trace(line)
+        if not status:
+
+            status_info = line.split(" ", 2)
+            status = int(status_info[1])
+        else:
+            kv = line.split(":", 1)
+            if len(kv) == 2:
+                key, value = kv
+                headers[key.lower()] = value.strip().lower()
+            else:
+                raise WebSocketException("Invalid header")
+
+    trace("-----------------------")
+
+    return status, headers
