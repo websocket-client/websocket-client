@@ -3,6 +3,7 @@ ChangeLog
 
 - 0.27.0
 
+  - remove unittest2 requirements for python 2.6 (#156)
   - refactoring.
 
 - 0.26.0
