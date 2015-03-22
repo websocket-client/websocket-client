@@ -154,7 +154,7 @@ def _tunnel(sock, host, port, auth):
 
     if status != 200:
         raise WebSocketProxyException(
-            "failed CONNECT via proxy status: " + str(status))
+            "failed CONNECT via proxy status: %r" + status)
 
 
 def read_headers(sock):
