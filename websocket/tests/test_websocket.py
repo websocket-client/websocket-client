@@ -213,6 +213,11 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(_validate_header(header, key, ["sub1", "sub2"]), (True, "sub1"))
         self.assertEqual(_validate_header(header, key, ["sub2", "sub3"]), (False, None))
 
+        header = required_header.copy()
+        header["sec-websocket-protocol"] = "sUb1"
+        self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (True, "sub1"))
+
+
     def testReadHeader(self):
         status, header = read_headers(HeaderSockMock("data/header01.txt"))
         self.assertEqual(status, 101)

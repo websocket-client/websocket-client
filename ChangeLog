@@ -4,6 +4,7 @@ ChangeLog
 - 0.27.0
 
   - remove unittest2 requirements for python 2.6 (#156)
+  - fixed subprotocol case during header validation (#158)
   - refactoring.
 
 - 0.26.0
