@@ -48,7 +48,6 @@ else:
     from base64 import encodestring as base64encode
 
 import os
-import errno
 import struct
 import threading
 
