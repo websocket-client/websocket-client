@@ -98,7 +98,7 @@ def create_connection(url, timeout=None, **options):
              "http_no_proxy"   - host names, which doesn't use proxy.
              "http_proxy_auth" - http proxy auth infomation.
                                     tuple of username and password.
-                                    defualt is None
+                                    default is None
              "enable_multithread" -> enable lock for multithread.
              "sockopt" -> socket options
              "sslopt" -> ssl option
