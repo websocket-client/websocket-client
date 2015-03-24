@@ -247,7 +247,7 @@ class WebSocket(object):
         self.sock, addrs = connect(url, self.sockopt, self.sslopt, self.timeout, **options)
 
         try:
-            self.subprotocol = handshake(self.sock, *addrs, **options)
+            self.subprotocol, self.status, self.headers = handshake(self.sock, *addrs, **options)
             self.connected = True
         except:
             self.sock.close()
