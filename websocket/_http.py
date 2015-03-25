@@ -22,6 +22,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import six
 import socket
+import errno
 
 try:
     import ssl
