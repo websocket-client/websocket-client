@@ -35,11 +35,17 @@ from ._socket import*
 from ._http import *
 from ._exceptions import *
 
-__all__ = ["handshake"]
+__all__ = ["handshake_response", "handshake"]
 
 # websocket supported version.
 VERSION = 13
 
+
+class handshake_response(object):
+    def __init__(self, status, headers, subprotocol):
+        self.status = status
+        self.headers = headers
+        self.subprotocol = subprotocol
 
 def handshake(sock, host, port, resource, **options):
     headers, key = _get_handshake_headers(resource, host, port, options)
@@ -48,12 +54,12 @@ def handshake(sock, host, port, resource, **options):
     send(sock, header_str)
     dump("request header", header_str)
 
-    resp = _get_resp_headers(sock)
+    status, resp = _get_resp_headers(sock)
     success, subproto = _validate(resp, key, options.get("subprotocols"))
     if not success:
         raise WebSocketException("Invalid WebSocket Header")
 
-    return subproto
+    return handshake_response(status, resp, subproto)
 
 
 def _get_handshake_headers(resource, host, port, options):
@@ -98,7 +104,7 @@ def _get_resp_headers(sock, success_status=101):
     status, resp_headers = read_headers(sock)
     if status != success_status:
         raise WebSocketException("Handshake status %d" % status)
-    return resp_headers
+    return status, resp_headers
 
 _HEADERS_TO_CHECK = {
     "upgrade": "websocket",

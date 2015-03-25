@@ -565,23 +565,23 @@ class ProxyInfoTest(unittest.TestCase):
 
 
     def testProxyFromArgs(self):
-        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost"), ("localhost", 0, None))
-        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
-        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost"), ("localhost", 0, None))
-        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128), ("localhost", 3128, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, proxy_host="localhost", proxy_port=3128), ("localhost", 3128, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, proxy_host="localhost"), ("localhost", 0, None))
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, proxy_host="localhost", proxy_port=3128), ("localhost", 3128, None))
 
-        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, proxy_host="localhost", proxy_auth=("a", "b")),
             ("localhost", 0, ("a", "b")))
-        self.assertEqual(get_proxy_info("echo.websocket.org", False, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", False, proxy_host="localhost", proxy_port=3128, proxy_auth=("a", "b")),
             ("localhost", 3128, ("a", "b")))
-        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, proxy_host="localhost", proxy_auth=("a", "b")),
             ("localhost", 0, ("a", "b")))
-        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, proxy_host="localhost", proxy_port=3128, proxy_auth=("a", "b")),
             ("localhost", 3128, ("a", "b")))
 
-        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["example.com"], http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, proxy_host="localhost", proxy_port=3128, no_proxy=["example.com"], proxy_auth=("a", "b")),
             ("localhost", 3128, ("a", "b")))
-        self.assertEqual(get_proxy_info("echo.websocket.org", True, http_proxy_host="localhost", http_proxy_port=3128, http_no_proxy=["echo.websocket.org"], http_proxy_auth=("a", "b")),
+        self.assertEqual(get_proxy_info("echo.websocket.org", True, proxy_host="localhost", proxy_port=3128, no_proxy=["echo.websocket.org"], proxy_auth=("a", "b")),
             (None, 0, None))
 
 

@@ -49,25 +49,36 @@ from ._url import *
 from ._socket import*
 from ._exceptions import *
 
-__all__ = ["connect", "read_headers"]
+__all__ = ["proxy_info", "connect", "read_headers"]
 
+class proxy_info(object):
+    def __init__(self, **options):
+        self.host = options.get("http_proxy_host", None)
+        if self.host:
+            self.port = options.get("http_proxy_port", 0)
+            self.auth =  options.get("http_proxy_auth", None)
+            self.no_proxy = options.get("http_no_proxy", None)
+        else:
+            self.port = 0
+            self.auth = None
+            self.no_proxy = None
 
-def connect(url, sockopt, sslopt, timeout, **options):
+def connect(url, options, proxy):
     hostname, port, resource, is_secure = parse_url(url)
-    addrinfo_list, need_tunnel, auth = _get_addrinfo_list(hostname, port, is_secure, **options)
+    addrinfo_list, need_tunnel, auth = _get_addrinfo_list(hostname, port, is_secure, proxy)
     if not addrinfo_list:
         raise WebSocketException(
             "Host not found.: " + hostname + ":" + str(port))
 
     sock = None
     try:
-        sock = _open_socket(addrinfo_list, sockopt, timeout)
+        sock = _open_socket(addrinfo_list, options.sockopt, options.timeout)
         if need_tunnel:
             sock = _tunnel(sock, hostname, port, auth)
 
         if is_secure:
             if HAVE_SSL:
-                sock = _ssl_socket(sock, sslopt)
+                sock = _ssl_socket(sock, options.sslopt)
             else:
                 raise WebSocketException("SSL not available.")
 
@@ -78,8 +89,9 @@ def connect(url, sockopt, sslopt, timeout, **options):
         raise
 
 
-def _get_addrinfo_list(hostname, port, is_secure, **options):
-    phost, pport, pauth = get_proxy_info(hostname, is_secure, **options)
+def _get_addrinfo_list(hostname, port, is_secure, proxy):
+    phost, pport, pauth = get_proxy_info(hostname, is_secure,
+        proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
     if not phost:
         addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
         return addrinfo_list, False, None

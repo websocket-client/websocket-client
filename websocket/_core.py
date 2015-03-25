@@ -155,15 +155,11 @@ class WebSocket(object):
         """
         Initalize WebSocket object.
         """
-        if sockopt is None:
-            sockopt = []
-        if sslopt is None:
-            sslopt = {}
-        self.connected = False
+        self.sock_opt = sock_opt(sockopt, sslopt)
+        self.handshake_response = None
         self.sock = None
-        self._timeout = None
-        self.sockopt = sockopt
-        self.sslopt = sslopt
+        
+        self.connected = False
         self.get_mask_key = get_mask_key
         self.fire_cont_frame = fire_cont_frame
         self.skip_utf8_validation = skip_utf8_validation
@@ -174,12 +170,11 @@ class WebSocket(object):
         self._frame_buffer = FrameBuffer()
         self._cont_data = None
         self._recving_frames = None
+
         if enable_multithread:
             self.lock = threading.Lock()
         else:
             self.lock = NoLock()
-
-        self.subprotocol = None
 
     def fileno(self):
         return self.sock.fileno()
@@ -200,7 +195,7 @@ class WebSocket(object):
         """
         Get the websocket timeout(second).
         """
-        return self._timeout
+        return self.sock_opt.timeout
 
     def settimeout(self, timeout):
         """
@@ -208,11 +203,44 @@ class WebSocket(object):
 
         timeout: timeout time(second).
         """
-        self._timeout = timeout
+        self.sock_opt.timeout = timeout
         if self.sock:
             self.sock.settimeout(timeout)
 
     timeout = property(gettimeout, settimeout)
+
+    def getsubprotocol(self):
+        """
+        get subprotocol
+        """
+        if self.handshake_response:
+            return self.handshake_response.subprotocol
+        else:
+            return None
+
+    subprotocol = property(getsubprotocol)
+
+    def getstatus(self):
+        """
+        get handshake status
+        """
+        if self.handshake_response:
+            return self.handshake_response.status
+        else:
+            return None
+
+    status = property(getstatus)
+
+    def getheaders(self):
+        """
+        get handshake response header
+        """
+        if self.handshake_response:
+            return self.handshake_response.headers
+        else:
+            return None
+
+    headers = property(getheaders)
 
     def connect(self, url, **options):
         """
@@ -232,6 +260,7 @@ class WebSocket(object):
 
         options: "header" -> custom http header list.
                  "cookie" -> cookie value.
+                 "origin" -> custom origin url.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
                  "http_no_proxy"   - host names, which doesn't use proxy.
@@ -242,12 +271,10 @@ class WebSocket(object):
                                   default is None.
 
         """
-        if "sockopt" in options:
-            del options["sockopt"]
-        self.sock, addrs = connect(url, self.sockopt, self.sslopt, self.timeout, **options)
+        self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options))
 
         try:
-            self.subprotocol = handshake(self.sock, *addrs, **options)
+            self.handshake_response = handshake(self.sock, *addrs, **options)
             self.connected = True
         except:
             self.sock.close()

@@ -82,7 +82,8 @@ def _is_no_proxy_host(hostname, no_proxy):
     return hostname in no_proxy
 
 
-def get_proxy_info(hostname, is_secure, **options):
+def get_proxy_info(hostname, is_secure,
+            proxy_host=None, proxy_port=0, proxy_auth=None, no_proxy=None):
     """
     try to retrieve proxy host and port from environment
     if not provided in options.
@@ -103,14 +104,13 @@ def get_proxy_info(hostname, is_secure, **options):
                                     tuple of username and password.
                                     defualt is None
     """
-    if _is_no_proxy_host(hostname, options.get("http_no_proxy", None)):
+    if _is_no_proxy_host(hostname, no_proxy):
         return None, 0, None
 
-    http_proxy_host = options.get("http_proxy_host", None)
-    if http_proxy_host:
-        port = options.get("http_proxy_port", 0)
-        auth = options.get("http_proxy_auth", None)
-        return http_proxy_host, port, auth
+    if proxy_host:
+        port = proxy_port
+        auth = proxy_auth
+        return proxy_host, port, auth
 
     env_keys = ["http_proxy"]
     if is_secure:
