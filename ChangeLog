@@ -6,7 +6,8 @@ ChangeLog
   - remove unittest2 requirements for python 2.6 (#156)
   - fixed subprotocol case during header validation (#158)
   - get response status and headers (#160)
-  - fix out-of-memory due to fragmentation when recieving a very large frame #163
+  - fix out-of-memory due to fragmentation when recieving a very large frame(#163)
+  - fix error if the payload data is nothing.(#166)
   - refactoring.
 
 - 0.26.0

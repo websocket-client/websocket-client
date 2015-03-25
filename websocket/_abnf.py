@@ -98,6 +98,8 @@ class ABNF(object):
         self.rsv3 = rsv3
         self.opcode = opcode
         self.mask = mask
+        if data == None:
+            data = ""
         self.data = data
         self.get_mask_key = os.urandom
 
@@ -204,7 +206,8 @@ class ABNF(object):
 
         data: data to mask/unmask.
         """
-
+        if data == None:
+            data = ""
         if isinstance(mask_key, six.text_type):
             mask_key = six.b(mask_key)
 
