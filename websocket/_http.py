@@ -24,22 +24,6 @@ import six
 import socket
 import errno
 
-try:
-    import ssl
-    from ssl import SSLError
-    if hasattr(ssl, "match_hostname"):
-        from ssl import match_hostname
-    else:
-        from backports.ssl_match_hostname import match_hostname
-
-    HAVE_SSL = True
-except ImportError:
-    # dummy class of SSLError for ssl none-support environment.
-    class SSLError(Exception):
-        pass
-
-    HAVE_SSL = False
-
 if six.PY3:
     from base64 import encodebytes as base64encode
 else:
@@ -49,6 +33,7 @@ from ._logging import *
 from ._url import *
 from ._socket import*
 from ._exceptions import *
+from ._ssl_compat import *
 
 __all__ = ["proxy_info", "connect", "read_headers"]
 
