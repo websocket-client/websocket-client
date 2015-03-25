@@ -323,7 +323,12 @@ class frame_buffer(object):
     def recv_strict(self, bufsize):
         shortage = bufsize - sum(len(x) for x in self.recv_buffer)
         while shortage > 0:
-            bytes = self.recv(shortage)
+            # Limit buffer size that we pass to socket.recv() to avoid
+            # fragmenting the heap -- the number of bytes recv() actually
+            # reads is limited by socket buffer and is relatively small,
+            # yet passing large numbers repeatedly causes lots of large
+            # buffers allocated and then shrunk, which results in fragmentation.
+            bytes = self.recv(min(16384, shortage))
             self.recv_buffer.append(bytes)
             shortage -= len(bytes)
 
