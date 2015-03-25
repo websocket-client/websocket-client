@@ -226,8 +226,9 @@ class frame_buffer(object):
     _HEADER_MASK_INDEX = 5
     _HEADER_LENGHT_INDEX = 6
 
-    def __init__(self, recv_fn):
+    def __init__(self, recv_fn, skip_utf8_validation):
         self.recv = recv_fn
+        self.skip_utf8_validation = skip_utf8_validation
         # Buffers over the packets from the layer beneath until desired amount
         # bytes of bytes are received.
         self.recv_buffer = []
@@ -290,6 +291,35 @@ class frame_buffer(object):
     def recv_mask(self):
         self.mask = self.recv_strict(4) if self.has_mask() else ""
 
+    def recv_frame(self):
+        # Header
+        if self.has_received_header():
+            self.recv_header()
+        (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = self.header
+
+        # Frame length
+        if self.has_received_length():
+            self.recv_length()
+        length = self.length
+
+        # Mask
+        if self.has_received_mask():
+            self.recv_mask()
+        mask = self.mask
+
+        # Payload
+        payload = self.recv_strict(length)
+        if has_mask:
+            payload = ABNF.mask(mask, payload)
+
+        # Reset for next frame
+        self.clear()
+
+        frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
+        frame.validate(self.skip_utf8_validation)
+
+        return frame
+
     def recv_strict(self, bufsize):
         shortage = bufsize - sum(len(x) for x in self.recv_buffer)
         while shortage > 0:
@@ -305,3 +335,40 @@ class frame_buffer(object):
         else:
             self.recv_buffer = [unified[bufsize:]]
             return unified[:bufsize]
+
+
+class continuous_frame(object):
+    def __init__(self, fire_cont_frame, skip_utf8_validation):
+        self.fire_cont_frame = fire_cont_frame
+        self.skip_utf8_validation = skip_utf8_validation
+        self.cont_data = None
+        self.recving_frames = None
+
+    def validate(self, frame):
+        if not self.recving_frames and frame.opcode == ABNF.OPCODE_CONT:
+            raise WebSocketProtocolException("Illegal frame")
+        if self.recving_frames and frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+            raise WebSocketProtocolException("Illegal frame")
+
+    def add(self, frame):
+        if self.cont_data:
+            self.cont_data[1] += frame.data
+        else:
+            if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+                self.recving_frames = frame.opcode
+            self.cont_data = [frame.opcode, frame.data]
+
+        if frame.fin:
+            self.recving_frames = None
+
+    def is_fire(self, frame):
+        return frame.fin or self.fire_cont_frame
+
+    def extract(self, frame):
+        data = self.cont_data
+        self.cont_data = None
+        frame.data = data[1]
+        if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not self.skip_utf8_validation and not validate_utf8(frame.data):
+            raise WebSocketPayloadException("cannot decode: " + repr(frame.data))
+
+        return [data[0], frame]

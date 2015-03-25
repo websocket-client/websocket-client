@@ -160,12 +160,9 @@ class WebSocket(object):
 
         self.connected = False
         self.get_mask_key = get_mask_key
-        self.fire_cont_frame = fire_cont_frame
-        self.skip_utf8_validation = skip_utf8_validation
         # These buffer over the build-up of a single frame.
-        self.frame_buffer = frame_buffer(self._recv)
-        self._cont_data = None
-        self._recving_frames = None
+        self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
+        self.cont_frame = continuous_frame(fire_cont_frame, skip_utf8_validation)
 
         if enable_multithread:
             self.lock = threading.Lock()
@@ -384,28 +381,11 @@ class WebSocket(object):
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketProtocolException("Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
-                if not self._recving_frames and frame.opcode == ABNF.OPCODE_CONT:
-                    raise WebSocketProtocolException("Illegal frame")
-                if self._recving_frames and frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
-                    raise WebSocketProtocolException("Illegal frame")
+                self.cont_frame.validate(frame)
+                self.cont_frame.add(frame)
 
-                if self._cont_data:
-                    self._cont_data[1] += frame.data
-                else:
-                    if frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
-                        self._recving_frames = frame.opcode
-                    self._cont_data = [frame.opcode, frame.data]
-
-                if frame.fin:
-                    self._recving_frames = None
-
-                if frame.fin or self.fire_cont_frame:
-                    data = self._cont_data
-                    self._cont_data = None
-                    frame.data = data[1]
-                    if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not self.skip_utf8_validation and not validate_utf8(frame.data):
-                        raise WebSocketPayloadException("cannot decode: " + repr(frame.data))
-                    return [data[0], frame]
+                if self.cont_frame.is_fire(frame):
+                    return self.cont_frame.extract(frame)
 
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
@@ -427,34 +407,7 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
-        frame_buffer = self.frame_buffer
-        # Header
-        if frame_buffer.has_received_header():
-            frame_buffer.recv_header()
-        (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = frame_buffer.header
-
-        # Frame length
-        if frame_buffer.has_received_length():
-            frame_buffer.recv_length()
-        length = frame_buffer.length
-
-        # Mask
-        if frame_buffer.has_received_mask():
-            frame_buffer.recv_mask()
-        mask = frame_buffer.mask
-
-        # Payload
-        payload = frame_buffer.recv_strict(length)
-        if has_mask:
-            payload = ABNF.mask(mask, payload)
-
-        # Reset for next frame
-        frame_buffer.clear()
-
-        frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
-        frame.validate(self.skip_utf8_validation)
-
-        return frame
+        return self.frame_buffer.recv_frame()
 
     def send_close(self, status=STATUS_NORMAL, reason=six.b("")):
         """
