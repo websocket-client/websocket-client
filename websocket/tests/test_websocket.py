@@ -264,17 +264,17 @@ class WebSocketTest(unittest.TestCase):
         # s.add_packet(SSLError("The read operation timed out"))
         s.add_packet(six.b("baz"))
         with self.assertRaises(ws.WebSocketTimeoutException):
-            data = sock._recv_strict(9)
+            data = sock.frame_buffer.recv_strict(9)
         # if six.PY2:
         #     with self.assertRaises(ws.WebSocketTimeoutException):
         #         data = sock._recv_strict(9)
         # else:
         #     with self.assertRaises(SSLError):
         #         data = sock._recv_strict(9)
-        data = sock._recv_strict(9)
+        data = sock.frame_buffer.recv_strict(9)
         self.assertEqual(data, six.b("foobarbaz"))
         with self.assertRaises(ws.WebSocketConnectionClosedException):
-            data = sock._recv_strict(1)
+            data = sock.frame_buffer.recv_strict(1)
 
     def testRecvTimeout(self):
         sock = ws.WebSocket()

@@ -222,11 +222,15 @@ class ABNF(object):
             return _d.tostring()
 
 
-class FrameBuffer(object):
+class frame_buffer(object):
     _HEADER_MASK_INDEX = 5
     _HEADER_LENGHT_INDEX = 6
 
-    def __init__(self):
+    def __init__(self, recv_fn):
+        self.recv = recv_fn
+        # Buffers over the packets from the layer beneath until desired amount
+        # bytes of bytes are received.
+        self.recv_buffer = []
         self.clear()
 
     def clear(self):
@@ -237,8 +241,8 @@ class FrameBuffer(object):
     def has_received_header(self):
         return  self.header is None
 
-    def recv_header(self, recv_fn):
-        header = recv_fn(2)
+    def recv_header(self):
+        header = self.recv_strict(2)
         b1 = header[0]
 
         if six.PY2:
@@ -262,20 +266,20 @@ class FrameBuffer(object):
     def has_mask(self):
         if not self.header:
             return False
-        return self.header[FrameBuffer._HEADER_MASK_INDEX]
+        return self.header[frame_buffer._HEADER_MASK_INDEX]
 
 
     def has_received_length(self):
         return self.length is None
 
-    def recv_length(self, recv_fn):
-        bits = self.header[FrameBuffer._HEADER_LENGHT_INDEX]
+    def recv_length(self):
+        bits = self.header[frame_buffer._HEADER_LENGHT_INDEX]
         length_bits = bits & 0x7f
         if length_bits == 0x7e:
-            v = recv_fn(2)
+            v = self.recv_strict(2)
             self.length = struct.unpack("!H", v)[0]
         elif length_bits == 0x7f:
-            v = recv_fn(8)
+            v = self.recv_strict(8)
             self.length = struct.unpack("!Q", v)[0]
         else:
             self.length = length_bits
@@ -283,5 +287,21 @@ class FrameBuffer(object):
     def has_received_mask(self):
         return self.mask is None
 
-    def recv_mask(self, recv_fn):
-        self.mask = recv_fn(4) if self.has_mask() else ""
+    def recv_mask(self):
+        self.mask = self.recv_strict(4) if self.has_mask() else ""
+
+    def recv_strict(self, bufsize):
+        shortage = bufsize - sum(len(x) for x in self.recv_buffer)
+        while shortage > 0:
+            bytes = self.recv(shortage)
+            self.recv_buffer.append(bytes)
+            shortage -= len(bytes)
+
+        unified = six.b("").join(self.recv_buffer)
+
+        if shortage == 0:
+            self.recv_buffer = []
+            return unified
+        else:
+            self.recv_buffer = [unified[bufsize:]]
+            return unified[:bufsize]

@@ -157,16 +157,13 @@ class WebSocket(object):
         self.sock_opt = sock_opt(sockopt, sslopt)
         self.handshake_response = None
         self.sock = None
-        
+
         self.connected = False
         self.get_mask_key = get_mask_key
         self.fire_cont_frame = fire_cont_frame
         self.skip_utf8_validation = skip_utf8_validation
-        # Buffers over the packets from the layer beneath until desired amount
-        # bytes of bytes are received.
-        self._recv_buffer = []
         # These buffer over the build-up of a single frame.
-        self._frame_buffer = FrameBuffer()
+        self.frame_buffer = frame_buffer(self._recv)
         self._cont_data = None
         self._recving_frames = None
 
@@ -430,24 +427,24 @@ class WebSocket(object):
 
         return value: ABNF frame object.
         """
-        frame_buffer = self._frame_buffer
+        frame_buffer = self.frame_buffer
         # Header
         if frame_buffer.has_received_header():
-            frame_buffer.recv_header(self._recv_strict)
+            frame_buffer.recv_header()
         (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = frame_buffer.header
 
         # Frame length
         if frame_buffer.has_received_length():
-            frame_buffer.recv_length(self._recv_strict)
+            frame_buffer.recv_length()
         length = frame_buffer.length
 
         # Mask
         if frame_buffer.has_received_mask():
-            frame_buffer.recv_mask(self._recv_strict)
+            frame_buffer.recv_mask()
         mask = frame_buffer.mask
 
         # Payload
-        payload = self._recv_strict(length)
+        payload = frame_buffer.recv_strict(length)
         if has_mask:
             payload = ABNF.mask(mask, payload)
 
@@ -530,21 +527,3 @@ class WebSocket(object):
             self.sock = None
             self.connected = False
             raise
-        except:
-            raise
-
-    def _recv_strict(self, bufsize):
-        shortage = bufsize - sum(len(x) for x in self._recv_buffer)
-        while shortage > 0:
-            bytes = self._recv(shortage)
-            self._recv_buffer.append(bytes)
-            shortage -= len(bytes)
-
-        unified = six.b("").join(self._recv_buffer)
-
-        if shortage == 0:
-            self._recv_buffer = []
-            return unified
-        else:
-            self._recv_buffer = [unified[bufsize:]]
-            return unified[:bufsize]
