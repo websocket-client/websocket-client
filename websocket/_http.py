@@ -125,8 +125,7 @@ def _ssl_socket(sock, sslopt):
     sslopt.update(sslopt)
     check_hostname = sslopt.pop('check_hostname', True)
     sock = ssl.wrap_socket(sock, **sslopt)
-    if (sslopt["cert_reqs"] != ssl.CERT_NONE
-            and check_hostname):
+    if (sslopt["cert_reqs"] != ssl.CERT_NONE and check_hostname):
         match_hostname(sock.getpeercert(), hostname)
 
 

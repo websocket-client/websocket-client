@@ -20,7 +20,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 """
 
-__all__ = ["HAVE_SSL"]
+__all__ = ["HAVE_SSL", "SSLError"]
 
 try:
     import ssl
@@ -37,5 +37,4 @@ except ImportError:
     class SSLError(Exception):
         pass
 
-    __all__.append("SSLError")
     HAVE_SSL = False
