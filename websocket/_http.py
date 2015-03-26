@@ -23,6 +23,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import six
 import socket
 import errno
+import os
 
 if six.PY3:
     from base64 import encodebytes as base64encode
@@ -64,7 +65,7 @@ def connect(url, options, proxy):
 
         if is_secure:
             if HAVE_SSL:
-                sock = _ssl_socket(sock, options.sslopt)
+                sock = _ssl_socket(sock, options.sslopt, hostname)
             else:
                 raise WebSocketException("SSL not available.")
 
@@ -116,7 +117,7 @@ def _open_socket(addrinfo_list, sockopt, timeout):
     return sock
 
 
-def _ssl_socket(sock, sslopt):
+def _ssl_socket(sock, sslopt, hostname):
     sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
     certPath = os.path.join(
         os.path.dirname(__file__), "cacert.pem")

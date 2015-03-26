@@ -20,7 +20,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 """
 
-__all__ = ["HAVE_SSL", "SSLError"]
+__all__ = ["HAVE_SSL", "ssl", "SSLError"]
 
 try:
     import ssl

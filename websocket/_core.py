@@ -30,7 +30,6 @@ if six.PY3:
 else:
     from base64 import encodestring as base64encode
 
-import os
 import struct
 import threading
 
@@ -254,8 +253,9 @@ class WebSocket(object):
             self.handshake_response = handshake(self.sock, *addrs, **options)
             self.connected = True
         except:
-            self.sock.close()
-            self.sock = None
+            if self.sock:
+                self.sock.close()
+                self.sock = None
             raise
 
     def send(self, payload, opcode=ABNF.OPCODE_TEXT):
