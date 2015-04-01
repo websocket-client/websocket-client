@@ -129,6 +129,7 @@ def _ssl_socket(sock, user_sslopt, hostname):
     if (sslopt["cert_reqs"] != ssl.CERT_NONE and check_hostname):
         match_hostname(sock.getpeercert(), hostname)
 
+    return sock
 
 def _tunnel(sock, host, port, auth):
     debug("Connecting proxy...")
