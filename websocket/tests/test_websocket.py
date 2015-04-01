@@ -37,7 +37,7 @@ TEST_WITH_INTERNET = False
 # TEST_WITH_INTERNET = True
 
 # Skip Secure WebSocket test.
-TEST_SECURE_WS = False
+TEST_SECURE_WS = True
 TRACABLE = False
 
 
