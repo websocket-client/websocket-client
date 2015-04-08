@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.30.0
+
+  - fixed if client is behind proxy (#169)
+
 - 0.29.0
 
   - fixed ssl socket bug
