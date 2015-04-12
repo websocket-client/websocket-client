@@ -24,6 +24,7 @@ import six
 import socket
 import errno
 import os
+import sys
 
 if six.PY3:
     from base64 import encodebytes as base64encode
@@ -125,7 +126,22 @@ def _ssl_socket(sock, user_sslopt, hostname):
         sslopt['ca_certs'] = certPath
     sslopt.update(user_sslopt)
     check_hostname = sslopt.pop('check_hostname', True)
-    sock = ssl.wrap_socket(sock, **sslopt)
+
+    if sys.version_info[2] >= 9 or (six.PY3 and sys.version_info[2] >= 2):
+        context = ssl.create_default_context(cafile=sslopt.get('ca_certs', None))
+        context.options = sslopt.get('ssl_version', context.options)
+        context.verify_mode = sslopt['cert_reqs']
+        if 'ciphers' in sslopt:
+            context.set_ciphers(sslopt['ciphers'])
+        sock = context.wrap_socket(
+            sock,
+            do_handshake_on_connect=sslopt.get('do_handshake_on_connect', True),
+            suppress_ragged_eofs=sslopt.get('suppress_ragged_eofs', True),
+            server_hostname=hostname,
+        )
+    else:
+        sock = ssl.wrap_socket(sock, **sslopt)
+
     if (sslopt["cert_reqs"] != ssl.CERT_NONE and check_hostname):
         match_hostname(sock.getpeercert(), hostname)
 
