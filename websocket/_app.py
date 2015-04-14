@@ -122,7 +122,8 @@ class WebSocketApp(object):
                     ping_interval=0, ping_timeout=None,
                     http_proxy_host=None, http_proxy_port=None,
                     http_no_proxy=None, http_proxy_auth=None,
-                    skip_utf8_validation=False):
+                    skip_utf8_validation=False,
+                    host=None, origin=None):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -138,6 +139,8 @@ class WebSocketApp(object):
         http_proxy_port: http proxy port. If not set, set to 80.
         http_no_proxy: host names, which doesn't use proxy.
         skip_utf8_validation: skip utf8 validation.
+        host: update host header.
+        origin: update origin header.
         """
 
         if not ping_timeout or ping_timeout <= 0:
@@ -161,7 +164,8 @@ class WebSocketApp(object):
                 http_proxy_host=http_proxy_host,
                 http_proxy_port=http_proxy_port,
                 http_no_proxy=http_no_proxy, http_proxy_auth=http_proxy_auth,
-                subprotocols=self.subprotocols)
+                subprotocols=self.subprotocols,
+                host=host, origin=origin)
             self._callback(self.on_open)
 
             if ping_interval:

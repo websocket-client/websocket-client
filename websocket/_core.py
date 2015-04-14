@@ -76,6 +76,8 @@ def create_connection(url, timeout=None, **options):
 
     options: "header" -> custom http header list.
              "cookie" -> cookie value.
+             "origin" -> custom origin url.
+             "host"   -> custom host header string.
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.
              "http_no_proxy"   - host names, which doesn't use proxy.
@@ -237,6 +239,7 @@ class WebSocket(object):
         options: "header" -> custom http header list.
                  "cookie" -> cookie value.
                  "origin" -> custom origin url.
+                 "host"   -> custom host header string.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
                  "http_no_proxy"   - host names, which doesn't use proxy.

@@ -47,8 +47,8 @@ class handshake_response(object):
         self.headers = headers
         self.subprotocol = subprotocol
 
-def handshake(sock, host, port, resource, **options):
-    headers, key = _get_handshake_headers(resource, host, port, options)
+def handshake(sock, hostname, port, resource, **options):
+    headers, key = _get_handshake_headers(resource, hostname, port, options)
 
     header_str = "\r\n".join(headers)
     send(sock, header_str)
@@ -71,9 +71,13 @@ def _get_handshake_headers(resource, host, port, options):
         hostport = host
     else:
         hostport = "%s:%d" % (host, port)
-    headers.append("Host: %s" % hostport)
 
-    if "origin" in options:
+    if "host" in options and options["host"]:
+        headers.append("Host: %s" % options["host"])
+    else:
+        headers.append("Host: %s" % hostport)
+
+    if "origin" in options and options["origin"]:
         headers.append("Origin: %s" % options["origin"])
     else:
         headers.append("Origin: http://%s" % hostport)
