@@ -118,6 +118,24 @@ def _open_socket(addrinfo_list, sockopt, timeout):
     return sock
 
 
+def _can_use_sni():
+    return sys.version_info[2] >= 9 or (six.PY3 and sys.version_info[2] >= 2)
+
+
+def _wrap_sni_socket(sock, sslopt, hostname):
+    context = ssl.create_default_context(cafile=sslopt.get('ca_certs', None))
+    context.options = sslopt.get('ssl_version', context.options)
+    context.verify_mode = sslopt['cert_reqs']
+    if 'ciphers' in sslopt:
+        context.set_ciphers(sslopt['ciphers'])
+    return context.wrap_socket(
+        sock,
+        do_handshake_on_connect=sslopt.get('do_handshake_on_connect', True),
+        suppress_ragged_eofs=sslopt.get('suppress_ragged_eofs', True),
+        server_hostname=hostname,
+    )
+
+
 def _ssl_socket(sock, user_sslopt, hostname):
     sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
     certPath = os.path.join(
@@ -127,18 +145,8 @@ def _ssl_socket(sock, user_sslopt, hostname):
     sslopt.update(user_sslopt)
     check_hostname = sslopt.pop('check_hostname', True)
 
-    if sys.version_info[2] >= 9 or (six.PY3 and sys.version_info[2] >= 2):
-        context = ssl.create_default_context(cafile=sslopt.get('ca_certs', None))
-        context.options = sslopt.get('ssl_version', context.options)
-        context.verify_mode = sslopt['cert_reqs']
-        if 'ciphers' in sslopt:
-            context.set_ciphers(sslopt['ciphers'])
-        sock = context.wrap_socket(
-            sock,
-            do_handshake_on_connect=sslopt.get('do_handshake_on_connect', True),
-            suppress_ragged_eofs=sslopt.get('suppress_ragged_eofs', True),
-            server_hostname=hostname,
-        )
+    if _can_use_sni:
+        sock = _wrap_sni_socket(sock, sslopt, hostname)
     else:
         sock = ssl.wrap_socket(sock, **sslopt)
 

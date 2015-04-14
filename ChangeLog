@@ -4,6 +4,7 @@ ChangeLog
 - 0.30.0
 
   - fixed if client is behind proxy (#169)
+  - support SNI for python 2.7.9+ and 3.2+ (#172)
 
 - 0.29.0
 
