@@ -26,7 +26,7 @@ _logger = logging.getLogger()
 _traceEnabled = False
 
 __all__ = ["enableTrace", "dump", "error", "debug", "trace",
-           "isEnableForError", "isEnableForDebug"]
+           "isEnabledForError", "isEnabledForDebug"]
 
 
 def enableTrace(tracable):
@@ -63,9 +63,9 @@ def trace(msg):
         _logger.debug(msg)
 
 
-def isEnableForError():
-    return _logger.isEnableFor(logging.ERROR)
+def isEnabledForError():
+    return _logger.isEnabledFor(logging.ERROR)
 
 
-def isEnableForDebug():
-    return _logger.isEnableFor(logging.DEBUG)
+def isEnabledForDebug():
+    return _logger.isEnabledFor(logging.DEBUG)

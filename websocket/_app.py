@@ -231,6 +231,6 @@ class WebSocketApp(object):
                 callback(self, *args)
             except Exception as e:
                 error(e)
-                if isEnableForDebug():
+                if isEnabledForDebug():
                     _, _, tb = sys.exc_info()
                     traceback.print_tb(tb)
