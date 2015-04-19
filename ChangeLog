@@ -7,6 +7,7 @@ ChangeLog
   - support SNI for python 2.7.9+ and 3.2+ (#172)
   - update Host HTTP header by user. (#171)
   - fix typo for isEnabledFor (#173)
+  - can set verify_mode to CERT_NONE when check_hostname is enabled.(#175)
 
 - 0.29.0
 
