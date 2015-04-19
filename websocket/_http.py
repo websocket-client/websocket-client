@@ -125,9 +125,11 @@ def _can_use_sni():
 def _wrap_sni_socket(sock, sslopt, hostname):
     context = ssl.create_default_context(cafile=sslopt.get('ca_certs', None))
     context.options = sslopt.get('ssl_version', context.options)
+    context.check_hostname = sslopt.get('check_hostname', True)
     context.verify_mode = sslopt['cert_reqs']
     if 'ciphers' in sslopt:
         context.set_ciphers(sslopt['ciphers'])
+
     return context.wrap_socket(
         sock,
         do_handshake_on_connect=sslopt.get('do_handshake_on_connect', True),
@@ -143,11 +145,12 @@ def _ssl_socket(sock, user_sslopt, hostname):
     if os.path.isfile(certPath):
         sslopt['ca_certs'] = certPath
     sslopt.update(user_sslopt)
-    check_hostname = sslopt.pop('check_hostname', True)
+    check_hostname = sslopt.get('check_hostname', True)
 
     if _can_use_sni():
         sock = _wrap_sni_socket(sock, sslopt, hostname)
     else:
+        sslopt.pop('check_hostname', True)
         sock = ssl.wrap_socket(sock, **sslopt)
 
     if (sslopt["cert_reqs"] != ssl.CERT_NONE and check_hostname):
