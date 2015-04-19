@@ -122,11 +122,12 @@ def _can_use_sni():
     return (six.PY2 and sys.version_info[1] >= 7 and sys.version_info[2] >= 9) or (six.PY3 and sys.version_info[2] >= 2)
 
 
-def _wrap_sni_socket(sock, sslopt, hostname):
-    context = ssl.create_default_context(cafile=sslopt.get('ca_certs', None))
-    context.options = sslopt.get('ssl_version', context.options)
-    context.check_hostname = sslopt.get('check_hostname', True)
+def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
+    context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_SSLv23))
+    context.load_verify_locations(cafile=sslopt.get('ca_certs', None))
     context.verify_mode = sslopt['cert_reqs']
+    if HAVE_CONTEXT_CHECK_HOSTNAME:
+        context.check_hostname = check_hostname
     if 'ciphers' in sslopt:
         context.set_ciphers(sslopt['ciphers'])
 
@@ -145,15 +146,15 @@ def _ssl_socket(sock, user_sslopt, hostname):
     if os.path.isfile(certPath):
         sslopt['ca_certs'] = certPath
     sslopt.update(user_sslopt)
-    check_hostname = sslopt.get('check_hostname', True)
+    check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop('check_hostname', True)
 
     if _can_use_sni():
-        sock = _wrap_sni_socket(sock, sslopt, hostname)
+        sock = _wrap_sni_socket(sock, sslopt, hostname, check_hostname)
     else:
         sslopt.pop('check_hostname', True)
         sock = ssl.wrap_socket(sock, **sslopt)
 
-    if (sslopt["cert_reqs"] != ssl.CERT_NONE and check_hostname):
+    if not HAVE_CONTEXT_CHECK_HOSTNAME and check_hostname:
         match_hostname(sock.getpeercert(), hostname)
 
     return sock
