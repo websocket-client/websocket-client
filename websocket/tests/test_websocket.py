@@ -255,6 +255,19 @@ class WebSocketTest(unittest.TestCase):
         data = sock.recv()
         self.assertEqual(data, "Hello")
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    def testIter(self):
+        count = 2
+        for rsvp in ws.create_connection('ws://stream.meetup.com/2/rsvps'):
+            count -= 1
+            if count == 0:
+                break
+
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    def testNext(self):
+        sock = ws.create_connection('ws://stream.meetup.com/2/rsvps')
+        self.assertEqual(str, type(next(sock)))
+
     def testInternalRecvStrict(self):
         sock = ws.WebSocket()
         s = sock.sock = SockMock()

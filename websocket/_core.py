@@ -154,6 +154,19 @@ class WebSocket(object):
         else:
             self.lock = NoLock()
 
+    def __iter__(self):
+        """
+        Allow iteration over websocket, implying sequential `recv` executions.
+        """
+        while True:
+            yield self.recv()
+
+    def __next__(self):
+        return self.recv()
+
+    def next(self):
+        return self.__next__()
+
     def fileno(self):
         return self.sock.fileno()
 
