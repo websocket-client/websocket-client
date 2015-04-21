@@ -125,10 +125,10 @@ def _can_use_sni():
 def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_SSLv23))
 
-    if HAVE_CONTEXT_CHECK_HOSTNAME:
-        context.check_hostname = check_hostname
     context.load_verify_locations(cafile=sslopt.get('ca_certs', None))
     context.verify_mode = sslopt['cert_reqs']
+    if HAVE_CONTEXT_CHECK_HOSTNAME:
+        context.check_hostname = check_hostname
     if 'ciphers' in sslopt:
         context.set_ciphers(sslopt['ciphers'])
 
