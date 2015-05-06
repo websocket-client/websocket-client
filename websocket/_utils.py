@@ -85,8 +85,4 @@ def validate_utf8(utfbytes):
 
 
 def extract_err_message(exception):
-    message = getattr(exception, 'strerror', '')
-    if not message:
-        message = getattr(exception, 'message', '')
-
-    return message
+    return getattr(exception, 'strerror', str(exception))
