@@ -1,0 +1,14 @@
+language: python
+
+python:
+  - '2.7'
+  - '3.3'
+  - '3.4'
+  - 'pypy'
+  - 'nightly'
+
+install:
+  - python -c "import setuptools; print(setuptools.__version__)"
+
+script:
+  - TEST_WITH_INTERNET=1 python setup.py test
