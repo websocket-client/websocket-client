@@ -47,6 +47,7 @@ class handshake_response(object):
         self.headers = headers
         self.subprotocol = subprotocol
 
+
 def handshake(sock, hostname, port, resource, **options):
     headers, key = _get_handshake_headers(resource, hostname, port, options)
 

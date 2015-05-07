@@ -23,6 +23,12 @@ else:
 
 import uuid
 
+if six.PY3:
+    from base64 import decodebytes as base64decode
+else:
+    from base64 import decodestring as base64decode
+
+
 # websocket-client
 import websocket as ws
 from websocket._handshake import _create_sec_websocket_key
@@ -462,7 +468,7 @@ class WebSocketTest(unittest.TestCase):
         """ WebSocket key should be a UUID4.
         """
         key = _create_sec_websocket_key()
-        u = uuid.UUID(bytes=base64.b64decode(key))
+        u = uuid.UUID(bytes=base64decode(key.encode("utf-8")))
         self.assertEqual(4, u.version)
 
 
