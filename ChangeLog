@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.31.0
+
+  - Avoid deprecated BaseException.message (#180)
+
 - 0.30.0
 
   - fixed if client is behind proxy (#169)
