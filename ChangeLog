@@ -4,6 +4,7 @@ ChangeLog
 - 0.31.0
 
   - Avoid deprecated BaseException.message (#180)
+  - Add travis builds (#182)
 
 - 0.30.0
 
