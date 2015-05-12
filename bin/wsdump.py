@@ -5,6 +5,7 @@ import code
 import six
 import sys
 import threading
+import time
 import websocket
 try:
     import readline
@@ -12,8 +13,17 @@ except:
     pass
 
 
+def get_encoding():
+    encoding = getattr(sys.stdin, "encoding", "")
+    if not encoding:
+        return "utf-8"
+    else:
+        return encoding.lower()
+
+
 OPCODE_DATA = (websocket.ABNF.OPCODE_TEXT, websocket.ABNF.OPCODE_BINARY)
-ENCODING = getattr(sys.stdin, "encoding", "").lower()
+ENCODING = get_encoding()
+
 
 class VAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
@@ -105,6 +115,7 @@ def main():
     def recv_ws():
         while True:
             opcode, data = recv()
+            print(data)
             msg = None
             if not args.verbose and opcode in OPCODE_DATA:
                 msg = "< %s" % data
@@ -128,6 +139,7 @@ def main():
         try:
             message = console.raw_input("> ")
             ws.send(message)
+            time.sleep(0.05)
         except KeyboardInterrupt:
             return
         except EOFError:

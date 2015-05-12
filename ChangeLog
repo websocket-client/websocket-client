@@ -5,6 +5,7 @@ ChangeLog
 
   - Avoid deprecated BaseException.message (#180)
   - Add travis builds (#182)
+  - fixed wsdump to work with piped input (#183)
 
 - 0.30.0
 
