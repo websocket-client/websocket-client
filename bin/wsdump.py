@@ -115,7 +115,6 @@ def main():
     def recv_ws():
         while True:
             opcode, data = recv()
-            print(data)
             msg = None
             if not args.verbose and opcode in OPCODE_DATA:
                 msg = "< %s" % data
