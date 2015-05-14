@@ -121,7 +121,7 @@ def main():
             elif args.verbose:
                 msg = "< %s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
 
-            if msg:
+            if msg is not None:
                 console.write(msg)
 
             if opcode == websocket.ABNF.OPCODE_CLOSE:
