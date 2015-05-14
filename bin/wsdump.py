@@ -59,7 +59,7 @@ class InteractiveConsole(code.InteractiveConsole):
     def write(self, data):
         sys.stdout.write("\033[2K\033[E")
         # sys.stdout.write("\n")
-        sys.stdout.write("\033[34m" + data + "\033[39m")
+        sys.stdout.write("\033[34m< " + data + "\033[39m")
         sys.stdout.write("\n> ")
         sys.stdout.flush()
 
@@ -117,9 +117,9 @@ def main():
             opcode, data = recv()
             msg = None
             if not args.verbose and opcode in OPCODE_DATA:
-                msg = "< %s" % data
+                msg = data
             elif args.verbose:
-                msg = "< %s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
+                msg = "%s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
 
             if msg is not None:
                 console.write(msg)
