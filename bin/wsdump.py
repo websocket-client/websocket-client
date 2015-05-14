@@ -49,6 +49,8 @@ def parse_args():
                         help="Set subprotocols")
     parser.add_argument("-o", "--origin",
                         help="Set origin")
+    parser.add_argument("--eof-wait", default=0, type=int,
+                        help="wait time(second) after 'EOF' recieved.")
     parser.add_argument("-t", "--text",
                         help="Send initial text")
 
@@ -138,10 +140,10 @@ def main():
         try:
             message = console.raw_input("> ")
             ws.send(message)
-            time.sleep(0.05)
         except KeyboardInterrupt:
             return
         except EOFError:
+            time.sleep(args.eof_wait)
             return
 
 
