@@ -45,6 +45,8 @@ def parse_args():
                         "If set to 2, enable to trace  websocket module")
     parser.add_argument("-n", "--nocert", action='store_true',
                         help="Ignore invalid SSL cert")
+    parser.add_argument("-r", "--raw", action="store_true",
+                        help="raw output")
     parser.add_argument("-s", "--subprotocols", nargs='*',
                         help="Set subprotocols")
     parser.add_argument("-o", "--origin",
@@ -56,15 +58,7 @@ def parse_args():
 
     return parser.parse_args()
 
-
-class InteractiveConsole(code.InteractiveConsole):
-    def write(self, data):
-        sys.stdout.write("\033[2K\033[E")
-        # sys.stdout.write("\n")
-        sys.stdout.write("\033[34m" + data + "\033[39m")
-        sys.stdout.write("\n> ")
-        sys.stdout.flush()
-
+class RawInput():
     def raw_input(self, prompt):
         if six.PY3:
             line = input(prompt)
@@ -78,10 +72,28 @@ class InteractiveConsole(code.InteractiveConsole):
 
         return line
 
+class InteractiveConsole(RawInput, code.InteractiveConsole):
+    def write(self, data):
+        sys.stdout.write("\033[2K\033[E")
+        # sys.stdout.write("\n")
+        sys.stdout.write("\033[34m< " + data + "\033[39m")
+        sys.stdout.write("\n> ")
+        sys.stdout.flush()
+
+    def read(self):
+        return self.raw_input("> ")
+
+class NonInteractive(RawInput):
+    def write(self, data):
+        sys.stdout.write(data)
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
+    def read(self):
+        return self.raw_input("")
 
 def main():
     args = parse_args()
-    console = InteractiveConsole()
     if args.verbose > 1:
         websocket.enableTrace(True)
     options = {}
@@ -93,7 +105,11 @@ def main():
     if (args.nocert):
         opts = { "cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False }
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
-    print("Press Ctrl+C to quit")
+    if args.raw:
+        console = NonInteractive()
+    else:
+        console = InteractiveConsole()
+        print("Press Ctrl+C to quit")
 
     def recv():
         try:
@@ -121,11 +137,11 @@ def main():
             if six.PY3 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
             if not args.verbose and opcode in OPCODE_DATA:
-                msg = "< %s" % data
+                msg = data
             elif args.verbose:
-                msg = "< %s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
+                msg = "%s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
 
-            if msg:
+            if msg is not None:
                 console.write(msg)
 
             if opcode == websocket.ABNF.OPCODE_CLOSE:
@@ -140,7 +156,7 @@ def main():
 
     while True:
         try:
-            message = console.raw_input("> ")
+            message = console.read()
             ws.send(message)
         except KeyboardInterrupt:
             return
