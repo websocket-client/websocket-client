@@ -118,6 +118,8 @@ def main():
         while True:
             opcode, data = recv()
             msg = None
+            if six.PY3 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
+                data = str(data, "utf-8")
             if not args.verbose and opcode in OPCODE_DATA:
                 msg = "< %s" % data
             elif args.verbose:
