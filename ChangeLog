@@ -6,6 +6,8 @@ ChangeLog
   - Avoid deprecated BaseException.message (#180)
   - Add travis builds (#182)
   - fixed wsdump to work with piped input (#183)
+  - fixed output of wsdump.py with python3 (#185)
+  - add raw mode to wsdump.py (#186)
 
 - 0.30.0
 
