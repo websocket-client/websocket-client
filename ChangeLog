@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.32.0
+
+  - fix http proxy bug (#189)
+
 - 0.31.0
 
   - Avoid deprecated BaseException.message (#180)
