@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.33.0
+
+  - fixed timeout+ssl error handling bug  on python 2.7.10 (#190)
+
 - 0.32.0
 
   - fix http proxy bug (#189)
