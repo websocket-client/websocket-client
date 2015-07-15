@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 import websocket
+from six.moves.urllib.parse import urlparse
 try:
     import readline
 except:
@@ -39,6 +40,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="WebSocket Simple Dump Tool")
     parser.add_argument("url", metavar="ws_url",
                         help="websocket url. ex. ws://echo.websocket.org/")
+    parser.add_argument("-p", "--proxy",
+                        help="proxy url. ex. http://127.0.0.1:8080")
     parser.add_argument("-v", "--verbose", default=0, nargs='?', action=VAction,
                         dest="verbose",
                         help="set verbose mode. If set to 1, show opcode. "
@@ -97,6 +100,10 @@ def main():
     if args.verbose > 1:
         websocket.enableTrace(True)
     options = {}
+    if (args.proxy):
+        p = urlparse(args.proxy)
+        options["http_proxy_host"] = p.hostname
+        options["http_proxy_port"] = p.port
     if (args.origin):
         options["origin"] = args.origin
     if (args.subprotocols):
