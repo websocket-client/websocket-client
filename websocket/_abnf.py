@@ -26,6 +26,24 @@ import os
 from ._exceptions import *
 from ._utils import validate_utf8
 
+try:
+    # If wsaccel is available we use compiled routines to mask data.
+    from wsaccel.xormask import XorMaskerSimple
+
+    def _mask(_m, _d):
+        return XorMaskerSimple(_m).process(_d)
+
+except ImportError:
+    # wsaccel is not available, we rely on python implementations.
+    def _mask(_m, _d):
+        for i in range(len(_d)):
+            _d[i] ^= _m[i % 4]
+
+        if six.PY3:
+            return _d.tobytes()
+        else:
+            return _d.tostring()
+
 # closing frame status codes.
 STATUS_NORMAL = 1000
 STATUS_GOING_AWAY = 1001
@@ -208,6 +226,7 @@ class ABNF(object):
         """
         if data == None:
             data = ""
+
         if isinstance(mask_key, six.text_type):
             mask_key = six.b(mask_key)
 
@@ -216,14 +235,7 @@ class ABNF(object):
 
         _m = array.array("B", mask_key)
         _d = array.array("B", data)
-        for i in range(len(_d)):
-            _d[i] ^= _m[i % 4]
-
-        if six.PY3:
-            return _d.tobytes()
-        else:
-            return _d.tostring()
-
+        return _mask(_m, _d)
 
 class frame_buffer(object):
     _HEADER_MASK_INDEX = 5

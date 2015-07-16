@@ -119,7 +119,7 @@ def _open_socket(addrinfo_list, sockopt, timeout):
 
 
 def _can_use_sni():
-    return six.Py2 and sys.version_info >= (2, 7, 9) or sys.version_info >= (3, 2)
+    return six.PY2 and sys.version_info >= (2, 7, 9) or sys.version_info >= (3, 2)
 
 
 def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
