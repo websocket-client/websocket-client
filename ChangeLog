@@ -1,9 +1,11 @@
 ChangeLog
 ============
 
+
 - 0.33.0
 
   - fixed timeout+ssl error handling bug  on python 2.7.10 (#190)
+  - add proxy support to wsdump.py (#194)
 
 - 0.32.0
 
