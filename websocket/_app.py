@@ -230,7 +230,7 @@ class WebSocketApp(object):
             try:
                 callback(self, *args)
             except Exception as e:
-                error(e)
+                error("error from callback {}: {}".format(callback, e))
                 if isEnabledForDebug():
                     _, _, tb = sys.exc_info()
                     traceback.print_tb(tb)
