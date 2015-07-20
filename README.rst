@@ -62,7 +62,7 @@ Low Level API example::
     print "Sending 'Hello, World'..."
     ws.send("Hello, World")
     print "Sent"
-    print "Reeiving..."
+    print "Receiving..."
     result =  ws.recv()
     print "Received '%s'" % result
     ws.close()
