@@ -10,6 +10,7 @@ ChangeLog
   - add support for ssl cert chains to support client certs (#195)
   - fix string formatting in exception (#196)
   - fix typo in README.rst (#197)
+  - introduce on_data callback to pass data type. (#198)
 
 - 0.32.0
 
