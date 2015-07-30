@@ -11,6 +11,7 @@ ChangeLog
   - fix string formatting in exception (#196)
   - fix typo in README.rst (#197)
   - introduce on_data callback to pass data type. (#198)
+  - WebSocketBadStatusException for Handshake error (#199)
 
 - 0.32.0
 
