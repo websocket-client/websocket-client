@@ -12,6 +12,7 @@ ChangeLog
   - fix typo in README.rst (#197)
   - introduce on_data callback to pass data type. (#198)
   - WebSocketBadStatusException for Handshake error (#199)
+  - set close timeout (#192)
 
 - 0.32.0
 
