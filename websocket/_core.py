@@ -422,13 +422,16 @@ class WebSocket(object):
         self.connected = False
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status=STATUS_NORMAL, reason=six.b("")):
+    def close(self, status=STATUS_NORMAL, reason=six.b(""), timeout=3):
         """
         Close Websocket object
 
         status: status code to send. see STATUS_XXX.
 
         reason: the reason to close. This must be string.
+
+        timeout: timeout until recieve a close frame. 
+            If None, it will wait forever until recieve a close frame.
         """
         if self.connected:
             if status < 0 or status >= ABNF.LENGTH_16:
@@ -437,8 +440,8 @@ class WebSocket(object):
             try:
                 self.connected = False
                 self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
-                timeout = self.sock.gettimeout()
-                self.sock.settimeout(3)
+                sock_timeout = self.sock.gettimeout()
+                self.sock.settimeout(timeout)
                 try:
                     frame = self.recv_frame()
                     if isEnabledForError():
@@ -447,7 +450,7 @@ class WebSocket(object):
                             error("close status: " + repr(recv_status))
                 except:
                     pass
-                self.sock.settimeout(timeout)
+                self.sock.settimeout(sock_timeout)
                 self.sock.shutdown(socket.SHUT_RDWR)
             except:
                 pass

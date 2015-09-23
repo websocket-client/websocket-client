@@ -7,6 +7,12 @@ ChangeLog
   - fixed timeout+ssl error handling bug  on python 2.7.10 (#190)
   - add proxy support to wsdump.py (#194)
   - use wsaccel if available (#193)
+  - add support for ssl cert chains to support client certs (#195)
+  - fix string formatting in exception (#196)
+  - fix typo in README.rst (#197)
+  - introduce on_data callback to pass data type. (#198)
+  - WebSocketBadStatusException for Handshake error (#199)
+  - set close timeout (#192)
 
 - 0.32.0
 

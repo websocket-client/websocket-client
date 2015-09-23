@@ -31,17 +31,20 @@ class WebSocketException(Exception):
     """
     pass
 
+
 class WebSocketProtocolException(WebSocketException):
     """
     If the webscoket protocol is invalid, this exception will be raised.
     """
     pass
 
+
 class WebSocketPayloadException(WebSocketException):
     """
     If the webscoket payload is invalid, this exception will be raised.
     """
     pass
+
 
 class WebSocketConnectionClosedException(WebSocketException):
     """
@@ -50,11 +53,13 @@ class WebSocketConnectionClosedException(WebSocketException):
     """
     pass
 
+
 class WebSocketTimeoutException(WebSocketException):
     """
     WebSocketTimeoutException will be raised at socket timeout during read/write data.
     """
     pass
+
 
 class WebSocketProxyException(WebSocketException):
     """
@@ -63,3 +68,10 @@ class WebSocketProxyException(WebSocketException):
     pass
 
 
+class WebSocketBadStatusException(WebSocketException):
+    """
+    WebSocketBadStatusException will be raised when we get bad handshake status code.
+    """
+    def __init__(self, message, status_code):
+        super(WebSocketBadStatusException, self).__init__(message % status_code)
+        self.status_code = status_code

@@ -132,6 +132,9 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
         context.check_hostname = check_hostname
     if 'ciphers' in sslopt:
         context.set_ciphers(sslopt['ciphers'])
+    if 'cert_chain' in sslopt :
+        certfile,keyfile,password = sslopt['cert_chain']
+        context.load_cert_chain(certfile, keyfile, password)
 
     return context.wrap_socket(
         sock,
@@ -183,7 +186,7 @@ def _tunnel(sock, host, port, auth):
 
     if status != 200:
         raise WebSocketProxyException(
-            "failed CONNECT via proxy status: %r" + status)
+            "failed CONNECT via proxy status: %r" % status)
     
     return sock
 

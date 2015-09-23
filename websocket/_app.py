@@ -48,7 +48,8 @@ class WebSocketApp(object):
                  on_close=None, on_ping=None, on_pong=None,
                  on_cont_message=None,
                  keep_running=True, get_mask_key=None, cookie=None,
-                 subprotocols=None):
+                 subprotocols=None,
+                 on_data=None):
         """
         url: websocket url.
         header: custom header for websocket handshake.
@@ -71,6 +72,14 @@ class WebSocketApp(object):
          The passing 2nd arugment is utf-8 string which we get from the server.
          The 3rd arugment is continue flag. if 0, the data continue
          to next frame data
+        on_data: callback object which is called when a message recieved.
+          This is called before on_message or on_cont_message,
+          and then on_message or on_cont_message is called.
+          on_data has 4 argument.
+          The 1st arugment is this class object.
+          The passing 2nd arugment is utf-8 string which we get from the server.
+          The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came. 
+          The 4rd arugment is continue flag. if 0, the data continue
         keep_running: a boolean flag indicating whether the app's main loop
           should keep running, defaults to True
         get_mask_key: a callable to produce new mask keys,
@@ -82,6 +91,7 @@ class WebSocketApp(object):
         self.cookie = cookie
         self.on_open = on_open
         self.on_message = on_message
+        self.on_data = on_data
         self.on_error = on_error
         self.on_close = on_close
         self.on_ping = on_ping
@@ -192,11 +202,13 @@ class WebSocketApp(object):
                     elif op_code == ABNF.OPCODE_PONG:
                         self._callback(self.on_pong, frame.data)
                     elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
+                        self._callback(self.on_data, data, frame.opcode, frame.fin)
                         self._callback(self.on_cont_message, frame.data, frame.fin)
                     else:
                         data = frame.data
                         if six.PY3 and frame.opcode == ABNF.OPCODE_TEXT:
                             data = data.decode("utf-8")
+                        self._callback(self.on_data, data, frame.opcode, True)
                         self._callback(self.on_message, data)
         except Exception as e:
             self._callback(self.on_error, e)
