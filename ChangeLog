@@ -2,6 +2,10 @@ ChangeLog
 ============
 
 
+- 0.34.0
+
+
+
 - 0.33.0
 
   - fixed timeout+ssl error handling bug  on python 2.7.10 (#190)
