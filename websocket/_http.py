@@ -126,6 +126,12 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_SSLv23))
 
     context.load_verify_locations(cafile=sslopt.get('ca_certs', None))
+    if sslopt.get('certfile', None):
+        context.load_cert_chain(
+            sslopt['certfile'],
+            sslopt.get('keyfile', None),
+            sslopt.get('password', None),
+        )
     # see https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
     context.verify_mode = sslopt['cert_reqs']
     if HAVE_CONTEXT_CHECK_HOSTNAME:
