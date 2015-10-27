@@ -92,8 +92,11 @@ def _get_handshake_headers(resource, host, port, options):
         headers.append("Sec-WebSocket-Protocol: %s" % ",".join(subprotocols))
 
     if "header" in options:
-        headers.extend(options["header"])
-
+        header = options["header"]
+        if isinstance(header, dict):
+            header = map(": ".join, header.items())
+        headers.extend(header)
+        
     cookie = options.get("cookie", None)
 
     if cookie:
