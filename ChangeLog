@@ -15,6 +15,8 @@ ChangeLog
   - set close timeout (#192)
   - Map dict to headers list (#204)
   - support client certication (#207)
+  - security improvement during handshake (#211)
+
 - 0.32.0
 
   - fix http proxy bug (#189)
