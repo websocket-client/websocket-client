@@ -74,7 +74,7 @@ def create_connection(url, timeout=None, **options):
              it means "use default_timeout value"
 
 
-    options: "header" -> custom http header list.
+    options: "header" -> custom http header list or dict.
              "cookie" -> cookie value.
              "origin" -> custom origin url.
              "host"   -> custom host header string.
@@ -249,7 +249,7 @@ class WebSocket(object):
                  if you set None for this value,
                  it means "use default_timeout value"
 
-        options: "header" -> custom http header list.
+        options: "header" -> custom http header list or dict.
                  "cookie" -> cookie value.
                  "origin" -> custom origin url.
                  "host"   -> custom host header string.

@@ -13,6 +13,7 @@ ChangeLog
   - introduce on_data callback to pass data type. (#198)
   - WebSocketBadStatusException for Handshake error (#199)
   - set close timeout (#192)
+  - Map dict to headers list (#204)
 
 - 0.32.0
 
