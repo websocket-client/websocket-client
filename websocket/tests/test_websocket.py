@@ -464,12 +464,12 @@ class WebSocketTest(unittest.TestCase):
         self.assertRaises(ws.WebSocketConnectionClosedException, s.send, "Hello")
         self.assertRaises(ws.WebSocketConnectionClosedException, s.recv)
 
-    def testUUID4(self):
-        """ WebSocket key should be a UUID4.
+    def testNonce(self):
+        """ WebSocket key should be a random 16-byte nonce.
         """
         key = _create_sec_websocket_key()
-        u = uuid.UUID(bytes=base64decode(key.encode("utf-8")))
-        self.assertEqual(4, u.version)
+        nonce = base64decode(key.encode("utf-8"))
+        self.assertEqual(16, len(nonce))
 
 
 class WebSocketAppTest(unittest.TestCase):

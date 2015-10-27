@@ -28,6 +28,8 @@ else:
 
 import uuid
 import hashlib
+import hmac
+import os
 
 from ._logging import *
 from ._url import *
@@ -146,7 +148,7 @@ def _validate(headers, key, subprotocols):
 
     value = (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode('utf-8')
     hashed = base64encode(hashlib.sha1(value).digest()).strip().lower()
-    success = (hashed == result)
+    success = hmac.compare_digest(hashed, result)
     if success:
         return True, subproto
     else:
@@ -154,5 +156,5 @@ def _validate(headers, key, subprotocols):
 
 
 def _create_sec_websocket_key():
-    uid = uuid.uuid4()
-    return base64encode(uid.bytes).decode('utf-8').strip()
+    randomness = os.urandom(16)
+    return base64encode(randomness).decode('utf-8').strip()
