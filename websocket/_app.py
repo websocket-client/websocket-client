@@ -33,7 +33,7 @@ import six
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
 from ._logging import *
-from websocket._abnf import ABNF
+from ._abnf import ABNF
 
 __all__ = ["WebSocketApp"]
 
@@ -78,7 +78,7 @@ class WebSocketApp(object):
           on_data has 4 argument.
           The 1st arugment is this class object.
           The passing 2nd arugment is utf-8 string which we get from the server.
-          The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came. 
+          The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
           The 4rd arugment is continue flag. if 0, the data continue
         keep_running: a boolean flag indicating whether the app's main loop
           should keep running, defaults to True
