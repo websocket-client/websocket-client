@@ -40,6 +40,12 @@ from ._exceptions import *
 
 __all__ = ["handshake_response", "handshake"]
 
+if hasattr(hmac, "compare_digest"):
+    compare_digest = hmac.compare_digest
+else:
+    def compare_digest(s1, s2):
+        return s1 == s2
+
 # websocket supported version.
 VERSION = 13
 
@@ -99,7 +105,7 @@ def _get_handshake_headers(resource, host, port, options):
         if isinstance(header, dict):
             header = map(": ".join, header.items())
         headers.extend(header)
-        
+
     cookie = options.get("cookie", None)
 
     if cookie:
@@ -149,10 +155,7 @@ def _validate(headers, key, subprotocols):
 
     value = (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode('utf-8')
     hashed = base64encode(hashlib.sha1(value).digest()).strip().lower()
-    if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-        success = (hashed == result)
-    else:
-        success = hmac.compare_digest(hashed, result)
+    success = compare_digest(hashed, result)
 
     if success:
         return True, subproto

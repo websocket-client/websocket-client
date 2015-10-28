@@ -5,6 +5,7 @@ ChangeLog
 - 0.34.0
 
   - Change import style (#203)
+  - fix attribute error on the older python. (#215)
 
 - 0.33.0
 
