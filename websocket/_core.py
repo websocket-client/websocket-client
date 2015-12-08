@@ -90,6 +90,7 @@ def create_connection(url, timeout=None, **options):
              "subprotocols" - array of available sub protocols.
                               default is None.
              "skip_utf8_validation" - skip utf8 validation.
+             "socket" - pre-initialized stream socket.
     """
     sockopt = options.get("sockopt", [])
     sslopt = options.get("sslopt", {})
@@ -261,9 +262,11 @@ class WebSocket(object):
                                      defualt is None
                  "subprotocols" - array of available sub protocols.
                                   default is None.
+                 "socket" - pre-initialized stream socket.
 
         """
-        self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options))
+        self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
+                                   options.pop('socket', None))
 
         try:
             self.handshake_response = handshake(self.sock, *addrs, **options)
