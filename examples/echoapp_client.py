@@ -23,8 +23,8 @@ def on_open(ws):
     def run(*args):
         for i in range(3):
             # send the message, then wait
-            # so thread doesnt exit and socket
-            # isnt closed
+            # so thread doesn't exit and socket
+            # isn't closed
             ws.send("Hello %d" % i)
             time.sleep(1)
 

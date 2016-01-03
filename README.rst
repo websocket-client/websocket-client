@@ -167,7 +167,7 @@ SNI support is available for Python 2.7.9+ and 3.2+. It will be enabled automati
 Sub Protocols.
 ----------------------------------------
 
-The server needs to support sub protocols, please set the subprotcol like this.
+The server needs to support sub protocols, please set the subprotocol like this.
 
 
 Subprotocol sample::

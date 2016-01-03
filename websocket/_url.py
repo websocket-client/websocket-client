@@ -100,9 +100,9 @@ def get_proxy_info(hostname, is_secure,
     options:    "http_proxy_host" - http proxy host name.
                 "http_proxy_port" - http proxy port.
                 "http_no_proxy"   - host names, which doesn't use proxy.
-                "http_proxy_auth" - http proxy auth infomation.
+                "http_proxy_auth" - http proxy auth information.
                                     tuple of username and password.
-                                    defualt is None
+                                    default is None
     """
     if _is_no_proxy_host(hostname, no_proxy):
         return None, 0, None
