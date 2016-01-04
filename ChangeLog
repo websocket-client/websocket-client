@@ -6,6 +6,7 @@ ChangeLog
   - use inspect.getfullargspec with Python 3.x (#219)
   - Check that exception message is actually a string before trying for substring check (#224)
   - Use pre-initialized stream socket (#226)
+  - fixed TypeError: cafile, capath and cadata cannot be all omitted (#227)
 
 - 0.34.0
 

@@ -129,7 +129,8 @@ def _can_use_sni():
 def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_SSLv23))
 
-    context.load_verify_locations(cafile=sslopt.get('ca_certs', None))
+    if sslopt.get('cert_reqs', ssl.CERT_NONE) != ssl.CERT_NONE:
+        context.load_verify_locations(cafile=sslopt.get('ca_certs', None))
     if sslopt.get('certfile', None):
         context.load_cert_chain(
             sslopt['certfile'],
@@ -156,11 +157,12 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
 
 def _ssl_socket(sock, user_sslopt, hostname):
     sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
+    sslopt.update(user_sslopt)
+    
     certPath = os.path.join(
         os.path.dirname(__file__), "cacert.pem")
-    if os.path.isfile(certPath):
+    if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) == None:
         sslopt['ca_certs'] = certPath
-    sslopt.update(user_sslopt)
     check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop('check_hostname', True)
 
     if _can_use_sni():
