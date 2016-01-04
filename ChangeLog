@@ -2,7 +2,9 @@ ChangeLog
 ============
 
 - 0.35.0
-  - Prints timings in console (#217) 
+  - Prints timings in console (#217)
+  - use inspect.getfullargspec with Python 3.x (#219)
+  - Check that exception message is actually a string before trying for substring check (#224)
 
 - 0.34.0
 
