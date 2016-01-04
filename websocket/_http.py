@@ -51,8 +51,12 @@ class proxy_info(object):
             self.auth = None
             self.no_proxy = None
 
-def connect(url, options, proxy):
+def connect(url, options, proxy, socket):
     hostname, port, resource, is_secure = parse_url(url)
+
+    if socket:
+        return socket, (hostname, port, resource)
+
     addrinfo_list, need_tunnel, auth = _get_addrinfo_list(hostname, port, is_secure, proxy)
     if not addrinfo_list:
         raise WebSocketException(
