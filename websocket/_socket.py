@@ -115,7 +115,7 @@ def send(sock, data):
         raise WebSocketTimeoutException(message)
     except Exception as e:
         message = extract_err_message(e)
-        if message and "timed out" in message:
+        if isinstance(message, str) and "timed out" in message:
             raise WebSocketTimeoutException(message)
         else:
             raise
