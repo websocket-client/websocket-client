@@ -21,7 +21,7 @@ ChangeLog
   - WebSocketBadStatusException for Handshake error (#199)
   - set close timeout (#192)
   - Map dict to headers list (#204)
-  - support client certication (#207)
+  - support client certification (#207)
   - security improvement during handshake (#211)
   - improve logging of error from callback (#212)
 
@@ -59,7 +59,7 @@ ChangeLog
   - remove unittest2 requirements for python 2.6 (#156)
   - fixed subprotocol case during header validation (#158)
   - get response status and headers (#160)
-  - fix out-of-memory due to fragmentation when recieving a very large frame(#163)
+  - fix out-of-memory due to fragmentation when receiving a very large frame(#163)
   - fix error if the payload data is nothing.(#166)
   - refactoring.
 
@@ -88,7 +88,7 @@ ChangeLog
 
   - Fix not thread-safe of Websocket.close() (#120)
   - Try to get proxy info from environment if not explicitly provided (#124)
-  - support proxy basic authenticaiton. (#125)
+  - support proxy basic authentication. (#125)
   - Fix NoneType exception at WebsocketApp.send (#126)
   - not use proxy for localhost (#132)
 

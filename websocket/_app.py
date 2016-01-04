@@ -54,32 +54,32 @@ class WebSocketApp(object):
         url: websocket url.
         header: custom header for websocket handshake.
         on_open: callable object which is called at opening websocket.
-          this function has one argument. The arugment is this class object.
-        on_message: callbale object which is called when recieved data.
+          this function has one argument. The argument is this class object.
+        on_message: callable object which is called when received data.
          on_message has 2 arguments.
-         The 1st arugment is this class object.
-         The passing 2nd arugment is utf-8 string which we get from the server.
+         The 1st argument is this class object.
+         The 2nd argument is utf-8 string which we get from the server.
         on_error: callable object which is called when we get error.
          on_error has 2 arguments.
-         The 1st arugment is this class object.
-         The passing 2nd arugment is exception object.
+         The 1st argument is this class object.
+         The 2nd argument is exception object.
         on_close: callable object which is called when closed the connection.
-         this function has one argument. The arugment is this class object.
-        on_cont_message: callback object which is called when recieve continued
+         this function has one argument. The argument is this class object.
+        on_cont_message: callback object which is called when receive continued
          frame data.
          on_message has 3 arguments.
-         The 1st arugment is this class object.
-         The passing 2nd arugment is utf-8 string which we get from the server.
-         The 3rd arugment is continue flag. if 0, the data continue
+         The 1st argument is this class object.
+         The 2nd argument is utf-8 string which we get from the server.
+         The 3rd argument is continue flag. if 0, the data continue
          to next frame data
-        on_data: callback object which is called when a message recieved.
+        on_data: callback object which is called when a message received.
           This is called before on_message or on_cont_message,
           and then on_message or on_cont_message is called.
           on_data has 4 argument.
-          The 1st arugment is this class object.
-          The passing 2nd arugment is utf-8 string which we get from the server.
+          The 1st argument is this class object.
+          The 2nd argument is utf-8 string which we get from the server.
           The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
-          The 4rd arugment is continue flag. if 0, the data continue
+          The 4rd argument is continue flag. if 0, the data continue
         keep_running: a boolean flag indicating whether the app's main loop
           should keep running, defaults to True
         get_mask_key: a callable to produce new mask keys,
@@ -139,12 +139,12 @@ class WebSocketApp(object):
         This loop is infinite loop and is alive during websocket is available.
         sockopt: values for socket.setsockopt.
             sockopt must be tuple
-            and each element is argument of sock.setscokopt.
+            and each element is argument of sock.setsockopt.
         sslopt: ssl socket optional dict.
         ping_interval: automatically send "ping" command
             every specified period(second)
             if set to 0, not send automatically.
-        ping_timeout: timeout(second) if the pong message is not recieved.
+        ping_timeout: timeout(second) if the pong message is not received.
         http_proxy_host: http proxy host name.
         http_proxy_port: http proxy port. If not set, set to 80.
         http_no_proxy: host names, which doesn't use proxy.

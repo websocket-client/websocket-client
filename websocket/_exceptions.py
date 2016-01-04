@@ -27,21 +27,21 @@ define websocket exceptions
 
 class WebSocketException(Exception):
     """
-    websocket exeception class.
+    websocket exception class.
     """
     pass
 
 
 class WebSocketProtocolException(WebSocketException):
     """
-    If the webscoket protocol is invalid, this exception will be raised.
+    If the websocket protocol is invalid, this exception will be raised.
     """
     pass
 
 
 class WebSocketPayloadException(WebSocketException):
     """
-    If the webscoket payload is invalid, this exception will be raised.
+    If the websocket payload is invalid, this exception will be raised.
     """
     pass
 
@@ -63,7 +63,7 @@ class WebSocketTimeoutException(WebSocketException):
 
 class WebSocketProxyException(WebSocketException):
     """
-    WebSocketProxyException will be raised when proxy error occured.
+    WebSocketProxyException will be raised when proxy error occurred.
     """
     pass
 

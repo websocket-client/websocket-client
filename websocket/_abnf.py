@@ -99,7 +99,7 @@ class ABNF(object):
         OPCODE_PONG: "pong"
         }
 
-    # data length threashold.
+    # data length threshold.
     LENGTH_7  = 0x7e
     LENGTH_16 = 1 << 16
     LENGTH_63 = 1 << 63
@@ -162,8 +162,8 @@ class ABNF(object):
         create frame to send text, binary and other data.
 
         data: data to send. This is string value(byte array).
-            if opcode is OPCODE_TEXT and this value is uniocde,
-            data value is conveted into unicode string, automatically.
+            if opcode is OPCODE_TEXT and this value is unicode,
+            data value is converted into unicode string, automatically.
 
         opcode: operation code. please see OPCODE_XXX.
 

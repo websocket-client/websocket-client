@@ -55,7 +55,7 @@ def parse_args():
     parser.add_argument("-o", "--origin",
                         help="Set origin")
     parser.add_argument("--eof-wait", default=0, type=int,
-                        help="wait time(second) after 'EOF' recieved.")
+                        help="wait time(second) after 'EOF' received.")
     parser.add_argument("-t", "--text",
                         help="Send initial text")
     parser.add_argument("--timings", action="store_true",
