@@ -10,7 +10,7 @@ import six
 
 
 SERVER = 'ws://127.0.0.1:8642'
-AGENT = 'py-websockets-cleint'
+AGENT = 'py-websockets-client'
 
 
 ws = websocket.create_connection(SERVER + "/getCaseCount")

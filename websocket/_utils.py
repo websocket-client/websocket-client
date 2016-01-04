@@ -32,7 +32,7 @@ class NoLock(object):
         pass
 
 try:
-    # If wsaccel is availabe we use compiled routines to validate UTF-8
+    # If wsaccel is available we use compiled routines to validate UTF-8
     # strings.
     from wsaccel.utf8validator import Utf8Validator
 
