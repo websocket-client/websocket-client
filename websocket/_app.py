@@ -212,6 +212,9 @@ class WebSocketApp(object):
                         self._callback(self.on_message, data)
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
+            if isinstance(e, SystemExit):
+                # propagate SystemExit further
+                raise
         finally:
             if thread:
                 event.set()
