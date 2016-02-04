@@ -210,8 +210,11 @@ class WebSocketApp(object):
                             data = data.decode("utf-8")
                         self._callback(self.on_data, data, frame.opcode, True)
                         self._callback(self.on_message, data)
-        except Exception as e:
+        except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
+            if isinstance(e, SystemExit):
+                # propagate SystemExit further
+                raise
         finally:
             if thread:
                 event.set()
