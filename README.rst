@@ -78,6 +78,21 @@ sockopt example
     ws = create_connection("ws://echo.websocket.org/",
                             sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
 
+You can also use your own class for the connection.
+
+custom connection class example
+
+..code:: python
+
+    from websocket import create_connection, WebSocket
+    class MyWebSocket(WebSocket):
+        def recv_frame(self):
+            frame = super().recv_frame()
+            print('yay! I got this frame: ', frame)
+            return frame
+
+    ws = create_connection("ws://echo.websocket.org/",
+                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),), class_=MyWebSocket)
 
 JavaScript websocket-like API example
 ..code:: python

@@ -53,59 +53,6 @@ Please see http://tools.ietf.org/html/rfc6455 for protocol.
 """
 
 
-def create_connection(url, timeout=None, **options):
-    """
-    connect to url and return websocket object.
-
-    Connect to url and return the WebSocket object.
-    Passing optional timeout parameter will set the timeout on the socket.
-    If no timeout is supplied,
-    the global default timeout setting returned by getdefauttimeout() is used.
-    You can customize using 'options'.
-    If you set "header" list object, you can set your own custom header.
-
-    >>> conn = create_connection("ws://echo.websocket.org/",
-         ...     header=["User-Agent: MyProgram",
-         ...             "x-custom: header"])
-
-
-    timeout: socket timeout time. This value is integer.
-             if you set None for this value,
-             it means "use default_timeout value"
-
-
-    options: "header" -> custom http header list or dict.
-             "cookie" -> cookie value.
-             "origin" -> custom origin url.
-             "host"   -> custom host header string.
-             "http_proxy_host" - http proxy host name.
-             "http_proxy_port" - http proxy port. If not set, set to 80.
-             "http_no_proxy"   - host names, which doesn't use proxy.
-             "http_proxy_auth" - http proxy auth information.
-                                    tuple of username and password.
-                                    default is None
-             "enable_multithread" -> enable lock for multithread.
-             "sockopt" -> socket options
-             "sslopt" -> ssl option
-             "subprotocols" - array of available sub protocols.
-                              default is None.
-             "skip_utf8_validation" - skip utf8 validation.
-             "socket" - pre-initialized stream socket.
-    """
-    sockopt = options.get("sockopt", [])
-    sslopt = options.get("sslopt", {})
-    fire_cont_frame = options.get("fire_cont_frame", False)
-    enable_multithread = options.get("enable_multithread", False)
-    skip_utf8_validation = options.get("skip_utf8_validation", False)
-    websock = WebSocket(sockopt=sockopt, sslopt=sslopt,
-                        fire_cont_frame=fire_cont_frame,
-                        enable_multithread=enable_multithread,
-                        skip_utf8_validation=skip_utf8_validation)
-    websock.settimeout(timeout if timeout is not None else getdefaulttimeout())
-    websock.connect(url, **options)
-    return websock
-
-
 class WebSocket(object):
     """
     Low level WebSocket interface.
@@ -486,3 +433,58 @@ class WebSocket(object):
             self.sock = None
             self.connected = False
             raise
+
+
+def create_connection(url, timeout=None, class_=WebSocket, **options):
+    """
+    connect to url and return websocket object.
+
+    Connect to url and return the WebSocket object.
+    Passing optional timeout parameter will set the timeout on the socket.
+    If no timeout is supplied,
+    the global default timeout setting returned by getdefauttimeout() is used.
+    You can customize using 'options'.
+    If you set "header" list object, you can set your own custom header.
+
+    >>> conn = create_connection("ws://echo.websocket.org/",
+         ...     header=["User-Agent: MyProgram",
+         ...             "x-custom: header"])
+
+
+    timeout: socket timeout time. This value is integer.
+             if you set None for this value,
+             it means "use default_timeout value"
+
+    class_: class to instantiate when creating the connection. It has to implement
+            settimeout and connect. It's __init__ should be compatible with
+            WebSocket.__init__, i.e. accept all of it's kwargs.
+    options: "header" -> custom http header list or dict.
+             "cookie" -> cookie value.
+             "origin" -> custom origin url.
+             "host"   -> custom host header string.
+             "http_proxy_host" - http proxy host name.
+             "http_proxy_port" - http proxy port. If not set, set to 80.
+             "http_no_proxy"   - host names, which doesn't use proxy.
+             "http_proxy_auth" - http proxy auth information.
+                                    tuple of username and password.
+                                    default is None
+             "enable_multithread" -> enable lock for multithread.
+             "sockopt" -> socket options
+             "sslopt" -> ssl option
+             "subprotocols" - array of available sub protocols.
+                              default is None.
+             "skip_utf8_validation" - skip utf8 validation.
+             "socket" - pre-initialized stream socket.
+    """
+    sockopt = options.pop("sockopt", [])
+    sslopt = options.pop("sslopt", {})
+    fire_cont_frame = options.pop("fire_cont_frame", False)
+    enable_multithread = options.pop("enable_multithread", False)
+    skip_utf8_validation = options.pop("skip_utf8_validation", False)
+    websock = class_(sockopt=sockopt, sslopt=sslopt,
+                     fire_cont_frame=fire_cont_frame,
+                     enable_multithread=enable_multithread,
+                     skip_utf8_validation=skip_utf8_validation, **options)
+    websock.settimeout(timeout if timeout is not None else getdefaulttimeout())
+    websock.connect(url, **options)
+    return websock
