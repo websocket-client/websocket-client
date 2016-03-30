@@ -44,7 +44,8 @@ Current implementation of websocket-client is using "CONNECT" method via proxy.
 
 
 example
-..code:: python
+
+.. code:: python
 
     import websocket
     ws = websocket.WebSocket()
@@ -57,7 +58,8 @@ Example
 =============
 
 Low Level API example
-..code:: python
+
+.. code:: python
 
     from websocket import create_connection
     ws = create_connection("ws://echo.websocket.org/")
@@ -72,7 +74,8 @@ Low Level API example
 If you want to customize socket options, set sockopt.
 
 sockopt example
-..code:: python
+
+.. code:: python
 
     from websocket import create_connection
     ws = create_connection("ws://echo.websocket.org/",
@@ -80,7 +83,8 @@ sockopt example
 
 
 JavaScript websocket-like API example
-..code:: python
+
+.. code:: python
 
     import websocket
     import thread
@@ -125,19 +129,22 @@ How to disable ssl cert verification?
 Please set sslopt to {"cert_reqs": ssl.CERT_NONE}.
 
 WebSocketApp sample
-..code:: python
+
+.. code:: python
 
     ws = websocket.WebSocketApp("wss://echo.websocket.org")
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 create_connection sample
-..code:: python
+
+.. code:: python
 
     ws = websocket.create_connection("wss://echo.websocket.org",
       sslopt={"cert_reqs": ssl.CERT_NONE})
 
 WebSocket sample
-..code:: python
+
+.. code:: python
 
     ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
     ws.connect("wss://echo.websocket.org")
@@ -150,19 +157,22 @@ Please set sslopt to {"check_hostname": False}.
 (since v0.18.0)
 
 WebSocketApp sample
-..code:: python
+
+.. code:: python
 
     ws = websocket.WebSocketApp("wss://echo.websocket.org")
     ws.run_forever(sslopt={"check_hostname": False})
 
 create_connection sample
-..code:: python
+
+.. code:: python
 
     ws = websocket.create_connection("wss://echo.websocket.org",
       sslopt={"check_hostname": False})
 
 WebSocket sample
-..code:: python
+
+.. code:: python
 
     ws = websocket.WebSocket(sslopt={"check_hostname": False})
     ws.connect("wss://echo.websocket.org")
@@ -181,7 +191,8 @@ The server needs to support sub protocols, please set the subprotocol like this.
 
 
 Subprotocol sample
-..code:: python
+
+.. code:: python
 
     ws = websocket.create_connection("ws://exapmle.com/websocket", subprotocols=["binary", "base64"])
 
