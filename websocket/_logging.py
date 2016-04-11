@@ -22,7 +22,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import logging
 
-_logger = logging.getLogger()
+_logger = logging.getLogger('websocket')
 _traceEnabled = False
 
 __all__ = ["enableTrace", "dump", "error", "debug", "trace",

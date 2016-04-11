@@ -67,7 +67,7 @@ class WebSocketApp(object):
          this function has one argument. The argument is this class object.
         on_cont_message: callback object which is called when receive continued
          frame data.
-         on_message has 3 arguments.
+         on_cont_message has 3 arguments.
          The 1st argument is this class object.
          The 2nd argument is utf-8 string which we get from the server.
          The 3rd argument is continue flag. if 0, the data continue
@@ -79,7 +79,7 @@ class WebSocketApp(object):
           The 1st argument is this class object.
           The 2nd argument is utf-8 string which we get from the server.
           The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
-          The 4rd argument is continue flag. if 0, the data continue
+          The 4th argument is continue flag. if 0, the data continue
         keep_running: a boolean flag indicating whether the app's main loop
           should keep running, defaults to True
         get_mask_key: a callable to produce new mask keys,
