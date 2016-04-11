@@ -1,6 +1,12 @@
 ChangeLog
 ============
 
+- 0.36.0
+  - added support for using custom connection class(#235)
+  - use Named logger(#238)
+  - implement ping/pong timeout(#241)
+  - Corrects the syntax highlight code(#243)
+
 - 0.35.0
   - Prints timings in console (#217)
   - use inspect.getfullargspec with Python 3.x (#219)
