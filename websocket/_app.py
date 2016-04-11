@@ -101,6 +101,7 @@ class WebSocketApp(object):
         self.get_mask_key = get_mask_key
         self.sock = None
         self.last_ping_tm = 0
+        self.last_pong_tm = 0
         self.subprotocols = subprotocols
 
     def send(self, data, opcode=ABNF.OPCODE_TEXT):
@@ -155,6 +156,8 @@ class WebSocketApp(object):
 
         if not ping_timeout or ping_timeout <= 0:
             ping_timeout = None
+        if ping_timeout and ping_interval and ping_interval <= ping_timeout:
+            raise WebSocketException("Ensure ping_interval > ping_timeout")
         if sockopt is None:
             sockopt = []
         if sslopt is None:
@@ -188,9 +191,6 @@ class WebSocketApp(object):
                 r, w, e = select.select((self.sock.sock, ), (), (), ping_timeout)
                 if not self.keep_running:
                     break
-                if ping_timeout and self.last_ping_tm and time.time() - self.last_ping_tm > ping_timeout:
-                    self.last_ping_tm = 0
-                    raise WebSocketTimeoutException("ping timed out")
 
                 if r:
                     op_code, frame = self.sock.recv_data_frame(True)
@@ -200,6 +200,7 @@ class WebSocketApp(object):
                     elif op_code == ABNF.OPCODE_PING:
                         self._callback(self.on_ping, frame.data)
                     elif op_code == ABNF.OPCODE_PONG:
+                        self.last_pong_tm = time.time()
                         self._callback(self.on_pong, frame.data)
                     elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
                         self._callback(self.on_data, data, frame.opcode, frame.fin)
@@ -210,6 +211,11 @@ class WebSocketApp(object):
                             data = data.decode("utf-8")
                         self._callback(self.on_data, data, frame.opcode, True)
                         self._callback(self.on_message, data)
+
+                if ping_timeout and self.last_ping_tm \
+                        and self.last_ping_tm - time.time() > ping_timeout \
+                        and self.last_ping_tm - self.last_pong_tm > ping_timeout:
+                    raise WebSocketTimeoutException("ping/pong timed out")
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
