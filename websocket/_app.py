@@ -222,7 +222,7 @@ class WebSocketApp(object):
                 # propagate SystemExit further
                 raise
         finally:
-            if thread:
+            if thread and thread.isAlive():
                 event.set()
                 thread.join()
                 self.keep_running = False

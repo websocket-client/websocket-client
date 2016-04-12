@@ -2,10 +2,11 @@ ChangeLog
 ============
 
 - 0.36.0
-  - added support for using custom connection class(#235)
-  - use Named logger(#238)
-  - implement ping/pong timeout(#241)
-  - Corrects the syntax highlight code(#243)
+  - added support for using custom connection class (#235)
+  - use Named logger (#238)
+  - implement ping/pong timeout (#241)
+  - Corrects the syntax highlight code (#243)
+  - fixed failure to join thread before it is started (#242)
 
 - 0.35.0
   - Prints timings in console (#217)
