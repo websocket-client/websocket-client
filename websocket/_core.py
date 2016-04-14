@@ -83,7 +83,7 @@ class WebSocket(object):
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
                  fire_cont_frame=False, enable_multithread=False,
-                 skip_utf8_validation=False):
+                 skip_utf8_validation=False, **options):
         """
         Initialize WebSocket object.
         """

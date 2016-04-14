@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 0.37.0
+  - fixed fialer that `websocket.create_connection` does not accept `origin` as a parameter (#246 )
+
 - 0.36.0
   - added support for using custom connection class (#235)
   - use Named logger (#238)
