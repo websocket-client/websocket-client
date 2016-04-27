@@ -74,7 +74,7 @@ def recv(sock, bufsize):
         raise WebSocketConnectionClosedException("socket is already closed.")
 
     try:
-        bytes = sock.recv(bufsize)
+        bytes_ = sock.recv(bufsize)
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
@@ -85,10 +85,10 @@ def recv(sock, bufsize):
         else:
             raise
 
-    if not bytes:
+    if not bytes_:
         raise WebSocketConnectionClosedException("Connection is already closed.")
 
-    return bytes
+    return bytes_
 
 
 def recv_line(sock):

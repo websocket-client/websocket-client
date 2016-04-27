@@ -344,9 +344,9 @@ class frame_buffer(object):
             # reads is limited by socket buffer and is relatively small,
             # yet passing large numbers repeatedly causes lots of large
             # buffers allocated and then shrunk, which results in fragmentation.
-            bytes = self.recv(min(16384, shortage))
-            self.recv_buffer.append(bytes)
-            shortage -= len(bytes)
+            bytes_ = self.recv(min(16384, shortage))
+            self.recv_buffer.append(bytes_)
+            shortage -= len(bytes_)
 
         unified = six.b("").join(self.recv_buffer)
 
