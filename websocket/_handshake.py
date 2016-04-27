@@ -26,14 +26,11 @@ if six.PY3:
 else:
     from base64 import encodestring as base64encode
 
-import uuid
 import hashlib
 import hmac
 import os
-import sys
 
 from ._logging import *
-from ._url import *
 from ._socket import*
 from ._http import *
 from ._exceptions import *

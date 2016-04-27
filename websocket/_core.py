@@ -30,19 +30,15 @@ if six.PY3:
 else:
     from base64 import encodestring as base64encode
 
-import struct
 import threading
 
 # websocket modules
-from ._exceptions import *
 from ._abnf import *
 from ._socket import *
 from ._utils import *
-from ._url import *
 from ._logging import *
 from ._http import *
 from ._handshake import *
-from ._ssl_compat import *
 
 """
 websocket python client.
