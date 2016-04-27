@@ -372,10 +372,10 @@ class WebSocketTest(unittest.TestCase):
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Once more unto the breach, "
-        s.add_packet(six.b("\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15" \
+        s.add_packet(six.b("\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15"
                            "\rC\x10\t\x07C\x06\x13\x07\x02\x07\tNC"))
         # OPCODE=CONT, FIN=0, MSG="dear friends, "
-        s.add_packet(six.b("\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07" \
+        s.add_packet(six.b("\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07"
                            "\x17MB"))
         # OPCODE=CONT, FIN=1, MSG="once more"
         s.add_packet(six.b("\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04"))
@@ -395,7 +395,7 @@ class WebSocketTest(unittest.TestCase):
         # OPCODE=PING, FIN=1, MSG="Please PONG this"
         s.add_packet(six.b("\x89\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17"))
         # OPCODE=CONT, FIN=1, MSG="of a good thing"
-        s.add_packet(six.b("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
+        s.add_packet(six.b("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c"
                            "\x08\x0c\x04"))
         data = sock.recv()
         self.assertEqual(data, "Too much of a good thing")
