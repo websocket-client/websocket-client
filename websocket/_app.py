@@ -168,16 +168,16 @@ class WebSocketApp(object):
         close_frame = None
 
         try:
-            self.sock = WebSocket(self.get_mask_key,
-                sockopt=sockopt, sslopt=sslopt,
+            self.sock = WebSocket(
+                self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message and True or False,
                 skip_utf8_validation=skip_utf8_validation)
             self.sock.settimeout(getdefaulttimeout())
-            self.sock.connect(self.url, header=self.header, cookie=self.cookie,
+            self.sock.connect(
+                self.url, header=self.header, cookie=self.cookie,
                 http_proxy_host=http_proxy_host,
-                http_proxy_port=http_proxy_port,
-                http_no_proxy=http_no_proxy, http_proxy_auth=http_proxy_auth,
-                subprotocols=self.subprotocols,
+                http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
+                http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
                 host=host, origin=origin)
             self._callback(self.on_open)
 
@@ -227,8 +227,9 @@ class WebSocketApp(object):
                 thread.join()
                 self.keep_running = False
             self.sock.close()
-            self._callback(self.on_close,
-                *self._get_close_args(close_frame.data if close_frame else None))
+            close_args = self._get_close_args(
+                close_frame.data if close_frame else None)
+            self._callback(self.on_close, *close_args)
             self.sock = None
 
     def _get_close_args(self, data):

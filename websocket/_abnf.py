@@ -68,7 +68,7 @@ VALID_CLOSE_STATUS = (
     STATUS_MESSAGE_TOO_BIG,
     STATUS_INVALID_EXTENSION,
     STATUS_UNEXPECTED_CONDITION,
-    )
+)
 
 class ABNF(object):
     """
@@ -87,7 +87,7 @@ class ABNF(object):
 
     # available operation code value tuple
     OPCODES = (OPCODE_CONT, OPCODE_TEXT, OPCODE_BINARY, OPCODE_CLOSE,
-                OPCODE_PING, OPCODE_PONG)
+               OPCODE_PING, OPCODE_PONG)
 
     # opcode human readable string
     OPCODE_MAP = {
@@ -97,7 +97,7 @@ class ABNF(object):
         OPCODE_CLOSE: "close",
         OPCODE_PING: "ping",
         OPCODE_PONG: "pong"
-        }
+    }
 
     # data length threshold.
     LENGTH_7  = 0x7e

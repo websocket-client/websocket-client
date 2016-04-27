@@ -82,8 +82,8 @@ def connect(url, options, proxy, socket):
 
 
 def _get_addrinfo_list(hostname, port, is_secure, proxy):
-    phost, pport, pauth = get_proxy_info(hostname, is_secure,
-        proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
+    phost, pport, pauth = get_proxy_info(
+        hostname, is_secure, proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
     if not phost:
         addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
         return addrinfo_list, False, None

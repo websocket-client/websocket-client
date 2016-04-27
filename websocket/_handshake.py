@@ -124,7 +124,7 @@ def _get_resp_headers(sock, success_status=101):
 _HEADERS_TO_CHECK = {
     "upgrade": "websocket",
     "connection": "upgrade",
-    }
+}
 
 
 def _validate(headers, key, subprotocols):

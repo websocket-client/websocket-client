@@ -82,8 +82,9 @@ def _is_no_proxy_host(hostname, no_proxy):
     return hostname in no_proxy
 
 
-def get_proxy_info(hostname, is_secure,
-            proxy_host=None, proxy_port=0, proxy_auth=None, no_proxy=None):
+def get_proxy_info(
+        hostname, is_secure, proxy_host=None, proxy_port=0, proxy_auth=None,
+        no_proxy=None):
     """
     try to retrieve proxy host and port from environment
     if not provided in options.
