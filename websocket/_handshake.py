@@ -77,7 +77,7 @@ def _get_handshake_headers(resource, host, port, options):
     headers.append("GET %s HTTP/1.1" % resource)
     headers.append("Upgrade: websocket")
     headers.append("Connection: Upgrade")
-    if port == 80:
+    if port == 80 or port == 443:
         hostport = host
     else:
         hostport = "%s:%d" % (host, port)
