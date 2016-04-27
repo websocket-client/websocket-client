@@ -43,7 +43,7 @@ TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = True
-TRACABLE = False
+TRACEABLE = False
 
 
 def create_mask_key(n):
@@ -86,7 +86,7 @@ class HeaderSockMock(SockMock):
 
 class WebSocketTest(unittest.TestCase):
     def setUp(self):
-        ws.enableTrace(TRACABLE)
+        ws.enableTrace(TRACEABLE)
 
     def tearDown(self):
         pass
@@ -479,7 +479,7 @@ class WebSocketAppTest(unittest.TestCase):
         """
 
     def setUp(self):
-        ws.enableTrace(TRACABLE)
+        ws.enableTrace(TRACEABLE)
 
         WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
