@@ -60,7 +60,8 @@ def connect(url, options, proxy, socket):
     if socket:
         return socket, (hostname, port, resource)
 
-    addrinfo_list, need_tunnel, auth = _get_addrinfo_list(hostname, port, is_secure, proxy)
+    addrinfo_list, need_tunnel, auth = _get_addrinfo_list(
+        hostname, port, is_secure, proxy)
     if not addrinfo_list:
         raise WebSocketException(
             "Host not found.: " + hostname + ":" + str(port))
@@ -88,7 +89,8 @@ def _get_addrinfo_list(hostname, port, is_secure, proxy):
     phost, pport, pauth = get_proxy_info(
         hostname, is_secure, proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
     if not phost:
-        addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
+        addrinfo_list = socket.getaddrinfo(
+            hostname, port, 0, 0, socket.SOL_TCP)
         return addrinfo_list, False, None
     else:
         pport = pport and pport or 80
@@ -140,7 +142,8 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
             sslopt.get('keyfile', None),
             sslopt.get('password', None),
         )
-    # see https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
+    # see
+    # https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
     context.verify_mode = sslopt['cert_reqs']
     if HAVE_CONTEXT_CHECK_HOSTNAME:
         context.check_hostname = check_hostname
@@ -166,7 +169,8 @@ def _ssl_socket(sock, user_sslopt, hostname):
         os.path.dirname(__file__), "cacert.pem")
     if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) is None:
         sslopt['ca_certs'] = certPath
-    check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop('check_hostname', True)
+    check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop(
+        'check_hostname', True)
 
     if _can_use_sni():
         sock = _wrap_sni_socket(sock, sslopt, hostname, check_hostname)

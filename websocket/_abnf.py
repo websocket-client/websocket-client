@@ -145,7 +145,8 @@ class ABNF(object):
             if l > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
                 raise WebSocketProtocolException("Invalid close frame.")
 
-            code = 256*six.byte2int(self.data[0:1]) + six.byte2int(self.data[1:2])
+            code = 256 * \
+                six.byte2int(self.data[0:1]) + six.byte2int(self.data[1:2])
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode.")
 
@@ -155,8 +156,8 @@ class ABNF(object):
 
     def __str__(self):
         return "fin=" + str(self.fin) \
-                + " opcode=" + str(self.opcode) \
-                + " data=" + str(self.data)
+            + " opcode=" + str(self.opcode) \
+            + " data=" + str(self.data)
 
     @staticmethod
     def create_frame(data, opcode, fin=1):
@@ -344,7 +345,8 @@ class frame_buffer(object):
             # fragmenting the heap -- the number of bytes recv() actually
             # reads is limited by socket buffer and is relatively small,
             # yet passing large numbers repeatedly causes lots of large
-            # buffers allocated and then shrunk, which results in fragmentation.
+            # buffers allocated and then shrunk, which results in
+            # fragmentation.
             bytes_ = self.recv(min(16384, shortage))
             self.recv_buffer.append(bytes_)
             shortage -= len(bytes_)
@@ -392,6 +394,7 @@ class continuous_frame(object):
         self.cont_data = None
         frame.data = data[1]
         if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not self.skip_utf8_validation and not validate_utf8(frame.data):
-            raise WebSocketPayloadException("cannot decode: " + repr(frame.data))
+            raise WebSocketPayloadException(
+                "cannot decode: " + repr(frame.data))
 
         return [data[0], frame]

@@ -114,7 +114,8 @@ class WebSocketApp(object):
         """
 
         if not self.sock or self.sock.send(data, opcode) == 0:
-            raise WebSocketConnectionClosedException("Connection is already closed.")
+            raise WebSocketConnectionClosedException(
+                "Connection is already closed.")
 
     def close(self):
         """
@@ -184,12 +185,14 @@ class WebSocketApp(object):
 
             if ping_interval:
                 event = threading.Event()
-                thread = threading.Thread(target=self._send_ping, args=(ping_interval, event))
+                thread = threading.Thread(
+                    target=self._send_ping, args=(ping_interval, event))
                 thread.setDaemon(True)
                 thread.start()
 
             while self.sock.connected:
-                r, w, e = select.select((self.sock.sock, ), (), (), ping_timeout)
+                r, w, e = select.select(
+                    (self.sock.sock, ), (), (), ping_timeout)
                 if not self.keep_running:
                     break
 
@@ -204,8 +207,10 @@ class WebSocketApp(object):
                         self.last_pong_tm = time.time()
                         self._callback(self.on_pong, frame.data)
                     elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
-                        self._callback(self.on_data, data, frame.opcode, frame.fin)
-                        self._callback(self.on_cont_message, frame.data, frame.fin)
+                        self._callback(self.on_data, data,
+                                       frame.opcode, frame.fin)
+                        self._callback(self.on_cont_message,
+                                       frame.data, frame.fin)
                     else:
                         data = frame.data
                         if six.PY3 and frame.opcode == ABNF.OPCODE_TEXT:
