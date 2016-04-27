@@ -69,7 +69,7 @@ except ImportError:
     def _decode(state, codep, ch):
         tp = _UTF8D[ch]
 
-        codep = (ch & 0x3f ) | (codep << 6) if (state != _UTF8_ACCEPT)  else (0xff >> tp) & (ch)
+        codep = (ch & 0x3f ) | (codep << 6) if (state != _UTF8_ACCEPT)  else (0xff >> tp) & ch
         state = _UTF8D[256 + state + tp]
 
         return state, codep;

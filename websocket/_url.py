@@ -66,7 +66,7 @@ def parse_url(url):
     if parsed.query:
         resource += "?" + parsed.query
 
-    return (hostname, port, resource, is_secure)
+    return hostname, port, resource, is_secure
 
 
 DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]

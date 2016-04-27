@@ -63,7 +63,7 @@ def parse_args():
 
     return parser.parse_args()
 
-class RawInput():
+class RawInput:
     def raw_input(self, prompt):
         if six.PY3:
             line = input(prompt)
@@ -103,16 +103,16 @@ def main():
     if args.verbose > 1:
         websocket.enableTrace(True)
     options = {}
-    if (args.proxy):
+    if args.proxy:
         p = urlparse(args.proxy)
         options["http_proxy_host"] = p.hostname
         options["http_proxy_port"] = p.port
-    if (args.origin):
+    if args.origin:
         options["origin"] = args.origin
-    if (args.subprotocols):
+    if args.subprotocols:
         options["subprotocols"] = args.subprotocols
     opts = {}
-    if (args.nocert):
+    if args.nocert:
         opts = { "cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False }
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
     if args.raw:
@@ -125,14 +125,14 @@ def main():
         try:
             frame = ws.recv_frame()
         except websocket.WebSocketException:
-            return (websocket.ABNF.OPCODE_CLOSE, None)
+            return websocket.ABNF.OPCODE_CLOSE, None
         if not frame:
             raise websocket.WebSocketException("Not a valid frame %s" % frame)
         elif frame.opcode in OPCODE_DATA:
-            return (frame.opcode, frame.data)
+            return frame.opcode, frame.data
         elif frame.opcode == websocket.ABNF.OPCODE_CLOSE:
             ws.send_close()
-            return (frame.opcode, None)
+            return frame.opcode, None
         elif frame.opcode == websocket.ABNF.OPCODE_PING:
             ws.pong(frame.data)
             return frame.opcode, frame.data
@@ -152,7 +152,7 @@ def main():
                 msg = "%s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
 
             if msg is not None:
-                if (args.timings):
+                if args.timings:
                     console.write(str(time.time() - start_time) + ": " + msg)
                 else:
                     console.write(msg)
