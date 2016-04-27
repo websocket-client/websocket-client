@@ -415,7 +415,7 @@ class WebSocket(object):
             self.sock.shutdown(socket.SHUT_RDWR)
 
     def shutdown(self):
-        "close socket, immediately."
+        """close socket, immediately."""
         if self.sock:
             self.sock.close()
             self.sock = None
