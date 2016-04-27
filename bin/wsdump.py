@@ -28,7 +28,7 @@ ENCODING = get_encoding()
 
 class VAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
-        if values==None:
+        if values is None:
             values = "1"
         try:
             values = int(values)

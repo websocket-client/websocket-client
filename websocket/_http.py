@@ -161,7 +161,7 @@ def _ssl_socket(sock, user_sslopt, hostname):
     
     certPath = os.path.join(
         os.path.dirname(__file__), "cacert.pem")
-    if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) == None:
+    if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) is None:
         sslopt['ca_certs'] = certPath
     check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop('check_hostname', True)
 
