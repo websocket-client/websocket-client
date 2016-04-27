@@ -148,7 +148,8 @@ class ABNF(object):
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode.")
 
-    def _is_valid_close_status(self, code):
+    @staticmethod
+    def _is_valid_close_status(code):
         return code in VALID_CLOSE_STATUS or (3000 <= code <5000)
 
     def __str__(self):
