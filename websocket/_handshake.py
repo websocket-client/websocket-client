@@ -19,21 +19,21 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
-
-import six
-if six.PY3:
-    from base64 import encodebytes as base64encode
-else:
-    from base64 import encodestring as base64encode
-
 import hashlib
 import hmac
 import os
 
-from ._logging import *
-from ._socket import*
-from ._http import *
+import six
+
 from ._exceptions import *
+from ._http import *
+from ._logging import *
+from ._socket import *
+
+if six.PY3:
+    from base64 import encodebytes as base64encode
+else:
+    from base64 import encodestring as base64encode
 
 __all__ = ["handshake_response", "handshake"]
 

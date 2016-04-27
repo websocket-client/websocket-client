@@ -21,24 +21,22 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 from __future__ import print_function
 
+import socket
+import struct
+import threading
 
 import six
-import socket
-
-if six.PY3:
-    from base64 import encodebytes as base64encode
-else:
-    from base64 import encodestring as base64encode
-
-import threading
 
 # websocket modules
 from ._abnf import *
+from ._exceptions import *
+from ._handshake import *
+from ._http import *
+from ._logging import *
 from ._socket import *
 from ._utils import *
-from ._logging import *
-from ._http import *
-from ._handshake import *
+
+__all__ = ['WebSocket', 'create_connection']
 
 """
 websocket python client.

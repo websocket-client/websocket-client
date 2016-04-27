@@ -1,40 +1,39 @@
 # -*- coding: utf-8 -*-
 #
 
-import six
 import sys
 sys.path[0:0] = [""]
 
 import os
 import os.path
 import socket
-try:
-    from ssl import SSLError
-except ImportError:
-    # dummy class of SSLError for ssl none-support environment.
-    class SSLError(Exception):
-        pass
 
-if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-    import unittest2 as unittest
-else:
-    import unittest
+import six
 
+# websocket-client
+import websocket as ws
+from websocket._handshake import _create_sec_websocket_key, \
+    _validate as _validate_header
+from websocket._http import read_headers
+from websocket._url import get_proxy_info, parse_url
+from websocket._utils import validate_utf8
 
 if six.PY3:
     from base64 import decodebytes as base64decode
 else:
     from base64 import decodestring as base64decode
 
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+    import unittest2 as unittest
+else:
+    import unittest
 
-# websocket-client
-import websocket as ws
-from websocket._handshake import _create_sec_websocket_key
-from websocket._url import parse_url, get_proxy_info
-from websocket._utils import validate_utf8
-from websocket._handshake import _validate as _validate_header
-from websocket._http import read_headers
-
+try:
+    from ssl import SSLError
+except ImportError:
+    # dummy class of SSLError for ssl none-support environment.
+    class SSLError(Exception):
+        pass
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'

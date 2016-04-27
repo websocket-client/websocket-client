@@ -2,12 +2,15 @@
 
 import argparse
 import code
-import six
 import sys
 import threading
 import time
-import websocket
+
+import six
 from six.moves.urllib.parse import urlparse
+
+import websocket
+
 try:
     import readline
 except ImportError:

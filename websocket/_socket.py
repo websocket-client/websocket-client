@@ -19,13 +19,13 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA 02110-1335  USA
 
 """
-
 import socket
+
 import six
 
 from ._exceptions import *
-from ._utils import *
 from ._ssl_compat import *
+from ._utils import *
 
 DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1)]
 if hasattr(socket, "SO_KEEPALIVE"):

@@ -23,17 +23,18 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 WebSocketApp provides higher level APIs.
 """
+import select
+import sys
 import threading
 import time
 import traceback
-import sys
-import select
+
 import six
 
+from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
 from ._logging import *
-from ._abnf import ABNF
 
 __all__ = ["WebSocketApp"]
 

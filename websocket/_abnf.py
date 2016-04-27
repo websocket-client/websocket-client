@@ -19,10 +19,12 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
-import six
 import array
-import struct
 import os
+import struct
+
+import six
+
 from ._exceptions import *
 from ._utils import validate_utf8
 
@@ -43,6 +45,22 @@ except ImportError:
             return _d.tobytes()
         else:
             return _d.tostring()
+
+__all__ = [
+    'ABNF', 'continuous_frame', 'frame_buffer',
+    'STATUS_NORMAL',
+    'STATUS_GOING_AWAY',
+    'STATUS_PROTOCOL_ERROR',
+    'STATUS_UNSUPPORTED_DATA_TYPE',
+    'STATUS_STATUS_NOT_AVAILABLE',
+    'STATUS_ABNORMAL_CLOSED',
+    'STATUS_INVALID_PAYLOAD',
+    'STATUS_POLICY_VIOLATION',
+    'STATUS_MESSAGE_TOO_BIG',
+    'STATUS_INVALID_EXTENSION',
+    'STATUS_UNEXPECTED_CONDITION',
+    'STATUS_TLS_HANDSHAKE_ERROR',
+]
 
 # closing frame status codes.
 STATUS_NORMAL = 1000

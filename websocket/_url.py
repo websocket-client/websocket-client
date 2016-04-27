@@ -19,9 +19,9 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
+import os
 
 from six.moves.urllib.parse import urlparse
-import os
 
 __all__ = ["parse_url", "get_proxy_info"]
 

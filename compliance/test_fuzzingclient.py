@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
-import websocket
 import json
 import traceback
-import six
 
-
-
-
+import websocket
 
 SERVER = 'ws://127.0.0.1:8642'
 AGENT = 'py-websockets-client'

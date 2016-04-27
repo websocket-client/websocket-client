@@ -19,23 +19,23 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
-
-import six
-import socket
 import errno
 import os
+import socket
 import sys
+
+import six
+
+from ._exceptions import *
+from ._logging import *
+from ._socket import*
+from ._ssl_compat import *
+from ._url import *
 
 if six.PY3:
     from base64 import encodebytes as base64encode
 else:
     from base64 import encodestring as base64encode
-
-from ._logging import *
-from ._url import *
-from ._socket import*
-from ._exceptions import *
-from ._ssl_compat import *
 
 __all__ = ["proxy_info", "connect", "read_headers"]
 
