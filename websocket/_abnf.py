@@ -240,7 +240,7 @@ class ABNF(object):
 
 class frame_buffer(object):
     _HEADER_MASK_INDEX = 5
-    _HEADER_LENGHT_INDEX = 6
+    _HEADER_LENGTH_INDEX = 6
 
     def __init__(self, recv_fn, skip_utf8_validation):
         self.recv = recv_fn
@@ -290,7 +290,7 @@ class frame_buffer(object):
         return self.length is None
 
     def recv_length(self):
-        bits = self.header[frame_buffer._HEADER_LENGHT_INDEX]
+        bits = self.header[frame_buffer._HEADER_LENGTH_INDEX]
         length_bits = bits & 0x7f
         if length_bits == 0x7e:
             v = self.recv_strict(2)

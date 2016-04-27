@@ -2,7 +2,7 @@ ChangeLog
 ============
 
 - 0.37.0
-  - fixed fialer that `websocket.create_connection` does not accept `origin` as a parameter (#246 )
+  - fixed failure that `websocket.create_connection` does not accept `origin` as a parameter (#246 )
 
 - 0.36.0
   - added support for using custom connection class (#235)
@@ -90,7 +90,7 @@ ChangeLog
 - 0.24.0
 
   - Supporting http-basic auth in WebSocketApp (#143)
-  - fix failer of test.testInternalRecvStrict(#141)
+  - fix failure of test.testInternalRecvStrict(#141)
   - skip utf8 validation by skip_utf8_validation argument (#137)
   - WebsocketProxyException will be raised if we got error about proxy.(#138)
 
