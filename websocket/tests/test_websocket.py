@@ -44,7 +44,7 @@ TEST_SECURE_WS = True
 TRACEABLE = False
 
 
-def create_mask_key(n):
+def create_mask_key(_):
     return "abcd"
 
 
@@ -261,7 +261,7 @@ class WebSocketTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testIter(self):
         count = 2
-        for rsvp in ws.create_connection('ws://stream.meetup.com/2/rsvps'):
+        for _ in ws.create_connection('ws://stream.meetup.com/2/rsvps'):
             count -= 1
             if count == 0:
                 break
@@ -280,7 +280,7 @@ class WebSocketTest(unittest.TestCase):
         # s.add_packet(SSLError("The read operation timed out"))
         s.add_packet(six.b("baz"))
         with self.assertRaises(ws.WebSocketTimeoutException):
-            data = sock.frame_buffer.recv_strict(9)
+            sock.frame_buffer.recv_strict(9)
         # if six.PY2:
         #     with self.assertRaises(ws.WebSocketTimeoutException):
         #         data = sock._recv_strict(9)
@@ -290,7 +290,7 @@ class WebSocketTest(unittest.TestCase):
         data = sock.frame_buffer.recv_strict(9)
         self.assertEqual(data, six.b("foobarbaz"))
         with self.assertRaises(ws.WebSocketConnectionClosedException):
-            data = sock.frame_buffer.recv_strict(1)
+            sock.frame_buffer.recv_strict(1)
 
     def testRecvTimeout(self):
         sock = ws.WebSocket()
@@ -301,13 +301,13 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet(socket.timeout())
         s.add_packet(six.b("\x4e\x43\x33\x0e\x10\x0f\x00\x40"))
         with self.assertRaises(ws.WebSocketTimeoutException):
-            data = sock.recv()
+            sock.recv()
         with self.assertRaises(ws.WebSocketTimeoutException):
-            data = sock.recv()
+            sock.recv()
         data = sock.recv()
         self.assertEqual(data, "Hello, World!")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
-            data = sock.recv()
+            sock.recv()
 
     def testRecvWithSimpleFragmentation(self):
         sock = ws.WebSocket()
