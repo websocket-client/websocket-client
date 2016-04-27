@@ -27,6 +27,7 @@ ENCODING = get_encoding()
 
 
 class VAction(argparse.Action):
+
     def __call__(self, parser, args, values, option_string=None):
         if values is None:
             values = "1"
@@ -64,7 +65,9 @@ def parse_args():
 
     return parser.parse_args()
 
+
 class RawInput:
+
     def raw_input(self, prompt):
         if six.PY3:
             line = input(prompt)
@@ -78,7 +81,9 @@ class RawInput:
 
         return line
 
+
 class InteractiveConsole(RawInput, code.InteractiveConsole):
+
     def write(self, data):
         sys.stdout.write("\033[2K\033[E")
         # sys.stdout.write("\n")
@@ -89,7 +94,9 @@ class InteractiveConsole(RawInput, code.InteractiveConsole):
     def read(self):
         return self.raw_input("> ")
 
+
 class NonInteractive(RawInput):
+
     def write(self, data):
         sys.stdout.write(data)
         sys.stdout.write("\n")
@@ -97,6 +104,7 @@ class NonInteractive(RawInput):
 
     def read(self):
         return self.raw_input("")
+
 
 def main():
     start_time = time.time()
@@ -139,7 +147,6 @@ def main():
             return frame.opcode, frame.data
 
         return frame.opcode, frame.data
-
 
     def recv_ws():
         while True:

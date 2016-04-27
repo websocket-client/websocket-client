@@ -39,7 +39,9 @@ from ._ssl_compat import *
 
 __all__ = ["proxy_info", "connect", "read_headers"]
 
+
 class proxy_info(object):
+
     def __init__(self, **options):
         self.host = options.get("http_proxy_host", None)
         if self.host:
@@ -50,6 +52,7 @@ class proxy_info(object):
             self.port = 0
             self.auth = None
             self.no_proxy = None
+
 
 def connect(url, options, proxy, socket):
     hostname, port, resource, is_secure = parse_url(url)
@@ -158,7 +161,7 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
 def _ssl_socket(sock, user_sslopt, hostname):
     sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
     sslopt.update(user_sslopt)
-    
+
     certPath = os.path.join(
         os.path.dirname(__file__), "cacert.pem")
     if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) is None:
@@ -175,6 +178,7 @@ def _ssl_socket(sock, user_sslopt, hostname):
         match_hostname(sock.getpeercert(), hostname)
 
     return sock
+
 
 def _tunnel(sock, host, port, auth):
     debug("Connecting proxy...")
@@ -199,8 +203,9 @@ def _tunnel(sock, host, port, auth):
     if status != 200:
         raise WebSocketProxyException(
             "failed CONNECT via proxy status: %r" % status)
-    
+
     return sock
+
 
 def read_headers(sock):
     status = None

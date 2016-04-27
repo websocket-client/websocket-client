@@ -48,6 +48,7 @@ VERSION = 13
 
 
 class handshake_response(object):
+
     def __init__(self, status, headers, subprotocol):
         self.status = status
         self.headers = headers

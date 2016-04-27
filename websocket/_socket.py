@@ -42,7 +42,9 @@ _default_timeout = None
 __all__ = ["DEFAULT_SOCKET_OPTION", "sock_opt", "setdefaulttimeout", "getdefaulttimeout",
            "recv", "recv_line", "send"]
 
+
 class sock_opt(object):
+
     def __init__(self, sockopt, sslopt):
         if sockopt is None:
             sockopt = []
@@ -51,6 +53,7 @@ class sock_opt(object):
         self.sockopt = sockopt
         self.sslopt = sslopt
         self.timeout = None
+
 
 def setdefaulttimeout(timeout):
     """

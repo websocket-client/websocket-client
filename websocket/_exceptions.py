@@ -25,6 +25,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 define websocket exceptions
 """
 
+
 class WebSocketException(Exception):
     """
     websocket exception class.
@@ -72,6 +73,7 @@ class WebSocketBadStatusException(WebSocketException):
     """
     WebSocketBadStatusException will be raised when we get bad handshake status code.
     """
+
     def __init__(self, message, status_code):
         super(WebSocketBadStatusException, self).__init__(message % status_code)
         self.status_code = status_code
