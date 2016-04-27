@@ -43,7 +43,7 @@ class WebSocketApp(object):
     Higher level of APIs are provided.
     The interface is like JavaScript WebSocket object.
     """
-    def __init__(self, url, header=[],
+    def __init__(self, url, header=None,
                  on_open=None, on_message=None, on_error=None,
                  on_close=None, on_ping=None, on_pong=None,
                  on_cont_message=None,
@@ -87,7 +87,7 @@ class WebSocketApp(object):
         subprotocols: array of available sub protocols. default is None.
         """
         self.url = url
-        self.header = header
+        self.header = header if header is not None else []
         self.cookie = cookie
         self.on_open = on_open
         self.on_message = on_message
