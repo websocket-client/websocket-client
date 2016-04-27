@@ -7,7 +7,6 @@ sys.path[0:0] = [""]
 
 import os
 import os.path
-import base64
 import socket
 try:
     from ssl import SSLError
@@ -21,7 +20,6 @@ if sys.version_info[0] == 2 and sys.version_info[1] < 7:
 else:
     import unittest
 
-import uuid
 
 if six.PY3:
     from base64 import decodebytes as base64decode
