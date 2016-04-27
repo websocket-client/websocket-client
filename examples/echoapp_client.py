@@ -41,8 +41,8 @@ if __name__ == "__main__":
     else:
         host = sys.argv[1]
     ws = websocket.WebSocketApp(host,
-                                on_message = on_message,
-                                on_error = on_error,
-                                on_close = on_close)
+                                on_message=on_message,
+                                on_error=on_error,
+                                on_close=on_close)
     ws.on_open = on_open
     ws.run_forever()

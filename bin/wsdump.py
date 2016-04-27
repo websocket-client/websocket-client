@@ -33,8 +33,9 @@ class VAction(argparse.Action):
         try:
             values = int(values)
         except ValueError:
-            values = values.count("v")+1
+            values = values.count("v") + 1
         setattr(args, self.dest, values)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="WebSocket Simple Dump Tool")
@@ -113,7 +114,7 @@ def main():
         options["subprotocols"] = args.subprotocols
     opts = {}
     if args.nocert:
-        opts = { "cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False }
+        opts = {"cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False}
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
     if args.raw:
         console = NonInteractive()
