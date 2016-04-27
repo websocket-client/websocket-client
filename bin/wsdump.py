@@ -10,7 +10,7 @@ import websocket
 from six.moves.urllib.parse import urlparse
 try:
     import readline
-except:
+except ImportError:
     pass
 
 
