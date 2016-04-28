@@ -85,7 +85,7 @@ You can also use your own class for the connection.
 
 custom connection class example
 
-..code:: python
+.. code:: python
 
     from websocket import create_connection, WebSocket
     class MyWebSocket(WebSocket):
