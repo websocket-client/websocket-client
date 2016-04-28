@@ -390,7 +390,8 @@ class continuous_frame(object):
     def validate(self, frame):
         if not self.recving_frames and frame.opcode == ABNF.OPCODE_CONT:
             raise WebSocketProtocolException("Illegal frame")
-        if self.recving_frames and frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+        if self.recving_frames and \
+                frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
             raise WebSocketProtocolException("Illegal frame")
 
     def add(self, frame):
