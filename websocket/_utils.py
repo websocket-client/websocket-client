@@ -19,16 +19,17 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA 02110-1335  USA
 
 """
-
 import six
 
 __all__ = ["NoLock", "validate_utf8", "extract_err_message"]
 
+
 class NoLock(object):
+
     def __enter__(self):
         pass
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         pass
 
 try:
@@ -69,10 +70,11 @@ except ImportError:
     def _decode(state, codep, ch):
         tp = _UTF8D[ch]
 
-        codep = (ch & 0x3f ) | (codep << 6) if (state != _UTF8_ACCEPT)  else (0xff >> tp) & (ch)
+        codep = (ch & 0x3f) | (codep << 6) if (
+            state != _UTF8_ACCEPT) else (0xff >> tp) & ch
         state = _UTF8D[256 + state + tp]
 
-        return state, codep;
+        return state, codep
 
     def _validate_utf8(utfbytes):
         state = _UTF8_ACCEPT
@@ -86,6 +88,7 @@ except ImportError:
 
         return True
 
+
 def validate_utf8(utfbytes):
     """
     validate utf8 byte string.
@@ -93,6 +96,7 @@ def validate_utf8(utfbytes):
     return value: if valid utf8 string, return true. Otherwise, return false.
     """
     return _validate_utf8(utfbytes)
+
 
 def extract_err_message(exception):
     if exception.args:

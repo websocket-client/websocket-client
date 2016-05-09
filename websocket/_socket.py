@@ -19,13 +19,13 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA 02110-1335  USA
 
 """
-
 import socket
+
 import six
 
 from ._exceptions import *
-from ._utils import *
 from ._ssl_compat import *
+from ._utils import *
 
 DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1)]
 if hasattr(socket, "SO_KEEPALIVE"):
@@ -42,7 +42,9 @@ _default_timeout = None
 __all__ = ["DEFAULT_SOCKET_OPTION", "sock_opt", "setdefaulttimeout", "getdefaulttimeout",
            "recv", "recv_line", "send"]
 
+
 class sock_opt(object):
+
     def __init__(self, sockopt, sslopt):
         if sockopt is None:
             sockopt = []
@@ -51,6 +53,7 @@ class sock_opt(object):
         self.sockopt = sockopt
         self.sslopt = sslopt
         self.timeout = None
+
 
 def setdefaulttimeout(timeout):
     """
@@ -74,7 +77,7 @@ def recv(sock, bufsize):
         raise WebSocketConnectionClosedException("socket is already closed.")
 
     try:
-        bytes = sock.recv(bufsize)
+        bytes_ = sock.recv(bufsize)
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
@@ -85,10 +88,11 @@ def recv(sock, bufsize):
         else:
             raise
 
-    if not bytes:
-        raise WebSocketConnectionClosedException("Connection is already closed.")
+    if not bytes_:
+        raise WebSocketConnectionClosedException(
+            "Connection is already closed.")
 
-    return bytes
+    return bytes_
 
 
 def recv_line(sock):

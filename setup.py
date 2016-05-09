@@ -2,12 +2,12 @@ from setuptools import setup
 import sys
 
 VERSION = "0.37.0"
-NAME="websocket_client"
+NAME = "websocket_client"
 
 install_requires = ["six"]
 tests_require = []
 if sys.version_info[0] == 2:
-    if sys.version_info[1] < 7 or (sys.version_info[1] == 7 and sys.version_info[2]< 9):
+    if sys.version_info[1] < 7 or (sys.version_info[1] == 7 and sys.version_info[2] < 9):
         install_requires.append('backports.ssl_match_hostname')
     if sys.version_info[1] < 7:
         tests_require.append('unittest2==0.8.0')
