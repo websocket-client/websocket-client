@@ -1,14 +1,33 @@
 # -*- coding: utf-8 -*-
 #
 
-import six
 import sys
 sys.path[0:0] = [""]
 
 import os
 import os.path
-import base64
 import socket
+
+import six
+
+# websocket-client
+import websocket as ws
+from websocket._handshake import _create_sec_websocket_key, \
+    _validate as _validate_header
+from websocket._http import read_headers
+from websocket._url import get_proxy_info, parse_url
+from websocket._utils import validate_utf8
+
+if six.PY3:
+    from base64 import decodebytes as base64decode
+else:
+    from base64 import decodestring as base64decode
+
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+    import unittest2 as unittest
+else:
+    import unittest
+
 try:
     from ssl import SSLError
 except ImportError:
@@ -16,37 +35,15 @@ except ImportError:
     class SSLError(Exception):
         pass
 
-if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-    import unittest2 as unittest
-else:
-    import unittest
-
-import uuid
-
-if six.PY3:
-    from base64 import decodebytes as base64decode
-else:
-    from base64 import decodestring as base64decode
-
-
-# websocket-client
-import websocket as ws
-from websocket._handshake import _create_sec_websocket_key
-from websocket._url import parse_url, get_proxy_info
-from websocket._utils import validate_utf8
-from websocket._handshake import _validate as _validate_header
-from websocket._http import read_headers
-
-
 # Skip test to access the internet.
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = True
-TRACABLE = False
+TRACEABLE = False
 
 
-def create_mask_key(n):
+def create_mask_key(_):
     return "abcd"
 
 
@@ -86,7 +83,7 @@ class HeaderSockMock(SockMock):
 
 class WebSocketTest(unittest.TestCase):
     def setUp(self):
-        ws.enableTrace(TRACABLE)
+        ws.enableTrace(TRACEABLE)
 
     def tearDown(self):
         pass
@@ -263,7 +260,7 @@ class WebSocketTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testIter(self):
         count = 2
-        for rsvp in ws.create_connection('ws://stream.meetup.com/2/rsvps'):
+        for _ in ws.create_connection('ws://stream.meetup.com/2/rsvps'):
             count -= 1
             if count == 0:
                 break
@@ -282,7 +279,7 @@ class WebSocketTest(unittest.TestCase):
         # s.add_packet(SSLError("The read operation timed out"))
         s.add_packet(six.b("baz"))
         with self.assertRaises(ws.WebSocketTimeoutException):
-            data = sock.frame_buffer.recv_strict(9)
+            sock.frame_buffer.recv_strict(9)
         # if six.PY2:
         #     with self.assertRaises(ws.WebSocketTimeoutException):
         #         data = sock._recv_strict(9)
@@ -292,7 +289,7 @@ class WebSocketTest(unittest.TestCase):
         data = sock.frame_buffer.recv_strict(9)
         self.assertEqual(data, six.b("foobarbaz"))
         with self.assertRaises(ws.WebSocketConnectionClosedException):
-            data = sock.frame_buffer.recv_strict(1)
+            sock.frame_buffer.recv_strict(1)
 
     def testRecvTimeout(self):
         sock = ws.WebSocket()
@@ -303,13 +300,13 @@ class WebSocketTest(unittest.TestCase):
         s.add_packet(socket.timeout())
         s.add_packet(six.b("\x4e\x43\x33\x0e\x10\x0f\x00\x40"))
         with self.assertRaises(ws.WebSocketTimeoutException):
-            data = sock.recv()
+            sock.recv()
         with self.assertRaises(ws.WebSocketTimeoutException):
-            data = sock.recv()
+            sock.recv()
         data = sock.recv()
         self.assertEqual(data, "Hello, World!")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
-            data = sock.recv()
+            sock.recv()
 
     def testRecvWithSimpleFragmentation(self):
         sock = ws.WebSocket()
@@ -374,10 +371,10 @@ class WebSocketTest(unittest.TestCase):
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
         # OPCODE=TEXT, FIN=0, MSG="Once more unto the breach, "
-        s.add_packet(six.b("\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15" \
+        s.add_packet(six.b("\x01\x9babcd.\x0c\x00\x01A\x0f\x0c\x16\x04B\x16\n\x15"
                            "\rC\x10\t\x07C\x06\x13\x07\x02\x07\tNC"))
         # OPCODE=CONT, FIN=0, MSG="dear friends, "
-        s.add_packet(six.b("\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07" \
+        s.add_packet(six.b("\x00\x8eabcd\x05\x07\x02\x16A\x04\x11\r\x04\x0c\x07"
                            "\x17MB"))
         # OPCODE=CONT, FIN=1, MSG="once more"
         s.add_packet(six.b("\x80\x89abcd\x0e\x0c\x00\x01A\x0f\x0c\x16\x04"))
@@ -397,7 +394,7 @@ class WebSocketTest(unittest.TestCase):
         # OPCODE=PING, FIN=1, MSG="Please PONG this"
         s.add_packet(six.b("\x89\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17"))
         # OPCODE=CONT, FIN=1, MSG="of a good thing"
-        s.add_packet(six.b("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c" \
+        s.add_packet(six.b("\x80\x8fabcd\x0e\x04C\x05A\x05\x0c\x0b\x05B\x17\x0c"
                            "\x08\x0c\x04"))
         data = sock.recv()
         self.assertEqual(data, "Too much of a good thing")
@@ -479,7 +476,7 @@ class WebSocketAppTest(unittest.TestCase):
         """
 
     def setUp(self):
-        ws.enableTrace(TRACABLE)
+        ws.enableTrace(TRACEABLE)
 
         WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()

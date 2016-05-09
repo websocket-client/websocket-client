@@ -2,15 +2,18 @@
 
 import argparse
 import code
-import six
 import sys
 import threading
 import time
-import websocket
+
+import six
 from six.moves.urllib.parse import urlparse
+
+import websocket
+
 try:
     import readline
-except:
+except ImportError:
     pass
 
 
@@ -27,14 +30,16 @@ ENCODING = get_encoding()
 
 
 class VAction(argparse.Action):
+
     def __call__(self, parser, args, values, option_string=None):
-        if values==None:
+        if values is None:
             values = "1"
         try:
             values = int(values)
         except ValueError:
-            values = values.count("v")+1
+            values = values.count("v") + 1
         setattr(args, self.dest, values)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="WebSocket Simple Dump Tool")
@@ -63,7 +68,9 @@ def parse_args():
 
     return parser.parse_args()
 
-class RawInput():
+
+class RawInput:
+
     def raw_input(self, prompt):
         if six.PY3:
             line = input(prompt)
@@ -77,7 +84,9 @@ class RawInput():
 
         return line
 
+
 class InteractiveConsole(RawInput, code.InteractiveConsole):
+
     def write(self, data):
         sys.stdout.write("\033[2K\033[E")
         # sys.stdout.write("\n")
@@ -88,7 +97,9 @@ class InteractiveConsole(RawInput, code.InteractiveConsole):
     def read(self):
         return self.raw_input("> ")
 
+
 class NonInteractive(RawInput):
+
     def write(self, data):
         sys.stdout.write(data)
         sys.stdout.write("\n")
@@ -97,23 +108,24 @@ class NonInteractive(RawInput):
     def read(self):
         return self.raw_input("")
 
+
 def main():
     start_time = time.time()
     args = parse_args()
     if args.verbose > 1:
         websocket.enableTrace(True)
     options = {}
-    if (args.proxy):
+    if args.proxy:
         p = urlparse(args.proxy)
         options["http_proxy_host"] = p.hostname
         options["http_proxy_port"] = p.port
-    if (args.origin):
+    if args.origin:
         options["origin"] = args.origin
-    if (args.subprotocols):
+    if args.subprotocols:
         options["subprotocols"] = args.subprotocols
     opts = {}
-    if (args.nocert):
-        opts = { "cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False }
+    if args.nocert:
+        opts = {"cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False}
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
     if args.raw:
         console = NonInteractive()
@@ -125,20 +137,19 @@ def main():
         try:
             frame = ws.recv_frame()
         except websocket.WebSocketException:
-            return (websocket.ABNF.OPCODE_CLOSE, None)
+            return websocket.ABNF.OPCODE_CLOSE, None
         if not frame:
             raise websocket.WebSocketException("Not a valid frame %s" % frame)
         elif frame.opcode in OPCODE_DATA:
-            return (frame.opcode, frame.data)
+            return frame.opcode, frame.data
         elif frame.opcode == websocket.ABNF.OPCODE_CLOSE:
             ws.send_close()
-            return (frame.opcode, None)
+            return frame.opcode, None
         elif frame.opcode == websocket.ABNF.OPCODE_PING:
             ws.pong(frame.data)
             return frame.opcode, frame.data
 
         return frame.opcode, frame.data
-
 
     def recv_ws():
         while True:
@@ -152,7 +163,7 @@ def main():
                 msg = "%s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
 
             if msg is not None:
-                if (args.timings):
+                if args.timings:
                     console.write(str(time.time() - start_time) + ": " + msg)
                 else:
                     console.write(msg)

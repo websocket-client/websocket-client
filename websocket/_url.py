@@ -19,9 +19,9 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
+import os
 
 from six.moves.urllib.parse import urlparse
-import os
 
 __all__ = ["parse_url", "get_proxy_info"]
 
@@ -66,7 +66,7 @@ def parse_url(url):
     if parsed.query:
         resource += "?" + parsed.query
 
-    return (hostname, port, resource, is_secure)
+    return hostname, port, resource, is_secure
 
 
 DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
@@ -82,8 +82,9 @@ def _is_no_proxy_host(hostname, no_proxy):
     return hostname in no_proxy
 
 
-def get_proxy_info(hostname, is_secure,
-            proxy_host=None, proxy_port=0, proxy_auth=None, no_proxy=None):
+def get_proxy_info(
+        hostname, is_secure, proxy_host=None, proxy_port=0, proxy_auth=None,
+        no_proxy=None):
     """
     try to retrieve proxy host and port from environment
     if not provided in options.

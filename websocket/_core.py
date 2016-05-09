@@ -21,28 +21,22 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 from __future__ import print_function
 
-
-import six
 import socket
-
-if six.PY3:
-    from base64 import encodebytes as base64encode
-else:
-    from base64 import encodestring as base64encode
-
 import struct
 import threading
 
+import six
+
 # websocket modules
-from ._exceptions import *
 from ._abnf import *
+from ._exceptions import *
+from ._handshake import *
+from ._http import *
+from ._logging import *
 from ._socket import *
 from ._utils import *
-from ._url import *
-from ._logging import *
-from ._http import *
-from ._handshake import *
-from ._ssl_compat import *
+
+__all__ = ['WebSocket', 'create_connection']
 
 """
 websocket python client.
@@ -83,7 +77,7 @@ class WebSocket(object):
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
                  fire_cont_frame=False, enable_multithread=False,
-                 skip_utf8_validation=False, **options):
+                 skip_utf8_validation=False, **_):
         """
         Initialize WebSocket object.
         """
@@ -95,7 +89,8 @@ class WebSocket(object):
         self.get_mask_key = get_mask_key
         # These buffer over the build-up of a single frame.
         self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
-        self.cont_frame = continuous_frame(fire_cont_frame, skip_utf8_validation)
+        self.cont_frame = continuous_frame(
+            fire_cont_frame, skip_utf8_validation)
 
         if enable_multithread:
             self.lock = threading.Lock()
@@ -329,7 +324,8 @@ class WebSocket(object):
             if not frame:
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
-                raise WebSocketProtocolException("Not a valid frame %s" % frame)
+                raise WebSocketProtocolException(
+                    "Not a valid frame %s" % frame)
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
                 self.cont_frame.validate(frame)
                 self.cont_frame.add(frame)
@@ -339,17 +335,18 @@ class WebSocket(object):
 
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
-                return (frame.opcode, frame)
+                return frame.opcode, frame
             elif frame.opcode == ABNF.OPCODE_PING:
                 if len(frame.data) < 126:
                     self.pong(frame.data)
                 else:
-                    raise WebSocketProtocolException("Ping message is too long")
+                    raise WebSocketProtocolException(
+                        "Ping message is too long")
                 if control_frame:
-                    return (frame.opcode, frame)
+                    return frame.opcode, frame
             elif frame.opcode == ABNF.OPCODE_PONG:
                 if control_frame:
-                    return (frame.opcode, frame)
+                    return frame.opcode, frame
 
     def recv_frame(self):
         """
@@ -389,7 +386,8 @@ class WebSocket(object):
 
             try:
                 self.connected = False
-                self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
+                self.send(struct.pack('!H', status) +
+                          reason, ABNF.OPCODE_CLOSE)
                 sock_timeout = self.sock.gettimeout()
                 self.sock.settimeout(timeout)
                 try:
@@ -415,7 +413,7 @@ class WebSocket(object):
             self.sock.shutdown(socket.SHUT_RDWR)
 
     def shutdown(self):
-        "close socket, immediately."
+        """close socket, immediately."""
         if self.sock:
             self.sock.close()
             self.sock = None

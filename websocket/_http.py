@@ -19,37 +19,40 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
-
-import six
-import socket
 import errno
 import os
+import socket
 import sys
+
+import six
+
+from ._exceptions import *
+from ._logging import *
+from ._socket import*
+from ._ssl_compat import *
+from ._url import *
 
 if six.PY3:
     from base64 import encodebytes as base64encode
 else:
     from base64 import encodestring as base64encode
 
-from ._logging import *
-from ._url import *
-from ._socket import*
-from ._exceptions import *
-from ._ssl_compat import *
-
 __all__ = ["proxy_info", "connect", "read_headers"]
 
+
 class proxy_info(object):
+
     def __init__(self, **options):
         self.host = options.get("http_proxy_host", None)
         if self.host:
             self.port = options.get("http_proxy_port", 0)
-            self.auth =  options.get("http_proxy_auth", None)
+            self.auth = options.get("http_proxy_auth", None)
             self.no_proxy = options.get("http_no_proxy", None)
         else:
             self.port = 0
             self.auth = None
             self.no_proxy = None
+
 
 def connect(url, options, proxy, socket):
     hostname, port, resource, is_secure = parse_url(url)
@@ -57,7 +60,8 @@ def connect(url, options, proxy, socket):
     if socket:
         return socket, (hostname, port, resource)
 
-    addrinfo_list, need_tunnel, auth = _get_addrinfo_list(hostname, port, is_secure, proxy)
+    addrinfo_list, need_tunnel, auth = _get_addrinfo_list(
+        hostname, port, is_secure, proxy)
     if not addrinfo_list:
         raise WebSocketException(
             "Host not found.: " + hostname + ":" + str(port))
@@ -82,10 +86,11 @@ def connect(url, options, proxy, socket):
 
 
 def _get_addrinfo_list(hostname, port, is_secure, proxy):
-    phost, pport, pauth = get_proxy_info(hostname, is_secure,
-        proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
+    phost, pport, pauth = get_proxy_info(
+        hostname, is_secure, proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
     if not phost:
-        addrinfo_list = socket.getaddrinfo(hostname, port, 0, 0, socket.SOL_TCP)
+        addrinfo_list = socket.getaddrinfo(
+            hostname, port, 0, 0, socket.SOL_TCP)
         return addrinfo_list, False, None
     else:
         pport = pport and pport or 80
@@ -137,14 +142,15 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
             sslopt.get('keyfile', None),
             sslopt.get('password', None),
         )
-    # see https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
+    # see
+    # https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
     context.verify_mode = sslopt['cert_reqs']
     if HAVE_CONTEXT_CHECK_HOSTNAME:
         context.check_hostname = check_hostname
     if 'ciphers' in sslopt:
         context.set_ciphers(sslopt['ciphers'])
-    if 'cert_chain' in sslopt :
-        certfile,keyfile,password = sslopt['cert_chain']
+    if 'cert_chain' in sslopt:
+        certfile, keyfile, password = sslopt['cert_chain']
         context.load_cert_chain(certfile, keyfile, password)
 
     return context.wrap_socket(
@@ -158,12 +164,13 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
 def _ssl_socket(sock, user_sslopt, hostname):
     sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
     sslopt.update(user_sslopt)
-    
+
     certPath = os.path.join(
         os.path.dirname(__file__), "cacert.pem")
-    if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) == None:
+    if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) is None:
         sslopt['ca_certs'] = certPath
-    check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop('check_hostname', True)
+    check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop(
+        'check_hostname', True)
 
     if _can_use_sni():
         sock = _wrap_sni_socket(sock, sslopt, hostname, check_hostname)
@@ -175,6 +182,7 @@ def _ssl_socket(sock, user_sslopt, hostname):
         match_hostname(sock.getpeercert(), hostname)
 
     return sock
+
 
 def _tunnel(sock, host, port, auth):
     debug("Connecting proxy...")
@@ -199,8 +207,9 @@ def _tunnel(sock, host, port, auth):
     if status != 200:
         raise WebSocketProxyException(
             "failed CONNECT via proxy status: %r" % status)
-    
+
     return sock
+
 
 def read_headers(sock):
     status = None

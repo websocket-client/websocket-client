@@ -19,7 +19,6 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
-
 import logging
 
 _logger = logging.getLogger('websocket')
@@ -29,15 +28,15 @@ __all__ = ["enableTrace", "dump", "error", "debug", "trace",
            "isEnabledForError", "isEnabledForDebug"]
 
 
-def enableTrace(tracable):
+def enableTrace(traceable):
     """
-    turn on/off the tracability.
+    turn on/off the traceability.
 
-    tracable: boolean value. if set True, tracability is enabled.
+    traceable: boolean value. if set True, traceability is enabled.
     """
     global _traceEnabled
-    _traceEnabled = tracable
-    if tracable:
+    _traceEnabled = traceable
+    if traceable:
         if not _logger.handlers:
             _logger.addHandler(logging.StreamHandler())
         _logger.setLevel(logging.DEBUG)
