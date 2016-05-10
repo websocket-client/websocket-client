@@ -5,6 +5,7 @@ ChangeLog
   - Exclude port 443 from host http header (#248)
   - Cleanup code (#249)
   - Modify a code block directive in README (#250)
+  - fixed ping/pong timeouet (#253)
 
 - 0.37.0
   - fixed failure that `websocket.create_connection` does not accept `origin` as a parameter (#246 )
