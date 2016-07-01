@@ -53,6 +53,10 @@ def error(msg):
     _logger.error(msg)
 
 
+def warning(msg):
+    _logger.warning(msg)
+
+
 def debug(msg):
     _logger.debug(msg)
 

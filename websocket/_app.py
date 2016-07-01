@@ -130,7 +130,11 @@ class WebSocketApp(object):
         while not event.wait(interval):
             self.last_ping_tm = time.time()
             if self.sock:
-                self.sock.ping()
+                try:
+                    self.sock.ping()
+                except Exception as ex:
+                    warning("send_ping routine terminated: {}".format(ex))
+                    break
 
     def run_forever(self, sockopt=None, sslopt=None,
                     ping_interval=0, ping_timeout=None,
