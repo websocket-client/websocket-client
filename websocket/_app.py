@@ -118,13 +118,13 @@ class WebSocketApp(object):
             raise WebSocketConnectionClosedException(
                 "Connection is already closed.")
 
-    def close(self):
+    def close(self, **kwargs):
         """
         close websocket connection.
         """
         self.keep_running = False
         if self.sock:
-            self.sock.close()
+            self.sock.close(**kwargs)
 
     def _send_ping(self, interval, event):
         while not event.wait(interval):
