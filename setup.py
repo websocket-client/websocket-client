@@ -1,17 +1,38 @@
-from setuptools import setup
 import sys
+
+from setuptools import setup
+import pkg_resources
 
 VERSION = "0.38.0"
 NAME = "websocket_client"
 
 install_requires = ["six"]
 tests_require = []
-if sys.version_info[0] == 2:
-    if sys.version_info[1] < 7 or (sys.version_info[1] == 7 and sys.version_info[2] < 9):
-        install_requires.append('backports.ssl_match_hostname')
-    if sys.version_info[1] < 7:
+
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
         tests_require.append('unittest2==0.8.0')
-        install_requires.append('argparse')
+
+insecure_pythons = '2.4, 2.5, 2.6' + ', '.join("2.7.{pv}".format(pv=pv) for pv in range(10))
+
+extras_require = {
+    ':python_version in "{ips}"'.format(ips=insecure_pythons):
+        ['backports.ssl_match_hostname'],
+    ':python_version in "2.4, 2.5, 2.6"': ['argparse'],
+}
+
+try:
+    if 'bdist_wheel' not in sys.argv:
+        for key, value in extras_require.items():
+            if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
+                install_requires.extend(value)
+except Exception:
+    logging.getLogger(__name__).exception(
+        'Something went wrong calculating platform specific dependencies, so '
+        "you're getting them all!"
+    )
+    for key, value in extras_require.items():
+        if key.startswith(':'):
+            install_requires.extend(value)
 
 setup(
     name=NAME,
