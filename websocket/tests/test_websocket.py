@@ -649,8 +649,11 @@ class ProxyInfoTest(unittest.TestCase):
         os.environ["no_proxy"] = "example1.com,example2.com, echo.websocket.org"
         self.assertEqual(get_proxy_info("echo.websocket.org", True), (None, 0, None))
 
-
-
+        os.environ["http_proxy"] = "http://a:b@localhost:3128/"
+        os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
+        os.environ["no_proxy"] = "127.0.0.0/8, 192.168.0.0/16"
+        self.assertEqual(get_proxy_info("127.0.0.1", False), (None, 0, None))
+        self.assertEqual(get_proxy_info("192.168.1.1", False), (None, 0, None))
 
 
 if __name__ == "__main__":

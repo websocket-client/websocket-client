@@ -19,9 +19,13 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA  02110-1335  USA
 
 """
+
 import os
+import socket
+import struct
 
 from six.moves.urllib.parse import urlparse
+
 
 __all__ = ["parse_url", "get_proxy_info"]
 
@@ -72,6 +76,30 @@ def parse_url(url):
 DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
 
 
+def _is_ip_address(addr):
+    try:
+        socket.inet_aton(addr)
+    except socket.error:
+        return False
+    else:
+        return True
+
+
+def _is_subnet_address(hostname):
+    try:
+        addr, netmask = hostname.split("/")
+        return _is_ip_address(addr) and 0 <= int(netmask) < 32
+    except ValueError:
+        return False
+
+
+def _is_address_in_network(ip, net):
+    ipaddr = struct.unpack('I', socket.inet_aton(ip))[0]
+    netaddr, bits = net.split('/')
+    netmask = struct.unpack('I', socket.inet_aton(netaddr))[0] & ((2L << int(bits) - 1) - 1)
+    return ipaddr & netmask == netmask
+
+
 def _is_no_proxy_host(hostname, no_proxy):
     if not no_proxy:
         v = os.environ.get("no_proxy", "").replace(" ", "")
@@ -79,7 +107,12 @@ def _is_no_proxy_host(hostname, no_proxy):
     if not no_proxy:
         no_proxy = DEFAULT_NO_PROXY_HOST
 
-    return hostname in no_proxy
+    if hostname in no_proxy:
+        return True
+    elif _is_ip_address(hostname):
+        return any([_is_address_in_network(hostname, subnet) for subnet in no_proxy if _is_subnet_address(subnet)])
+
+    return False
 
 
 def get_proxy_info(
