@@ -54,50 +54,12 @@ example
 
 
 
-Example
-=============
+Examples
+========
 
-Low Level API example
-
-.. code:: python
-
-    from websocket import create_connection
-    ws = create_connection("ws://echo.websocket.org/")
-    print "Sending 'Hello, World'..."
-    ws.send("Hello, World")
-    print "Sent"
-    print "Receiving..."
-    result =  ws.recv()
-    print "Received '%s'" % result
-    ws.close()
-
-If you want to customize socket options, set sockopt.
-
-sockopt example
-
-.. code:: python
-
-    from websocket import create_connection
-    ws = create_connection("ws://echo.websocket.org/",
-                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
-
-You can also use your own class for the connection.
-
-custom connection class example
-
-.. code:: python
-
-    from websocket import create_connection, WebSocket
-    class MyWebSocket(WebSocket):
-        def recv_frame(self):
-            frame = super().recv_frame()
-            print('yay! I got this frame: ', frame)
-            return frame
-
-    ws = create_connection("ws://echo.websocket.org/",
-                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),), class_=MyWebSocket)
-
-JavaScript websocket-like API example
+Long-lived connection
+---------------------
+This example is similar to how WebSocket code looks in browsers using JavaScript.
 
 .. code:: python
 
@@ -133,6 +95,50 @@ JavaScript websocket-like API example
                                   on_close = on_close)
         ws.on_open = on_open
         ws.run_forever()
+
+
+Short-lived one-off send-receive
+--------------------------------
+This is if you want to communicate a short message and disconnect immediately when done.
+
+.. code:: python
+
+    from websocket import create_connection
+    ws = create_connection("ws://echo.websocket.org/")
+    print "Sending 'Hello, World'..."
+    ws.send("Hello, World")
+    print "Sent"
+    print "Receiving..."
+    result =  ws.recv()
+    print "Received '%s'" % result
+    ws.close()
+
+If you want to customize socket options, set sockopt.
+
+sockopt example
+
+.. code:: python
+
+    from websocket import create_connection
+    ws = create_connection("ws://echo.websocket.org/",
+                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
+
+
+More advanced: Custom class
+---------------------------
+You can also write your own class for the connection, if you want to handle the nitty-gritty details yourself.
+
+.. code:: python
+
+    from websocket import create_connection, WebSocket
+    class MyWebSocket(WebSocket):
+        def recv_frame(self):
+            frame = super().recv_frame()
+            print('yay! I got this frame: ', frame)
+            return frame
+
+    ws = create_connection("ws://echo.websocket.org/",
+                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),), class_=MyWebSocket)
 
 
 FAQ
