@@ -1,6 +1,13 @@
 ChangeLog
 ============
 
+- 0.39.0
+  - Shuffled around example code (#256)
+  - _send_ping graceful error handling (#262)
+  - Allow closing WebSocketApp with status/reason/timeout (#265)
+  - Support universal wheels (#267)
+  - _url: Added subnet IP address matching in no_proxy host detection (#270)
+
 - 0.38.0
   - Exclude port 443 from host http header (#248)
   - Cleanup code (#249)
