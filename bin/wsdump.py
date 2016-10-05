@@ -65,6 +65,8 @@ def parse_args():
                         help="Send initial text")
     parser.add_argument("--timings", action="store_true",
                         help="Print timings in seconds")
+    parser.add_argument("--headers",
+                        help="Set custom headers. Use ',' as separator")
 
     return parser.parse_args()
 
@@ -126,6 +128,8 @@ def main():
     opts = {}
     if args.nocert:
         opts = {"cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False}
+    if args.headers:
+        options['header'] = map(str.strip, args.headers.split(','))
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
     if args.raw:
         console = NonInteractive()
