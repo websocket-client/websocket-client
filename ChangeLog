@@ -8,6 +8,7 @@ ChangeLog
   - Support universal wheels (#267)
   - _url: Added subnet IP address matching in no_proxy host detection (#270)
   - fixed Incorrect encoding in continued messages python3 (#261)
+  - Pass headers for websocket handshake (#271)
 
 - 0.38.0
   - Exclude port 443 from host http header (#248)
