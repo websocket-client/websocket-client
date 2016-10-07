@@ -26,6 +26,7 @@ try:
             if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
                 install_requires.extend(value)
 except Exception:
+    import logging
     logging.getLogger(__name__).exception(
         'Something went wrong calculating platform specific dependencies, so '
         "you're getting them all!"
