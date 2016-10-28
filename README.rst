@@ -237,6 +237,7 @@ Usage
 ---------
 
 usage::
+
   wsdump.py [-h] [-v [VERBOSE]] ws_url
 
 WebSocket Simple Dump Tool
