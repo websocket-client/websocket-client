@@ -4,11 +4,15 @@ python:
   - '2.7'
   - '3.3'
   - '3.4'
+  - '3.5'
   - 'pypy'
   - 'nightly'
 
 install:
+  - pip install -U pip setuptools wheel
+  - pip install -U readme_renderer
   - python -c "import setuptools; print(setuptools.__version__)"
 
 script:
   - TEST_WITH_INTERNET=1 python setup.py test
+  - python setup.py check -r -s
