@@ -233,7 +233,7 @@ def read_headers(sock):
             kv = line.split(":", 1)
             if len(kv) == 2:
                 key, value = kv
-                headers[key.lower()] = value.strip().lower()
+                headers[key.lower()] = value.strip()
             else:
                 raise WebSocketException("Invalid header")
 

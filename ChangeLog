@@ -12,6 +12,7 @@ ChangeLog
   - setup.py: Import `logging` before calling it. (#272)
   - Implemented close code 1014 (#273)
   - Support CA bundle specified by environment variable (#279)
+  - Response header values should not be converted to lower case (#264)
 
 - 0.38.0
   - Exclude port 443 from host http header (#248)
