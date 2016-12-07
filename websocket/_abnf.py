@@ -24,6 +24,7 @@ import os
 import struct
 
 import six
+from six.moves import range
 
 from ._exceptions import *
 from ._utils import validate_utf8
