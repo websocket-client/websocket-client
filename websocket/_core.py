@@ -252,7 +252,7 @@ class WebSocket(object):
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
         length = len(data)
-        trace("send: " + repr(data))
+        #trace("send: " + repr(data))
 
         with self.lock:
             while data:
