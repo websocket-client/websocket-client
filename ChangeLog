@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 0.40.0
+  - Fix opcode -> op_code (#286)
+
 - 0.39.0
   - Shuffled around example code (#256)
   - _send_ping graceful error handling (#262)
