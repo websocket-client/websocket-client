@@ -218,7 +218,7 @@ class WebSocketApp(object):
                                        frame.data, frame.fin)
                     else:
                         data = frame.data
-                        if six.PY3 and opcode == ABNF.OPCODE_TEXT:
+                        if six.PY3 and op_code == ABNF.OPCODE_TEXT:
                             data = data.decode("utf-8")
                         self._callback(self.on_data, data, frame.opcode, True)
                         self._callback(self.on_message, data)
