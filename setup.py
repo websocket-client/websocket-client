@@ -66,5 +66,5 @@ setup(
         'websocket': ["cacert.pem"]
     },
     tests_require=tests_require,
-    test_suite="websocket.tests.test_websocket",
+    test_suite="websocket.tests"
 )

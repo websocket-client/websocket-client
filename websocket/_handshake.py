@@ -25,6 +25,7 @@ import os
 
 import six
 
+from ._cookiejar import SimpleCookieJar
 from ._exceptions import *
 from ._http import *
 from ._logging import *
@@ -46,6 +47,8 @@ else:
 # websocket supported version.
 VERSION = 13
 
+CookieJar = SimpleCookieJar()
+
 
 class handshake_response(object):
 
@@ -53,6 +56,7 @@ class handshake_response(object):
         self.status = status
         self.headers = headers
         self.subprotocol = subprotocol
+        CookieJar.add(headers.get("set-cookie"))
 
 
 def handshake(sock, hostname, port, resource, **options):
@@ -105,7 +109,10 @@ def _get_handshake_headers(resource, host, port, options):
             header = map(": ".join, header.items())
         headers.extend(header)
 
-    cookie = options.get("cookie", None)
+    server_cookie = CookieJar.get(host)
+    client_cookie = options.get("cookie", None)
+
+    cookie = "; ".join(filter(None, [server_cookie, client_cookie]))
 
     if cookie:
         headers.append("Cookie: %s" % cookie)
