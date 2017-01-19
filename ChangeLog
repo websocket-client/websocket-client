@@ -4,6 +4,7 @@ ChangeLog
 - 0.41.0
 
   - move to repository to https://github.com/websocket-client/websocket-client.git
+  - _send_ping warning fails due to missing reference in _logging.__all__ (#294)
 
 - 0.40.0
   - Fix opcode -> op_code (#286)
