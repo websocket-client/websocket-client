@@ -3,7 +3,7 @@ import sys
 from setuptools import setup
 import pkg_resources
 
-VERSION = "0.40.0"
+VERSION = "0.41.0"
 NAME = "websocket_client"
 
 install_requires = ["six"]
@@ -43,7 +43,7 @@ setup(
     author="liris",
     author_email="liris.pp@gmail.com",
     license="LGPL",
-    url="https://github.com/liris/websocket-client",
+    url="https://github.com/websocket-client/websocket-client.git",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
