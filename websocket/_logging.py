@@ -24,7 +24,7 @@ import logging
 _logger = logging.getLogger('websocket')
 _traceEnabled = False
 
-__all__ = ["enableTrace", "dump", "error", "debug", "trace",
+__all__ = ["enableTrace", "dump", "error", "warning", "debug", "trace",
            "isEnabledForError", "isEnabledForDebug"]
 
 
