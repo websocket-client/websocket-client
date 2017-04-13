@@ -5,6 +5,7 @@ import code
 import sys
 import threading
 import time
+import ssl
 
 import six
 from six.moves.urllib.parse import urlparse
@@ -127,7 +128,7 @@ def main():
         options["subprotocols"] = args.subprotocols
     opts = {}
     if args.nocert:
-        opts = {"cert_reqs": websocket.ssl.CERT_NONE, "check_hostname": False}
+        opts = {"cert_reqs": ssl.CERT_NONE, "check_hostname": False}
     if args.headers:
         options['header'] = map(str.strip, args.headers.split(','))
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
