@@ -34,7 +34,7 @@ import six
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
-from ._logging import *
+import _logging
 
 __all__ = ["WebSocketApp"]
 
@@ -133,7 +133,7 @@ class WebSocketApp(object):
                 try:
                     self.sock.ping()
                 except Exception as ex:
-                    warning("send_ping routine terminated: {}".format(ex))
+                    _logging.warning("send_ping routine terminated: {}".format(ex))
                     break
 
     def run_forever(self, sockopt=None, sslopt=None,
@@ -267,7 +267,7 @@ class WebSocketApp(object):
             try:
                 callback(self, *args)
             except Exception as e:
-                error("error from callback {}: {}".format(callback, e))
-                if isEnabledForDebug():
+                _logging.error("error from callback {}: {}".format(callback, e))
+                if _logging.isEnabledForDebug():
                     _, _, tb = sys.exc_info()
                     traceback.print_tb(tb)
