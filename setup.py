@@ -12,7 +12,7 @@ tests_require = []
 if sys.version_info[0] == 2 and sys.version_info[1] < 7:
         tests_require.append('unittest2==0.8.0')
 
-insecure_pythons = '2.4, 2.5, 2.6' + ', '.join("2.7.{pv}".format(pv=pv) for pv in range(10))
+insecure_pythons = '2.4, 2.5, 2.6, ' + ', '.join("2.7.{pv}".format(pv=pv) for pv in range(10))
 
 extras_require = {
     ':python_version in "{ips}"'.format(ips=insecure_pythons):
