@@ -217,7 +217,7 @@ Subprotocol sample
 
 .. code:: python
 
-    ws = websocket.create_connection("ws://exapmle.com/websocket", subprotocols=["binary", "base64"])
+    ws = websocket.create_connection("ws://example.com/websocket", subprotocols=["binary", "base64"])
 
 
 
