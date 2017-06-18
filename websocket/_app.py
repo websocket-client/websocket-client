@@ -197,7 +197,7 @@ class WebSocketApp(object):
 
             while self.sock.connected:
                 r, w, e = select.select(
-                    (self.sock.sock, ), (), (), ping_timeout)
+                    (self.sock.sock, ), (), (), ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
                 if not self.keep_running:
                     break
 
