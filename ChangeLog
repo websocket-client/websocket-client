@@ -5,6 +5,12 @@ ChangeLog
 
   - Implement simple cookie jar(#292)
   - fix: when using pppoe redial will block.(#301)
+  - Fix insecure_pythons list in setup.py(#304)
+  - Support WEBSOCKET_CLIENT_CA_BUNDLE being directory(#307)
+  - WebSocketPayloadException under high traffic and limited network connection(#306)
+  - Not working --nocert parameter in wsdump.py(#315)
+  - Avoid the app to block on close on certain systems (#320)
+  - Fix warning is not defined. (#323)
 
 - 0.41.0
 
