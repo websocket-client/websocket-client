@@ -70,13 +70,13 @@ This example is similar to how WebSocket code looks in browsers using JavaScript
     import time
 
     def on_message(ws, message):
-        print message
+        print(message)
 
     def on_error(ws, error):
-        print error
+        print(error)
 
     def on_close(ws):
-        print "### closed ###"
+        print("### closed ###")
 
     def on_open(ws):
         def run(*args):
@@ -85,7 +85,7 @@ This example is similar to how WebSocket code looks in browsers using JavaScript
                 ws.send("Hello %d" % i)
             time.sleep(1)
             ws.close()
-            print "thread terminating..."
+            print("thread terminating...")
         thread.start_new_thread(run, ())
 
 
@@ -107,12 +107,12 @@ This is if you want to communicate a short message and disconnect immediately wh
 
     from websocket import create_connection
     ws = create_connection("ws://echo.websocket.org/")
-    print "Sending 'Hello, World'..."
+    print("Sending 'Hello, World'...")
     ws.send("Hello, World")
-    print "Sent"
-    print "Receiving..."
+    print("Sent")
+    print("Receiving...")
     result =  ws.recv()
-    print "Received '%s'" % result
+    print("Received '%s'" % result)
     ws.close()
 
 If you want to customize socket options, set sockopt.
