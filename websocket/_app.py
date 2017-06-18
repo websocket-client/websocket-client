@@ -34,7 +34,8 @@ import six
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
-import _logging
+from . import _logging
+
 
 __all__ = ["WebSocketApp"]
 
