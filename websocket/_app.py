@@ -195,13 +195,16 @@ class WebSocketApp(object):
                 thread.setDaemon(True)
                 thread.start()
 
+            poller = select.poll()
+            READ_FLAGS = (select.POLLIN | select.POLLPRI |
+                          select.POLLHUP | select.POLLERR)
+            poller.register(self.sock.sock, READ_FLAGS)
             while self.sock.connected:
-                r, w, e = select.select(
-                    (self.sock.sock, ), (), (), ping_timeout)
+                events = poller.poll(ping_timeout)
                 if not self.keep_running:
                     break
 
-                if r:
+                if events:
                     op_code, frame = self.sock.recv_data_frame(True)
                     if op_code == ABNF.OPCODE_CLOSE:
                         close_frame = frame
