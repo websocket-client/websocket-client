@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 0.42.0
+
+  - Implement simple cookie jar(#292)
+  - fix: when using pppoe redial will block.(#301)
+
 - 0.41.0
 
   - move to repository to https://github.com/websocket-client/websocket-client.git
