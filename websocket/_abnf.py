@@ -27,6 +27,7 @@ import six
 
 from ._exceptions import *
 from ._utils import validate_utf8
+from threading import Lock
 
 try:
     # If wsaccel is available we use compiled routines to mask data.
@@ -273,6 +274,7 @@ class frame_buffer(object):
         # bytes of bytes are received.
         self.recv_buffer = []
         self.clear()
+        self.lock = Lock()
 
     def clear(self):
         self.header = None
@@ -331,31 +333,33 @@ class frame_buffer(object):
         self.mask = self.recv_strict(4) if self.has_mask() else ""
 
     def recv_frame(self):
-        # Header
-        if self.has_received_header():
-            self.recv_header()
-        (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = self.header
 
-        # Frame length
-        if self.has_received_length():
-            self.recv_length()
-        length = self.length
+        with self.lock:
+            # Header
+            if self.has_received_header():
+                self.recv_header()
+            (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = self.header
 
-        # Mask
-        if self.has_received_mask():
-            self.recv_mask()
-        mask = self.mask
+            # Frame length
+            if self.has_received_length():
+                self.recv_length()
+            length = self.length
 
-        # Payload
-        payload = self.recv_strict(length)
-        if has_mask:
-            payload = ABNF.mask(mask, payload)
+            # Mask
+            if self.has_received_mask():
+                self.recv_mask()
+            mask = self.mask
 
-        # Reset for next frame
-        self.clear()
+            # Payload
+            payload = self.recv_strict(length)
+            if has_mask:
+                payload = ABNF.mask(mask, payload)
 
-        frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
-        frame.validate(self.skip_utf8_validation)
+            # Reset for next frame
+            self.clear()
+
+            frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
+            frame.validate(self.skip_utf8_validation)
 
         return frame
 
