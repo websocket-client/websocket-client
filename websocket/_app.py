@@ -225,6 +225,7 @@ class WebSocketApp(object):
                         self._callback(self.on_message, data)
 
                 if ping_timeout and self.last_ping_tm \
+                        and time.time() - self.last_ping_tm > ping_timeout \
                         and self.last_ping_tm - self.last_pong_tm > ping_timeout:
                     raise WebSocketTimeoutException("ping/pong timed out")
         except (Exception, KeyboardInterrupt, SystemExit) as e:
