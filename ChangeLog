@@ -1,9 +1,14 @@
 ChangeLog
 ============
 
+- 0.44.0
+
+  -renames key in sslopt dict (#326)
+
 - 0.43.0
 
   - Unkown kwarg 'ca_cert' when calling ssl wrap_socket() (#326)
+  - Race condition in WebSocket ping/pong (#327)
 
 - 0.42.0
 
