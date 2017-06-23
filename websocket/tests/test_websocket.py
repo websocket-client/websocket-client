@@ -39,7 +39,7 @@ except ImportError:
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 
 # Skip Secure WebSocket test.
-TEST_SECURE_WS = False
+TEST_SECURE_WS = True
 TRACEABLE = False
 
 
