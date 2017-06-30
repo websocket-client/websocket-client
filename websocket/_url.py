@@ -42,7 +42,7 @@ def parse_url(url):
 
     scheme, url = url.split(":", 1)
 
-    parsed = urlparse(url, scheme="ws")
+    parsed = urlparse(url, scheme="http")
     if parsed.hostname:
         hostname = parsed.hostname
     else:
