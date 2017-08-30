@@ -47,11 +47,10 @@ class proxy_info(object):
         if self.host:
             self.port = options.get("http_proxy_port", 0)
             self.auth = options.get("http_proxy_auth", None)
-            self.no_proxy = options.get("http_no_proxy", None)
         else:
             self.port = 0
             self.auth = None
-            self.no_proxy = None
+        self.no_proxy = options.get("http_no_proxy", None)
 
 
 def connect(url, options, proxy, socket):
