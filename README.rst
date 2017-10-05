@@ -66,7 +66,10 @@ This example is similar to how WebSocket code looks in browsers using JavaScript
 .. code:: python
 
     import websocket
-    import thread
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread
     import time
 
     def on_message(ws, message):
