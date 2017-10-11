@@ -132,6 +132,7 @@ You can also write your own class for the connection, if you want to handle the 
 
 .. code:: python
 
+    import socket
     from websocket import create_connection, WebSocket
     class MyWebSocket(WebSocket):
         def recv_frame(self):
@@ -140,7 +141,7 @@ You can also write your own class for the connection, if you want to handle the 
             return frame
 
     ws = create_connection("ws://echo.websocket.org/",
-                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),), class_=MyWebSocket)
+                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 
 
 FAQ
