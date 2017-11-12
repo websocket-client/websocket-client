@@ -3,7 +3,7 @@ import sys
 from setuptools import setup
 import pkg_resources
 
-VERSION = "0.44.1"
+VERSION = "0.45.0"
 NAME = "websocket_client"
 
 install_requires = ["six"]
