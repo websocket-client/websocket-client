@@ -213,7 +213,7 @@ class WebSocketApp(object):
                         self.last_pong_tm = time.time()
                         self._callback(self.on_pong, frame.data)
                     elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
-                        self._callback(self.on_data, data,
+                        self._callback(self.on_data, frame.data,
                                        frame.opcode, frame.fin)
                         self._callback(self.on_cont_message,
                                        frame.data, frame.fin)
