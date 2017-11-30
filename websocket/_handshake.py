@@ -85,12 +85,12 @@ def _get_handshake_headers(resource, host, port, options):
     else:
         hostport = "%s:%d" % (host, port)
 
-    if "host" in options and options["host"]:
+    if "host" in options and options["host"] is not None:
         headers.append("Host: %s" % options["host"])
     else:
         headers.append("Host: %s" % hostport)
 
-    if "origin" in options and options["origin"]:
+    if "origin" in options and options["origin"] is not None:
         headers.append("Origin: %s" % options["origin"])
     else:
         headers.append("Origin: http://%s" % hostport)
