@@ -3,6 +3,7 @@ ChangeLog
 
 - 0.45.0
 
+  - add lock to recv function (#356)
   - Parse close frame response correctly when reason present (#354)
   - Fix SSL: SSLV3_ALERT_HANDSHAKE_FAILURE on Debian Stretch (#353)
   - Wrap socket.gaierror with subclass of WebsocketException (#352)
