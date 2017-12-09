@@ -50,7 +50,7 @@ class WebSocketApp(object):
                  on_open=None, on_message=None, on_error=None,
                  on_close=None, on_ping=None, on_pong=None,
                  on_cont_message=None,
-                 keep_running=True, get_mask_key=None, cookie=None,
+                 get_mask_key=None, cookie=None,
                  subprotocols=None,
                  on_data=None):
         """
@@ -83,8 +83,6 @@ class WebSocketApp(object):
           The 2nd argument is utf-8 string which we get from the server.
           The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
           The 4th argument is continue flag. if 0, the data continue
-        keep_running: a boolean flag indicating whether the app's main loop
-          should keep running, defaults to True
         get_mask_key: a callable to produce new mask keys,
           see the WebSocket.set_mask_key's docstring for more information
         subprotocols: array of available sub protocols. default is None.
@@ -100,7 +98,7 @@ class WebSocketApp(object):
         self.on_ping = on_ping
         self.on_pong = on_pong
         self.on_cont_message = on_cont_message
-        self.keep_running = keep_running
+        self.keep_running = True
         self.get_mask_key = get_mask_key
         self.sock = None
         self.last_ping_tm = 0
@@ -174,6 +172,7 @@ class WebSocketApp(object):
             raise WebSocketException("socket is already opened")
         thread = None
         close_frame = None
+        self.keep_running = True
 
         try:
             self.sock = WebSocket(
@@ -197,6 +196,8 @@ class WebSocketApp(object):
                 thread.start()
 
             while self.sock.connected:
+                if not self.keep_running:
+                    break
                 r, w, e = select.select(
                     (self.sock.sock, ), (), (), ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
                 if not self.keep_running:
@@ -237,7 +238,7 @@ class WebSocketApp(object):
             if thread and thread.isAlive():
                 event.set()
                 thread.join()
-                self.keep_running = False
+            self.keep_running = False
             self.sock.close()
             close_args = self._get_close_args(
                 close_frame.data if close_frame else None)
