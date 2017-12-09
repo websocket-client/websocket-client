@@ -3,10 +3,8 @@ ChangeLog
 
 - 0.45.0
 
+  - Allow empty Host header value (#369)
   - Fix undefined variable (#347)
-
-- 0.44.1
-
   - fix: getting a value with the key 'ca_certs' in sslopt dict (#326)
 
 - 0.44.0
