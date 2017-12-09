@@ -47,11 +47,10 @@ class proxy_info(object):
         if self.host:
             self.port = options.get("http_proxy_port", 0)
             self.auth = options.get("http_proxy_auth", None)
-            self.no_proxy = options.get("http_no_proxy", None)
         else:
             self.port = 0
             self.auth = None
-            self.no_proxy = None
+        self.no_proxy = options.get("http_no_proxy", None)
 
 
 def connect(url, options, proxy, socket):
@@ -114,7 +113,11 @@ def _open_socket(addrinfo_list, sockopt, timeout):
             sock.connect(address)
         except socket.error as error:
             error.remote_ip = str(address[0])
-            if error.errno in (errno.ECONNREFUSED, ):
+            try:
+                eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED)
+            except:
+                eConnRefused = (errno.ECONNREFUSED, )
+            if error.errno in eConnRefused:
                 err = error
                 continue
             else:
