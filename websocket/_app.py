@@ -99,7 +99,7 @@ class WebSocketApp(object):
         self.on_ping = on_ping
         self.on_pong = on_pong
         self.on_cont_message = on_cont_message
-        self.keep_running = false
+        self.keep_running = False
         self.get_mask_key = get_mask_key
         self.sock = None
         self.last_ping_tm = 0
@@ -173,7 +173,7 @@ class WebSocketApp(object):
             raise WebSocketException("socket is already opened")
         thread = None
         close_frame = None
-        self.keep_running = true
+        self.keep_running = True
 
         try:
             self.sock = WebSocket(
