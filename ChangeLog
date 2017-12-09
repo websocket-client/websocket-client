@@ -3,6 +3,7 @@ ChangeLog
 
 - 0.45.0
 
+  - Resolve a proxy issue and a connection error (#345)
   - Allow empty Host header value (#369)
   - Fix undefined variable (#347)
   - fix: getting a value with the key 'ca_certs' in sslopt dict (#326)
