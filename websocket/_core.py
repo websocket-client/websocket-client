@@ -94,8 +94,10 @@ class WebSocket(object):
 
         if enable_multithread:
             self.lock = threading.Lock()
+            self.readlock = threading.Lock()
         else:
             self.lock = NoLock()
+            self.readlock = NoLock()
 
     def __iter__(self):
         """
@@ -290,7 +292,8 @@ class WebSocket(object):
 
         return value: string(byte array) value.
         """
-        opcode, data = self.recv_data()
+        with self.readlock:
+            opcode, data = self.recv_data()
         if six.PY3 and opcode == ABNF.OPCODE_TEXT:
             return data.decode("utf-8")
         elif opcode == ABNF.OPCODE_TEXT or opcode == ABNF.OPCODE_BINARY:
