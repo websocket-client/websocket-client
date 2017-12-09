@@ -173,7 +173,7 @@ class WebSocketApp(object):
             raise WebSocketException("socket is already opened")
         thread = None
         close_frame = None
-        self.keep_running = true
+        self.keep_running = True
 
         try:
             self.sock = WebSocket(
