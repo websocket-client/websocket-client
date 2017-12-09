@@ -3,6 +3,7 @@ ChangeLog
 
 - 0.45.0
 
+  - Wrap socket.gaierror with subclass of WebsocketException (#352)
   - Resolve a proxy issue and a connection error (#345)
   - Allow empty Host header value (#369)
   - Fix undefined variable (#347)
