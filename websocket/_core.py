@@ -393,7 +393,7 @@ class WebSocket(object):
                 try:
                     frame = self.recv_frame()
                     if isEnabledForError():
-                        recv_status = struct.unpack("!H", frame.data)[0]
+                        recv_status = struct.unpack("!H", frame.data[0:2])[0]
                         if recv_status != STATUS_NORMAL:
                             error("close status: " + repr(recv_status))
                 except:
