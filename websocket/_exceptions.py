@@ -78,3 +78,9 @@ class WebSocketBadStatusException(WebSocketException):
         super(WebSocketBadStatusException, self).__init__(
             message % status_code)
         self.status_code = status_code
+
+class WebSocketAddressException(WebSocketException):
+    """
+    If the websocket address info cannot be found, this exception will be raised.
+    """
+    pass
