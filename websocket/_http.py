@@ -158,6 +158,8 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     if 'cert_chain' in sslopt:
         certfile, keyfile, password = sslopt['cert_chain']
         context.load_cert_chain(certfile, keyfile, password)
+    if 'ecdh_curve' in sslopt:
+        context.set_ecdh_curve(sslopt['ecdh_curve'])
 
     return context.wrap_socket(
         sock,
