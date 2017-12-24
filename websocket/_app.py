@@ -177,6 +177,8 @@ class WebSocketApp(object):
         self.keep_running = True
 
         def teardown():
+            if not self.keep_running:
+                return
             if thread and thread.isAlive():
                 event.set()
                 thread.join()
@@ -215,7 +217,7 @@ class WebSocketApp(object):
                 op_code, frame = self.sock.recv_data_frame(True)
                 if op_code == ABNF.OPCODE_CLOSE:
                     close_frame = frame
-                    return
+                    return teardown()
                 elif op_code == ABNF.OPCODE_PING:
                     self._callback(self.on_ping, frame.data)
                 elif op_code == ABNF.OPCODE_PONG:
