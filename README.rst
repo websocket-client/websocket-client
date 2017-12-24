@@ -30,6 +30,14 @@ This module depend on
  - six
  - backports.ssl_match_hostname for Python 2.x
 
+ performance
+ -------------
+
+ "send" method is too slow on pure python. If you want to get better performace, please install wsaccel.
+
+ In the future, you could use numpy, but it is sitll working in progress.
+
+
 How about Python 3
 ===========================
 
@@ -71,7 +79,7 @@ This example is similar to how WebSocket code looks in browsers using JavaScript
     except ImportError:
         import _thread as thread
     import time
-
+``
     def on_message(ws, message):
         print(message)
 
@@ -261,4 +269,3 @@ example::
   $ wsdump.py ws://echo.websocket.org/
   $ wsdump.py ws://echo.websocket.org/ -v
   $ wsdump.py ws://echo.websocket.org/ -vv
-
