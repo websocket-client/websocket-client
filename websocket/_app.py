@@ -176,6 +176,17 @@ class WebSocketApp(object):
         close_frame = None
         self.keep_running = True
 
+        def teardown():
+            if thread and thread.isAlive():
+                event.set()
+                thread.join()
+            self.keep_running = False
+            self.sock.close()
+            close_args = self._get_close_args(
+                close_frame.data if close_frame else None)
+            self._callback(self.on_close, *close_args)
+            self.sock = None
+
         try:
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
@@ -199,7 +210,7 @@ class WebSocketApp(object):
 
             def read():
                 if not self.keep_running:
-                    return
+                    return teardown()
 
                 op_code, frame = self.sock.recv_data_frame(True)
                 if op_code == ABNF.OPCODE_CLOSE:
@@ -235,16 +246,7 @@ class WebSocketApp(object):
             if isinstance(e, SystemExit):
                 # propagate SystemExit further
                 raise
-        finally:
-            if thread and thread.isAlive():
-                event.set()
-                thread.join()
-            self.keep_running = False
-            self.sock.close()
-            close_args = self._get_close_args(
-                close_frame.data if close_frame else None)
-            self._callback(self.on_close, *close_args)
-            self.sock = None
+            teardown()
 
     def _get_close_args(self, data):
         """ this functions extracts the code, reason from the close body
