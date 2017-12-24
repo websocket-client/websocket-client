@@ -22,6 +22,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import socket
 
 import six
+import sys
 
 from ._exceptions import *
 from ._ssl_compat import *
@@ -34,7 +35,7 @@ if hasattr(socket, "TCP_KEEPIDLE"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPIDLE, 30))
 if hasattr(socket, "TCP_KEEPINTVL"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPINTVL, 10))
-if hasattr(socket, "TCP_KEEPCNT"):
+if hasattr(socket, "TCP_KEEPCNT") and sys.platform != 'win32':
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPCNT, 3))
 
 _default_timeout = None
@@ -64,7 +65,7 @@ def setdefaulttimeout(timeout):
     global _default_timeout
     _default_timeout = timeout
 
-
+c
 def getdefaulttimeout():
     """
     Return the global timeout setting(second) to connect.

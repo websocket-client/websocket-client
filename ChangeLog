@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+
+- 0.46.0
+
+  - fixed OSError on windows (#370)
+
 - 0.45.0
 
   - change license to LGP v2.1
