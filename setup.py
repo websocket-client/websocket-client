@@ -6,7 +6,7 @@ import pkg_resources
 VERSION = "0.46.0"
 NAME = "websocket_client"
 
-install_requires = ["six"]
+install_requires = ["six", "rel"]
 tests_require = []
 
 if sys.version_info[0] == 2 and sys.version_info[1] < 7:
