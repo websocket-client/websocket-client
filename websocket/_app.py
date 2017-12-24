@@ -242,6 +242,7 @@ class WebSocketApp(object):
                 return True
 
             rel.read(self.sock.sock, read)
+            rel.signal(2, rel.abort)
             no_dispatch or rel.dispatch()
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
