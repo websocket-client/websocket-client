@@ -30,6 +30,7 @@ import time
 import traceback
 
 import six
+import rel
 
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
@@ -141,7 +142,7 @@ class WebSocketApp(object):
                     http_proxy_host=None, http_proxy_port=None,
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
-                    host=None, origin=None):
+                    host=None, origin=None, no_dispatch=False):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -196,38 +197,39 @@ class WebSocketApp(object):
                 thread.setDaemon(True)
                 thread.start()
 
-            while self.sock.connected:
-                r, w, e = select.select(
-                    (self.sock.sock, ), (), (), ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
+            def read():
                 if not self.keep_running:
-                    break
+                    return
 
-                if r:
-                    op_code, frame = self.sock.recv_data_frame(True)
-                    if op_code == ABNF.OPCODE_CLOSE:
-                        close_frame = frame
-                        break
-                    elif op_code == ABNF.OPCODE_PING:
-                        self._callback(self.on_ping, frame.data)
-                    elif op_code == ABNF.OPCODE_PONG:
-                        self.last_pong_tm = time.time()
-                        self._callback(self.on_pong, frame.data)
-                    elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
-                        self._callback(self.on_data, frame.data,
-                                       frame.opcode, frame.fin)
-                        self._callback(self.on_cont_message,
-                                       frame.data, frame.fin)
-                    else:
-                        data = frame.data
-                        if six.PY3 and op_code == ABNF.OPCODE_TEXT:
-                            data = data.decode("utf-8")
-                        self._callback(self.on_data, data, frame.opcode, True)
-                        self._callback(self.on_message, data)
+                op_code, frame = self.sock.recv_data_frame(True)
+                if op_code == ABNF.OPCODE_CLOSE:
+                    close_frame = frame
+                    return
+                elif op_code == ABNF.OPCODE_PING:
+                    self._callback(self.on_ping, frame.data)
+                elif op_code == ABNF.OPCODE_PONG:
+                    self.last_pong_tm = time.time()
+                    self._callback(self.on_pong, frame.data)
+                elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
+                    self._callback(self.on_data, frame.data,
+                                   frame.opcode, frame.fin)
+                    self._callback(self.on_cont_message,
+                                   frame.data, frame.fin)
+                else:
+                    data = frame.data
+                    if six.PY3 and op_code == ABNF.OPCODE_TEXT:
+                        data = data.decode("utf-8")
+                    self._callback(self.on_data, data, frame.opcode, True)
+                    self._callback(self.on_message, data)
 
                 if ping_timeout and self.last_ping_tm \
                         and time.time() - self.last_ping_tm > ping_timeout \
                         and self.last_ping_tm - self.last_pong_tm > ping_timeout:
                     raise WebSocketTimeoutException("ping/pong timed out")
+                return True
+
+            rel.read(self.sock.sock, read)
+            no_dispatch or rel.dispatch()
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
