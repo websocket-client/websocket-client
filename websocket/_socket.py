@@ -65,6 +65,7 @@ def setdefaulttimeout(timeout):
     global _default_timeout
     _default_timeout = timeout
 
+
 def getdefaulttimeout():
     """
     Return the global timeout setting(second) to connect.
