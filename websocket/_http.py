@@ -103,8 +103,8 @@ def _get_addrinfo_list(hostname, port, is_secure, proxy):
 def _open_socket(addrinfo_list, sockopt, timeout):
     err = None
     for addrinfo in addrinfo_list:
-        family = addrinfo[0]
-        sock = socket.socket(family)
+        family, type, proto = addrinfo[:3]
+        sock = socket.socket(family, type, proto)
         sock.settimeout(timeout)
         for opts in DEFAULT_SOCKET_OPTION:
             sock.setsockopt(*opts)
