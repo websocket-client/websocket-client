@@ -33,9 +33,8 @@ This module depend on
 performance
 ------------------
 
- "send" method is too slow on pure python. If you want to get better performace, please install wsaccel.
-
- In the future, you could use numpy, but it is sitll working in progress.
+ "send" method is too slow on pure python. If you want to get better performace, please install numpy or wsaccel.
+You can get the best performance from numpy.
 
 
 How about Python 3
@@ -60,7 +59,7 @@ example
     import websocket
     ws = websocket.WebSocket()
     ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http_proxy_port=3128)
-   
+
 
 
 
