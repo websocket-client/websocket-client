@@ -23,7 +23,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 WebSocketApp provides higher level APIs.
 """
-import select
+
 import sys
 import threading
 import time
@@ -197,8 +197,7 @@ class WebSocketApp(object):
                 thread.start()
 
             while self.sock.connected:
-                r, w, e = select.select(
-                    (self.sock.sock, ), (), (), ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
+                r = self.sock.rselect(ping_timeout or 10)
                 if not self.keep_running:
                     break
 
