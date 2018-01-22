@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 0.47.0
+
+  - Fix socket constructor in _open_socket to use all relevant variables from getaddrinfo. (#383)
 
 - 0.46.0
 
