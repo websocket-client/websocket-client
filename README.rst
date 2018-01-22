@@ -30,8 +30,8 @@ This module depend on
  - six
  - backports.ssl_match_hostname for Python 2.x
 
- performance
- -------------
+performance
+------------------
 
  "send" method is too slow on pure python. If you want to get better performace, please install wsaccel.
 
@@ -60,7 +60,7 @@ example
     import websocket
     ws = websocket.WebSocket()
     ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http_proxy_port=3128)
-    :
+   
 
 
 
@@ -79,7 +79,7 @@ This example is similar to how WebSocket code looks in browsers using JavaScript
     except ImportError:
         import _thread as thread
     import time
-``
+
     def on_message(ws, message):
         print(message)
 
