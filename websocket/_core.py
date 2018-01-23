@@ -440,7 +440,7 @@ class WebSocket(object):
 
     def _rselect_ssl(self, timeout):
         if self.sock.pending():
-            return [self.sock,]            
+            return [self.sock,]
         r, w, e = select.select((self.sock, ), (), (), timeout)
         return r
 
