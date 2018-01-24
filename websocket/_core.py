@@ -213,7 +213,7 @@ class WebSocket(object):
         """
         self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
                                    options.pop('socket', None))
-        self.rselect = self._rselect_ssl if isinstance(self.sock, ssl.SSLSocket) else self._rselect
+        self.is_ssl_socket = isinstance(self.sock, ssl.SSLSocket)
 
         try:
             self.handshake_response = handshake(self.sock, *addrs, **options)
@@ -438,13 +438,9 @@ class WebSocket(object):
             self.connected = False
             raise
 
-    def _rselect_ssl(self, timeout):
-        if self.sock.pending():
+    def rselect(self, timeout):
+        if self.is_ssl_socket and self.sock.pending():
             return [self.sock,]
-        r, w, e = select.select((self.sock, ), (), (), timeout)
-        return r
-
-    def _rselect(self, timeout):
         r, w, e = select.select((self.sock, ), (), (), timeout)
         return r
 
