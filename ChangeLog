@@ -5,6 +5,7 @@ ChangeLog
 
   - Fix socket constructor in _open_socket to use all relevant variables from getaddrinfo. (#383)
   - .send() method is very slow (#340)
+  - cross-platform aync multi-client solution (#375)
 
 - 0.46.0
 
