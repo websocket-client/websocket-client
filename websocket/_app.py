@@ -244,7 +244,6 @@ class WebSocketApp(object):
                 return True
 
             dispatcher.read(self.sock.sock, read)
-            dispatcher.dispatch()
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
@@ -260,10 +259,6 @@ class WebSocketApp(object):
                     (self.sock.sock, ), (), (), ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
                     if r:
                         callback()
-
-            def dispatch(_):
-                # do nothing
-                pass
 
         return Dispatcher()
 
