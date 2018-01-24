@@ -21,11 +21,13 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 from __future__ import print_function
 
+import select
 import socket
 import struct
 import threading
 
 import six
+import ssl
 
 # websocket modules
 from ._abnf import *
@@ -211,6 +213,7 @@ class WebSocket(object):
         """
         self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
                                    options.pop('socket', None))
+        self.is_ssl_socket = isinstance(self.sock, ssl.SSLSocket)
 
         try:
             self.handshake_response = handshake(self.sock, *addrs, **options)
@@ -435,6 +438,11 @@ class WebSocket(object):
             self.connected = False
             raise
 
+    def rselect(self, timeout):
+        if self.is_ssl_socket and self.sock.pending():
+            return [self.sock,]
+        r, w, e = select.select((self.sock, ), (), (), timeout)
+        return r
 
 def create_connection(url, timeout=None, class_=WebSocket, **options):
     """
