@@ -30,7 +30,6 @@ import time
 import traceback
 
 import six
-import rel
 
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
@@ -142,7 +141,7 @@ class WebSocketApp(object):
                     http_proxy_host=None, http_proxy_port=None,
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
-                    host=None, origin=None, no_dispatch=False):
+                    host=None, origin=None, dispatcher=None):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -175,6 +174,9 @@ class WebSocketApp(object):
         thread = None
         close_frame = None
         self.keep_running = True
+
+        if not dispatcher:
+            dispatcher = self.create_dispatcher(ping_timeout)
 
         def teardown():
             if not self.keep_running:
@@ -241,15 +243,29 @@ class WebSocketApp(object):
                     raise WebSocketTimeoutException("ping/pong timed out")
                 return True
 
-            rel.read(self.sock.sock, read)
-            rel.signal(2, rel.abort)
-            no_dispatch or rel.dispatch()
+            dispatcher.read(self.sock.sock, read)
+            dispatcher.dispatch()
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
                 # propagate SystemExit further
                 raise
             teardown()
+
+    def create_dispatcher(self, ping_timeout):
+        class Dispatcher:
+            def read(_, sock, callback):
+                while self.sock.connected:
+                    r, w, e = select.select(
+                    (self.sock.sock, ), (), (), ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
+                    if r:
+                        callback()
+
+            def dispatch(_):
+                # do nothing
+                pass
+
+        return Dispatcher()
 
     def _get_close_args(self, data):
         """ this functions extracts the code, reason from the close body
