@@ -84,7 +84,7 @@ def recv(sock, bufsize):
         raise WebSocketTimeoutException(message)
     except SSLError as e:
         message = extract_err_message(e)
-        if message == "The read operation timed out":
+        if isinstance(message, str) and 'timed out' in message:
             raise WebSocketTimeoutException(message)
         else:
             raise
