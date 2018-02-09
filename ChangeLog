@@ -7,6 +7,7 @@ ChangeLog
   - .send() method is very slow (#340)
   - cross-platform aync multi-client solution (#375)
   - Fix detecting timeouts with SSL in recv (#387)
+  - Fix WebSocketApp does not poll for data correctly when using SSL (#384)
 
 - 0.46.0
 
