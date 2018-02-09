@@ -39,6 +39,20 @@ from . import _logging
 
 __all__ = ["WebSocketApp"]
 
+class Dispatcher:
+    def __init__(self, app, ping_timeout):
+        self.app  = app
+        self.ping_timeout = ping_timeout
+
+    def read(self, sock, callback):
+        print("###### ")
+        print(self.app.sock.connected)
+        while self.app.sock.connected:
+            r, w, e = select.select(
+            (self.app.sock.sock, ), (), (), self.ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
+            if r:
+                callback()
+        print(self.app)
 
 class WebSocketApp(object):
     """
@@ -252,15 +266,7 @@ class WebSocketApp(object):
             teardown()
 
     def create_dispatcher(self, ping_timeout):
-        class Dispatcher:
-            def read(_, sock, callback):
-                while self.sock.connected:
-                    r, w, e = select.select(
-                    (self.sock.sock, ), (), (), ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
-                    if r:
-                        callback()
-
-        return Dispatcher()
+        return Dispatcher(self, ping_timeout)
 
     def _get_close_args(self, data):
         """ this functions extracts the code, reason from the close body
