@@ -176,6 +176,9 @@ class WebSocket(object):
         else:
             return None
 
+    def is_ssl(self):
+        return isinstance(self.sock, ssl.SSLSocket)
+
     headers = property(getheaders)
 
     def connect(self, url, **options):

@@ -45,14 +45,30 @@ class Dispatcher:
         self.ping_timeout = ping_timeout
 
     def read(self, sock, callback):
-        print("###### ")
-        print(self.app.sock.connected)
         while self.app.sock.connected:
             r, w, e = select.select(
-            (self.app.sock.sock, ), (), (), self.ping_timeout or 10) # Use a 10 second timeout to avoid to wait forever on close
+            (self.app.sock.sock, ), (), (), self.ping_timeout) # Use a 10 second timeout to avoid to wait forever on close
             if r:
                 callback()
-        print(self.app)
+
+class SSLDispacther:
+    def __init__(self, app, ping_timeout):
+        self.app  = app
+        self.ping_timeout = ping_timeout
+
+    def read(self, sock, callback):
+        while self.app.sock.connected:
+            r = self.select()
+            if r:
+                callback()
+
+    def select(self):
+        sock = self.app.sock.sock
+        if sock.pending():
+            return [sock,]
+
+        r, w, e = select.select((sock, ), (), (), self.ping_timeout)
+        return r
 
 class WebSocketApp(object):
     """
@@ -189,9 +205,6 @@ class WebSocketApp(object):
         close_frame = None
         self.keep_running = True
 
-        if not dispatcher:
-            dispatcher = self.create_dispatcher(ping_timeout)
-
         def teardown():
             if not self.keep_running:
                 return
@@ -217,6 +230,9 @@ class WebSocketApp(object):
                 http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
                 http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
                 host=host, origin=origin)
+            if not dispatcher:
+                dispatcher = self.create_dispatcher(ping_timeout)
+
             self._callback(self.on_open)
 
             if ping_interval:
@@ -266,7 +282,11 @@ class WebSocketApp(object):
             teardown()
 
     def create_dispatcher(self, ping_timeout):
-        return Dispatcher(self, ping_timeout)
+        timeout = ping_timeout or 10
+        if self.sock.is_ssl():
+            return SSLDispacther(self, timeout)
+
+        return Dispatcher(self, timeout)
 
     def _get_close_args(self, data):
         """ this functions extracts the code, reason from the close body
