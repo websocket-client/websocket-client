@@ -34,6 +34,7 @@ from ._handshake import *
 from ._http import *
 from ._logging import *
 from ._socket import *
+from ._ssl_compat import *
 from ._utils import *
 
 __all__ = ['WebSocket', 'create_connection']
