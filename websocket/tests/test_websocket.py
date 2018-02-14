@@ -221,7 +221,7 @@ class WebSocketTest(unittest.TestCase):
 
 
     def testReadHeader(self):
-        status, header = read_headers(HeaderSockMock("data/header01.txt"))
+        status, header, status_message = read_headers(HeaderSockMock("data/header01.txt"))
         self.assertEqual(status, 101)
         self.assertEqual(header["connection"], "Upgrade")
 
