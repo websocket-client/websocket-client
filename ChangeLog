@@ -8,6 +8,7 @@ ChangeLog
   - cross-platform aync multi-client solution (#375)
   - Fix detecting timeouts with SSL in recv (#387)
   - Fix WebSocketApp does not poll for data correctly when using SSL (#384)
+  - Fix Infinite ping/pong timeouts in WebSocketApp.run_forever (#395)
 
 - 0.46.0
 
