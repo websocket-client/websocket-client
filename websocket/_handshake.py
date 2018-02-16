@@ -130,9 +130,9 @@ def _get_handshake_headers(resource, host, port, options):
 
 
 def _get_resp_headers(sock, success_status=101):
-    status, resp_headers = read_headers(sock)
+    status, resp_headers, status_message = read_headers(sock)
     if status != success_status:
-        raise WebSocketBadStatusException("Handshake status %d", status)
+        raise WebSocketBadStatusException("Handshake status %d %s", status, status_message)
     return status, resp_headers
 
 _HEADERS_TO_CHECK = {
