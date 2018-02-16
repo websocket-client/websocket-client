@@ -204,6 +204,8 @@ class WebSocketApp(object):
         thread = None
         close_frame = None
         self.keep_running = True
+        self.last_ping_tm = 0
+        self.last_pong_tm = 0
 
         def teardown():
             if not self.keep_running:
