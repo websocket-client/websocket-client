@@ -22,6 +22,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import logging
 
 _logger = logging.getLogger('websocket')
+_logger.addHandler(logging.NullHandler())
 _traceEnabled = False
 
 __all__ = ["enableTrace", "dump", "error", "warning", "debug", "trace",
