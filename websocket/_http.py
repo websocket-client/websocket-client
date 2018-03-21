@@ -145,7 +145,7 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
         capath = sslopt.get('ca_cert_path', None)
         if cafile or capath:
             context.load_verify_locations(cafile=cafile, capath=capath)
-        else:
+        elif hasattr(context, 'load_default_certs'):
             context.load_default_certs(ssl.Purpose.SERVER_AUTH)
     if sslopt.get('certfile', None):
         context.load_cert_chain(
