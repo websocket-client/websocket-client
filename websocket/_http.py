@@ -141,7 +141,12 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_SSLv23))
 
     if sslopt.get('cert_reqs', ssl.CERT_NONE) != ssl.CERT_NONE:
-        context.load_verify_locations(cafile=sslopt.get('ca_certs', None), capath=sslopt.get('ca_cert_path', None))
+        cafile = sslopt.get('ca_certs', None)
+        capath = sslopt.get('ca_cert_path', None)
+        if cafile or capath:
+            context.load_verify_locations(cafile=cafile, capath=capath)
+        else:
+            context.load_default_certs(ssl.Purpose.SERVER_AUTH)
     if sslopt.get('certfile', None):
         context.load_cert_chain(
             sslopt['certfile'],
