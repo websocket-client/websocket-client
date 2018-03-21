@@ -178,15 +178,13 @@ def _ssl_socket(sock, user_sslopt, hostname):
     sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
     sslopt.update(user_sslopt)
 
-    if os.environ.get('WEBSOCKET_CLIENT_CA_BUNDLE'):
-        certPath = os.environ.get('WEBSOCKET_CLIENT_CA_BUNDLE')
-    else:
-        certPath = os.path.join(
-            os.path.dirname(__file__), "cacert.pem")
-    if os.path.isfile(certPath) and user_sslopt.get('ca_certs', None) is None \
+    certPath = os.environ.get('WEBSOCKET_CLIENT_CA_BUNDLE')
+    if certPath and os.path.isfile(certPath) \
+            and user_sslopt.get('ca_certs', None) is None \
             and user_sslopt.get('ca_cert', None) is None:
         sslopt['ca_certs'] = certPath
-    elif os.path.isdir(certPath) and user_sslopt.get('ca_cert_path', None) is None:
+    elif certPath and os.path.isdir(certPath) \
+            and user_sslopt.get('ca_cert_path', None) is None:
         sslopt['ca_cert_path'] = certPath
 
     check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop(
