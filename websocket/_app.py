@@ -49,7 +49,8 @@ class Dispatcher:
             r, w, e = select.select(
             (self.app.sock.sock, ), (), (), self.ping_timeout) # Use a 10 second timeout to avoid to wait forever on close
             if r:
-                read_callback()
+                if not read_callback():
+                    break
             check_callback()
 
 class SSLDispacther:
@@ -61,7 +62,8 @@ class SSLDispacther:
         while self.app.sock.connected:
             r = self.select()
             if r:
-                read_callback()
+                if not read_callback():
+                    break
             check_callback()
 
     def select(self):
