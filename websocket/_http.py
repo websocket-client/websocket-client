@@ -39,21 +39,71 @@ else:
 
 __all__ = ["proxy_info", "connect", "read_headers"]
 
+try:
+    import socks
+    ProxyConnectionError = socks.ProxyConnectionError
+    HAS_PYSOCKS = True
+except:
+    class ProxyConnectionError(BaseException):
+        pass
+    HAS_PYSOCKS = False
 
 class proxy_info(object):
 
     def __init__(self, **options):
+        self.type = options.get("proxy_type", "http")
+        if not(self.type in ['http', 'socks4', 'socks5', 'socks5h']):
+            raise ValueError("proxy_type must be 'http', 'socks4', 'socks5' or 'socks5h'")
         self.host = options.get("http_proxy_host", None)
         if self.host:
             self.port = options.get("http_proxy_port", 0)
             self.auth = options.get("http_proxy_auth", None)
+            self.no_proxy = options.get("http_no_proxy", None)
         else:
             self.port = 0
             self.auth = None
-        self.no_proxy = options.get("http_no_proxy", None)
+            self.no_proxy = None
+
+def _open_proxied_socket(url, options, proxy):
+    hostname, port, resource, is_secure = parse_url(url)
+
+    if not HAS_PYSOCKS:
+        raise WebSocketException("PySocks module not found.")
+
+    ptype = socks.SOCKS5
+    rdns = False
+    if proxy.type == "socks4":
+        ptype = socks.SOCKS4
+    if proxy.type == "http":
+        ptype = socks.HTTP
+    if proxy.type[-1] == "h":
+        rdns = True
+
+    sock = socks.create_connection(
+            (hostname, port),
+            proxy_type = ptype,
+            proxy_addr = proxy.host,
+            proxy_port = proxy.port,
+            proxy_rdns = rdns,
+            proxy_username = proxy.auth[0] if proxy.auth else None,
+            proxy_password = proxy.auth[1] if proxy.auth else None,
+            timeout = options.timeout,
+            socket_options = DEFAULT_SOCKET_OPTION + options.sockopt
+    )
+
+    if is_secure:
+        if HAVE_SSL:
+            sock = _ssl_socket(sock, options.sslopt, hostname)
+        else:
+            raise WebSocketException("SSL not available.")
+
+    return sock, (hostname, port, resource)
 
 
 def connect(url, options, proxy, socket):
+    if proxy.host and not socket and not(proxy.type == 'http'):
+        return _open_proxied_socket(url, options, proxy)
+
     hostname, port, resource, is_secure = parse_url(url)
 
     if socket:
@@ -114,6 +164,11 @@ def _open_socket(addrinfo_list, sockopt, timeout):
         address = addrinfo[4]
         try:
             sock.connect(address)
+            err = None
+        except ProxyConnectionError as error:
+            err = WebSocketProxyException(str(error))
+            err.remote_ip = str(address[0])
+            continue
         except socket.error as error:
             error.remote_ip = str(address[0])
             try:
