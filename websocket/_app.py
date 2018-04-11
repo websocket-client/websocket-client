@@ -57,7 +57,7 @@ class SSLDispacther:
         self.ping_timeout = ping_timeout
 
     def read(self, sock, callback):
-        while self.app.sock.connected:
+        while self.app.sock and self.app.sock.connected:
             r = self.select()
             if r:
                 callback()
@@ -202,12 +202,11 @@ class WebSocketApp(object):
         if self.sock:
             raise WebSocketException("socket is already opened")
         thread = None
-        close_frame = None
         self.keep_running = True
         self.last_ping_tm = 0
         self.last_pong_tm = 0
 
-        def teardown():
+        def teardown(close_frame=None):
             if not self.keep_running:
                 return
             if thread and thread.isAlive():
@@ -250,8 +249,7 @@ class WebSocketApp(object):
 
                 op_code, frame = self.sock.recv_data_frame(True)
                 if op_code == ABNF.OPCODE_CLOSE:
-                    close_frame = frame
-                    return teardown()
+                    return teardown(frame)
                 elif op_code == ABNF.OPCODE_PING:
                     self._callback(self.on_ping, frame.data)
                 elif op_code == ABNF.OPCODE_PONG:
