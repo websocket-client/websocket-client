@@ -121,14 +121,22 @@ class WebSocketApp(object):
         self.url = url
         self.header = header if header is not None else []
         self.cookie = cookie
-        self.on_open = on_open
-        self.on_message = on_message
-        self.on_data = on_data
-        self.on_error = on_error
-        self.on_close = on_close
-        self.on_ping = on_ping
-        self.on_pong = on_pong
-        self.on_cont_message = on_cont_message
+        if not hasattr(self, 'on_open') or on_open is not None:
+            self.on_open = on_open
+        if not hasattr(self, 'on_message') or on_message is not None:
+            self.on_message = on_message
+        if not hasattr(self, 'on_data') or on_data is not None:
+            self.on_data = on_data
+        if not hasattr(self, 'on_error') or on_error is not None:
+            self.on_error = on_error
+        if not hasattr(self, 'on_close') or on_close is not None:
+            self.on_close = on_close
+        if not hasattr(self, 'on_ping') or on_ping is not None:
+            self.on_ping = on_ping
+        if not hasattr(self, 'on_pong') or on_pong is not None:
+            self.on_pong = on_pong
+        if not hasattr(self, 'on_cont_message') or on_cont_message is not None:
+            self.on_cont_message = on_cont_message
         self.keep_running = False
         self.get_mask_key = get_mask_key
         self.sock = None
