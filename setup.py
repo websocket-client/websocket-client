@@ -62,8 +62,7 @@ setup(
     install_requires=install_requires,
     packages=["websocket", "websocket.tests"],
     package_data={
-        'websocket.tests': ['data/*.txt'],
-        'websocket': ["cacert.pem"]
+        'websocket.tests': ['data/*.txt']
     },
     tests_require=tests_require,
     test_suite="websocket.tests"
