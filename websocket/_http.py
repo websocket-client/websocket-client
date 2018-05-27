@@ -124,7 +124,7 @@ def _open_socket(addrinfo_list, sockopt, timeout):
                 err = error
                 continue
             else:
-                raise
+                raise error
         else:
             break
     else:
