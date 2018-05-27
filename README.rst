@@ -31,7 +31,7 @@ This module depend on
 performance
 ------------------
 
- "send" method is too slow on pure python. If you want to get better performace, please install numpy or wsaccel.
+"send" method is too slow on pure python. If you want to get better performace, please install numpy or wsaccel.
 You can get the best performance from numpy.
 
 
@@ -57,7 +57,6 @@ example
     import websocket
     ws = websocket.WebSocket()
     ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http_proxy_port=3128)
-
 
 
 
@@ -123,6 +122,7 @@ This is if you want to communicate a short message and disconnect immediately wh
     print("Received '%s'" % result)
     ws.close()
 
+
 If you want to customize socket options, set sockopt.
 
 sockopt example
@@ -167,12 +167,14 @@ WebSocketApp sample
     ws = websocket.WebSocketApp("wss://echo.websocket.org")
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
+
 create_connection sample
 
 .. code:: python
 
     ws = websocket.create_connection("wss://echo.websocket.org",
       sslopt={"cert_reqs": ssl.CERT_NONE})
+
 
 WebSocket sample
 
@@ -195,12 +197,14 @@ WebSocketApp sample
     ws = websocket.WebSocketApp("wss://echo.websocket.org")
     ws.run_forever(sslopt={"check_hostname": False})
 
+
 create_connection sample
 
 .. code:: python
 
     ws = websocket.create_connection("wss://echo.websocket.org",
       sslopt={"check_hostname": False})
+
 
 WebSocket sample
 
@@ -244,6 +248,7 @@ sample for echo.websocket.org::
   > How are you?
   < How are you?
 
+
 Usage
 ---------
 
@@ -251,15 +256,18 @@ usage::
 
   wsdump.py [-h] [-v [VERBOSE]] ws_url
 
+
 WebSocket Simple Dump Tool
 
 positional arguments:
   ws_url                websocket url. ex. ws://echo.websocket.org/
 
+
 optional arguments:
   -h, --help                           show this help message and exit
 WebSocketApp
   -v VERBOSE, --verbose VERBOSE    set verbose mode. If set to 1, show opcode. If set to 2, enable to trace websocket module
+
 
 example::
 
