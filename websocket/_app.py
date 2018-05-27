@@ -212,8 +212,6 @@ class WebSocketApp(object):
         self.last_pong_tm = 0
 
         def teardown():
-            if not self.keep_running:
-                return
             if thread and thread.isAlive():
                 event.set()
                 thread.join()
