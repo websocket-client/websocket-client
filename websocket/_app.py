@@ -44,23 +44,27 @@ class Dispatcher:
         self.app  = app
         self.ping_timeout = ping_timeout
 
-    def read(self, sock, callback):
+    def read(self, sock, read_callback, check_callback):
         while self.app.sock.connected:
             r, w, e = select.select(
             (self.app.sock.sock, ), (), (), self.ping_timeout) # Use a 10 second timeout to avoid to wait forever on close
             if r:
-                callback()
+                if not read_callback():
+                    break
+            check_callback()
 
 class SSLDispacther:
     def __init__(self, app, ping_timeout):
         self.app  = app
         self.ping_timeout = ping_timeout
 
-    def read(self, sock, callback):
+    def read(self, sock, read_callback, check_callback):
         while self.app.sock.connected:
             r = self.select()
             if r:
-                callback()
+                if not read_callback():
+                    break
+            check_callback()
 
     def select(self):
         sock = self.app.sock.sock
@@ -269,13 +273,16 @@ class WebSocketApp(object):
                     self._callback(self.on_data, data, frame.opcode, True)
                     self._callback(self.on_message, data)
 
+                return True
+
+            def check():
                 if ping_timeout and self.last_ping_tm \
                         and time.time() - self.last_ping_tm > ping_timeout \
                         and self.last_ping_tm - self.last_pong_tm > ping_timeout:
                     raise WebSocketTimeoutException("ping/pong timed out")
                 return True
 
-            dispatcher.read(self.sock.sock, read)
+            dispatcher.read(self.sock.sock, read, check)
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
