@@ -1,6 +1,17 @@
 ChangeLog
 ============
 
+- 0.48.0
+
+  - Add NullHandler to logger to fix python 2 issue. (#400)
+  - Fix the issue that websocket status message may not present (#403)
+  - Socket error not raised in nested try except in python2 (#408)
+  - Load system default certificates if none are given (#415)
+  - Fix waiting forever on ping/pong timeout (#411)
+  - socks5 via pysocks support (#417)
+  - v0.47.0 breaks ability to stop stream with `run_forever` (#410)
+  - _http.py: fix windows proxy error due to socktype (#427)
+
 - 0.47.0
 
   - Fix socket constructor in _open_socket to use all relevant variables from getaddrinfo. (#383)
