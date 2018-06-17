@@ -165,7 +165,7 @@ def main():
             if not args.verbose and opcode in OPCODE_DATA:
                 msg = data
             elif args.verbose:
-                msg = "%s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
+                msg = "{}: {}".format(websocket.ABNF.OPCODE_MAP.get(opcode), data)
 
             if msg is not None:
                 if args.timings:
