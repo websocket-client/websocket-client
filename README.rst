@@ -15,15 +15,15 @@ License
 Installation
 =============
 
-This module is tested on Python 2.7 and Python 3.x.
+This module is tested on Python 2.7 and Python 3.4+.
 
 Type "python setup.py install" or "pip install websocket-client" to install.
 
 .. CAUTION::
 
-  from v0.16.0, we can install by "pip install websocket-client" for python 3.
+  from v0.16.0, we can install by "pip install websocket-client" for Python 3.
 
-This module depend on
+This module depends on
 
  - six
  - backports.ssl_match_hostname for Python 2.x
@@ -38,7 +38,7 @@ You can get the best performance from numpy.
 How about Python 3
 ===========================
 
-Now, we support python 3 on  single source code from version 0.14.0. Thanks, @battlemidget and @ralphbean.
+Now, we support Python 3 on single source code from version 0.14.0. Thanks, @battlemidget and @ralphbean.
 
 HTTP Proxy
 =============
