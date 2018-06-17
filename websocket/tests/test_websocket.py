@@ -88,7 +88,7 @@ class WebSocketTest(unittest.TestCase):
         pass
 
     def testDefaultTimeout(self):
-        self.assertEqual(ws.getdefaulttimeout(), None)
+        self.assertIsNone(ws.getdefaulttimeout())
         ws.setdefaulttimeout(10)
         self.assertEqual(ws.getdefaulttimeout(), 10)
         ws.setdefaulttimeout(None)
@@ -176,8 +176,8 @@ class WebSocketTest(unittest.TestCase):
 
     def testWSKey(self):
         key = _create_sec_websocket_key()
-        self.assertTrue(key != 24)
-        self.assertTrue(six.u("¥n") not in key)
+        self.assertNotEqual(key, 24)
+        self.assertNotIn(six.u("¥n"), key)
 
     def testWsUtils(self):
         key = "c6b8hTg4EeGb2gQMztV1/g=="

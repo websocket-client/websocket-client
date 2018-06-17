@@ -20,12 +20,12 @@ class CookieJarTest(unittest.TestCase):
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; domain=.abc")
-        self.assertTrue(".abc" in cookie_jar.jar)
+        self.assertIn(".abc", cookie_jar.jar)
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; domain=abc")
-        self.assertTrue(".abc" in cookie_jar.jar)
-        self.assertTrue("abc" not in cookie_jar.jar)
+        self.assertIn(".abc", cookie_jar.jar)
+        self.assertNotIn("abc", cookie_jar.jar)
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; c=d; domain=abc")
@@ -55,12 +55,12 @@ class CookieJarTest(unittest.TestCase):
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; domain=.abc")
-        self.assertTrue(".abc" in cookie_jar.jar)
+        self.assertIn(".abc", cookie_jar.jar)
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; domain=abc")
-        self.assertTrue(".abc" in cookie_jar.jar)
-        self.assertTrue("abc" not in cookie_jar.jar)
+        self.assertIn(".abc", cookie_jar.jar)
+        self.assertNotIn("abc", cookie_jar.jar)
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; c=d; domain=abc")
