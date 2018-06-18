@@ -107,12 +107,12 @@ This example is similar to how WebSocket code looks in browsers using JavaScript
 
 
 Class inheritance
---------------------------------
+-----------------
 Same as above with class inheritance.
 
 .. code:: python
 
-import websocket
+    import websocket
     from threading import Thread
     import time
     import sys
