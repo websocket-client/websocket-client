@@ -23,6 +23,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 WebSocketApp provides higher level APIs.
 """
+import inspect
 import select
 import sys
 import threading
@@ -125,16 +126,17 @@ class WebSocketApp(object):
         self.url = url
         self.header = header if header is not None else []
         self.cookie = cookie
-        self.on_open = on_open
-        self.on_message = on_message
-        self.on_data = on_data
-        self.on_error = on_error
-        self.on_close = on_close
-        self.on_ping = on_ping
-        self.on_pong = on_pong
-        self.on_cont_message = on_cont_message
+
+        self.on_open = on_open or getattr(self, 'on_open', None)
+        self.on_message = on_message or getattr(self, 'on_message', None)
+        self.on_data = on_data or getattr(self, 'on_data', None)
+        self.on_error = on_error or getattr(self, 'on_error', None)
+        self.on_close = on_close or getattr(self, 'on_close', None)
+        self.on_ping = on_ping or getattr(self, 'on_ping', None)
+        self.on_pong = on_pong or getattr(self, 'on_pong', None)
+        self.on_cont_message = on_cont_message or getattr(self, 'on_cont_message', None)
+        self.get_mask_key = get_mask_key or getattr(self, 'get_mask_key', None)
         self.keep_running = False
-        self.get_mask_key = get_mask_key
         self.sock = None
         self.last_ping_tm = 0
         self.last_pong_tm = 0
@@ -317,7 +319,10 @@ class WebSocketApp(object):
     def _callback(self, callback, *args):
         if callback:
             try:
-                callback(self, *args)
+                if inspect.ismethod(callback):
+                    callback(*args)
+                else:
+                    callback(self, *args)
             except Exception as e:
                 _logging.error("error from callback {}: {}".format(callback, e))
                 if _logging.isEnabledForDebug():
