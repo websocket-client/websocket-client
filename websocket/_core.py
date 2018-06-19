@@ -24,6 +24,7 @@ from __future__ import print_function
 import socket
 import struct
 import threading
+import time
 
 import six
 
@@ -397,14 +398,19 @@ class WebSocket(object):
                           reason, ABNF.OPCODE_CLOSE)
                 sock_timeout = self.sock.gettimeout()
                 self.sock.settimeout(timeout)
-                try:
-                    frame = self.recv_frame()
-                    if isEnabledForError():
-                        recv_status = struct.unpack("!H", frame.data[0:2])[0]
-                        if recv_status != STATUS_NORMAL:
-                            error("close status: " + repr(recv_status))
-                except:
-                    pass
+                start_time = time.time()
+                while timeout is None or time.time() - start_time < timeout:
+                    try:
+                        frame = self.recv_frame()
+                        if frame.opcode != ABNF.OPCODE_CLOSE:
+                            continue
+                        if isEnabledForError():
+                            recv_status = struct.unpack("!H", frame.data[0:2])[0]
+                            if recv_status != STATUS_NORMAL:
+                                error("close status: " + repr(recv_status))
+                        break
+                    except:
+                        break
                 self.sock.settimeout(sock_timeout)
                 self.sock.shutdown(socket.SHUT_RDWR)
             except:
