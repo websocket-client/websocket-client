@@ -226,7 +226,8 @@ class WebSocketApp(object):
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message and True or False,
-                skip_utf8_validation=skip_utf8_validation)
+                skip_utf8_validation=skip_utf8_validation,
+                enable_multithread=True if ping_interval else False)
             self.sock.settimeout(getdefaulttimeout())
             self.sock.connect(
                 self.url, header=self.header, cookie=self.cookie,
