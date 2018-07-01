@@ -159,6 +159,7 @@ class WebSocketApp(object):
         self.keep_running = False
         if self.sock:
             self.sock.close(**kwargs)
+            self.sock = None
 
     def _send_ping(self, interval, event):
         while not event.wait(interval):
