@@ -4,6 +4,7 @@ ChangeLog
 - 0.49.0
 
   - WebSocketApp class to make it inheritable (#442)
+  - Add option to disable sending the Origin header (#459)
 
 - 0.48.0
 

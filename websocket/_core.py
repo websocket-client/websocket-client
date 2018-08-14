@@ -201,6 +201,7 @@ class WebSocket(object):
         options: "header" -> custom http header list or dict.
                  "cookie" -> cookie value.
                  "origin" -> custom origin url.
+                 "supress_origin" -> suppress outputting origin header.
                  "host"   -> custom host header string.
                  "http_proxy_host" - http proxy host name.
                  "http_proxy_port" - http proxy port. If not set, set to 80.
@@ -466,6 +467,7 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
     options: "header" -> custom http header list or dict.
              "cookie" -> cookie value.
              "origin" -> custom origin url.
+             "supress_origin" -> suppress outputting origin header. 
              "host"   -> custom host header string.
              "http_proxy_host" - http proxy host name.
              "http_proxy_port" - http proxy port. If not set, set to 80.

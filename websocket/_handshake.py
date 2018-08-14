@@ -96,10 +96,11 @@ def _get_handshake_headers(resource, host, port, options):
     else:
         headers.append("Host: %s" % hostport)
 
-    if "origin" in options and options["origin"] is not None:
-        headers.append("Origin: %s" % options["origin"])
-    else:
-        headers.append("Origin: http://%s" % hostport)
+    if "suppress_origin" not in options or not options["suppress_origin"]:
+        if "origin" in options and options["origin"] is not None:
+            headers.append("Origin: %s" % options["origin"])
+        else:
+            headers.append("Origin: http://%s" % hostport)
 
     key = _create_sec_websocket_key()
     headers.append("Sec-WebSocket-Key: %s" % key)
