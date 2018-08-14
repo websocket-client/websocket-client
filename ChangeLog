@@ -7,6 +7,7 @@ ChangeLog
   - Add option to disable sending the Origin header (#459)
   - Websocket.close() meaning of "close status: XXXXX" (#414)
   - Enable multithreading protection with ping_interval (#448)
+  - reset WebsocketApp.sock (#450)
 
 - 0.48.0
 
