@@ -11,6 +11,7 @@ ChangeLog
   - websocket.enableTrace not working (#455)
   - AttributeError: 'module' object has no attribute 'NullHandler' (#443)
   - WebSocketBadStatusException "not enough arguments for format string" (#454)
+  - handshake should deal with None in headers (#432)
 
 - 0.48.0
 
