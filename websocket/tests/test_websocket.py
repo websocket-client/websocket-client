@@ -40,7 +40,7 @@ TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 
 # Skip Secure WebSocket test.
 TEST_SECURE_WS = True
-TRACEABLE = False
+TRACEABLE = True
 
 
 def create_mask_key(_):

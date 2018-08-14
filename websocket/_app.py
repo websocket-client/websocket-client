@@ -221,7 +221,8 @@ class WebSocketApp(object):
                 event.set()
                 thread.join()
             self.keep_running = False
-            self.sock.close()
+            if self.sock:
+                self.sock.close()
             close_args = self._get_close_args(
                 close_frame.data if close_frame else None)
             self._callback(self.on_close, *close_args)
