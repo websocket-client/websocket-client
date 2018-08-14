@@ -197,7 +197,8 @@ class WebSocketApp(object):
         skip_utf8_validation: skip utf8 validation.
         host: update host header.
         origin: update origin header.
-        "supress_origin" -> suppress outputting origin header.
+        dispatcher: customize reading data from socket.
+        supress_origin: suppress outputting origin header.
         """
 
         if not ping_timeout or ping_timeout <= 0:
