@@ -12,12 +12,12 @@ tests_require = []
 if sys.version_info[0] == 2 and sys.version_info[1] < 7:
         tests_require.append('unittest2==0.8.0')
 
-insecure_pythons = '2.4, 2.5, 2.6, ' + ', '.join("2.7.{pv}".format(pv=pv) for pv in range(10))
+insecure_pythons = '2.6, ' + ', '.join("2.7.{pv}".format(pv=pv) for pv in range(10))
 
 extras_require = {
     ':python_version in "{ips}"'.format(ips=insecure_pythons):
         ['backports.ssl_match_hostname'],
-    ':python_version in "2.4, 2.5, 2.6"': ['argparse'],
+    ':python_version in "2.6"': ['argparse'],
 }
 
 try:
@@ -38,7 +38,7 @@ except Exception:
 setup(
     name=NAME,
     version=VERSION,
-    description="WebSocket client for python. hybi13 is supported.",
+    description="WebSocket client for Python. hybi13 is supported.",
     long_description=open("README.rst").read(),
     author="liris",
     author_email="liris.pp@gmail.com",
@@ -50,6 +50,8 @@ setup(
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
