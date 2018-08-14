@@ -1,6 +1,8 @@
 ChangeLog
 ============
 
+- 0.49.0
+
 - 0.48.0
 
   - Add NullHandler to logger to fix python 2 issue. (#400)
