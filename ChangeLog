@@ -10,6 +10,7 @@ ChangeLog
   - reset WebsocketApp.sock (#450)
   - websocket.enableTrace not working (#455)
   - AttributeError: 'module' object has no attribute 'NullHandler' (#443)
+  - WebSocketBadStatusException "not enough arguments for format string" (#454)
 
 - 0.48.0
 
