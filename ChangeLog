@@ -6,6 +6,7 @@ ChangeLog
   - WebSocketApp class to make it inheritable (#442)
   - Add option to disable sending the Origin header (#459)
   - Websocket.close() meaning of "close status: XXXXX" (#414)
+  - Enable multithreading protection with ping_interval (#448)
 
 - 0.48.0
 
