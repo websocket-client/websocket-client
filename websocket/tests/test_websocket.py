@@ -542,6 +542,28 @@ class WebSocketAppTest(unittest.TestCase):
         # Note: We can't use 'is' for comparing the functions directly, need to use 'id'.
         # self.assertEqual(WebSocketAppTest.get_mask_key_id, id(my_mask_key_func))
 
+    def testSettingClassCallbacks(self):
+        """ App class should provide possibility to set callback functions via class instantiate call, class inheritance
+        and via setting instance attributes
+        """
+        class TestApp(ws.WebSocketApp):
+            def on_close(self):
+                pass
+
+        def on_open(ws):
+            pass
+
+        def on_message(ws):
+            pass
+
+        app = TestApp('ws://www.example.com/', on_open=on_open)
+        app.on_message = on_message
+
+        #assert isinstance(app.on_close, function)
+        assert callable(app.on_open)
+        assert callable(app.on_message)
+        assert callable(app.on_close)
+
 
 class SockOptTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
@@ -551,6 +573,7 @@ class SockOptTest(unittest.TestCase):
         self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
         s.close()
 
+
 class UtilsTest(unittest.TestCase):
     def testUtf8Validator(self):
         state = validate_utf8(six.b('\xf0\x90\x80\x80'))
@@ -559,6 +582,7 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(state, False)
         state = validate_utf8(six.b(''))
         self.assertEqual(state, True)
+
 
 class ProxyInfoTest(unittest.TestCase):
     def setUp(self):
@@ -580,7 +604,6 @@ class ProxyInfoTest(unittest.TestCase):
         elif "https_proxy" in os.environ:
             del os.environ["https_proxy"]
 
-
     def testProxyFromArgs(self):
         self.assertEqual(get_proxy_info("echo.websocket.org", False, proxy_host="localhost"), ("localhost", 0, None))
         self.assertEqual(get_proxy_info("echo.websocket.org", False, proxy_host="localhost", proxy_port=3128), ("localhost", 3128, None))
@@ -600,7 +623,6 @@ class ProxyInfoTest(unittest.TestCase):
             ("localhost", 3128, ("a", "b")))
         self.assertEqual(get_proxy_info("echo.websocket.org", True, proxy_host="localhost", proxy_port=3128, no_proxy=["echo.websocket.org"], proxy_auth=("a", "b")),
             (None, 0, None))
-
 
     def testProxyFromEnv(self):
         os.environ["http_proxy"] = "http://localhost/"
