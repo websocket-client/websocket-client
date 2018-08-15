@@ -282,9 +282,14 @@ class WebSocketApp(object):
                 return True
 
             def check():
-                if ping_timeout and self.last_ping_tm \
-                        and time.time() - self.last_ping_tm > ping_timeout \
-                        and self.last_ping_tm - self.last_pong_tm > ping_timeout:
+                has_timeout_expired = time.time() - self.last_ping_tm > ping_timeout
+                has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
+                has_pong_arrived_too_late = self.last_pong_tm - self.last_ping_tm > ping_timeout
+
+                if (ping_timeout
+                        and self.last_ping_tm
+                        and has_timeout_expired
+                        and (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
                     raise WebSocketTimeoutException("ping/pong timed out")
                 return True
 
