@@ -4,6 +4,7 @@ ChangeLog
 - 0.50.0
 
   - fixed pong before ping (#461)
+  - pass proper arguments to method callbacks (#462)
 
 - 0.49.0
 
