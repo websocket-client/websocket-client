@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.50.0
+
+  - fixed pong before ping (#461)
+
 - 0.49.0
 
   - WebSocketApp class to make it inheritable (#442)
