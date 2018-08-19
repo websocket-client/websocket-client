@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.51.0
+
+  - revert "WebSocketApp class to make it inheritable (#442)" because of breaking the compatibily
+
 - 0.50.0
 
   - fixed pong before ping (#461)

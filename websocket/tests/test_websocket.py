@@ -542,28 +542,6 @@ class WebSocketAppTest(unittest.TestCase):
         # Note: We can't use 'is' for comparing the functions directly, need to use 'id'.
         # self.assertEqual(WebSocketAppTest.get_mask_key_id, id(my_mask_key_func))
 
-    def testSettingClassCallbacks(self):
-        """ App class should provide possibility to set callback functions via class instantiate call, class inheritance
-        and via setting instance attributes
-        """
-        class TestApp(ws.WebSocketApp):
-            def on_close(self):
-                pass
-
-        def on_open(ws):
-            pass
-
-        def on_message(ws):
-            pass
-
-        app = TestApp('ws://www.example.com/', on_open=on_open)
-        app.on_message = on_message
-
-        #assert isinstance(app.on_close, function)
-        assert callable(app.on_open)
-        assert callable(app.on_message)
-        assert callable(app.on_close)
-
 
 class SockOptTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
