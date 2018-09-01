@@ -48,7 +48,7 @@ class Dispatcher:
     def read(self, sock, read_callback, check_callback):
         while self.app.sock.connected:
             r, w, e = select.select(
-            (self.app.sock.sock, ), (), (), self.ping_timeout) # Use a 10 second timeout to avoid to wait forever on close
+            (self.app.sock.sock, ), (), (), self.ping_timeout)
             if r:
                 if not read_callback():
                     break
@@ -282,15 +282,15 @@ class WebSocketApp(object):
                 return True
 
             def check():
-                has_timeout_expired = time.time() - self.last_ping_tm > ping_timeout
-                has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
-                has_pong_arrived_too_late = self.last_pong_tm - self.last_ping_tm > ping_timeout
+                if (ping_timeout):
+                    has_timeout_expired = time.time() - self.last_ping_tm > ping_timeout
+                    has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
+                    has_pong_arrived_too_late = self.last_pong_tm - self.last_ping_tm > ping_timeout
 
-                if (ping_timeout
-                        and self.last_ping_tm
-                        and has_timeout_expired
-                        and (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
-                    raise WebSocketTimeoutException("ping/pong timed out")
+                    if (self.last_ping_tm
+                            and has_timeout_expired
+                            and (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
+                        raise WebSocketTimeoutException("ping/pong timed out")
                 return True
 
             dispatcher.read(self.sock.sock, read, check)
