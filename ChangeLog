@@ -5,6 +5,7 @@ ChangeLog
 
   - fixed callback argument in _app.py (#468)
   - Fixing none compare bug in run_forever (#472)
+  - Fix NoneType bug introduced by #386 fix (#476)
 
 - 0.51.0
 
