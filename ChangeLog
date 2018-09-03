@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.52.0
+
+  - fixed callback argument in _app.py (#468)
+
 - 0.51.0
 
   - revert "WebSocketApp class to make it inheritable (#442)" because of breaking the compatibily
