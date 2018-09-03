@@ -4,6 +4,7 @@ ChangeLog
 - 0.52.0
 
   - fixed callback argument in _app.py (#468)
+  - Fixing none compare bug in run_forever (#472)
 
 - 0.51.0
 
