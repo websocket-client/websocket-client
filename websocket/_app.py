@@ -329,7 +329,11 @@ class WebSocketApp(object):
     def _callback(self, callback, *args):
         if callback:
             try:
-                callback(self, *args)
+                if inspect.ismethod(callback):
+                    callback(*args)
+                else:
+                    callback(self, *args)
+
             except Exception as e:
                 _logging.error("error from callback {}: {}".format(callback, e))
                 if _logging.isEnabledForDebug():

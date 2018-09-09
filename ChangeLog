@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.53.0
+
+  - on_open() missing 1 required positional argument: 'ws' (#471)
+  
 - 0.52.0
 
   - fixed callback argument in _app.py (#468)
