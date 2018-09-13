@@ -212,12 +212,16 @@ class WebSocketApp(object):
         if self.sock:
             raise WebSocketException("socket is already opened")
         thread = None
-        close_frame = None
         self.keep_running = True
         self.last_ping_tm = 0
         self.last_pong_tm = 0
 
-        def teardown():
+        def teardown(close_frame=None):
+            """
+            Tears down the connection.
+            If close_frame is set, we will invoke the on_close handler with the
+            statusCode and reason from there.
+            """
             if thread and thread.isAlive():
                 event.set()
                 thread.join()
@@ -260,8 +264,7 @@ class WebSocketApp(object):
 
                 op_code, frame = self.sock.recv_data_frame(True)
                 if op_code == ABNF.OPCODE_CLOSE:
-                    close_frame = frame
-                    return teardown()
+                    return teardown(frame)
                 elif op_code == ABNF.OPCODE_PING:
                     self._callback(self.on_ping, frame.data)
                 elif op_code == ABNF.OPCODE_PONG:
