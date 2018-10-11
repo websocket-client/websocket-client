@@ -210,6 +210,7 @@ class WebSocket(object):
                  "http_proxy_auth" - http proxy auth information.
                                      tuple of username and password.
                                      default is None
+                 "redirect_threshold" -> number of redirects to follow.
                  "subprotocols" - array of available sub protocols.
                                   default is None.
                  "socket" - pre-initialized stream socket.
@@ -220,6 +221,13 @@ class WebSocket(object):
 
         try:
             self.handshake_response = handshake(self.sock, *addrs, **options)
+            for attempt in range(options.pop('redirect_threshold', 3)):
+                if self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES:
+                    url = self.handshake_response.headers['location']
+                    self.sock.close()
+                    self.sock, addrs =  connect(url, self.sock_opt, proxy_info(**options),
+                                                options.pop('socket', None))
+                    self.handshake_response = handshake(self.sock, *addrs, **options)
             self.connected = True
         except:
             if self.sock:
@@ -482,6 +490,7 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
                                     tuple of username and password.
                                     default is None
              "enable_multithread" -> enable lock for multithread.
+             "redirect_threshold" -> number of redirects to follow.
              "sockopt" -> socket options
              "sslopt" -> ssl option
              "subprotocols" - array of available sub protocols.
