@@ -37,7 +37,10 @@ else:
     from base64 import encodestring as base64encode
 
 if six.PY3:
-    from http import HTTPStatus
+    if six.PY34:
+        from http import client as HTTPStatus
+    else:
+        from http import HTTPStatus
 else:
     import httplib as HTTPStatus
 
