@@ -10,7 +10,7 @@ websocket-client supports only hybi-13.
 License
 =======
 
- - LGPL
+ - BSD
 
 Installation
 ============

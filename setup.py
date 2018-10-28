@@ -42,7 +42,7 @@ setup(
     long_description=open("README.rst").read(),
     author="liris",
     author_email="liris.pp@gmail.com",
-    license="LGPL",
+    license="BSD",
     url="https://github.com/websocket-client/websocket-client.git",
     python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     classifiers=[
