@@ -36,7 +36,15 @@ if six.PY3:
 else:
     from base64 import encodestring as base64encode
 
-__all__ = ["handshake_response", "handshake"]
+if six.PY3:
+    if six.PY34:
+        from http import client as HTTPStatus
+    else:
+        from http import HTTPStatus
+else:
+    import httplib as HTTPStatus
+
+__all__ = ["handshake_response", "handshake", "SUPPORTED_REDIRECT_STATUSES"]
 
 if hasattr(hmac, "compare_digest"):
     compare_digest = hmac.compare_digest
@@ -46,6 +54,8 @@ else:
 
 # websocket supported version.
 VERSION = 13
+
+SUPPORTED_REDIRECT_STATUSES = [HTTPStatus.MOVED_PERMANENTLY, HTTPStatus.FOUND, HTTPStatus.SEE_OTHER]
 
 CookieJar = SimpleCookieJar()
 
@@ -67,6 +77,8 @@ def handshake(sock, hostname, port, resource, **options):
     dump("request header", header_str)
 
     status, resp = _get_resp_headers(sock)
+    if status in SUPPORTED_REDIRECT_STATUSES:
+        return handshake_response(status, resp, None)
     success, subproto = _validate(resp, key, options.get("subprotocols"))
     if not success:
         raise WebSocketException("Invalid WebSocket Header")
@@ -134,9 +146,9 @@ def _get_handshake_headers(resource, host, port, options):
     return headers, key
 
 
-def _get_resp_headers(sock, success_status=101):
+def _get_resp_headers(sock, success_statuses=(101, 301, 302, 303)):
     status, resp_headers, status_message = read_headers(sock)
-    if status != success_status:
+    if status not in success_statuses:
         raise WebSocketBadStatusException("Handshake status %d %s", status, status_message)
     return status, resp_headers
 

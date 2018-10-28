@@ -8,12 +8,12 @@ websocket-client supports only hybi-13.
 
 
 License
-============
+=======
 
  - LGPL
 
 Installation
-=============
+============
 
 This module is tested on Python 2.7 and Python 3.4+.
 
@@ -28,20 +28,19 @@ This module depends on
  - six
  - backports.ssl_match_hostname for Python 2.x
 
-performance
-------------------
+Performance
+-----------
 
-"send" method is too slow on pure python. If you want to get better performace, please install numpy or wsaccel.
-You can get the best performance from numpy.
+The "send" and "validate_utf8" methods are too slow on pure python. If you want to get better performace, please install both numpy and wsaccel.
 
 
 How about Python 3
-===========================
+==================
 
 Now, we support Python 3 on single source code from version 0.14.0. Thanks, @battlemidget and @ralphbean.
 
 HTTP Proxy
-=============
+==========
 
 Support websocket access via http proxy.
 The proxy server must allow "CONNECT" method to websocket port.
@@ -154,10 +153,10 @@ You can also write your own class for the connection, if you want to handle the 
 
 
 FAQ
-============
+===
 
 How to disable ssl cert verification?
-----------------------------------------
+-------------------------------------
 
 Please set sslopt to {"cert_reqs": ssl.CERT_NONE}.
 
@@ -185,8 +184,8 @@ WebSocket sample
     ws.connect("wss://echo.websocket.org")
 
 
-How to disable hostname verification.
-----------------------------------------
+How to disable hostname verification?
+-------------------------------------
 
 Please set sslopt to {"check_hostname": False}.
 (since v0.18.0)
@@ -222,7 +221,7 @@ SNI support is available for Python 2.7.9+ and 3.2+. It will be enabled automati
 
 
 Sub Protocols.
-----------------------------------------
+--------------
 
 The server needs to support sub protocols, please set the subprotocol like this.
 
@@ -236,7 +235,7 @@ Subprotocol sample
 
 
 wsdump.py
-============
+=========
 
 wsdump.py is simple WebSocket test(debug) tool.
 
@@ -251,7 +250,7 @@ sample for echo.websocket.org::
 
 
 Usage
----------
+-----
 
 usage::
 

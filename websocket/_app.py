@@ -48,7 +48,7 @@ class Dispatcher:
     def read(self, sock, read_callback, check_callback):
         while self.app.sock.connected:
             r, w, e = select.select(
-            (self.app.sock.sock, ), (), (), self.ping_timeout)
+                    (self.app.sock.sock, ), (), (), self.ping_timeout)
             if r:
                 if not read_callback():
                     break
@@ -118,7 +118,7 @@ class WebSocketApp(object):
           The 2nd argument is utf-8 string which we get from the server.
           The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
           The 4th argument is continue flag. if 0, the data continue
-        keep_running: this parameter is obosleted and ignored it.
+        keep_running: this parameter is obsolete and ignored.
         get_mask_key: a callable to produce new mask keys,
           see the WebSocket.set_mask_key's docstring for more information
         subprotocols: array of available sub protocols. default is None.
@@ -179,7 +179,7 @@ class WebSocketApp(object):
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    suppress_origin = False):
+                    suppress_origin = False, proxy_type=None):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -199,15 +199,20 @@ class WebSocketApp(object):
         origin: update origin header.
         dispatcher: customize reading data from socket.
         suppress_origin: suppress outputting origin header.
+
+        Returns
+        -------
+        False if caught KeyboardInterrupt
+        True if other exception was raised during a loop
         """
 
-        if ping_timeout is not None and (not ping_timeout or ping_timeout <= 0):
+        if ping_timeout is not None and ping_timeout <= 0:
             ping_timeout = None
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
-        if sockopt is None:
+        if not sockopt:
             sockopt = []
-        if sslopt is None:
+        if not sslopt:
             sslopt = {}
         if self.sock:
             raise WebSocketException("socket is already opened")
@@ -232,7 +237,7 @@ class WebSocketApp(object):
         try:
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
-                fire_cont_frame=self.on_cont_message and True or False,
+                fire_cont_frame=self.on_cont_message is not None,
                 skip_utf8_validation=skip_utf8_validation,
                 enable_multithread=True if ping_interval else False)
             self.sock.settimeout(getdefaulttimeout())
@@ -241,7 +246,8 @@ class WebSocketApp(object):
                 http_proxy_host=http_proxy_host,
                 http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
                 http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
-                host=host, origin=origin, suppress_origin=suppress_origin)
+                host=host, origin=origin, suppress_origin=suppress_origin,
+                proxy_type=proxy_type)
             if not dispatcher:
                 dispatcher = self.create_dispatcher(ping_timeout)
 
@@ -300,6 +306,7 @@ class WebSocketApp(object):
                 # propagate SystemExit further
                 raise
             teardown()
+            return not isinstance(e, KeyboardInterrupt)
 
     def create_dispatcher(self, ping_timeout):
         timeout = ping_timeout or 10
