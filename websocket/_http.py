@@ -101,7 +101,7 @@ def _open_proxied_socket(url, options, proxy):
 
 
 def connect(url, options, proxy, socket):
-    if proxy.host and not socket and not(proxy.type == 'http'):
+    if proxy.host and not socket and not (proxy.type == 'http'):
         return _open_proxied_socket(url, options, proxy)
 
     hostname, port, resource, is_secure = parse_url(url)
