@@ -179,7 +179,7 @@ class WebSocketApp(object):
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    supress_origin = False, proxy_type=None):
+                    suppress_origin = False, proxy_type=None):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -198,7 +198,7 @@ class WebSocketApp(object):
         host: update host header.
         origin: update origin header.
         dispatcher: customize reading data from socket.
-        supress_origin: suppress outputting origin header.
+        suppress_origin: suppress outputting origin header.
 
         Returns
         -------
@@ -246,7 +246,7 @@ class WebSocketApp(object):
                 http_proxy_host=http_proxy_host,
                 http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
                 http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
-                host=host, origin=origin, supress_origin = supress_origin,
+                host=host, origin=origin, suppress_origin=suppress_origin,
                 proxy_type=proxy_type)
             if not dispatcher:
                 dispatcher = self.create_dispatcher(ping_timeout)
