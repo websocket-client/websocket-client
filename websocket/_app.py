@@ -118,7 +118,7 @@ class WebSocketApp(object):
           The 2nd argument is utf-8 string which we get from the server.
           The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
           The 4th argument is continue flag. if 0, the data continue
-        keep_running: this parameter is obosleted and ignored it.
+        keep_running: this parameter is obsolete and ignored.
         get_mask_key: a callable to produce new mask keys,
           see the WebSocket.set_mask_key's docstring for more information
         subprotocols: array of available sub protocols. default is None.
