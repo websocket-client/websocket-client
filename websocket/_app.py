@@ -48,7 +48,7 @@ class Dispatcher:
     def read(self, sock, read_callback, check_callback):
         while self.app.sock.connected:
             r, w, e = select.select(
-            (self.app.sock.sock, ), (), (), self.ping_timeout)
+                    (self.app.sock.sock, ), (), (), self.ping_timeout)
             if r:
                 if not read_callback():
                     break
@@ -206,13 +206,13 @@ class WebSocketApp(object):
         True if other exception was raised during a loop
         """
 
-        if ping_timeout is not None and (not ping_timeout or ping_timeout <= 0):
+        if ping_timeout is not None and ping_timeout <= 0:
             ping_timeout = None
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
-        if sockopt is None:
+        if not sockopt:
             sockopt = []
-        if sslopt is None:
+        if not sslopt:
             sslopt = {}
         if self.sock:
             raise WebSocketException("socket is already opened")
@@ -237,7 +237,7 @@ class WebSocketApp(object):
         try:
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
-                fire_cont_frame=self.on_cont_message and True or False,
+                fire_cont_frame=self.on_cont_message is not None,
                 skip_utf8_validation=skip_utf8_validation,
                 enable_multithread=True if ping_interval else False)
             self.sock.settimeout(getdefaulttimeout())
