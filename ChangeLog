@@ -5,6 +5,7 @@ ChangeLog
 
   - Status return for WebSocketApp.run_forever() (#492)
   - Handle redirects in handshake (#491)
+  - Make proxy_type option available in WebSocketApp.run_forever() (#486)
 
 - 0.53.0
 
