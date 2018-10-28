@@ -7,6 +7,7 @@ ChangeLog
   - Handle redirects in handshake (#491)
   - Make proxy_type option available in WebSocketApp.run_forever() (#486)
   - Fix typo in supress_origin (#485)
+  - WebSocketApp's on_close never emits status code or reason (#479)
 
 - 0.53.0
 
