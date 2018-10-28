@@ -4,6 +4,7 @@ ChangeLog
 - 0.54.0
 
   - Status return for WebSocketApp.run_forever() (#492)
+  - Handle redirects in handshake (#491)
 
 - 0.53.0
 
