@@ -199,6 +199,11 @@ class WebSocketApp(object):
         origin: update origin header.
         dispatcher: customize reading data from socket.
         supress_origin: suppress outputting origin header.
+
+        Returns
+        -------
+        False if caught KeyboardInterrupt
+        True if other exception was raised during a loop
         """
 
         if ping_timeout is not None and (not ping_timeout or ping_timeout <= 0):
@@ -300,6 +305,7 @@ class WebSocketApp(object):
                 # propagate SystemExit further
                 raise
             teardown()
+            return not isinstance(e, KeyboardInterrupt)
 
     def create_dispatcher(self, ping_timeout):
         timeout = ping_timeout or 10
