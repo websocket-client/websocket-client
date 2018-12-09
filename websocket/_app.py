@@ -339,7 +339,7 @@ class WebSocketApp(object):
     def _callback(self, callback, *args):
         if callback:
             try:
-                if inspect.ismethod(callback):
+                if inspect.ismethod(callback) and isinstance(callback.__self__, WebSocketApp):
                     callback(*args)
                 else:
                     callback(self, *args)
