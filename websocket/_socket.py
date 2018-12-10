@@ -23,6 +23,8 @@ import socket
 
 import six
 import sys
+import errno
+from time import sleep
 
 from ._exceptions import *
 from ._ssl_compat import *
@@ -77,17 +79,26 @@ def recv(sock, bufsize):
     if not sock:
         raise WebSocketConnectionClosedException("socket is already closed.")
 
-    try:
-        bytes_ = sock.recv(bufsize)
-    except socket.timeout as e:
-        message = extract_err_message(e)
-        raise WebSocketTimeoutException(message)
-    except SSLError as e:
-        message = extract_err_message(e)
-        if isinstance(message, str) and 'timed out' in message:
+    while True:
+        try:
+            bytes_ = sock.recv(bufsize)
+        except socket.error, e:
+            err = e.args[0]
+            if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
+                sleep(0.1)
+                continue
+            message = extract_err_message(e)
             raise WebSocketTimeoutException(message)
-        else:
-            raise
+        except socket.timeout as e:
+            message = extract_err_message(e)
+            raise WebSocketTimeoutException(message)
+        except SSLError as e:
+            message = extract_err_message(e)
+            if isinstance(message, str) and 'timed out' in message:
+                raise WebSocketTimeoutException(message)
+            else:
+                raise
+        break
 
     if not bytes_:
         raise WebSocketConnectionClosedException(
