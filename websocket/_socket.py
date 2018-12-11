@@ -24,6 +24,7 @@ import socket
 import six
 import sys
 import errno
+import select
 from time import sleep
 
 from ._exceptions import *
@@ -85,7 +86,7 @@ def recv(sock, bufsize):
         except socket.error, e:
             err = e.args[0]
             if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
-                sleep(0.1)
+                select.select([sock], [], [])
                 continue
             message = extract_err_message(e)
             raise WebSocketTimeoutException(message)
