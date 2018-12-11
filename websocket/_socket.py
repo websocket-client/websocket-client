@@ -25,7 +25,6 @@ import six
 import sys
 import errno
 import select
-from time import sleep
 
 from ._exceptions import *
 from ._ssl_compat import *
