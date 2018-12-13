@@ -56,6 +56,8 @@ class sock_opt(object):
         self.sockopt = sockopt
         self.sslopt = sslopt
         self.timeout = None
+        self.max_socket_retries = 5
+        self.max_socket_select_timeout = 3
 
 
 def setdefaulttimeout(timeout):
@@ -75,17 +77,52 @@ def getdefaulttimeout():
     return _default_timeout
 
 
+def setmaxsocketretries(retries):
+    """
+    Set the maximum socket read/writes attempts.
+
+    retries: default socket read/writes attempts.
+    """
+    self.max_socket_retries = retries
+
+
+def getmaxsocketretries():
+    """
+    Return the maximum socket read/writes attempts.
+    """
+    return self.max_socket_retries
+
+
+def setmaxsocketselecttimeout(timeout):
+    """
+    Set the global select socket timeout.
+
+    timeout: default select socket timeout. floating point number in seconds.
+    """
+    self.max_socket_select_timeout = timeout
+
+
+def getmaxsocketselecttimeout():
+    """
+    Return default select socket timeout. floating point number in seconds.
+    """
+    return self.max_socket_select_timeout
+
+
 def recv(sock, bufsize):
     if not sock:
         raise WebSocketConnectionClosedException("socket is already closed.")
 
-    while True:
+    left_socket_retries = self.max_socket_retries
+
+    while left_socket_retries:
+        left_socket_retries -=1
         try:
             bytes_ = sock.recv(bufsize)
         except socket.error, e:
             err = e.args[0]
             if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
-                select.select([sock], [], [])
+                select.select([sock], [], [], self.max_socket_select_timeout)
                 continue
             message = extract_err_message(e)
             raise WebSocketTimeoutException(message)
