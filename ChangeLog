@@ -4,7 +4,7 @@ ChangeLog
 - 0.55.0
 
   - Add response headers in WebSocketBadStatusException (#501)
-
+  - Manually assigning WebSocket-Version (#506)
 
 - 0.54.0
 
