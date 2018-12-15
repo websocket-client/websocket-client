@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 0.55.0
+
+  - Add response headers in WebSocketBadStatusException (#501)
+
+
 - 0.54.0
 
   - Change license from LGPL to BSD.
