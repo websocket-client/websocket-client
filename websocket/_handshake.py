@@ -149,7 +149,7 @@ def _get_handshake_headers(resource, host, port, options):
 def _get_resp_headers(sock, success_statuses=(101, 301, 302, 303)):
     status, resp_headers, status_message = read_headers(sock)
     if status not in success_statuses:
-        raise WebSocketBadStatusException("Handshake status %d %s", status, status_message)
+        raise WebSocketBadStatusException("Handshake status %d %s", status, status_message, resp_headers)
     return status, resp_headers
 
 _HEADERS_TO_CHECK = {
