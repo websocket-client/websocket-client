@@ -428,7 +428,7 @@ class WebSocket(object):
             except:
                 pass
 
-        self.shutdown()
+            self.shutdown()
 
     def abort(self):
         """
