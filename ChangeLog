@@ -7,6 +7,7 @@ ChangeLog
   - Manually assigning WebSocket-Version (#506)
   - SSL socket handling fix (#474)
   - Let setup.py use the same license as LICENSE file (#517)
+  - Ensure that "timeout" is passed down, when calling WebSocket.connect() (#513)
 
 - 0.54.0
 
