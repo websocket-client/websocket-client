@@ -5,6 +5,7 @@ ChangeLog
 
   - Add response headers in WebSocketBadStatusException (#501)
   - Manually assigning WebSocket-Version (#506)
+  - SSL socket handling fix (#474)
 
 - 0.54.0
 
