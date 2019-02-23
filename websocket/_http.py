@@ -187,7 +187,8 @@ def _open_socket(addrinfo_list, sockopt, timeout):
         else:
             break
     else:
-        raise err
+        if err:
+            raise err
 
     return sock
 
