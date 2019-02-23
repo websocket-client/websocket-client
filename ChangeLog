@@ -8,6 +8,7 @@ ChangeLog
   - SSL socket handling fix (#474)
   - Let setup.py use the same license as LICENSE file (#517)
   - Ensure that "timeout" is passed down, when calling WebSocket.connect() (#513)
+  - Retry connect on "Interrupted system call" (#528)
 
 - 0.54.0
 
