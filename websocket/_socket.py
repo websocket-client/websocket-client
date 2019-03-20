@@ -96,7 +96,10 @@ def recv(sock, bufsize):
             return sock.recv(bufsize)
 
     try:
-        bytes_ = _recv()
+        if sock.gettimeout() == 0:
+            bytes_ = sock.recv(bufsize)
+        else:
+            bytes_ = _recv()
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
@@ -148,7 +151,10 @@ def send(sock, data):
             return sock.send(data)
 
     try:
-        return _send()
+        if sock.gettimeout() == 0:
+            return sock.send(data)
+        else:
+            return _send()
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
