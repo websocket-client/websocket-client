@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.56.0
+
+ - Don't retry sockets with timeout set to 0(#536)
+
 - 0.55.0
 
   - Add response headers in WebSocketBadStatusException (#501)
