@@ -55,6 +55,9 @@ class SockMock(object):
     def add_packet(self, data):
         self.data.append(data)
 
+    def gettimeout(self):
+        return None
+
     def recv(self, bufsize):
         if self.data:
             e = self.data.pop(0)
