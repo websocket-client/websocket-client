@@ -140,7 +140,7 @@ def _get_addrinfo_list(hostname, port, is_secure, proxy):
     try:
         if not phost:
             addrinfo_list = socket.getaddrinfo(
-                hostname, port, 0, 0, socket.SOL_TCP)
+                hostname, port, 0, socket.SOCK_STREAM, socket.SOL_TCP)
             return addrinfo_list, False, None
         else:
             pport = pport and pport or 80
