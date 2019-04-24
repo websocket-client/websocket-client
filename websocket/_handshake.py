@@ -85,6 +85,7 @@ def handshake(sock, hostname, port, resource, **options):
 
     return handshake_response(status, resp, subproto)
 
+
 def _pack_hostname(hostname):
     # IPv6 address
     if ':' in hostname:
@@ -159,6 +160,7 @@ def _get_resp_headers(sock, success_statuses=(101, 301, 302, 303)):
     if status not in success_statuses:
         raise WebSocketBadStatusException("Handshake status %d %s", status, status_message, resp_headers)
     return status, resp_headers
+
 
 _HEADERS_TO_CHECK = {
     "upgrade": "websocket",

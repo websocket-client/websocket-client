@@ -42,7 +42,7 @@ __all__ = ["WebSocketApp"]
 
 class Dispatcher:
     def __init__(self, app, ping_timeout):
-        self.app  = app
+        self.app = app
         self.ping_timeout = ping_timeout
 
     def read(self, sock, read_callback, check_callback):
@@ -56,7 +56,7 @@ class Dispatcher:
 
 class SSLDispacther:
     def __init__(self, app, ping_timeout):
-        self.app  = app
+        self.app = app
         self.ping_timeout = ping_timeout
 
     def read(self, sock, read_callback, check_callback):
@@ -74,6 +74,7 @@ class SSLDispacther:
 
         r, w, e = select.select((sock, ), (), (), self.ping_timeout)
         return r
+
 
 class WebSocketApp(object):
     """
@@ -179,7 +180,7 @@ class WebSocketApp(object):
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    suppress_origin = False, proxy_type=None):
+                    suppress_origin=False, proxy_type=None):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
