@@ -1,6 +1,19 @@
 ChangeLog
 ============
 
+- 0.56.0
+
+ - Don't retry sockets with timeout set to 0(#536)
+
+- 0.55.0
+
+  - Add response headers in WebSocketBadStatusException (#501)
+  - Manually assigning WebSocket-Version (#506)
+  - SSL socket handling fix (#474)
+  - Let setup.py use the same license as LICENSE file (#517)
+  - Ensure that "timeout" is passed down, when calling WebSocket.connect() (#513)
+  - Retry connect on "Interrupted system call" (#528)
+
 - 0.54.0
 
   - Change license from LGPL to BSD.

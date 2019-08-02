@@ -166,28 +166,35 @@ def _open_socket(addrinfo_list, sockopt, timeout):
             sock.setsockopt(*opts)
 
         address = addrinfo[4]
-        try:
-            sock.connect(address)
-            err = None
-        except ProxyConnectionError as error:
-            err = WebSocketProxyException(str(error))
-            err.remote_ip = str(address[0])
-            continue
-        except socket.error as error:
-            error.remote_ip = str(address[0])
+        err = None
+        while not err:
             try:
-                eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED)
-            except:
-                eConnRefused = (errno.ECONNREFUSED, )
-            if error.errno in eConnRefused:
-                err = error
+                sock.connect(address)
+            except ProxyConnectionError as error:
+                err = WebSocketProxyException(str(error))
+                err.remote_ip = str(address[0])
                 continue
+            except socket.error as error:
+                error.remote_ip = str(address[0])
+                try:
+                    eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED)
+                except:
+                    eConnRefused = (errno.ECONNREFUSED, )
+                if error.errno == errno.EINTR:
+                    continue
+                elif error.errno in eConnRefused:
+                    err = error
+                    continue
+                else:
+                    raise error
             else:
-                raise error
+                break
         else:
-            break
+            continue
+        break
     else:
-        raise err
+        if err:
+            raise err
 
     return sock
 

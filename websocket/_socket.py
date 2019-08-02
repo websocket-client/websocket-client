@@ -19,6 +19,8 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Boston, MA 02110-1335  USA
 
 """
+import errno
+import select
 import socket
 
 import six
@@ -77,8 +79,27 @@ def recv(sock, bufsize):
     if not sock:
         raise WebSocketConnectionClosedException("socket is already closed.")
 
+    def _recv():
+        try:
+            return sock.recv(bufsize)
+        except SSLWantReadError:
+            pass
+        except socket.error as exc:
+            error_code = extract_error_code(exc)
+            if error_code is None:
+                raise
+            if error_code != errno.EAGAIN or error_code != errno.EWOULDBLOCK:
+                raise
+
+        r, w, e = select.select((sock, ), (), (), sock.gettimeout())
+        if r:
+            return sock.recv(bufsize)
+
     try:
-        bytes_ = sock.recv(bufsize)
+        if sock.gettimeout() == 0:
+            bytes_ = sock.recv(bufsize)
+        else:
+            bytes_ = _recv()
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
@@ -113,8 +134,27 @@ def send(sock, data):
     if not sock:
         raise WebSocketConnectionClosedException("socket is already closed.")
 
+    def _send():
+        try:
+            return sock.send(data)
+        except SSLWantWriteError:
+            pass
+        except socket.error as exc:
+            error_code = extract_error_code(exc)
+            if error_code is None:
+                raise
+            if error_code != errno.EAGAIN or error_code != errno.EWOULDBLOCK:
+                raise
+
+        r, w, e = select.select((), (sock, ), (), sock.gettimeout())
+        if w:
+            return sock.send(data)
+
     try:
-        return sock.send(data)
+        if sock.gettimeout() == 0:
+            return sock.send(data)
+        else:
+            return _send()
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)

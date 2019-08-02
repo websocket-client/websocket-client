@@ -216,6 +216,9 @@ class WebSocket(object):
                  "socket" - pre-initialized stream socket.
 
         """
+        # FIXME: "subprotocols" are getting lost, not passed down
+        # FIXME: "header", "cookie", "origin" and "host" too
+        self.sock_opt.timeout = options.get('timeout', self.sock_opt.timeout)
         self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
                                    options.pop('socket', None))
 
@@ -425,7 +428,7 @@ class WebSocket(object):
             except:
                 pass
 
-        self.shutdown()
+            self.shutdown()
 
     def abort(self):
         """
