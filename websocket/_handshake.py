@@ -101,7 +101,6 @@ def _get_handshake_headers(resource, host, port, options):
         hostport = _pack_hostname(host)
     else:
         hostport = "%s:%d" % (_pack_hostname(host), port)
-    
     if "host" in options and options["host"] is not None:
         headers.append("Host: %s" % options["host"])
     else:
