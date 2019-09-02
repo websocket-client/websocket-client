@@ -24,7 +24,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 WebSocketApp provides higher level APIs.
 """
 import inspect
-import select
+import selectors
 import sys
 import threading
 import time
@@ -47,12 +47,15 @@ class Dispatcher:
 
     def read(self, sock, read_callback, check_callback):
         while self.app.sock.connected:
-            r, w, e = select.select(
-                    (self.app.sock.sock, ), (), (), self.ping_timeout)
+            sel = selectors.DefaultSelector()
+            sel.register(self.app.sock.sock, selectors.EVENT_READ)
+
+            r = sel.select(self.ping_timeout)
             if r:
                 if not read_callback():
                     break
             check_callback()
+            sel.close()
 
 class SSLDispacther:
     def __init__(self, app, ping_timeout):
@@ -72,8 +75,14 @@ class SSLDispacther:
         if sock.pending():
             return [sock,]
 
-        r, w, e = select.select((sock, ), (), (), self.ping_timeout)
-        return r
+        sel = selectors.DefaultSelector()
+        sel.register(sock, selectors.EVENT_READ)
+
+        r = sel.select(self.ping_timeout)
+        sel.close()
+
+        if len(r) > 0:
+            return r[0][0]
 
 class WebSocketApp(object):
     """
