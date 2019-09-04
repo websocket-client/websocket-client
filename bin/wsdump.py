@@ -75,10 +75,10 @@ def parse_args():
 class RawInput:
 
     def raw_input(self, prompt):
-        if six.PY3:
-            line = input(prompt)
-        else:
+        if six.PY2:
             line = raw_input(prompt)
+        else:
+            line = input(prompt)
 
         if ENCODING and ENCODING != "utf-8" and not isinstance(line, six.text_type):
             line = line.decode(ENCODING).encode("utf-8")
@@ -160,7 +160,7 @@ def main():
         while True:
             opcode, data = recv()
             msg = None
-            if six.PY3 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
+            if not six.PY2 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
             if not args.verbose and opcode in OPCODE_DATA:
                 msg = data

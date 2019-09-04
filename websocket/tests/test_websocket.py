@@ -18,10 +18,10 @@ from websocket._http import read_headers
 from websocket._url import get_proxy_info, parse_url
 from websocket._utils import validate_utf8
 
-if six.PY3:
-    from base64 import decodebytes as base64decode
-else:
+if six.PY2:
     from base64 import decodestring as base64decode
+else:
+    from base64 import decodebytes as base64decode
 
 if sys.version_info[0] == 2 and sys.version_info[1] < 7:
     import unittest2 as unittest

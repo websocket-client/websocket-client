@@ -30,10 +30,10 @@ from ._utils import validate_utf8
 from threading import Lock
 
 try:
-    if six.PY3:
-        import numpy
-    else:
+    if six.PY2:
         numpy = None
+    else:
+        import numpy
 except ImportError:
     numpy = None
 
@@ -50,10 +50,10 @@ except ImportError:
         for i in range(len(_d)):
             _d[i] ^= _m[i % 4]
 
-        if six.PY3:
-            return _d.tobytes()
-        else:
+        if six.PY2:
             return _d.tostring()
+        else:
+            return _d.tobytes()
 
 
 __all__ = [

@@ -32,10 +32,10 @@ from ._socket import*
 from ._ssl_compat import *
 from ._url import *
 
-if six.PY3:
-    from base64 import encodebytes as base64encode
-else:
+if six.PY2:
     from base64 import encodestring as base64encode
+else:
+    from base64 import encodebytes as base64encode
 
 __all__ = ["proxy_info", "connect", "read_headers"]
 

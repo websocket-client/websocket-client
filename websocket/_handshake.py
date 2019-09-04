@@ -31,18 +31,18 @@ from ._http import *
 from ._logging import *
 from ._socket import *
 
-if six.PY3:
-    from base64 import encodebytes as base64encode
-else:
+if six.PY2:
     from base64 import encodestring as base64encode
+else:
+    from base64 import encodebytes as base64encode
 
-if six.PY3:
+if six.PY2:
+    import httplib as HTTPStatus
+else:
     if six.PY34:
         from http import client as HTTPStatus
     else:
         from http import HTTPStatus
-else:
-    import httplib as HTTPStatus
 
 __all__ = ["handshake_response", "handshake", "SUPPORTED_REDIRECT_STATUSES"]
 
