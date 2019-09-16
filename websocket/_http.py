@@ -138,16 +138,15 @@ def _get_addrinfo_list(hostname, port, is_secure, proxy):
     phost, pport, pauth = get_proxy_info(
         hostname, is_secure, proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
     try:
+        # when running on windows 10, getaddrinfo without socktype returns a socktype 0.
+        # This generates an error exception: `_on_error: exception Socket type must be stream or datagram, not 0`
+        # or `OSError: [Errno 22] Invalid argument` when creating socket. Force the socket type to SOCK_STREAM.
         if not phost:
             addrinfo_list = socket.getaddrinfo(
-                hostname, port, 0, 0, socket.SOL_TCP)
+                hostname, port, 0, socket.SOCK_STREAM, socket.SOL_TCP)
             return addrinfo_list, False, None
         else:
             pport = pport and pport or 80
-            # when running on windows 10, the getaddrinfo used above
-            # returns a socktype 0. This generates an error exception:
-            #_on_error: exception Socket type must be stream or datagram, not 0
-            # Force the socket type to SOCK_STREAM
             addrinfo_list = socket.getaddrinfo(phost, pport, 0, socket.SOCK_STREAM, socket.SOL_TCP)
             return addrinfo_list, True, pauth
     except socket.gaierror as e:
