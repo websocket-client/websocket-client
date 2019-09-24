@@ -6,6 +6,8 @@ import sys
 import threading
 import time
 import ssl
+import gzip
+import zlib
 
 import six
 from six.moves.urllib.parse import urlparse
@@ -162,10 +164,28 @@ def main():
             msg = None
             if six.PY3 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
-            if not args.verbose and opcode in OPCODE_DATA:
-                msg = data
-            elif args.verbose:
+            if isinstance(data, bytes) and len(data)>2 and data[:2] == b'\037\213':  # gzip magick
+                try:
+                    data = "[gzip] " + str(gzip.decompress(data), "utf-8")
+                except:
+                    pass
+            elif isinstance(data, bytes):
+                try:
+                    decomp = zlib.decompressobj(
+                            -zlib.MAX_WBITS
+                    )
+                    data = decomp.decompress(data)
+                    data = "[zlib] " + str(data + decomp.flush(), "utf-8")
+                except:
+                    pass
+
+            if isinstance(data, bytes):
+                data = repr(data)
+
+            if args.verbose:
                 msg = "%s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
+            else:
+                msg = data
 
             if msg is not None:
                 if args.timings:
