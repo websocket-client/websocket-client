@@ -171,11 +171,7 @@ def main():
                     pass
             elif isinstance(data, bytes):
                 try:
-                    decomp = zlib.decompressobj(
-                            -zlib.MAX_WBITS
-                    )
-                    data = decomp.decompress(data)
-                    data = "[zlib] " + str(data + decomp.flush(), "utf-8")
+                    data = "[zlib] " + str(zlib.decompress(data, -zlib.MAX_WBITS), "utf-8")
                 except:
                     pass
 
