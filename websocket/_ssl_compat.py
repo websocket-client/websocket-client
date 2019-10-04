@@ -49,4 +49,6 @@ except ImportError:
     class SSLWantWriteError(Exception):
         pass
 
+    ssl = lambda: None
+
     HAVE_SSL = False
