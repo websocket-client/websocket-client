@@ -46,7 +46,7 @@ class Dispatcher:
         self.ping_timeout = ping_timeout
 
     def read(self, sock, read_callback, check_callback):
-        while self.app.sock.connected:
+        while self.app.keep_running:
             r, w, e = select.select(
                     (self.app.sock.sock, ), (), (), self.ping_timeout)
             if r:
@@ -60,7 +60,7 @@ class SSLDispacther:
         self.ping_timeout = ping_timeout
 
     def read(self, sock, read_callback, check_callback):
-        while self.app.sock.connected:
+        while self.app.keep_running:
             r = self.select()
             if r:
                 if not read_callback():
