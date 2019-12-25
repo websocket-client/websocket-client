@@ -9,3 +9,5 @@ dist
 
 .cache/
 compliance/reports/
+.eggs
+.vscode
