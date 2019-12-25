@@ -55,7 +55,8 @@ else:
 # websocket supported version.
 VERSION = 13
 
-SUPPORTED_REDIRECT_STATUSES = [HTTPStatus.MOVED_PERMANENTLY, HTTPStatus.FOUND, HTTPStatus.SEE_OTHER]
+SUPPORTED_REDIRECT_STATUSES = (HTTPStatus.MOVED_PERMANENTLY, HTTPStatus.FOUND, HTTPStatus.SEE_OTHER,)
+SUCCESS_STATUSES = SUPPORTED_REDIRECT_STATUSES + (HTTPStatus.SWITCHING_PROTOCOLS,)
 
 CookieJar = SimpleCookieJar()
 
@@ -157,7 +158,7 @@ def _get_handshake_headers(resource, host, port, options):
     return headers, key
 
 
-def _get_resp_headers(sock, success_statuses=(101, 301, 302, 303)):
+def _get_resp_headers(sock, success_statuses=SUCCESS_STATUSES):
     status, resp_headers, status_message = read_headers(sock)
     if status not in success_statuses:
         raise WebSocketBadStatusException("Handshake status %d %s", status, status_message, resp_headers)
