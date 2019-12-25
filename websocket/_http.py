@@ -64,6 +64,7 @@ class proxy_info(object):
             self.auth = None
             self.no_proxy = None
 
+
 def _open_proxied_socket(url, options, proxy):
     hostname, port, resource, is_secure = parse_url(url)
 
@@ -147,6 +148,10 @@ def _get_addrinfo_list(hostname, port, is_secure, proxy):
             return addrinfo_list, False, None
         else:
             pport = pport and pport or 80
+            # when running on windows 10, the getaddrinfo used above
+            # returns a socktype 0. This generates an error exception:
+            # _on_error: exception Socket type must be stream or datagram, not 0
+            # Force the socket type to SOCK_STREAM
             addrinfo_list = socket.getaddrinfo(phost, pport, 0, socket.SOCK_STREAM, socket.SOL_TCP)
             return addrinfo_list, True, pauth
     except socket.gaierror as e:
