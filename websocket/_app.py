@@ -46,7 +46,7 @@ class Dispatcher:
         self.ping_timeout = ping_timeout
 
     def read(self, sock, read_callback, check_callback):
-        while self.app.sock.connected:
+        while self.app.keep_running:
             r, w, e = select.select(
                     (self.app.sock.sock, ), (), (), self.ping_timeout)
             if r:
@@ -54,13 +54,13 @@ class Dispatcher:
                     break
             check_callback()
 
-class SSLDispacther:
+class SSLDispatcher:
     def __init__(self, app, ping_timeout):
         self.app = app
         self.ping_timeout = ping_timeout
 
     def read(self, sock, read_callback, check_callback):
-        while self.app.sock.connected:
+        while self.app.keep_running:
             r = self.select()
             if r:
                 if not read_callback():
@@ -315,7 +315,7 @@ class WebSocketApp(object):
     def create_dispatcher(self, ping_timeout):
         timeout = ping_timeout or 10
         if self.sock.is_ssl():
-            return SSLDispacther(self, timeout)
+            return SSLDispatcher(self, timeout)
 
         return Dispatcher(self, timeout)
 
