@@ -95,14 +95,12 @@ def _pack_hostname(hostname):
 def _get_handshake_headers(resource, host, port, options):
     headers = [
         "GET %s HTTP/1.1" % resource,
-        "Upgrade: websocket",
-        "Connection: Upgrade"
+        "Upgrade: websocket"
     ]
     if port == 80 or port == 443:
         hostport = _pack_hostname(host)
     else:
         hostport = "%s:%d" % (_pack_hostname(host), port)
-
     if "host" in options and options["host"] is not None:
         headers.append("Host: %s" % options["host"])
     else:
@@ -125,6 +123,11 @@ def _get_handshake_headers(resource, host, port, options):
 
     if not 'header' in options or 'Sec-WebSocket-Version' not in options['header']:
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
+
+    if not 'connection' in options or options['connection'] is None:
+        headers.append('Connection: upgrade')
+    else:
+        headers.append(options['connection'])
 
     subprotocols = options.get("subprotocols")
     if subprotocols:
