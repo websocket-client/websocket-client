@@ -4,6 +4,17 @@ ChangeLog
 - 0.57.0
  - wsdump: Fix --headers option (#589)
  - Fix getting 400 bad request with long proxy authorization string (#587)
+ - Fix for errors that occur when closing websocket from another thread (#586)
+ - avoid calling repr(data) if tracing is not enabled (#584)
+ - Fixed typo (#579)
+ - Create dummy `ssl` object (#577)
+ - Show compressed text messages in wsdump.py (#576)
+ - Resolve issue opening socket to intranet on Windows 10 with no proxy settings but behind proxy (#573)
+ - Expose http connection header to user (#566)
+ - Improve the readability of HTTP status codes. (#553)
+ - fix the compatible issue with gevent+dnspython (#547)
+ - v should be checked for emptry string before splitting it (#539)
+ - _handshake: hasattr checks on six before accessing the values (#533)
 
 - 0.56.0
 
