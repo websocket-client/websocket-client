@@ -31,13 +31,13 @@ from ._http import *
 from ._logging import *
 from ._socket import *
 
-if six.PY3:
+if hasattr(six, 'PY3') and six.PY3:
     from base64 import encodebytes as base64encode
 else:
     from base64 import encodestring as base64encode
 
-if six.PY3:
-    if six.PY34:
+if hasattr(six, 'PY3') and six.PY3:
+    if hasattr(six, 'PY34') and six.PY34:
         from http import client as HTTPStatus
     else:
         from http import HTTPStatus
