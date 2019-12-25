@@ -54,7 +54,7 @@ class Dispatcher:
                     break
             check_callback()
 
-class SSLDispacther:
+class SSLDispatcher:
     def __init__(self, app, ping_timeout):
         self.app  = app
         self.ping_timeout = ping_timeout
@@ -314,7 +314,7 @@ class WebSocketApp(object):
     def create_dispatcher(self, ping_timeout):
         timeout = ping_timeout or 10
         if self.sock.is_ssl():
-            return SSLDispacther(self, timeout)
+            return SSLDispatcher(self, timeout)
 
         return Dispatcher(self, timeout)
 
