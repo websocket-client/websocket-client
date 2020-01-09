@@ -103,7 +103,8 @@ def _is_address_in_network(ip, net):
 def _is_no_proxy_host(hostname, no_proxy):
     if not no_proxy:
         v = os.environ.get("no_proxy", "").replace(" ", "")
-        no_proxy = v.split(",")
+        if v:
+            no_proxy = v.split(",")
     if not no_proxy:
         no_proxy = DEFAULT_NO_PROXY_HOST
 

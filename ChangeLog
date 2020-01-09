@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 0.57.0
+ - wsdump: Fix --headers option (#589)
+ - Fix getting 400 bad request with long proxy authorization string (#587)
+
 - 0.56.0
 
  - Don't retry sockets with timeout set to 0(#536)

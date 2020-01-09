@@ -80,6 +80,7 @@ class WebSocketBadStatusException(WebSocketException):
         self.status_code = status_code
         self.resp_headers = resp_headers
 
+
 class WebSocketAddressException(WebSocketException):
     """
     If the websocket address info cannot be found, this exception will be raised.
