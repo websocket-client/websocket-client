@@ -32,6 +32,7 @@ class NoLock(object):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
+
 try:
     # If wsaccel is available we use compiled routines to validate UTF-8
     # strings.
