@@ -23,7 +23,7 @@ if six.PY2:
 else:
     from base64 import decodebytes as base64decode
 
-if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
     import unittest
@@ -154,7 +154,7 @@ class WebSocketTest(unittest.TestCase):
 
         self.assertRaises(ValueError, parse_url, "http://www.example.com/r")
 
-        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+        if sys.version_info < (2, 7):
             return
 
         p = parse_url("ws://[2a03:4000:123:83::3]/r")
