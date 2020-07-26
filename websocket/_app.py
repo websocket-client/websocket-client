@@ -312,6 +312,9 @@ class WebSocketApp(object):
             teardown()
             return not isinstance(e, KeyboardInterrupt)
 
+    def is_opened(self):
+        return self.sock is not None
+
     def create_dispatcher(self, ping_timeout):
         timeout = ping_timeout or 10
         if self.sock.is_ssl():
