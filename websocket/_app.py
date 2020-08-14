@@ -341,7 +341,11 @@ class WebSocketApp(object):
         if callback:
             try:
                 if inspect.ismethod(callback):
-                    callback(*args)
+                    paramlen = len(inspect.signature(callback).parameters)
+                    if paramlen == len(args) + 1:
+                        callback(self, *args)
+                    else:
+                        callback(*args)
                 else:
                     callback(self, *args)
 
