@@ -151,6 +151,21 @@ You can also write your own class for the connection, if you want to handle the 
     ws = create_connection("ws://echo.websocket.org/",
                             sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 
+Using Unix Domain Sockets
+---------------------------
+You can also connect to a WebSocket server hosted on a unix domain socket. Just use the `socket` option to setup
+your socket and you are good to go!
+
+.. code:: python
+
+    import socket
+    from websocket import create_connection
+    my_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    my_socket.connect("/path/to/my/unix.socket")
+    
+    ws = create_connection("ws://localhost/", # Dummy URL
+                            socket = my_socket,
+                            sockopt=((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),))
 
 FAQ
 ===

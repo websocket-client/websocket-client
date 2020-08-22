@@ -8,6 +8,7 @@ import time
 import ssl
 import gzip
 import zlib
+import socket
 
 import six
 from six.moves.urllib.parse import urlparse
@@ -70,6 +71,8 @@ def parse_args():
                         help="Print timings in seconds")
     parser.add_argument("--headers",
                         help="Set custom headers. Use ',' as separator")
+    parser.add_argument("--unix-socket", action="store_true",
+                        help="Specify if the URL is a unix domain socket.")
 
     return parser.parse_args()
 
@@ -133,7 +136,14 @@ def main():
         opts = {"cert_reqs": ssl.CERT_NONE, "check_hostname": False}
     if args.headers:
         options['header'] = list(map(str.strip, args.headers.split(',')))
-    ws = websocket.create_connection(args.url, sslopt=opts, **options)
+    if args.unix_socket:
+        my_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        my_socket.connect(args.url)
+        ws = websocket.create_connection("ws://localhost", socket = my_socket,
+                                         sockopt=((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),),
+                                         sslopt=opts, **options)
+    else:
+        ws = websocket.create_connection(args.url, sslopt=opts, **options)
     if args.raw:
         console = NonInteractive()
     else:
