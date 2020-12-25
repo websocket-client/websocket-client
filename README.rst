@@ -31,7 +31,7 @@ This module depends on
 Performance
 -----------
 
-The "send" and "validate_utf8" methods are too slow on pure python. If you want to get better performace, please install both numpy and wsaccel.
+The "send" and "validate_utf8" methods are too slow on pure python. If you want to get better performance, please install both numpy and wsaccel.
 
 
 How about Python 3
