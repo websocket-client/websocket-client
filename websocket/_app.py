@@ -341,7 +341,7 @@ class WebSocketApp(object):
         if callback:
             try:
                 if inspect.ismethod(callback):
-                    callback(*args)
+                    callback(self, *args)
                 else:
                     callback(self, *args)
 
