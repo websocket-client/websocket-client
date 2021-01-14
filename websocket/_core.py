@@ -139,7 +139,7 @@ class WebSocket(object):
         """
         Set the timeout to the websocket.
 
-        timeout: timeout time(second).
+        timeout: timeout time (in seconds). This value could be either float/integer.
         """
         self.sock_opt.timeout = timeout
         if self.sock:
@@ -475,7 +475,7 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
          ...             "x-custom: header"])
 
 
-    timeout: socket timeout time. This value is integer.
+    timeout: socket timeout time. This value could be either float/integer.
              if you set None for this value,
              it means "use default_timeout value"
 
