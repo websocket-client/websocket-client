@@ -341,9 +341,9 @@ class WebSocketApp(object):
         if callback:
             try:
                 if inspect.ismethod(callback):
-                    callback(*args)
-                else:
                     callback(self, *args)
+                else:
+                    callback(*args)
 
             except Exception as e:
                 _logging.error("error from callback {}: {}".format(callback, e))
