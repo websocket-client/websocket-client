@@ -127,7 +127,7 @@ def _get_handshake_headers(resource, host, port, options):
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
 
     if not 'connection' in options or options['connection'] is None:
-        headers.append('Connection: upgrade')
+        headers.append('Connection: Upgrade')
     else:
         headers.append(options['connection'])
 
