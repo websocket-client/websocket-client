@@ -127,7 +127,7 @@ def _get_handshake_headers(resource, host, port, options):
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
 
     if not 'connection' in options or options['connection'] is None:
-        headers.append('Connection: upgrade')
+        headers.append('Connection: Upgrade')
     else:
         headers.append(options['connection'])
 
@@ -183,9 +183,11 @@ def _validate(headers, key, subprotocols):
             return False, None
 
     if subprotocols:
-        subproto = headers.get("sec-websocket-protocol", None).lower()
-        if not subproto or subproto not in [s.lower() for s in subprotocols]:
-            error("Invalid subprotocol: " + str(subprotocols))
+        subproto = headers.get("sec-websocket-protocol", None)
+        if subproto is None:
+            subproto = subprotocols[0].lower()
+        elif not subproto or subproto.lower() not in [s.lower() for s in subprotocols]:
+            error("Invalid or duplicate subprotocol: " + str(subprotocols))
             return False, None
 
     result = headers.get("sec-websocket-accept", None)
