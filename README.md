@@ -1,13 +1,7 @@
 # websocket-client
 
-This is a fork of @liris's original
-[websocket-client](https://github.com/websocket-client/websocket-client) tool and
-is intended to serve as a destination for further development, since the original
-project has not been updated in years. [This discussion](https://github.com/websocket-client/websocket-client/issues/644)
-in the original repo helped kick off this fork.
-
-websocket-client module is a WebSocket client for Python. It provides the
-low level APIs for WebSocket. All APIs are the synchronous functions.
+The websocket-client module is a WebSocket client for Python. It provides access
+to low level APIs for WebSockets. All APIs are for synchronous functions.
 
 websocket-client supports only [hybi-13](https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-13).
 
