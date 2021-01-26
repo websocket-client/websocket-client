@@ -466,7 +466,7 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
     Connect to url and return the WebSocket object.
     Passing optional timeout parameter will set the timeout on the socket.
     If no timeout is supplied,
-    the global default timeout setting returned by getdefauttimeout() is used.
+    the global default timeout setting returned by getdefaulttimeout() is used.
     You can customize using 'options'.
     If you set "header" list object, you can set your own custom header.
 
