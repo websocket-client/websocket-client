@@ -27,7 +27,7 @@ install.
 ## Performance
 
 The "send" and "validate_utf8" methods are very slow in pure Python.
-If you want to get better performace, please install both numpy and wsaccel.
+If you want to get better performance, please install both numpy and wsaccel.
 Note that wsaccel can sometimes causes other issues.
 
 ## Examples
