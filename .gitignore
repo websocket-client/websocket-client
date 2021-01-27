@@ -11,3 +11,10 @@ dist
 compliance/reports/
 .eggs
 .vscode
+
+# venv
+.venv/
+.env/
+
+# PyCharm
+.idea/
