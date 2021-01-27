@@ -184,11 +184,10 @@ def _validate(headers, key, subprotocols):
 
     if subprotocols:
         subproto = headers.get("sec-websocket-protocol", None)
-        if subproto is None:
-            subproto = subprotocols[0].lower()
-        elif not subproto or subproto.lower() not in [s.lower() for s in subprotocols]:
-            error("Invalid or duplicate subprotocol: " + str(subprotocols))
+        if not subproto or subproto.lower() not in [s.lower() for s in subprotocols]:
+            error("Invalid subprotocol: " + str(subprotocols))
             return False, None
+        subproto = subproto.lower()
 
     result = headers.get("sec-websocket-accept", None)
     if not result:
