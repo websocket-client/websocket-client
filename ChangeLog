@@ -50,7 +50,7 @@ ChangeLog
 
 - 0.51.0
 
-  - revert "WebSocketApp class to make it inheritable (#442)" because of breaking the compatibily
+  - revert "WebSocketApp class to make it inheritable (#442)" because of breaking the compatibility
 
 - 0.50.0
 
@@ -115,7 +115,7 @@ ChangeLog
 
 - 0.43.0
 
-  - Unkown kwarg 'ca_cert' when calling ssl wrap_socket() (#326)
+  - Unknown kwarg 'ca_cert' when calling ssl wrap_socket() (#326)
   - Race condition in WebSocket ping/pong (#327)
 
 - 0.42.0
