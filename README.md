@@ -19,7 +19,8 @@ First, install the following dependencies:
 - six
 - backports.ssl\_match\_hostname for Python 2.x
 
-You can install the dependencies with the command `pip install six`
+You can install the dependencies with the command `pip install six` and
+`pip install backports.ssl_match_hostname`
 
 You can use either `python setup.py install` or `pip install websocket-client` to
 install.
