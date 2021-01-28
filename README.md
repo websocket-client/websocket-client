@@ -39,7 +39,8 @@ The wsdump.py file, found in the /bin directory of this project, is a debug tool
 that provides a functional starting point for users who wish to test the
 functions of this client without substantial customization.
 
-```python wsdump.py -h          
+```
+python wsdump.py -h
 usage: wsdump.py [-h] [-p PROXY] [-v [VERBOSE]] [-n] [-r]
                  [-s [SUBPROTOCOLS [SUBPROTOCOLS ...]]] [-o ORIGIN]
                  [--eof-wait EOF_WAIT] [-t TEXT] [--timings]
@@ -68,7 +69,7 @@ optional arguments:
   -t TEXT, --text TEXT  Send initial text
   --timings             Print timings in seconds
   --headers HEADERS     Set custom headers. Use ',' as separator
-  ```
+```
 
 You can run this tool against the echo.websocket.org URL for a simple test:
 `wsdump.py ws://echo.websocket.org/`
@@ -82,11 +83,10 @@ is "ALLOWED TO CONNECT ONLY HTTPS PORT".
 The current implementation of websocket-client is using the "CONNECT" method via
 proxy. Here is an example of using a proxy:
 
-``` sourceCode python
+```python
 import websocket
 ws = websocket.WebSocket()
 ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http_proxy_port=3128)
-:
 ```
 
 ### Long-lived connection
@@ -94,7 +94,7 @@ ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http
 This example is similar to how WebSocket code looks in browsers using
 JavaScript.
 
-``` sourceCode python
+```python
 import websocket
 try:
     import thread
@@ -137,7 +137,8 @@ if __name__ == "__main__":
 This is if you want to communicate a short message and disconnect
 immediately when done.
 
-```from websocket import create_connection
+```python
+from websocket import create_connection
 ws = create_connection("ws://echo.websocket.org/")
 print("Sending 'Hello, World'...")
 ws.send("Hello, World")
@@ -150,7 +151,8 @@ ws.close()
 
 If you want to customize socket options, set sockopt, as seen below:
 
-```from websocket import create_connection
+```python
+from websocket import create_connection
 ws = create_connection("ws://echo.websocket.org/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
 ```
@@ -159,7 +161,8 @@ ws = create_connection("ws://echo.websocket.org/",
 
 You can also write your own class for the connection, if you want to handle the nitty-gritty details yourself.
 
-```import socket
+```python
+import socket
 from websocket import create_connection, WebSocket
 class MyWebSocket(WebSocket):
     def recv_frame(self):
@@ -180,19 +183,22 @@ for all examples seen below.
 
 WebSocketApp example
 
-```ws = websocket.WebSocketApp("wss://echo.websocket.org")
+```
+ws = websocket.WebSocketApp("wss://echo.websocket.org")
 ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 ```
 
 create_connection example
 
-```ws = websocket.create_connection("wss://echo.websocket.org",
+```
+ws = websocket.create_connection("wss://echo.websocket.org",
   sslopt={"cert_reqs": ssl.CERT_NONE})
 ```
 
 WebSocket example
 
-```ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
+```
+ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
 ws.connect("wss://echo.websocket.org")
 ```
 
@@ -202,19 +208,22 @@ Please set sslopt to {"check_hostname": False}. (since v0.18.0)
 
 WebSocketApp example
 
-```ws = websocket.WebSocketApp("wss://echo.websocket.org")
+```
+ws = websocket.WebSocketApp("wss://echo.websocket.org")
 ws.run_forever(sslopt={"check_hostname": False})
 ```
 
 create_connection example
 
-```ws = websocket.create_connection("wss://echo.websocket.org",
+```
+ws = websocket.create_connection("wss://echo.websocket.org",
   sslopt={"check_hostname": False})
 ```
 
 WebSocket example
 
-```ws = websocket.WebSocket(sslopt={"check_hostname": False})
+```
+ws = websocket.WebSocket(sslopt={"check_hostname": False})
 ws.connect("wss://echo.websocket.org")
 ```
 
