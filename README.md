@@ -25,10 +25,6 @@ Please see the contribution guidelines at
 
 ## Installation
 
-This module is tested on Python 2.7 and Python 3.4+. Python 3 support was
-introduced in version 0.14.0, but is a work in progress. Thanks to
-@battlemidget and @ralphbean for helping migrate this project to Python 3.
-
 First, install the following dependencies:
 - six
 - backports.ssl\_match\_hostname for Python 2.x
@@ -36,8 +32,10 @@ First, install the following dependencies:
 You can install the dependencies with the command `pip install six` and
 `pip install backports.ssl_match_hostname`
 
-You can use either `python setup.py install` or `pip install websocket-client` to
-install.
+You can use either `python setup.py install` or `pip install websocket-client`
+to install. This module is tested on Python 2.7 and Python 3.4+. Python 3
+support was first introduced in version 0.14.0, but is a work in progress.
+
 
 ## Usage Tips
 
@@ -149,3 +147,8 @@ class MyWebSocket(WebSocket):
 ws = create_connection("ws://echo.websocket.org/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 ```
+
+### Acknowledgements
+
+Thanks to @battlemidget and @ralphbean for helping migrate this project to
+Python 3.
