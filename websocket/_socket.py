@@ -1,4 +1,8 @@
 """
+
+"""
+
+"""
 websocket - WebSocket client library for Python
 
 Copyright (C) 2010 Hiroki Ohtani(liris)
@@ -62,7 +66,10 @@ def setdefaulttimeout(timeout):
     """
     Set the global timeout setting to connect.
 
-    timeout: default socket timeout time. This value is second.
+    Parameters
+    ----------
+    timeout: <type>
+        default socket timeout time. This value is second.
     """
     global _default_timeout
     _default_timeout = timeout
@@ -70,7 +77,12 @@ def setdefaulttimeout(timeout):
 
 def getdefaulttimeout():
     """
-    Return the global timeout setting(second) to connect.
+    Get default timeout
+
+    Returns
+    ----------
+    _default_timeout: <type>
+        Return the global timeout setting (in seconds) to connect.
     """
     return _default_timeout
 

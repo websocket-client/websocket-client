@@ -1,4 +1,8 @@
 """
+
+"""
+
+"""
 websocket - WebSocket client library for Python
 
 Copyright (C) 2010 Hiroki Ohtani(liris)
@@ -39,9 +43,12 @@ __all__ = ["enableTrace", "dump", "error", "warning", "debug", "trace",
 
 def enableTrace(traceable, handler = logging.StreamHandler()):
     """
-    turn on/off the traceability.
+    Turn on/off the traceability.
 
-    traceable: boolean value. if set True, traceability is enabled.
+    Parameters
+    ----------
+    traceable: bool
+        If set to True, traceability is enabled.
     """
     global _traceEnabled
     _traceEnabled = traceable

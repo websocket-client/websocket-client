@@ -18,3 +18,7 @@ compliance/reports/
 
 # PyCharm
 .idea/
+
+# Sphinx documentation
+docs/build/
+

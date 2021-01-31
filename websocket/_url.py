@@ -1,4 +1,7 @@
 """
+
+"""
+"""
 websocket - WebSocket client library for Python
 
 Copyright (C) 2010 Hiroki Ohtani(liris)
@@ -35,7 +38,10 @@ def parse_url(url):
     parse url and the result is tuple of
     (hostname, port, resource path and the flag of secure mode)
 
-    url: url string.
+    Parameters
+    ----------
+    url: str
+        url string.
     """
     if ":" not in url:
         raise ValueError("url is invalid")
@@ -120,27 +126,30 @@ def get_proxy_info(
         hostname, is_secure, proxy_host=None, proxy_port=0, proxy_auth=None,
         no_proxy=None, proxy_type='http'):
     """
-    try to retrieve proxy host and port from environment
+    Try to retrieve proxy host and port from environment
     if not provided in options.
-    result is (proxy_host, proxy_port, proxy_auth).
+    Result is (proxy_host, proxy_port, proxy_auth).
     proxy_auth is tuple of username and password
-     of proxy authentication information.
+    of proxy authentication information.
 
-    hostname: websocket server name.
-
-    is_secure:  is the connection secure? (wss)
-                looks for "https_proxy" in env
-                before falling back to "http_proxy"
-
-    options:    "http_proxy_host" - http proxy host name.
-                "http_proxy_port" - http proxy port.
-                "http_no_proxy"   - host names, which doesn't use proxy.
-                "http_proxy_auth" - http proxy auth information.
-                                    tuple of username and password.
-                                    default is None
-                "proxy_type"      - if set to "socks5" PySocks wrapper
-                                    will be used in place of a http proxy.
-                                    default is "http"
+    Parameters
+    ----------
+    hostname: <type>
+        websocket server name.
+    is_secure: <type>
+        is the connection secure? (wss) looks for "https_proxy" in env
+        before falling back to "http_proxy"
+    options: <type>
+        - http_proxy_host: <type>
+            http proxy host name.
+        - http_proxy_port: <type>
+            http proxy port.
+        - http_no_proxy: <type>
+            host names, which doesn't use proxy.
+        - http_proxy_auth: <type>
+            http proxy auth information. tuple of username and password. default is None
+        - proxy_type: <type>
+            if set to "socks5" PySocks wrapper will be used in place of a http proxy. default is "http"
     """
     if _is_no_proxy_host(hostname, no_proxy):
         return None, 0, None

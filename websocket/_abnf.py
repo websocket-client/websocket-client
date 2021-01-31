@@ -1,4 +1,8 @@
 """
+
+"""
+
+"""
 websocket - WebSocket client library for Python
 
 Copyright (C) 2010 Hiroki Ohtani(liris)
@@ -105,7 +109,7 @@ VALID_CLOSE_STATUS = (
 class ABNF(object):
     """
     ABNF frame class.
-    see http://tools.ietf.org/html/rfc5234
+    See http://tools.ietf.org/html/rfc5234
     and http://tools.ietf.org/html/rfc6455#section-5.2
     """
 
@@ -139,8 +143,7 @@ class ABNF(object):
     def __init__(self, fin=0, rsv1=0, rsv2=0, rsv3=0,
                  opcode=OPCODE_TEXT, mask=1, data=""):
         """
-        Constructor for ABNF.
-        please check RFC for arguments.
+        Constructor for ABNF. Please check RFC for arguments.
         """
         self.fin = fin
         self.rsv1 = rsv1
@@ -155,7 +158,10 @@ class ABNF(object):
 
     def validate(self, skip_utf8_validation=False):
         """
-        validate the ABNF frame.
+        Validate the ABNF frame.
+
+        Parameters
+        ----------
         skip_utf8_validation: skip utf8 validation.
         """
         if self.rsv1 or self.rsv2 or self.rsv3:
@@ -193,15 +199,18 @@ class ABNF(object):
     @staticmethod
     def create_frame(data, opcode, fin=1):
         """
-        create frame to send text, binary and other data.
+        Create frame to send text, binary and other data.
 
-        data: data to send. This is string value(byte array).
-            if opcode is OPCODE_TEXT and this value is unicode,
+        Parameters
+        ----------
+        data: <type>
+            data to send. This is string value(byte array).
+            If opcode is OPCODE_TEXT and this value is unicode,
             data value is converted into unicode string, automatically.
-
-        opcode: operation code. please see OPCODE_XXX.
-
-        fin: fin flag. if set to 0, create continue fragmentation.
+        opcode: <type>
+            operation code. please see OPCODE_XXX.
+        fin: <type>
+            fin flag. if set to 0, create continue fragmentation.
         """
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, six.text_type):
             data = data.encode("utf-8")
@@ -210,7 +219,7 @@ class ABNF(object):
 
     def format(self):
         """
-        format this object to string(byte array) to send data to server.
+        Format this object to string(byte array) to send data to server.
         """
         if any(x not in (0, 1) for x in [self.fin, self.rsv1, self.rsv2, self.rsv3]):
             raise ValueError("not 0 or 1")
@@ -252,11 +261,14 @@ class ABNF(object):
     @staticmethod
     def mask(mask_key, data):
         """
-        mask or unmask data. Just do xor for each byte
+        Mask or unmask data. Just do xor for each byte
 
-        mask_key: 4 byte string(byte).
-
-        data: data to mask/unmask.
+        Parameters
+        ----------
+        mask_key: <type>
+            4 byte string(byte).
+        data: <type>
+            data to mask/unmask.
         """
         if data is None:
             data = ""
