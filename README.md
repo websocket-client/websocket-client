@@ -39,7 +39,12 @@ You can install the dependencies with the command `pip install six` and
 You can use either `python setup.py install` or `pip install websocket-client` to
 install.
 
-## Performance
+## Usage Tips
+
+Check out the documentation's FAQ for additional guidelines:
+[https://websocket-client.readthedocs.io/en/latest/faq.html](https://websocket-client.readthedocs.io/en/latest/faq.html)
+
+### Performance
 
 The "send" and "validate_utf8" methods are very slow in pure Python.
 If you want to get better performance, please install both numpy and wsaccel.
@@ -144,68 +149,3 @@ class MyWebSocket(WebSocket):
 ws = create_connection("ws://echo.websocket.org/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 ```
-
-## FAQ
-
-### How to disable ssl cert verification?
-
-Set the sslopt to {"cert_reqs": ssl.CERT_NONE}. The same sslopt argument is provided
-for all examples seen below.
-
-WebSocketApp example
-
-```
-ws = websocket.WebSocketApp("wss://echo.websocket.org")
-ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-```
-
-create_connection example
-
-```
-ws = websocket.create_connection("wss://echo.websocket.org",
-  sslopt={"cert_reqs": ssl.CERT_NONE})
-```
-
-WebSocket example
-
-```
-ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
-ws.connect("wss://echo.websocket.org")
-```
-
-### How to disable hostname verification?
-
-Please set sslopt to {"check_hostname": False}. (since v0.18.0)
-
-WebSocketApp example
-
-```
-ws = websocket.WebSocketApp("wss://echo.websocket.org")
-ws.run_forever(sslopt={"check_hostname": False})
-```
-
-create_connection example
-
-```
-ws = websocket.create_connection("wss://echo.websocket.org",
-  sslopt={"check_hostname": False})
-```
-
-WebSocket example
-
-```
-ws = websocket.WebSocket(sslopt={"check_hostname": False})
-ws.connect("wss://echo.websocket.org")
-```
-
-## How to enable [SNI](http://en.wikipedia.org/wiki/Server_Name_Indication)?
-
-SNI support is available for Python 2.7.9+ and 3.2+.
-It will be enabled automatically whenever possible.
-
-## Using Subprotocols
-
-The WebSocket RFC [outlines the usage of subprotocols](https://tools.ietf.org/html/rfc6455#section-1.9).
-The subprotocol can be specified as in the example below:
-
-`ws = websocket.create_connection("ws://example.com/websocket", subprotocols=["binary", "base64"])`
