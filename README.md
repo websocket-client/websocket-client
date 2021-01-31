@@ -1,3 +1,7 @@
+[![docs](https://readthedocs.org/projects/websocket-client/badge/?style=flat)](https://websocket-client.readthedocs.io/)
+[![Build Status](https://travis-ci.com/websocket-client/websocket-client.svg?branch=master)](https://travis-ci.com/websocket-client/websocket-client)
+[![Downloads](https://pepy.tech/badge/websocket-client)](https://pepy.tech/project/websocket-client)
+
 # websocket-client
 
 The websocket-client module is a WebSocket client for Python. It provides access
@@ -8,6 +12,16 @@ websocket-client supports only [hybi-13](https://tools.ietf.org/html/draft-ietf-
 ## License
 
 - BSD
+
+## Documentation
+
+This project's documentation can be found at
+[https://websocket-client.readthedocs.io/](https://websocket-client.readthedocs.io/)
+
+## Contributing
+
+Please see the contribution guidelines at
+[https://websocket-client.readthedocs.io/en/latest/contributing.html](https://websocket-client.readthedocs.io/en/latest/contributing.html)
 
 ## Installation
 
@@ -30,49 +44,6 @@ install.
 The "send" and "validate_utf8" methods are very slow in pure Python.
 If you want to get better performance, please install both numpy and wsaccel.
 Note that wsaccel can sometimes causes other issues.
-
-## Examples
-
-### wsdump.py example
-
-The wsdump.py file, found in the /bin directory of this project, is a debug tool
-that provides a functional starting point for users who wish to test the
-functions of this client without substantial customization.
-
-```
-python wsdump.py -h
-usage: wsdump.py [-h] [-p PROXY] [-v [VERBOSE]] [-n] [-r]
-                 [-s [SUBPROTOCOLS [SUBPROTOCOLS ...]]] [-o ORIGIN]
-                 [--eof-wait EOF_WAIT] [-t TEXT] [--timings]
-                 [--headers HEADERS]
-                 ws_url
-
-WebSocket Simple Dump Tool
-
-positional arguments:
-  ws_url                websocket url. ex. ws://echo.websocket.org/
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -p PROXY, --proxy PROXY
-                        proxy url. ex. http://127.0.0.1:8080
-  -v [VERBOSE], --verbose [VERBOSE]
-                        set verbose mode. If set to 1, show opcode. If set to
-                        2, enable to trace websocket module
-  -n, --nocert          Ignore invalid SSL cert
-  -r, --raw             raw output
-  -s [SUBPROTOCOLS [SUBPROTOCOLS ...]], --subprotocols [SUBPROTOCOLS [SUBPROTOCOLS ...]]
-                        Set subprotocols
-  -o ORIGIN, --origin ORIGIN
-                        Set origin
-  --eof-wait EOF_WAIT   wait time(second) after 'EOF' received.
-  -t TEXT, --text TEXT  Send initial text
-  --timings             Print timings in seconds
-  --headers HEADERS     Set custom headers. Use ',' as separator
-```
-
-You can run this tool against the echo.websocket.org URL for a simple test:
-`wsdump.py ws://echo.websocket.org/`
 
 ### HTTP proxy
 
