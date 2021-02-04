@@ -46,7 +46,7 @@ Check out the documentation's FAQ for additional guidelines:
 
 The "send" and "validate_utf8" methods are very slow in pure Python.
 If you want to get better performance, please install both numpy and wsaccel.
-Note that wsaccel can sometimes causes other issues.
+Note that wsaccel can sometimes cause other issues.
 
 ### HTTP proxy
 
