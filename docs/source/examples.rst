@@ -67,3 +67,21 @@ Setting Subprotocols Values
 
 Setting Timeout Value
 --------------------------------
+
+
+Using Unix Domain Sockets
+--------------------------------
+
+You can also connect to a WebSocket server hosted on a unix domain socket.
+Just use the ``socket`` option when creating your connection.
+
+::
+
+  import socket
+  from websocket import create_connection
+  my_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+  my_socket.connect("/path/to/my/unix.socket")
+
+  ws = create_connection("ws://localhost/", # Dummy URL
+                          socket = my_socket,
+                          sockopt=((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),))
