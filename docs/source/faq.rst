@@ -63,6 +63,13 @@ How to enable `SNI <http://en.wikipedia.org/wiki/Server_Name_Indication>`_?
 SNI support is available for Python 2.7.9+ and 3.2+.
 It will be enabled automatically whenever possible.
 
+Why don't I receive all the server's message(s)?
+===================================================
+
+Depending on how long your connection exists, it can help to ping the server to
+keep the connection alive. See `issue #200 <https://github.com/websocket-client/websocket-client/issues/200>`
+for possible solutions.
+
 Using Subprotocols
 ====================
 
