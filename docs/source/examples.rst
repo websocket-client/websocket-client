@@ -172,6 +172,36 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
     subprotocols=["testproto"], on_message=on_message)
   wsapp.run_forever()
 
+Suppress Origin Header
+-------------------------
+
+There is a special ``suppress_origin`` option that can be used to remove the
+``Origin`` header from connection handshake requests. The below examples
+illustrate how this can be used.
+For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
+
+**WebSocket suppress origin example**
+
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org", suppress_origin=True)
+
+**WebSocketApp suppress origin example**
+
+::
+
+  import websocket
+
+  def on_message(wsapp, message):
+      print(message)
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+    on_message=on_message)
+  wsapp.run_forever(suppress_origin=True)
+
 Setting Custom Header Values
 --------------------------------
 
@@ -204,7 +234,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
     header={"CustomHeader1":"123", "NewHeader2":"Test"}, on_message=on_message)
   wsapp.run_forever()
 
-Disabling SSL or hostname verification
+Disabling SSL or Hostname Verification
 ---------------------------------------
 
 See the relevant :ref:`FAQ` page for instructions.
