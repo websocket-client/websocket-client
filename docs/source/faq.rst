@@ -67,7 +67,7 @@ Using Subprotocols
 ====================
 
 The WebSocket RFC
-`outlines the usage of subprotocols <https://tools.ietf.org/html/rfc6455#section-1.9>`_
+`outlines the usage of subprotocols <https://tools.ietf.org/html/rfc6455#section-1.9>`_.
 The subprotocol can be specified as in the example below:
 
 >>> ws = websocket.create_connection("ws://example.com/websocket",

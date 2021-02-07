@@ -71,7 +71,7 @@ class WebSocket(object):
         values for socket.setsockopt.
         sockopt must be tuple and each element is argument of sock.setsockopt.
     sslopt: dict
-        dict object for ssl socket option.
+        optional dict object for ssl socket option.
     fire_cont_frame: bool
         fire recv event for each cont frame. default is False
     enable_multithread: bool
@@ -141,7 +141,12 @@ class WebSocket(object):
 
     def gettimeout(self):
         """
-        Get the websocket timeout(second).
+        Get the websocket timeout (in seconds) as an int or float
+
+        Returns
+        ----------
+        timeout: int or float
+             returns timeout value (in seconds). This value could be either float/integer.
         """
         return self.sock_opt.timeout
 
@@ -219,11 +224,11 @@ class WebSocket(object):
                     custom http header list or dict.
                  - cookie: str
                     cookie value.
-                 - origin: <type>
+                 - origin: str
                     custom origin url.
-                 - suppress_origin: <type>
+                 - suppress_origin: bool
                     suppress outputting origin header.
-                 - host: <type>
+                 - host: str
                     custom host header string.
                  - http_proxy_host: <type>
                     http proxy host name.
@@ -454,7 +459,7 @@ class WebSocket(object):
             status code to send. see STATUS_XXX.
         reason: <type>
             the reason to close. This must be string.
-        timeout: <type>
+        timeout: int or float
             timeout until receive a close frame.
             If None, it will wait forever until receive a close frame.
         """
@@ -535,7 +540,7 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
 
     Parameters
     ----------
-    timeout: <type>
+    timeout: int or float
              socket timeout time. This value could be either float/integer.
              if you set None for this value,
              it means "use default_timeout value"
@@ -544,13 +549,13 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
             settimeout and connect. It's __init__ should be compatible with
             WebSocket.__init__, i.e. accept all of it's kwargs.
     options: <type>
-             - header: <type>
+             - header: list or dict
                 custom http header list or dict.
-             - cookie: <type>
+             - cookie: str
                 cookie value.
-             - origin: <type>
+             - origin: str
                 custom origin url.
-             - suppress_origin: <type>
+             - suppress_origin: bool
                 suppress outputting origin header.
              - host: <type>
                 custom host header string.
@@ -562,7 +567,7 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
                 host names, which doesn't use proxy.
              - http_proxy_auth: <type>
                 http proxy auth information. tuple of username and password. default is None
-             - enable_multithread: <type>
+             - enable_multithread: bool
                 enable lock for multithread.
              - redirect_limit: <type>
                 number of redirects to follow.

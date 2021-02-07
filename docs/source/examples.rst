@@ -39,6 +39,61 @@ simple examples below.
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
   wsapp.run_forever()
 
+Debug and Logging Options
+==========================
+
+When you're first writing your code, you will want to make sure everything is
+working as you planned. The easiest way to view the verbose connection
+information is the use ``websocket.enableTrace(True)``. For example, the
+following example shows how you can verify that the proper Origin header is set.
+
+.. code-block:: python
+  :emphasize-lines: 3
+
+  import websocket
+
+  websocket.enableTrace(True)
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org", origin="testing_websockets.com")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close()
+
+The output you will see will look something like this:
+
+::
+
+  --- request header ---
+  GET / HTTP/1.1
+  Upgrade: websocket
+	Host: echo.websocket.org
+	Origin: testing123.com
+	Sec-WebSocket-Key: k9kFAUWNAMmf5OEMfTlOEA==
+	Sec-WebSocket-Version: 13
+	Connection: Upgrade
+
+
+	-----------------------
+	--- response header ---
+	HTTP/1.1 101 Web Socket Protocol Handshake
+	Access-Control-Allow-Credentials: true
+	Access-Control-Allow-Headers: content-type
+	Access-Control-Allow-Headers: authorization
+	Access-Control-Allow-Headers: x-websocket-extensions
+	Access-Control-Allow-Headers: x-websocket-version
+	Access-Control-Allow-Headers: x-websocket-protocol
+	Access-Control-Allow-Origin: testing123.com
+	Connection: Upgrade
+	Date: Sat, 06 Feb 2021 12:34:56 GMT
+	Sec-WebSocket-Accept: 4hNxSu7OllvQZJ43LGpQTuR8+QA=
+	Server: Kaazing Gateway
+	Upgrade: websocket
+	-----------------------
+	send: b'\x81\x8dS\xfb\xc3a\x1b\x9e\xaf\r<\xd7\xe326\x89\xb5\x04!'
+	Hello, Server
+	send: b'\x88\x82 \xc3\x85E#+'
+
+
 Connection Options
 ===================
 
@@ -46,27 +101,123 @@ After you can establish a basic WebSocket connection, customizing your
 connection using specific options is the next step. Fortunately, this library
 provides many options you can configure, such as:
 
-* "Host:" header value
-* "Cookie:" header value
-* "Origin:" header value
-* Timeout value
+* "Host" header value
+* "Cookie" header value
+* "Origin" header value
 * WebSocket subprotocols
 * Custom headers
+* SSL or hostname verification
+* Timeout value
+
+For a more detailed list of the options available for the different connection
+methods, check out the source code comments for each:
+
+* `WebSocket().connect() option docs <https://websocket-client.readthedocs.io/en/latest/core.html#websocket._core.WebSocket.connect>`_
+   * Related: `WebSocket.create_connection() option docs <https://websocket-client.readthedocs.io/en/latest/core.html#websocket._core.create_connection>`_
+* `WebSocketApp() option docs <https://websocket-client.readthedocs.io/en/latest/app.html#websocket._app.WebSocketApp.__init__>`_
+   * Related: `WebSocketApp.run_forever docs <https://websocket-client.readthedocs.io/en/latest/app.html#websocket._app.WebSocketApp.run_forever>`_
 
 Setting Common Header Values
 --------------------------------
 
+To modify the ``Host``, ``Origin``, ``Cookie``, or ``Sec-WebSocket-Protocol``
+header values of the WebSocket handshake request, pass the ``host``, ``origin``,
+``cookie``, or ``subprotocols`` options to your WebSocket connection. The first
+two examples show the Host, Origin, and Cookies headers being set, while the
+Sec-WebSocket-Protocol header is set separately in the following example.
+For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
+
+**WebSocket common headers example**
+
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org", cookie="chocolate",
+    origin="testing_websockets.com", host="echo.websocket.org/websocket-client-test")
+
+**WebSocketApp common headers example**
+
+::
+
+  import websocket
+
+  def on_message(wsapp, message):
+      print(message)
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+    cookie="chocolate", on_message=on_message)
+  wsapp.run_forever(origin="testing_websockets.com", host="127.0.0.1")
+
+**WebSocket subprotocols example**
+
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("wss://ws.kraken.com", subprotocols=["testproto"])
+
+**WebSocketApp subprotocols example**
+
+::
+
+  import websocket
+
+  def on_message(wsapp, message):
+      print(message)
+
+  wsapp = websocket.WebSocketApp("wss://ws.kraken.com",
+    subprotocols=["testproto"], on_message=on_message)
+  wsapp.run_forever()
 
 Setting Custom Header Values
 --------------------------------
 
+Setting custom header values, other than ``Host``, ``Origin``, ``Cookie``, or
+``Sec-WebSocket-Protocol`` (which are addressed above), in the WebSocket
+handshake request is similar to setting common header values. Use the ``header``
+option to provide custom header values in a list or dict.
+For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
 
-Setting Subprotocols Values
---------------------------------
+**WebSocket custom headers example**
 
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org",
+    header={"CustomHeader1":"123", "NewHeader2":"Test"})
+
+**WebSocketApp custom headers example**
+
+::
+
+  import websocket
+
+  def on_message(wsapp, message):
+      print(message)
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+    header={"CustomHeader1":"123", "NewHeader2":"Test"}, on_message=on_message)
+  wsapp.run_forever()
+
+Disabling SSL or hostname verification
+---------------------------------------
+
+See the relevant :ref:`FAQ` page for instructions.
 
 Setting Timeout Value
 --------------------------------
+
+This documentation needs to be written!
+
+Connecting through a HTTP proxy
+--------------------------------
+
+This documentation needs to be written!
 
 
 Using Unix Domain Sockets

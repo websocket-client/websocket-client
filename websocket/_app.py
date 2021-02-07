@@ -101,7 +101,7 @@ class WebSocketApp(object):
         ----------
         url: <type>
             websocket url.
-        header: <type>
+        header: list or dict
             custom header for websocket handshake.
         on_open: <type>
             callable object which is called at opening websocket.
@@ -138,9 +138,11 @@ class WebSocketApp(object):
             The 4th argument is continue flag. if 0, the data continue
         keep_running: <type>
             this parameter is obsolete and ignored.
-        get_mask_key: <type>
+        get_mask_key: func
             a callable to produce new mask keys,
             see the WebSocket.set_mask_key's docstring for more information
+        cookie: str
+            cookie value.
         subprotocols: <type>
             array of available sub protocols. default is None.
         """
@@ -209,22 +211,22 @@ class WebSocketApp(object):
         """
         Run event loop for WebSocket framework.
 
-        This loop is infinite loop and is alive during websocket is available.
+        This loop is an infinite loop and is alive while websocket is available.
 
         Parameters
         ----------
-        sockopt: <type>
+        sockopt: tuple
             values for socket.setsockopt.
             sockopt must be tuple
             and each element is argument of sock.setsockopt.
-        sslopt: <type>
-            ssl socket optional dict.
-        ping_interval: <type>
+        sslopt: dict
+            optional dict object for ssl socket option.
+        ping_interval: int
             automatically send "ping" command
             every specified period(second)
             if set to 0, not send automatically.
-        ping_timeout: <type>
-            timeout(second) if the pong message is not received.
+        ping_timeout: int or float
+            timeout (in seconds) if the pong message is not received.
         http_proxy_host: <type>
             http proxy host name.
         http_proxy_port: <type>
@@ -233,13 +235,13 @@ class WebSocketApp(object):
             host names, which doesn't use proxy.
         skip_utf8_validation: bool
             skip utf8 validation.
-        host: <type>
+        host: str
             update host header.
-        origin: <type>
+        origin: str
             update origin header.
         dispatcher: <type>
             customize reading data from socket.
-        suppress_origin: <type>
+        suppress_origin: bool
             suppress outputting origin header.
 
         Returns
