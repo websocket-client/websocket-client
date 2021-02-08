@@ -17,3 +17,6 @@ install:
 script:
   - TEST_WITH_INTERNET=1 python setup.py test
   - python setup.py check -r -s
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
