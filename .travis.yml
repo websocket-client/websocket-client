@@ -11,9 +11,16 @@ python:
 
 install:
   - pip install -U pip setuptools wheel
+  - pip install -U coverage codecov
   - if [ "${TRAVIS_PYTHON_VERSION:0:3}" == "3.4" ]; then pip install readme_renderer==24.0; else  pip install -U readme_renderer; fi
   - python -c "import setuptools; print(setuptools.__version__)"
 
 script:
   - TEST_WITH_INTERNET=1 python setup.py test
   - python setup.py check -r -s
+
+after_success:
+  - coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" websocket/tests/test_websocket.py
+  - coverage report
+  - coverage xml
+  - bash <(curl -s https://codecov.io/bash)
