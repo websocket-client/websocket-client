@@ -13,7 +13,9 @@ try out the :ref:`getting started` wsdump.py script and the
 directory files.
 
 You can create your first custom connection with this library using one of the
-simple examples below.
+simple examples below. Note that the first WebSocket example is best for a
+short-lived connection, while the WebSocketApp example is best for a long-lived
+connection.
 
 **WebSocket example**
 
@@ -247,7 +249,24 @@ This documentation needs to be written!
 Connecting through a HTTP proxy
 --------------------------------
 
-This documentation needs to be written!
+The example below show how to connect through a HTTP proxy.
+
+**WebSocket example**
+
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org",
+    http_proxy_host="127.0.0.1", http_proxy_port="8080")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close()
+
+**WebSocketApp example**
+
+`Work in progress - coming soon`
 
 
 Using Unix Domain Sockets
@@ -266,3 +285,69 @@ Just use the ``socket`` option when creating your connection.
   ws = create_connection("ws://localhost/", # Dummy URL
                           socket = my_socket,
                           sockopt=((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),))
+
+Post-connection features
+==========================
+
+You can see a summary of this library's supported WebSocket features by either
+running the autobahn test suite against this client, or by reviewing a recently
+run autobahn report, available as a .html file in the /compliance directory.
+
+Ping/Pong Usage
+--------------------------------
+
+The WebSocket specification defines
+`ping <https://tools.ietf.org/html/rfc6455#section-5.5.2>`_ and
+`pong <https://tools.ietf.org/html/rfc6455#section-5.5.3>`_
+message opcodes as part of the protocol. These can serve as a way to keep a
+long-lived connection active even if data is not being transmitted. However, if
+a blocking event is happening, there may be some issues with ping/pong. The
+below examples demonstrate how ping and pong can be sent by this library. You
+can getaddition debugging information by using
+`Wireshark <https://www.wireshark.org/>`_
+to view the ping and pong messages being sent. In order for Wireshark to
+identify the WebSocket protocol properly, it should observe the initial HTTP
+handshake and the HTTP 101 response in cleartext (without encryption) -
+otherwise the WebSocket messages may be categorized as TCP or TLS messages.
+For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
+
+**WebSocket example**
+
+This example is best for a quick test where you want to check the effect of a
+ping, or where situations where you want to customize when the ping is sent.
+This type of connection does not automatically respond to a "ping" with a "pong".
+
+::
+
+  import websocket
+
+  websocket.enableTrace(True)
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org")
+  ws.ping()
+  ws.pong()
+  ws.close()
+
+**WebSocketApp example**
+
+This example, and run_forever in general, is better for long-lived connections.
+If a server needs a regular ping to keep the connection alive, this is probably
+the option you will want to use. The run_forever connection will automatically
+send a "pong" when it receives a "ping", per the specification.
+
+::
+
+  import websocket
+
+  def on_message(wsapp, message):
+      print(message)
+
+  def on_ping(wsapp, message):
+      print("Got a ping!")
+
+  def on_pong(wsapp, message):
+      print("Got a pong! No need to respond")
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+    on_message=on_message, on_ping=on_ping, on_pong=on_pong)
+  wsapp.run_forever(ping_interval=10, ping_timeout=60)

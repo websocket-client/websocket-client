@@ -67,7 +67,8 @@ Why don't I receive all the server's message(s)?
 ===================================================
 
 Depending on how long your connection exists, it can help to ping the server to
-keep the connection alive. See `issue #200 <https://github.com/websocket-client/websocket-client/issues/200>`
+keep the connection alive. See
+`issue #200 <https://github.com/websocket-client/websocket-client/issues/200>`_
 for possible solutions.
 
 Using Subprotocols
