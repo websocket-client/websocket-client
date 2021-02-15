@@ -331,7 +331,7 @@ class WebSocket(object):
             payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PING)
 
-    def pong(self, payload):
+    def pong(self, payload=""):
         """
         Send pong data.
 
