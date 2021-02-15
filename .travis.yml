@@ -20,7 +20,7 @@ script:
   - python setup.py check -r -s
 
 after_success:
-  - coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" test_websocket.py
+  - coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" websocket/tests/test_websocket.py
   - coverage report
   - coverage xml
   - bash <(curl -s https://codecov.io/bash)
