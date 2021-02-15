@@ -13,6 +13,7 @@ compliance/reports/
 .vscode
 
 # venv
+venv/
 .venv/
 .env/
 
