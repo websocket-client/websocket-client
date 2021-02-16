@@ -244,14 +244,64 @@ See the relevant :ref:`FAQ` page for instructions.
 Setting Timeout Value
 --------------------------------
 
-This documentation needs to be written!
+The _socket.py file contains the functions ``setdefaulttimeout()`` and
+``getdefaulttimeout()``. These two functions set the global ``_default_timeout``
+value, which sets the socket timeout value (in seconds). These two functions
+should not be confused with the similarly named ``settimeout()`` and
+``gettimeout()`` functions found in the _core.py file. With WebSocketApp, the
+``run_forever()`` function gets assigned the timeout `from getdefaulttimeout()
+<https://github.com/websocket-client/websocket-client/blob/29c15714ac9f5272e1adefc9c99b83420b409f63/websocket/_app.py#L248>`_.
+When the timeout value is reached, the exception WebSocketTimeoutException is
+triggered by the _socket.py ``send()`` and ``recv()`` functions. Additional timeout
+values can be found in other locations in this library,
+including the ``close()`` function of the WebSocket class and the
+``create_connection()`` function of the WebSocket class.
+
+The WebSocket timeout example below shows how an exception is triggered after
+no response is received from the server after 5 seconds.
+
+**WebSocket timeout example**
+
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org", timeout=5)
+  #ws.send("Hello, Server") # Commented out to trigger WebSocketTimeoutException
+  print(ws.recv())
+  # Program should end with a WebSocketTimeoutException
+
+The WebSocketApp timeout example works a bit differently than the WebSocket
+example. Because WebSocketApp handles long-lived connections, it does not
+timeout after a certain amount of time without receiving a message. Instead, a
+timeout is triggered if no connection response is received from the server after
+the timeout interval (5 seconds in the example below).
+
+**WebSocketApp timeout example**
+
+::
+
+  import websocket
+
+  def on_error(wsapp, err):
+    print("Got a an error: ", err)
+
+  websocket.setdefaulttimeout(5)
+  wsapp = websocket.WebSocketApp("ws://nexus-websocket-a.intercom.io",
+    on_error=on_error)
+  wsapp.run_forever()
+  # Program should print a "timed out" error message
+
 
 Connecting through a HTTP proxy
 --------------------------------
 
-The example below show how to connect through a HTTP proxy.
+The example below show how to connect through a HTTP proxy. Note that this
+library does support authentication to a proxy using the ``http_proxy_auth``
+parameter.
 
-**WebSocket example**
+**WebSocket proxy example**
 
 ::
 
@@ -264,7 +314,7 @@ The example below show how to connect through a HTTP proxy.
   print(ws.recv())
   ws.close()
 
-**WebSocketApp example**
+**WebSocketApp proxy example**
 
 `Work in progress - coming soon`
 
@@ -311,7 +361,7 @@ handshake and the HTTP 101 response in cleartext (without encryption) -
 otherwise the WebSocket messages may be categorized as TCP or TLS messages.
 For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
 
-**WebSocket example**
+**WebSocket ping/pong example**
 
 This example is best for a quick test where you want to check the effect of a
 ping, or where situations where you want to customize when the ping is sent.
@@ -328,7 +378,7 @@ This type of connection does not automatically respond to a "ping" with a "pong"
   ws.pong()
   ws.close()
 
-**WebSocketApp example**
+**WebSocketApp ping/pong example**
 
 This example, and run_forever in general, is better for long-lived connections.
 If a server needs a regular ping to keep the connection alive, this is probably
