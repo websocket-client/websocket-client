@@ -221,9 +221,9 @@ class WebSocketApp(object):
             and each element is argument of sock.setsockopt.
         sslopt: dict
             optional dict object for ssl socket option.
-        ping_interval: int
+        ping_interval: int or float
             automatically send "ping" command
-            every specified period(second)
+            every specified period (in seconds)
             if set to 0, not send automatically.
         ping_timeout: int or float
             timeout (in seconds) if the pong message is not received.

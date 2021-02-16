@@ -68,8 +68,8 @@ def setdefaulttimeout(timeout):
 
     Parameters
     ----------
-    timeout: <type>
-        default socket timeout time. This value is second.
+    timeout: int or float
+        default socket timeout time (in seconds)
     """
     global _default_timeout
     _default_timeout = timeout
@@ -81,7 +81,7 @@ def getdefaulttimeout():
 
     Returns
     ----------
-    _default_timeout: <type>
+    _default_timeout: int or float
         Return the global timeout setting (in seconds) to connect.
     """
     return _default_timeout

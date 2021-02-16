@@ -214,7 +214,7 @@ class WebSocket(object):
                 ...             "x-custom: header"])
 
         timeout: <type>
-            socket timeout time. This value is integer.
+            socket timeout time. This value is an integer or float.
             if you set None for this value, it means "use default_timeout value"
 
         Parameters
