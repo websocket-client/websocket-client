@@ -241,6 +241,26 @@ Disabling SSL or Hostname Verification
 
 See the relevant :ref:`FAQ` page for instructions.
 
+Using a Custom Class
+--------------------------------
+
+You can also write your own class for the connection, if you want to handle
+the nitty-gritty connection details yourself.
+
+::
+
+  import socket
+  from websocket import create_connection, WebSocket
+  class MyWebSocket(WebSocket):
+    def recv_frame(self):
+        frame = super().recv_frame()
+        print('yay! I got this frame: ', frame)
+        return frame
+
+  ws = create_connection("ws://echo.websocket.org/",
+                        sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
+
+
 Setting Timeout Value
 --------------------------------
 
@@ -299,7 +319,11 @@ Connecting through a HTTP proxy
 
 The example below show how to connect through a HTTP proxy. Note that this
 library does support authentication to a proxy using the ``http_proxy_auth``
-parameter.
+parameter. Be aware that the current implementation of websocket-client uses
+the "CONNECT" method, and the proxy server must allow the "CONNECT" method. For
+example, the squid proxy only allows the "CONNECT" method
+`on HTTPS ports <https://wiki.squid-cache.org/Features/HTTPS#CONNECT_tunnel>`_
+by default.
 
 **WebSocket proxy example**
 
@@ -353,7 +377,7 @@ message opcodes as part of the protocol. These can serve as a way to keep a
 long-lived connection active even if data is not being transmitted. However, if
 a blocking event is happening, there may be some issues with ping/pong. The
 below examples demonstrate how ping and pong can be sent by this library. You
-can getaddition debugging information by using
+can get additional debugging information by using
 `Wireshark <https://www.wireshark.org/>`_
 to view the ping and pong messages being sent. In order for Wireshark to
 identify the WebSocket protocol properly, it should observe the initial HTTP
@@ -380,9 +404,9 @@ This type of connection does not automatically respond to a "ping" with a "pong"
 
 **WebSocketApp ping/pong example**
 
-This example, and run_forever in general, is better for long-lived connections.
+This example, and ``run_forever()`` in general, is better for long-lived connections.
 If a server needs a regular ping to keep the connection alive, this is probably
-the option you will want to use. The run_forever connection will automatically
+the option you will want to use. The ``run_forever()`` function will automatically
 send a "pong" when it receives a "ping", per the specification.
 
 ::
@@ -401,3 +425,18 @@ send a "pong" when it receives a "ping", per the specification.
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
   wsapp.run_forever(ping_interval=10, ping_timeout=60)
+
+Real-world Examples
+=========================
+
+Other projects that depend on websocket-client may be able to illustrate more
+complex use cases for this library. A few of the projects using websocket-client
+are listed below:
+
+- `https://github.com/slackapi/python-slack-sdk <https://github.com/slackapi/python-slack-sdk>`_
+- `https://github.com/wee-slack/wee-slack <https://github.com/wee-slack/wee-slack>`_
+- `https://github.com/aluzzardi/wssh/ <https://github.com/aluzzardi/wssh/>`_
+- `https://github.com/invisibleroads/socketIO-client <https://github.com/invisibleroads/socketIO-client>`_
+- `https://github.com/Ape/samsungctl <https://github.com/Ape/samsungctl>`_
+- `https://github.com/xchwarze/samsung-tv-ws-api <https://github.com/xchwarze/samsung-tv-ws-api>`_
+- `https://github.com/andresriancho/websocket-fuzzer <https://github.com/andresriancho/websocket-fuzzer>`_

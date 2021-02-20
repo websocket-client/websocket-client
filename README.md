@@ -38,7 +38,6 @@ You can use either `python setup.py install` or `pip install websocket-client`
 to install. This module is tested on Python 2.7 and Python 3.4+. Python 3
 support was first introduced in version 0.14.0, but is a work in progress.
 
-
 ## Usage Tips
 
 Check out the documentation's FAQ for additional guidelines:
@@ -46,29 +45,20 @@ Check out the documentation's FAQ for additional guidelines:
 
 ### Performance
 
-The "send" and "validate_utf8" methods are very slow in pure Python.
-If you want to get better performance, please install both numpy and wsaccel.
+The `send` and `validate_utf8` methods are very slow in pure Python. You can
+disable UTF8 validation in this library (and receive a performance enhancement)
+with the `skip_utf8_validation` parameter. If you want to get better
+performance, please install both numpy and wsaccel, and import them into your
+project files - these other libraries will automatically be used when available.
 Note that wsaccel can sometimes cause other issues.
 
-### HTTP proxy
+### Long-lived Connection
 
-This project supports WebSocket connections over a HTTP proxy. The proxy server
-must allow "CONNECT" method to websocket port. The default squid proxy setting
-is "ALLOWED TO CONNECT ONLY HTTPS PORT".
-
-The current implementation of websocket-client is using the "CONNECT" method via
-proxy. Here is an example of using a proxy:
-
-```python
-import websocket
-ws = websocket.WebSocket()
-ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http_proxy_port=3128)
-```
-
-### Long-lived connection
-
-This example is similar to how WebSocket code looks in browsers using
-JavaScript.
+Most real-world WebSockets situations involve longer-lived connections.
+The WebSocketApp `run_forever` loop automatically tries to reconnect when a
+connection is lost, and provides a variety of event-based connection controls.
+The project documentation has
+[additional examples](https://websocket-client.readthedocs.io/en/latest/examples.html)
 
 ```python
 import websocket
@@ -97,21 +87,24 @@ def on_open(ws):
         print("thread terminating...")
     thread.start_new_thread(run, ())
 
-
 if __name__ == "__main__":
     websocket.enableTrace(True)
     ws = websocket.WebSocketApp("ws://echo.websocket.org/",
+                              on_open = on_open,
                               on_message = on_message,
                               on_error = on_error,
                               on_close = on_close)
-    ws.on_open = on_open
+
     ws.run_forever()
 ```
 
-### Short-lived one-off send-receive
+### Short-lived Connection
 
 This is if you want to communicate a short message and disconnect
-immediately when done.
+immediately when done. For example, if you want to confirm that a WebSocket
+server is running and responds properly to a specific request.
+The project documentation has
+[additional examples](https://websocket-client.readthedocs.io/en/latest/examples.html)
 
 ```python
 from websocket import create_connection
@@ -131,23 +124,6 @@ If you want to customize socket options, set sockopt, as seen below:
 from websocket import create_connection
 ws = create_connection("ws://echo.websocket.org/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
-```
-
-### More advanced: custom class
-
-You can also write your own class for the connection, if you want to handle the nitty-gritty details yourself.
-
-```python
-import socket
-from websocket import create_connection, WebSocket
-class MyWebSocket(WebSocket):
-    def recv_frame(self):
-        frame = super().recv_frame()
-        print('yay! I got this frame: ', frame)
-        return frame
-
-ws = create_connection("ws://echo.websocket.org/",
-                        sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 ```
 
 ### Acknowledgements
