@@ -1,3 +1,27 @@
+"""
+
+"""
+
+"""
+websocket - WebSocket client library for Python
+
+Copyright (C) 2010 Hiroki Ohtani(liris)
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+"""
 import sys
 
 from setuptools import setup
@@ -42,12 +66,12 @@ setup(
     long_description=open("README.rst").read(),
     author="liris",
     author_email="liris.pp@gmail.com",
-    license="BSD",
+    license="LGPL version 2.1",
     url="https://github.com/websocket-client/websocket-client.git",
     python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     classifiers=[
         "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.6",

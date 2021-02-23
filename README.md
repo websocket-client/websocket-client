@@ -13,7 +13,7 @@ websocket-client supports only [hybi-13](https://tools.ietf.org/html/draft-ietf-
 
 ## License
 
-- BSD
+- LGPL version 2.1
 
 ## Documentation
 
