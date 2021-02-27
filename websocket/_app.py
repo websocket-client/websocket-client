@@ -251,8 +251,8 @@ class WebSocketApp(object):
 
         if ping_timeout is not None and ping_timeout <= 0:
             ping_timeout = None
-        if ping_timeout and ping_interval and ping_interval >= ping_timeout:
-            raise WebSocketException("Ensure ping_interval < ping_timeout")
+        if ping_timeout and ping_interval and ping_interval <= ping_timeout:
+            raise WebSocketException("Ensure ping_interval > ping_timeout")
         if not sockopt:
             sockopt = []
         if not sslopt:
