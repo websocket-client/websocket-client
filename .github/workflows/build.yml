@@ -39,5 +39,5 @@ jobs:
         run: |
           pip install -U pip setuptools wheel twine six
           python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
-          TEST_WITH_INTERNET=1 python setup.py test
+          python setup.py sdist
           twine check dist/*
