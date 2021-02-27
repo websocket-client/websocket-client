@@ -26,8 +26,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        python-version: [3.8, 3.9]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -38,6 +38,6 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }} wheel
         run: |
           pip install -U pip setuptools wheel twine six
-          python -c "import setuptools; print(setuptools.__version__)"
-          python setup.py install
+          python -c "import setuptools; print("+++Setup tools version: ", str(setuptools.__version__))"
+          TEST_WITH_INTERNET=1 python setup.py test
           twine check dist/*
