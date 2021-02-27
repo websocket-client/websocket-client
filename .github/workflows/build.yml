@@ -3,20 +3,40 @@ name: Testing GitHub Actions
 on: [push]
 
 jobs:
-  dothis:
-    runs-on: ubuntu-latest 
+  code-coverage:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-      - name: Set up websocket-client
-        run: |
-          pip install six
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - run: |
+          TEST_WITH_INTERNET=1 python setup.py test
           pip install coverage
           pip install codecov
-          python -c "import setuptools; print(setuptools.__version__)"
           coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" websocket/tests/test_websocket.py
           coverage report
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v1.2.1
+
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: [2.7, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }} wheel
+        run: |
+          python -m pip install -U pip setuptools wheel
+          python -c "import setuptools; print(setuptools.__version__)"
+          TEST_WITH_INTERNET=0 python setup.py test
+          python setup.py check -r -s
