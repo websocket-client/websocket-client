@@ -18,6 +18,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install version 24.0 readme_renderer if Python version == 3.4
+        if: ${{ matrix.python-version == "3.4" }}
+        run: pip install readme_renderer==24.0
+      - name: Install latest readme_renderer if Python version != 3.4
+        if: ${{ matrix.python-version != "3.4" }}
+        run: pip install -U readme_renderer
       - name: Build websocket-client & run tests
         run: |
           pip install -U pip setuptools wheel twine six pytest
