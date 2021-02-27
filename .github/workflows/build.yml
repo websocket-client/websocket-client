@@ -12,16 +12,17 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }} environment
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Run websocket-client tests with Python ${{ matrix.python-version }}
+      - name: Build websocket-client & run tests
         run: |
           pip install -U pip setuptools wheel twine six pytest
           python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
-          pytest websocket/tests -v
+          pytest websocket/tests -v -rP
           python setup.py sdist
           twine check dist/*
         env:

@@ -473,7 +473,7 @@ class WebSocketTest(unittest.TestCase):
         #    pass
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
-    def testWebSocketWihtCustomHeader(self):
+    def testWebSocketWithCustomHeader(self):
         s = ws.create_connection("ws://echo.websocket.org/",
                                  headers={"User-Agent": "PythonWebsocketClient"})
         self.assertNotEqual(s, None)

@@ -1,4 +1,4 @@
-name: flake8 Lint
+name: Linting with flake8
 
 on: [push, pull_request]
 
@@ -9,11 +9,11 @@ jobs:
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
-      - name: Set up Python environment
+      - name: Set up Python ${{ matrix.python-version }} environment
         uses: actions/setup-python@v2
         with:
-          python-version: "3.8"
-      - name: flake8 Lint
+          python-version: "3.9"
+      - name: Perform flake8 linting
         run: |
           pip install flake8
           flake8 --version
