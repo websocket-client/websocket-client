@@ -69,6 +69,7 @@ setup(
     author_email="liris.pp@gmail.com",
     license="LGPL version 2.1",
     url="https://github.com/websocket-client/websocket-client.git",
+    download_url='https://github.com/websocket-client/websocket-client/releases',
     python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -91,7 +92,11 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Intended Audience :: Developers",
     ],
-    keywords='websockets',
+    project_urls={
+        'Documentation': 'https://websocket-client.readthedocs.io/',
+        'Source': 'https://github.com/websocket-client/websocket-client/',
+    },
+    keywords='websockets client',
     scripts=["bin/wsdump.py"],
     install_requires=install_requires,
     packages=["websocket", "websocket.tests"],
