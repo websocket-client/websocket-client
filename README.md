@@ -1,8 +1,8 @@
 [![docs](https://readthedocs.org/projects/websocket-client/badge/?style=flat)](https://websocket-client.readthedocs.io/)
-[![Build Status](https://travis-ci.com/websocket-client/websocket-client.svg?branch=master)](https://travis-ci.com/websocket-client/websocket-client)
+[![Build Status](https://github.com/websocket-client/websocket-client/actions/workflows/build.yml/badge.svg)](https://github.com/websocket-client/websocket-client/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/websocket-client/websocket-client/branch/master/graph/badge.svg?token=pcXhUQwiL3)](https://codecov.io/gh/websocket-client/websocket-client)
-[![Downloads](https://pepy.tech/badge/websocket-client)](https://pepy.tech/project/websocket-client)
-[![PyPI version](https://badge.fury.io/py/websocket_client.svg)](https://badge.fury.io/py/websocket_client)
+[![PyPI Downloads](https://pepy.tech/badge/websocket-client)](https://pepy.tech/project/websocket-client)
+[![PyPI version](https://img.shields.io/pypi/v/websocket_client)](https://img.shields.io/pypi/v/websocket_client)
 
 # websocket-client
 
