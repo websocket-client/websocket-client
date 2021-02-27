@@ -9,6 +9,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
+      - name: Set up websocket-client
         run: |
           pip install six
           pip install coverage
