@@ -20,4 +20,3 @@ jobs:
           coverage xml
       - name: Codecov
         uses: codecov/codecov-action@v1.2.1
-        verbose: true
