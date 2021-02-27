@@ -14,7 +14,7 @@ jobs:
           pip install six
           TEST_WITH_INTERNET=1 python setup.py test
           pip install coverage
-          coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" websocket/tests/test_websocket.py
+          coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" websocket/tests/test_cookiejar.py
           coverage report
           coverage xml
       - name: Codecov
