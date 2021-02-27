@@ -37,8 +37,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }} wheel
         run: |
-          pip install -U pip setuptools wheel
-          pip install docutils
-          pip install -U six
+          pip install -U pip setuptools wheel twine six
           python -c "import setuptools; print(setuptools.__version__)"
-          python setup.py check -r -s
+          python setup.py install
+          twine check dist/*

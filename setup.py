@@ -62,8 +62,9 @@ except Exception:
 setup(
     name=NAME,
     version=VERSION,
-    description="WebSocket client for Python. hybi13 is supported.",
-    long_description=open("README.rst").read(),
+    description="WebSocket client for Python with low level API options",
+    long_description=open("README.md").read(),
+    long_description_content_type='text/markdown',
     author="liris",
     author_email="liris.pp@gmail.com",
     license="LGPL version 2.1",
