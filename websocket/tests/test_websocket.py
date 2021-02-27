@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 """
 
 """
@@ -22,8 +24,6 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 """
-# -*- coding: utf-8 -*-
-#
 
 import sys
 sys.path[0:0] = [""]
