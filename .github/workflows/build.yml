@@ -41,5 +41,4 @@ jobs:
           pip install docutils
           pip install -U six
           python -c "import setuptools; print(setuptools.__version__)"
-#          TEST_WITH_INTERNET=0 python setup.py test
           python setup.py check -r -s
