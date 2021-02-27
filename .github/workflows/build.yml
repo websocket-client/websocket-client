@@ -3,23 +3,6 @@ name: Testing GitHub Actions
 on: [push]
 
 jobs:
-  code-coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - run: |
-          pip install six
-          TEST_WITH_INTERNET=1 python setup.py test
-          pip install coverage
-          coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" websocket/tests/test_websocket.py
-          coverage report
-          coverage xml
-      - name: Codecov
-        uses: codecov/codecov-action@v1.2.1
-
   build:
     runs-on: ${{ matrix.os }}
 
@@ -36,8 +19,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }} wheel
         run: |
-          pip install -U pip setuptools wheel twine six
+          pip install -U pip setuptools wheel twine six pytest
           python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
+          TEST_WITH_INTERNET=1
+          pytest websocket/tests -v
           python setup.py sdist
-          TEST_WITH_INTERNET=1 python setup.py test
           twine check dist/*
