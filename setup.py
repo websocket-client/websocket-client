@@ -28,7 +28,6 @@ from setuptools import setup
 import pkg_resources
 
 VERSION = "0.58.0"
-NAME = "websocket_client"
 
 install_requires = ["six"]
 tests_require = []
@@ -60,7 +59,7 @@ except Exception:
             install_requires.extend(value)
 
 setup(
-    name=NAME,
+    name="websocket-client",
     version=VERSION,
     description="WebSocket client for Python with low level API options",
     long_description=open("README.md").read(),
