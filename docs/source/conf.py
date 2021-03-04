@@ -12,7 +12,9 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+#sys.path.insert(0, os.path.abspath('../..'))
+sys.path.append(os.path.abspath('../..'))
+sys.path.append(os.path.abspath('websocket'))
 
 # Don't skip __init__, which is skipped by default
 def skip(app, what, name, obj, would_skip, options):
@@ -30,7 +32,7 @@ copyright = '2021'
 author = 'liris'
 
 # The full version, including alpha/beta/rc tags
-release = '0.57.0'
+release = '0.58.0'
 
 
 # -- General configuration ---------------------------------------------------
