@@ -430,13 +430,20 @@ Real-world Examples
 =========================
 
 Other projects that depend on websocket-client may be able to illustrate more
-complex use cases for this library. A few of the projects using websocket-client
-are listed below:
+complex use cases for this library. A list of 600+ dependent projects is found
+`on libraries.io <https://libraries.io/pypi/websocket-client/dependents>`_, and
+a few of the projects using websocket-client are listed below:
 
+- `https://github.com/docker/compose <https://github.com/docker/compose>`_
+- `https://github.com/apache/airflow <https://github.com/apache/airflow>`_
+- `https://github.com/docker/docker-py <https://github.com/docker/docker-py>`_
+- `https://github.com/scrapinghub/slackbot <https://github.com/scrapinghub/slackbot>`_
 - `https://github.com/slackapi/python-slack-sdk <https://github.com/slackapi/python-slack-sdk>`_
 - `https://github.com/wee-slack/wee-slack <https://github.com/wee-slack/wee-slack>`_
 - `https://github.com/aluzzardi/wssh/ <https://github.com/aluzzardi/wssh/>`_
+- `https://github.com/miguelgrinberg/python-socketio <https://github.com/miguelgrinberg/python-socketio>`_
 - `https://github.com/invisibleroads/socketIO-client <https://github.com/invisibleroads/socketIO-client>`_
+- `https://github.com/s4w3d0ff/python-poloniex <https://github.com/s4w3d0ff/python-poloniex>`_
 - `https://github.com/Ape/samsungctl <https://github.com/Ape/samsungctl>`_
 - `https://github.com/xchwarze/samsung-tv-ws-api <https://github.com/xchwarze/samsung-tv-ws-api>`_
 - `https://github.com/andresriancho/websocket-fuzzer <https://github.com/andresriancho/websocket-fuzzer>`_
