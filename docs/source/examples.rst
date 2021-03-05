@@ -426,6 +426,51 @@ send a "pong" when it receives a "ping", per the specification.
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
   wsapp.run_forever(ping_interval=10, ping_timeout=60)
 
+Connection Close Status Codes
+--------------------------------
+
+RFC6455 defines `various status codes <https://tools.ietf.org/html/rfc6455#section-7.4>`_
+that can be used to identify the reason for a close frame ending
+a connection. These codes are defined in the websocket/_abnf.py
+file. To view the code used to close a connection, you can
+:ref:`enable logging<Debug and Logging Options>` to view the
+status code information. You can also specify your own status code
+in the .close() function, as seen in the examples below. Specifying
+a custom status code is necessary when using the custom
+status code values between 3000-4999.
+
+**WebSocket close() status code example**
+
+::
+
+  import websocket
+
+  websocket.enableTrace(True)
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close(websocket.STATUS_PROTOCOL_ERROR)
+  # Alternatively, use ws.close(status=1002)
+
+
+**WebSocketApp close() status code example**
+
+::
+
+  import websocket
+
+  websocket.enableTrace(True)
+
+  def on_message(wsapp, message):
+    print(message)
+    wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
+    # Alternatively, use wsapp.close(status=1002)
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
+  wsapp.run_forever(skip_utf8_validation=True)
+
 Real-world Examples
 =========================
 
