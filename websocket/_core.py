@@ -478,7 +478,9 @@ class WebSocket(object):
                             continue
                         if isEnabledForError():
                             recv_status = struct.unpack("!H", frame.data[0:2])[0]
-                            if recv_status != STATUS_NORMAL:
+                            if recv_status >= 3000 and recv_status <= 4999:
+                                debug("close status: " + repr(recv_status))
+                            elif recv_status != STATUS_NORMAL:
                                 error("close status: " + repr(recv_status))
                         break
                     except:
