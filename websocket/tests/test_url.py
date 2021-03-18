@@ -124,10 +124,13 @@ class ProxyInfoTest(unittest.TestCase):
     def setUp(self):
         self.http_proxy = os.environ.get("http_proxy", None)
         self.https_proxy = os.environ.get("https_proxy", None)
+        self.no_proxy = os.environ.get("no_proxy", None)
         if "http_proxy" in os.environ:
             del os.environ["http_proxy"]
         if "https_proxy" in os.environ:
             del os.environ["https_proxy"]
+        if "no_proxy" in os.environ:
+            del os.environ["no_proxy"]
 
     def tearDown(self):
         if self.http_proxy:
@@ -139,6 +142,11 @@ class ProxyInfoTest(unittest.TestCase):
             os.environ["https_proxy"] = self.https_proxy
         elif "https_proxy" in os.environ:
             del os.environ["https_proxy"]
+
+        if self.no_proxy:
+            os.environ["no_proxy"] = self.no_proxy
+        elif "no_proxy" in os.environ:
+            del os.environ["no_proxy"]
 
     def testProxyFromArgs(self):
         self.assertEqual(get_proxy_info("echo.websocket.org", False, proxy_host="localhost"), ("localhost", 0, None))
