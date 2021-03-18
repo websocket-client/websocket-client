@@ -24,7 +24,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import sys
 import os
 
-from websocket._url import get_proxy_info, parse_url
+from websocket._url import get_proxy_info, parse_url, _is_address_in_network
 
 if sys.version_info[0] == 2 and sys.version_info[1] < 7:
     import unittest2 as unittest
@@ -34,6 +34,11 @@ sys.path[0:0] = [""]
 
 
 class UrlTest(unittest.TestCase):
+
+    def test_address_in_network(self):
+        self.assertTrue(_is_address_in_network('127.0.0.1', '127.0.0.0/8'))
+        self.assertTrue(_is_address_in_network('127.1.0.1', '127.0.0.0/8'))
+        self.assertFalse(_is_address_in_network('127.1.0.1', '127.0.0.0/24'))
 
     def testParseUrl(self):
         p = parse_url("ws://www.example.com/r")

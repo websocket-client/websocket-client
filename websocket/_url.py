@@ -99,10 +99,12 @@ def _is_subnet_address(hostname):
 
 
 def _is_address_in_network(ip, net):
-    ipaddr = struct.unpack('I', socket.inet_aton(ip))[0]
-    netaddr, bits = net.split('/')
-    netmask = struct.unpack('I', socket.inet_aton(netaddr))[0] & ((2 << int(bits) - 1) - 1)
-    return ipaddr & netmask == netmask
+    ipaddr = struct.unpack('!I', socket.inet_aton(ip))[0]
+    netaddr, netmask = net.split('/')
+    netaddr = struct.unpack('!I', socket.inet_aton(netaddr))[0]
+
+    netmask = (0xFFFFFFFF << (32 - int(netmask))) & 0xFFFFFFFF
+    return ipaddr & netmask == netaddr
 
 
 def _is_no_proxy_host(hostname, no_proxy):
