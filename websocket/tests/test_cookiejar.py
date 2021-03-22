@@ -120,3 +120,6 @@ class CookieJarTest(unittest.TestCase):
         self.assertEqual(cookie_jar.get("x.abc.com"), "a=b; c=d")
         self.assertEqual(cookie_jar.get("abc.com.es"), "")
         self.assertEqual(cookie_jar.get("xabc.com"), "")
+
+if __name__ == "__main__":
+    unittest.main()
