@@ -14,11 +14,9 @@ jobs:
           python-version: "3.9"
       - name: Run test cases for coverage collection
         run: |
-          pip install six
+          pip install six coverage pytest
           python setup.py install
-          pip install coverage
-          coverage run --source=websocket --omit="/*/tests/__init__.py","*/tests/test_cookiejar.py","*/tests/test_websocket.py" websocket/tests/test_websocket.py
+          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-report=xml
           coverage report
-          coverage xml
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v1.2.1

@@ -1,6 +1,7 @@
 [run]
 branch = True
 source = websocket-client
+omit = websocket/tests/*
 
 [report]
 exclude_lines =
