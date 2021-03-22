@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   flake8-lint:
     runs-on: ubuntu-latest
-    name: Lint
+    name: lint
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2

@@ -426,17 +426,69 @@ send a "pong" when it receives a "ping", per the specification.
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
   wsapp.run_forever(ping_interval=10, ping_timeout=60)
 
+Connection Close Status Codes
+--------------------------------
+
+RFC6455 defines `various status codes <https://tools.ietf.org/html/rfc6455#section-7.4>`_
+that can be used to identify the reason for a close frame ending
+a connection. These codes are defined in the websocket/_abnf.py
+file. To view the code used to close a connection, you can
+:ref:`enable logging<Debug and Logging Options>` to view the
+status code information. You can also specify your own status code
+in the .close() function, as seen in the examples below. Specifying
+a custom status code is necessary when using the custom
+status code values between 3000-4999.
+
+**WebSocket close() status code example**
+
+::
+
+  import websocket
+
+  websocket.enableTrace(True)
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close(websocket.STATUS_PROTOCOL_ERROR)
+  # Alternatively, use ws.close(status=1002)
+
+
+**WebSocketApp close() status code example**
+
+::
+
+  import websocket
+
+  websocket.enableTrace(True)
+
+  def on_message(wsapp, message):
+    print(message)
+    wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
+    # Alternatively, use wsapp.close(status=1002)
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
+  wsapp.run_forever(skip_utf8_validation=True)
+
 Real-world Examples
 =========================
 
 Other projects that depend on websocket-client may be able to illustrate more
-complex use cases for this library. A few of the projects using websocket-client
-are listed below:
+complex use cases for this library. A list of 600+ dependent projects is found
+`on libraries.io <https://libraries.io/pypi/websocket-client/dependents>`_, and
+a few of the projects using websocket-client are listed below:
 
+- `https://github.com/docker/compose <https://github.com/docker/compose>`_
+- `https://github.com/apache/airflow <https://github.com/apache/airflow>`_
+- `https://github.com/docker/docker-py <https://github.com/docker/docker-py>`_
+- `https://github.com/scrapinghub/slackbot <https://github.com/scrapinghub/slackbot>`_
 - `https://github.com/slackapi/python-slack-sdk <https://github.com/slackapi/python-slack-sdk>`_
 - `https://github.com/wee-slack/wee-slack <https://github.com/wee-slack/wee-slack>`_
 - `https://github.com/aluzzardi/wssh/ <https://github.com/aluzzardi/wssh/>`_
+- `https://github.com/miguelgrinberg/python-socketio <https://github.com/miguelgrinberg/python-socketio>`_
 - `https://github.com/invisibleroads/socketIO-client <https://github.com/invisibleroads/socketIO-client>`_
+- `https://github.com/s4w3d0ff/python-poloniex <https://github.com/s4w3d0ff/python-poloniex>`_
 - `https://github.com/Ape/samsungctl <https://github.com/Ape/samsungctl>`_
 - `https://github.com/xchwarze/samsung-tv-ws-api <https://github.com/xchwarze/samsung-tv-ws-api>`_
 - `https://github.com/andresriancho/websocket-fuzzer <https://github.com/andresriancho/websocket-fuzzer>`_

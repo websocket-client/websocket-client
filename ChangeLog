@@ -1,7 +1,21 @@
 ChangeLog
 ============
 
+- 0.58.0
+
+ - Fix README typos (#659)
+ - Create README.md from README.rst (#655)
+ - Capitalize 'Upgrade' in 'Connection: Upgrade' (#605)
+ - Add Python 3.8 and 3.9 CI support (#596)
+ - Replace deprecated `thread.isAlive` with `thread.is_alive` (#594)
+ - Revert to LGPL v2.1 license (#526)
+ - Add code coverage CI testing (#663)
+ - Properly revert callback (#442)
+ - Replace TravisCI with GitHub Actions (36e32c7)
+ - Create Sphinx readthedocs.io documentation (aace06b)
+
 - 0.57.0
+
  - wsdump: Fix --headers option (#589)
  - Fix getting 400 bad request with long proxy authorization string (#587)
  - Fix for errors that occur when closing websocket from another thread (#586)
@@ -13,7 +27,7 @@ ChangeLog
  - Expose http connection header to user (#566)
  - Improve the readability of HTTP status codes. (#553)
  - fix the compatible issue with gevent+dnspython (#547)
- - v should be checked for emptry string before splitting it (#539)
+ - v should be checked for empty string before splitting it (#539)
  - _handshake: hasattr checks on six before accessing the values (#533)
 
 - 0.56.0
