@@ -99,10 +99,12 @@ def _is_subnet_address(hostname):
 
 
 def _is_address_in_network(ip, net):
-    ipaddr = struct.unpack('I', socket.inet_aton(ip))[0]
-    netaddr, bits = net.split('/')
-    netmask = struct.unpack('I', socket.inet_aton(netaddr))[0] & ((2 << int(bits) - 1) - 1)
-    return ipaddr & netmask == netmask
+    ipaddr = struct.unpack('!I', socket.inet_aton(ip))[0]
+    netaddr, netmask = net.split('/')
+    netaddr = struct.unpack('!I', socket.inet_aton(netaddr))[0]
+
+    netmask = (0xFFFFFFFF << (32 - int(netmask))) & 0xFFFFFFFF
+    return ipaddr & netmask == netaddr
 
 
 def _is_no_proxy_host(hostname, no_proxy):
@@ -113,11 +115,15 @@ def _is_no_proxy_host(hostname, no_proxy):
     if not no_proxy:
         no_proxy = DEFAULT_NO_PROXY_HOST
 
+    if '*' in no_proxy:
+        return True
     if hostname in no_proxy:
         return True
-    elif _is_ip_address(hostname):
+    if _is_ip_address(hostname):
         return any([_is_address_in_network(hostname, subnet) for subnet in no_proxy if _is_subnet_address(subnet)])
-
+    for domain in [domain for domain in no_proxy if domain.startswith('.')]:
+        if hostname.endswith(domain):
+            return True
     return False
 
 
