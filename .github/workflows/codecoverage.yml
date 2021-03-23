@@ -19,7 +19,7 @@ jobs:
           python setup.py install
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-report=xml
           coverage report
-	env:
+        env:
           TEST_WITH_INTERNET: 1
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v1.2.1
