@@ -1,6 +1,4 @@
-"""
-
-"""
+#!/usr/bin/env python3
 
 """
 websocket - WebSocket client library for Python
