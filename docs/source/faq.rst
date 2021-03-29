@@ -35,6 +35,17 @@ the choice of ``import websocket``, see
 and to read about websocket-client vs. websocket_client, see
 `issue #147 <https://github.com/websocket-client/websocket-client/issues/147>`_
 
+Is WebSocket Compression using the permessage-deflate extension supported?
+============================================================================
+
+No, `RFC 7692 <https://tools.ietf.org/html/rfc7692>`_ for WebSocket Compression
+is unfortunately not supported by the websocket-client library at this time.
+You can view the currently supported WebSocket features in the
+latest autobahn compliance HTML report, found under the
+`compliance folder. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
+If you use the ``Sec-WebSocket-Extensions: permessage-deflate`` header with
+websocket-client, you will probably encounter errors.
+
 How to disable ssl cert verification?
 =======================================
 

@@ -38,6 +38,9 @@ support was first introduced in version 0.14.0, but is a work in progress.
 Check out the documentation's FAQ for additional guidelines:
 [https://websocket-client.readthedocs.io/en/latest/faq.html](https://websocket-client.readthedocs.io/en/latest/faq.html)
 
+Known issues with this library include lack of WebSocket Compression
+support (RFC 7692) and [minimal threading documentation/support](https://websocket-client.readthedocs.io/en/latest/threading.html).
+
 ## License
 
 - LGPL version 2.1
