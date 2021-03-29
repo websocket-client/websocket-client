@@ -170,6 +170,10 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(status, 101)
         self.assertEqual(header["connection"], "Upgrade")
 
+        status, header, status_message = read_headers(HeaderSockMock("data/header03.txt"))
+        self.assertEqual(status, 101)
+        self.assertEqual(header["connection"], "Upgrade, Keep-Alive")
+
         HeaderSockMock("data/header02.txt")
         self.assertRaises(ws.WebSocketException, read_headers, HeaderSockMock("data/header02.txt"))
 
