@@ -177,8 +177,8 @@ def _validate(headers, key, subprotocols):
         r = headers.get(k, None)
         if not r:
             return False, None
-        r = r.lower()
-        if v != r:
+        r = [x.strip().lower() for x in r.split(',')]
+        if v not in r:
             return False, None
 
     if subprotocols:
