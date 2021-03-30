@@ -2,8 +2,6 @@
 Examples
 ########
 
-This page needs help! Please see the :ref:`contributing` page to make it better!
-
 Creating Your First WebSocket Connection
 ==========================================
 
@@ -424,7 +422,7 @@ send a "pong" when it receives a "ping", per the specification.
 
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
-  wsapp.run_forever(ping_interval=10, ping_timeout=60)
+  wsapp.run_forever(ping_interval=60, ping_timeout=10)
 
 Connection Close Status Codes
 --------------------------------
