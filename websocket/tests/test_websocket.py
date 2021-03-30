@@ -61,9 +61,6 @@ except ImportError:
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
-
-# Skip Secure WebSocket test.
-TEST_SECURE_WS = True
 TRACEABLE = True
 
 
@@ -125,6 +122,13 @@ class WebSocketTest(unittest.TestCase):
         key = _create_sec_websocket_key()
         self.assertTrue(key != 24)
         self.assertTrue(six.u("¥n") not in key)
+
+    def testNonce(self):
+        """ WebSocket key should be a random 16-byte nonce.
+        """
+        key = _create_sec_websocket_key()
+        nonce = base64decode(key.encode("utf-8"))
+        self.assertEqual(16, len(nonce))
 
     def testWsUtils(self):
         key = "c6b8hTg4EeGb2gQMztV1/g=="
@@ -191,7 +195,10 @@ class WebSocketTest(unittest.TestCase):
         sock.send(u"こんにちは")
         self.assertEqual(s.sent[1], six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
 
-        sock.send("x" * 127)
+#        sock.send("x" * 5000)
+#        self.assertEqual(s.sent[1], six.b("\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"))
+
+        self.assertEqual(sock.send_binary(b'1111111111101'), 19)
 
     def testRecv(self):
         # TODO: add longer frame data
@@ -364,6 +371,7 @@ class WebSocketTest(unittest.TestCase):
         s.send(u"こにゃにゃちは、世界")
         result = s.recv()
         self.assertEqual(result, "こにゃにゃちは、世界")
+        self.assertRaises(ValueError, s.send_close, -1, "")
         s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
@@ -375,22 +383,14 @@ class WebSocketTest(unittest.TestCase):
         s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
-    @unittest.skipUnless(TEST_SECURE_WS, "wss://echo.websocket.org doesn't work well.")
     def testSecureWebSocket(self):
-        if 1:
-            import ssl
-            s = ws.create_connection("wss://echo.websocket.org/")
-            self.assertNotEqual(s, None)
-            self.assertTrue(isinstance(s.sock, ssl.SSLSocket))
-            s.send("Hello, World")
-            result = s.recv()
-            self.assertEqual(result, "Hello, World")
-            s.send(u"こにゃにゃちは、世界")
-            result = s.recv()
-            self.assertEqual(result, "こにゃにゃちは、世界")
-            s.close()
-        #except:
-        #    pass
+        import ssl
+        s = ws.create_connection("wss://api.bitfinex.com/ws/2")
+        self.assertNotEqual(s, None)
+        self.assertTrue(isinstance(s.sock, ssl.SSLSocket))
+        self.assertEqual(s.getstatus(), 101)
+        self.assertNotEqual(s.getheaders(), None)
+        s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocketWithCustomHeader(self):
@@ -400,6 +400,7 @@ class WebSocketTest(unittest.TestCase):
         s.send("Hello, World")
         result = s.recv()
         self.assertEqual(result, "Hello, World")
+        self.assertRaises(ValueError, s.close, -1, "")
         s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
@@ -409,13 +410,6 @@ class WebSocketTest(unittest.TestCase):
         s.close()
         self.assertRaises(ws.WebSocketConnectionClosedException, s.send, "Hello")
         self.assertRaises(ws.WebSocketConnectionClosedException, s.recv)
-
-    def testNonce(self):
-        """ WebSocket key should be a random 16-byte nonce.
-        """
-        key = _create_sec_websocket_key()
-        nonce = base64decode(key.encode("utf-8"))
-        self.assertEqual(16, len(nonce))
 
 
 class SockOptTest(unittest.TestCase):
