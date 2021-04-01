@@ -92,7 +92,8 @@ ws://echo.websocket.org, do not trigger the ``on_close()`` function.
   wsapp = websocket.WebSocketApp("wss://api.bitfinex.com/ws/1", on_open=on_open, on_message=on_message, on_close=on_close)
   wsapp.run_forever()
 
-
+TODO: Add an example of using ws.recv() in a non-blocking manner, as asked in
+`issue #416 <https://github.com/websocket-client/websocket-client/issues/416>`_
 
 In part because threading is hard, but also because this project has (until recently)
 lacked any threading documentation, there are many issues on this topic, including:

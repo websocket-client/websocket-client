@@ -484,6 +484,7 @@ a few of the projects using websocket-client are listed below:
 - `https://github.com/slackapi/python-slack-sdk <https://github.com/slackapi/python-slack-sdk>`_
 - `https://github.com/wee-slack/wee-slack <https://github.com/wee-slack/wee-slack>`_
 - `https://github.com/aluzzardi/wssh/ <https://github.com/aluzzardi/wssh/>`_
+- `https://github.com/llimllib/limbo <https://github.com/llimllib/limbo>`_
 - `https://github.com/miguelgrinberg/python-socketio <https://github.com/miguelgrinberg/python-socketio>`_
 - `https://github.com/invisibleroads/socketIO-client <https://github.com/invisibleroads/socketIO-client>`_
 - `https://github.com/s4w3d0ff/python-poloniex <https://github.com/s4w3d0ff/python-poloniex>`_
