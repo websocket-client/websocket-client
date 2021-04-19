@@ -273,7 +273,9 @@ def _ssl_socket(sock, user_sslopt, hostname):
 
 def _tunnel(sock, host, port, auth):
     debug("Connecting proxy...")
-    connect_header = "CONNECT %s:%d HTTP/1.0\r\n" % (host, port)
+    connect_header = "CONNECT %s:%d HTTP/1.1\r\n" % (host, port)
+    connect_header += "Host: %s:%d\r\n" % (host, port)
+
     # TODO: support digest auth.
     if auth and auth[0]:
         auth_str = auth[0]
