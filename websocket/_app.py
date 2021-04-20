@@ -28,6 +28,7 @@ import selectors
 import threading
 import time
 import traceback
+import sys
 
 import six
 
