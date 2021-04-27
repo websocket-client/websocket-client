@@ -397,6 +397,7 @@ This type of connection does not automatically respond to a "ping" with a "pong"
   ws = websocket.WebSocket()
   ws.connect("ws://echo.websocket.org")
   ws.ping()
+  ws.ping("This is an optional ping payload")
   ws.pong()
   ws.close()
 
@@ -422,7 +423,7 @@ send a "pong" when it receives a "ping", per the specification.
 
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
-  wsapp.run_forever(ping_interval=60, ping_timeout=10)
+  wsapp.run_forever(ping_interval=60, ping_timeout=10, ping_payload="This is an optional ping payload")
 
 Connection Close Status Codes
 --------------------------------
@@ -462,12 +463,63 @@ status code values between 3000-4999.
   websocket.enableTrace(True)
 
   def on_message(wsapp, message):
-    print(message)
-    wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
-    # Alternatively, use wsapp.close(status=1002)
+      print(message)
+      wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
+      # Alternatively, use wsapp.close(status=1002)
 
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
   wsapp.run_forever(skip_utf8_validation=True)
+
+Customizing frame mask
+--------------------------------
+
+WebSocket frames use masking with a random value to add entropy. The masking
+value in websocket-client is normally set using os.urandom in the
+websocket/_abnf.py file. However, this value can be customized as you wish.
+One use case, outlined in
+`issue #473 <https://github.com/websocket-client/websocket-client/issues/473>`_,
+is to set the masking key to a null value to make it easier to decode the
+messages being sent and received. This is effectively the same as "removing" the
+mask, though the mask cannot be fully "removed" because it is a part of the
+WebSocket frame. Tools such as Wireshark can automatically remove masking
+from payloads to decode the payload message, but it may be easier to skip
+the demasking step in your custom project.
+
+**WebSocket custom masking key code example**
+
+::
+
+  import websocket
+
+  def zero_mask_key(_):
+      return "\x00\x00\x00\x00"
+
+  websocket.enableTrace(True)
+
+  ws = websocket.WebSocket()
+  ws.set_mask_key(zero_mask_key)
+  ws.connect("ws://echo.websocket.org")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close()
+
+
+**WebSocketApp custom masking key code example**
+
+::
+
+  import websocket
+
+  def zero_mask_key(_):
+      return "\x00\x00\x00\x00"
+
+  websocket.enableTrace(True)
+
+  def on_message(wsapp, message):
+      print(message)
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message, get_mask_key=zero_mask_key)
+  wsapp.run_forever()
 
 Real-world Examples
 =========================
