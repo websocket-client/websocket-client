@@ -322,7 +322,10 @@ def read_headers(sock):
             kv = line.split(":", 1)
             if len(kv) == 2:
                 key, value = kv
-                headers[key.lower()] = value.strip()
+                if key.lower() == "set-cookie" and headers.get("set-cookie"):
+                    headers["set-cookie"] = headers.get("set-cookie") + "; " + value.strip()
+                else:
+                    headers[key.lower()] = value.strip()
             else:
                 raise WebSocketException("Invalid header")
 
