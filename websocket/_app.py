@@ -190,18 +190,19 @@ class WebSocketApp(object):
             self.sock.close(**kwargs)
             self.sock = None
 
-    def _send_ping(self, interval, event):
+    def _send_ping(self, interval, event, payload):
         while not event.wait(interval):
             self.last_ping_tm = time.time()
             if self.sock:
                 try:
-                    self.sock.ping()
+                    self.sock.ping(payload)
                 except Exception as ex:
                     _logging.warning("send_ping routine terminated: {}".format(ex))
                     break
 
     def run_forever(self, sockopt=None, sslopt=None,
                     ping_interval=0, ping_timeout=None,
+                    ping_payload="",
                     http_proxy_host=None, http_proxy_port=None,
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
@@ -226,6 +227,8 @@ class WebSocketApp(object):
             if set to 0, not send automatically.
         ping_timeout: int or float
             timeout (in seconds) if the pong message is not received.
+        ping_payload: str
+            payload message to send with each ping.
         http_proxy_host: <type>
             http proxy host name.
         http_proxy_port: <type>
@@ -304,7 +307,7 @@ class WebSocketApp(object):
             if ping_interval:
                 event = threading.Event()
                 thread = threading.Thread(
-                    target=self._send_ping, args=(ping_interval, event))
+                    target=self._send_ping, args=(ping_interval, event, ping_payload))
                 thread.daemon = True
                 thread.start()
 
