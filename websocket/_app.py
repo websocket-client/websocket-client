@@ -305,7 +305,7 @@ class WebSocketApp(object):
                 event = threading.Event()
                 thread = threading.Thread(
                     target=self._send_ping, args=(ping_interval, event))
-                thread.setDaemon(True)
+                thread.daemon = True
                 thread.start()
 
             def read():
