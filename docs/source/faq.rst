@@ -48,7 +48,8 @@ You can view the currently supported WebSocket features in the
 latest autobahn compliance HTML report, found under the
 `compliance folder. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
 If you use the ``Sec-WebSocket-Extensions: permessage-deflate`` header with
-websocket-client, you will probably encounter errors.
+websocket-client, you will probably encounter errors, such as the ones described
+in `issue #314. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
 
 How to disable ssl cert verification?
 =======================================
