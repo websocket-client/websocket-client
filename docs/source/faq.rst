@@ -51,6 +51,29 @@ If you use the ``Sec-WebSocket-Extensions: permessage-deflate`` header with
 websocket-client, you will probably encounter errors, such as the ones described
 in `issue #314. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
 
+If a connection is re-establish after getting disconnected, does the new connection continue where the previous one dropped off?
+=======================================================================================================================================
+
+The answer to this question depends on how the WebSocket server
+handles new connections. If the server keeps a list of recently dropped
+WebSocket connection sessions, then it may allow you to recontinue your
+WebSocket connection where you left off before disconnecting. However,
+this requires extra effort from the server and may create security issues.
+For these reasons it is rare to encounter such a WebSocket server.
+The server would need to identify each connecting client with
+authentication and keep track of which data was received using a method
+like TCP's SYN/ACK. That's a lot of overhead for a lightweight protocol!
+Both HTTP and WebSocket connections use TCP sockets, and when a new
+WebSocket connection is created, it uses a new TCP socket. Therefore,
+at the TCP layer, the default behavior is to give each WebSocket
+connection a separate TCP socket. This means the re-established connection
+after a disconnect is the same as a completely new connection. Another
+way to think about this is: what should the server do if you create two
+WebSocket connections from the same client to the same server? The easiest
+solution for the server is to treat each connection separately, unless
+the WebSocket uses an authentication method to identify individual clients
+connecting to the server.
+
 How to disable ssl cert verification?
 =======================================
 
