@@ -312,18 +312,19 @@ the timeout interval (5 seconds in the example below).
   # Program should print a "timed out" error message
 
 
-Connecting through a HTTP proxy
---------------------------------
+Connecting through a proxy
+----------------------------
 
-The example below show how to connect through a HTTP proxy. Note that this
+The example below show how to connect through a HTTP or SOCKS proxy. This
 library does support authentication to a proxy using the ``http_proxy_auth``
-parameter. Be aware that the current implementation of websocket-client uses
-the "CONNECT" method, and the proxy server must allow the "CONNECT" method. For
+parameter, which should be a tuple of the username and password. Be aware
+that the current implementation of websocket-client uses the "CONNECT"
+method, and the proxy server must allow the "CONNECT" method. For
 example, the squid proxy only allows the "CONNECT" method
 `on HTTPS ports <https://wiki.squid-cache.org/Features/HTTPS#CONNECT_tunnel>`_
-by default.
+by default. You may encounter problems if using SSL/TLS with your proxy.
 
-**WebSocket proxy example**
+**WebSocket HTTP proxy example**
 
 ::
 
@@ -331,10 +332,24 @@ by default.
 
   ws = websocket.WebSocket()
   ws.connect("ws://echo.websocket.org",
-    http_proxy_host="127.0.0.1", http_proxy_port="8080")
+    http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="http")
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()
+
+**WebSocket SOCKS4 (or SOCKS5) proxy example**
+
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org",
+    http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="socks4")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close()
+
 
 **WebSocketApp proxy example**
 
