@@ -29,6 +29,8 @@ import sys
 import unittest
 sys.path[0:0] = [""]
 
+# Skip test to access the internet.
+TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 
 class SockMock(object):
     def __init__(self):
@@ -87,8 +89,9 @@ class HttpTest(unittest.TestCase):
         self.assertRaises(ws.WebSocketProxyException, _tunnel, HeaderSockMock("data/header01.txt"), "example.com", 80, ("username", "password"))
         self.assertRaises(ws.WebSocketProxyException, _tunnel, HeaderSockMock("data/header02.txt"), "example.com", 80, ("username", "password"))
 
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testConnect(self):
-        # Not currently testing an actual proxy connection, so just check whether TypeError is raised
+        # Not currently testing an actual proxy connection, so just check whether TypeError is raised. This requires internet for a DNS lookup
         self.assertRaises(TypeError, _open_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="http"))
         self.assertRaises(TypeError, _open_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks4"))
         self.assertRaises(TypeError, _open_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks5h"))

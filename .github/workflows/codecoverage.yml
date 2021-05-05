@@ -12,11 +12,15 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.9"
-      - name: Run test cases for coverage collection
+      - name: Run test cases without internet to verify no offline test failures
         run: |
           pip install six coverage pytest pytest-cov setuptools PySocks numpy
           python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
           python setup.py install
+          pytest -vrP --cov=websocket websocket/tests
+          coverage report
+      - name: Run test cases for coverage collection
+        run: |
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-report=xml
           coverage report
         env:
