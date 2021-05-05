@@ -1,6 +1,18 @@
 ChangeLog
 ============
 
+- 0.59.0
+
+ - Last main release to support Python 2
+ - Fix Python 2 urlparse scheme (#332)
+ - Add support for headers with multiple values (#627)
+ - Add debug support for reserved custom status codes (#639)
+ - Allow multiple Set-Cookie: headers (#649)
+ - Simplified cookie sorting (#662)
+ - Add no_proxy support (#671)
+ - Add Host header to HTTP proxy request (#677)
+ - Improve PEP8 style compliance (dc3f5c4)
+
 - 0.58.0
 
  - Fix README typos (#659)

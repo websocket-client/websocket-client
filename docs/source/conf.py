@@ -34,7 +34,7 @@ copyright = '2021'
 author = 'liris'
 
 # The full version, including alpha/beta/rc tags
-release = '0.58.0'
+release = '0.59.0'
 
 
 # -- General configuration ---------------------------------------------------
