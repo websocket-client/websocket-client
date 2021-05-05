@@ -12,9 +12,10 @@
 #
 import os
 import sys
-#sys.path.insert(0, os.path.abspath('../..'))
+
 sys.path.append(os.path.abspath('../..'))
 sys.path.append(os.path.abspath('websocket'))
+
 
 # Don't skip __init__, which is skipped by default
 def skip(app, what, name, obj, would_skip, options):
@@ -22,11 +23,12 @@ def skip(app, what, name, obj, would_skip, options):
         return False
     return would_skip
 
+
 def setup(app):
     app.connect("autodoc-skip-member", skip)
 
-# -- Project information -----------------------------------------------------
 
+# -- Project information -----------------------------------------------------
 project = 'websocket-client'
 copyright = '2021'
 author = 'liris'
@@ -41,7 +43,8 @@ release = '0.58.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage',
-'sphinx.ext.napoleon', 'sphinx.ext.viewcode', 'sphinx.ext.autosectionlabel']
+              'sphinx.ext.napoleon', 'sphinx.ext.viewcode',
+              'sphinx.ext.autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

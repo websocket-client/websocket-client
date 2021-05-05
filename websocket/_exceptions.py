@@ -23,6 +23,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 """
 
+
 class WebSocketException(Exception):
     """
     WebSocket exception class.

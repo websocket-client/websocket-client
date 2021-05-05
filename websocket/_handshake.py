@@ -93,6 +93,7 @@ def _pack_hostname(hostname):
 
     return hostname
 
+
 def _get_handshake_headers(resource, host, port, options):
     headers = [
         "GET %s HTTP/1.1" % resource,
@@ -116,16 +117,16 @@ def _get_handshake_headers(resource, host, port, options):
     key = _create_sec_websocket_key()
 
     # Append Sec-WebSocket-Key & Sec-WebSocket-Version if not manually specified
-    if not 'header' in options or 'Sec-WebSocket-Key' not in options['header']:
+    if 'header' not in options or 'Sec-WebSocket-Key' not in options['header']:
         key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
     else:
         key = options['header']['Sec-WebSocket-Key']
 
-    if not 'header' in options or 'Sec-WebSocket-Version' not in options['header']:
+    if 'header' not in options or 'Sec-WebSocket-Version' not in options['header']:
         headers.append("Sec-WebSocket-Version: %s" % VERSION)
 
-    if not 'connection' in options or options['connection'] is None:
+    if 'connection' not in options or options['connection'] is None:
         headers.append('Connection: Upgrade')
     else:
         headers.append(options['connection'])

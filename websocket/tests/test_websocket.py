@@ -39,7 +39,6 @@ import websocket as ws
 from websocket._handshake import _create_sec_websocket_key, \
     _validate as _validate_header
 from websocket._http import read_headers
-from websocket._url import get_proxy_info, parse_url
 from websocket._utils import validate_utf8
 
 if six.PY3:
@@ -135,8 +134,7 @@ class WebSocketTest(unittest.TestCase):
         required_header = {
             "upgrade": "websocket",
             "connection": "upgrade",
-            "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0=",
-            }
+            "sec-websocket-accept": "Kxep+hNu9n51529fGidYu7a3wO0="}
         self.assertEqual(_validate_header(required_header, key, None), (True, None))
 
         header = required_header.copy()

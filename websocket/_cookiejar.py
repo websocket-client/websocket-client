@@ -72,5 +72,7 @@ class SimpleCookieJar(object):
             if host.endswith(domain) or host == domain[1:]:
                 cookies.append(self.jar.get(domain))
 
-        return "; ".join(filter(None, sorted(["%s=%s" % (k, v.value) for cookie in filter(None, cookies) for k, v in
-                                       cookie.items()])))
+        return "; ".join(filter(
+            None, sorted(
+                ["%s=%s" % (k, v.value) for cookie in filter(None, cookies) for k, v in cookie.items()]
+            )))

@@ -44,6 +44,7 @@ from ._utils import *
 
 __all__ = ['WebSocket', 'create_connection']
 
+
 class WebSocket(object):
     """
     Low level WebSocket interface.
@@ -254,8 +255,8 @@ class WebSocket(object):
                 if self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES:
                     url = self.handshake_response.headers['location']
                     self.sock.close()
-                    self.sock, addrs =  connect(url, self.sock_opt, proxy_info(**options),
-                                                options.pop('socket', None))
+                    self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
+                                               options.pop('socket', None))
                     self.handshake_response = handshake(self.sock, *addrs, **options)
             self.connected = True
         except:
@@ -466,8 +467,7 @@ class WebSocket(object):
 
             try:
                 self.connected = False
-                self.send(struct.pack('!H', status) +
-                          reason, ABNF.OPCODE_CLOSE)
+                self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
                 sock_timeout = self.sock.gettimeout()
                 self.sock.settimeout(timeout)
                 start_time = time.time()

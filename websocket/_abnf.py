@@ -228,9 +228,9 @@ class ABNF(object):
         if length >= ABNF.LENGTH_63:
             raise ValueError("data is too long")
 
-        frame_header = chr(self.fin << 7
-                           | self.rsv1 << 6 | self.rsv2 << 5 | self.rsv3 << 4
-                           | self.opcode)
+        frame_header = chr(self.fin << 7 |
+                           self.rsv1 << 6 | self.rsv2 << 5 | self.rsv3 << 4 |
+                           self.opcode)
         if length < ABNF.LENGTH_7:
             frame_header += chr(self.mask << 7 | length)
             frame_header = six.b(frame_header)
@@ -287,7 +287,7 @@ class ABNF(object):
             a = numpy.frombuffer(data, dtype="uint32")
             masked = numpy.bitwise_xor(a, [_mask_key]).astype("uint32")
             if len(data) > origlen:
-              return masked.tobytes()[:origlen]
+                return masked.tobytes()[:origlen]
             return masked.tobytes()
         else:
             _m = array.array("B", mask_key)

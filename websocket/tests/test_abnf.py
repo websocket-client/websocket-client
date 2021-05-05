@@ -22,17 +22,10 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 """
 
 import os
-import os.path
-import socket
 import websocket as ws
 from websocket._abnf import *
 import sys
 sys.path[0:0] = [""]
-
-try:
-    import socks
-except:
-    HAS_PYSOCKS = False
 
 if sys.version_info[0] == 2 and sys.version_info[1] < 7:
     import unittest2 as unittest
@@ -82,4 +75,3 @@ class ABNFTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

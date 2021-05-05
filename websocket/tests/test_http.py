@@ -23,21 +23,16 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import os
 import os.path
-import socket
 import websocket as ws
-from websocket._http import proxy_info, connect, read_headers, _open_proxied_socket, _tunnel, _open_socket, _get_addrinfo_list
+from websocket._http import proxy_info, read_headers, _open_proxied_socket, _tunnel
 import sys
 sys.path[0:0] = [""]
-
-try:
-    import socks
-except:
-    HAS_PYSOCKS = False
 
 if sys.version_info[0] == 2 and sys.version_info[1] < 7:
     import unittest2 as unittest
 else:
     import unittest
+
 
 class SockMock(object):
     def __init__(self):
@@ -75,11 +70,13 @@ class HeaderSockMock(SockMock):
         with open(path, "rb") as f:
             self.add_packet(f.read())
 
+
 class OptsList():
 
     def __init__(self):
         self.timeout = 0
         self.sockopt = []
+
 
 class HttpTest(unittest.TestCase):
 
@@ -107,6 +104,6 @@ class HttpTest(unittest.TestCase):
         self.assertEqual(proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="http").port, "8080")
         self.assertEqual(proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="http").auth, None)
 
+
 if __name__ == "__main__":
     unittest.main()
-

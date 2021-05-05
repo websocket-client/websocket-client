@@ -23,9 +23,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
 import os
 import os.path
-import socket
 import websocket as ws
-from websocket._app import WebSocketApp
 import sys
 sys.path[0:0] = [""]
 
@@ -42,6 +40,7 @@ else:
 # Skip test to access the internet.
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 TRACEABLE = True
+
 
 class WebSocketAppTest(unittest.TestCase):
 
@@ -130,10 +129,9 @@ class WebSocketAppTest(unittest.TestCase):
             app.close()
 
         app = ws.WebSocketApp('wss://api-pub.bitfinex.com/ws/1', on_ping=on_ping, on_pong=on_pong)
-        app.run_forever(ping_interval=2, ping_timeout=1) #, sslopt={"cert_reqs": ssl.CERT_NONE}
+        app.run_forever(ping_interval=2, ping_timeout=1)  # , sslopt={"cert_reqs": ssl.CERT_NONE}
         self.assertRaises(ws.WebSocketException, app.run_forever, ping_interval=2, ping_timeout=3, sslopt={"cert_reqs": ssl.CERT_NONE})
 
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -39,6 +39,7 @@ from . import _logging
 
 __all__ = ["WebSocketApp"]
 
+
 class Dispatcher:
     """
     Dispatcher
@@ -50,11 +51,12 @@ class Dispatcher:
     def read(self, sock, read_callback, check_callback):
         while self.app.keep_running:
             r, w, e = select.select(
-                    (self.app.sock.sock, ), (), (), self.ping_timeout)
+                (self.app.sock.sock, ), (), (), self.ping_timeout)
             if r:
                 if not read_callback():
                     break
             check_callback()
+
 
 class SSLDispatcher:
     """
@@ -343,9 +345,9 @@ class WebSocketApp(object):
                     has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
                     has_pong_arrived_too_late = self.last_pong_tm - self.last_ping_tm > ping_timeout
 
-                    if (self.last_ping_tm
-                            and has_timeout_expired
-                            and (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
+                    if (self.last_ping_tm and
+                            has_timeout_expired and
+                            (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
                         raise WebSocketTimeoutException("ping/pong timed out")
                 return True
 

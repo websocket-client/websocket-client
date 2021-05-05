@@ -26,11 +26,6 @@ import unittest
 
 from websocket._cookiejar import SimpleCookieJar
 
-try:
-    import Cookie
-except:
-    import http.cookies as Cookie
-
 
 class CookieJarTest(unittest.TestCase):
     def testAdd(self):
