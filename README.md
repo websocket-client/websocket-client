@@ -24,16 +24,10 @@ Please see the [contribution guidelines](https://github.com/websocket-client/web
 
 ## Installation
 
-First, install the following dependencies:
-- six
-- backports.ssl\_match\_hostname for Python 2.x
-
-You can install the dependencies with the command `pip install six` and
-`pip install backports.ssl_match_hostname`
+First, install dependency `six` with the command `pip install six`.
 
 You can use either `python setup.py install` or `pip install websocket-client`
-to install. This module is tested on Python 2.7 and Python 3.4+. Python 3
-support was first introduced in version 0.14.0, but is a work in progress.
+to install. This module is tested on Python 3.6+.
 
 ## Usage Tips
 
@@ -43,11 +37,7 @@ Check out the documentation's FAQ for additional guidelines:
 Known issues with this library include lack of WebSocket Compression
 support (RFC 7692) and [minimal threading documentation/support](https://websocket-client.readthedocs.io/en/latest/threading.html).
 
-## License
-
-- LGPL version 2.1
-
-### Performance
+## Performance
 
 The `send` and `validate_utf8` methods are very slow in pure Python. You can
 disable UTF8 validation in this library (and receive a performance enhancement)
@@ -56,13 +46,16 @@ performance, please install both numpy and wsaccel, and import them into your
 project files - these other libraries will automatically be used when available.
 Note that wsaccel can sometimes cause other issues.
 
+## Examples
+
+Many more examples are found in the
+[examples documentation](https://websocket-client.readthedocs.io/en/latest/examples.html).
+
 ### Long-lived Connection
 
 Most real-world WebSockets situations involve longer-lived connections.
 The WebSocketApp `run_forever` loop automatically tries to reconnect when a
 connection is lost, and provides a variety of event-based connection controls.
-The project documentation has
-[additional examples](https://websocket-client.readthedocs.io/en/latest/examples.html)
 
 ```python
 import websocket
@@ -107,8 +100,6 @@ if __name__ == "__main__":
 This is if you want to communicate a short message and disconnect
 immediately when done. For example, if you want to confirm that a WebSocket
 server is running and responds properly to a specific request.
-The project documentation has
-[additional examples](https://websocket-client.readthedocs.io/en/latest/examples.html)
 
 ```python
 from websocket import create_connection

@@ -2,6 +2,12 @@
 FAQ
 ###
 
+What about Python 2 support?
+==============================
+
+Release 0.59.0 was the last main release supporting Python 2. All
+future releases 1.X.X and beyond will only support Python 3.
+
 Why is this library slow?
 ===========================
 

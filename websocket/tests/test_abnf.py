@@ -25,12 +25,8 @@ import os
 import websocket as ws
 from websocket._abnf import *
 import sys
+import unittest
 sys.path[0:0] = [""]
-
-if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-    import unittest2 as unittest
-else:
-    import unittest
 
 
 class ABNFTest(unittest.TestCase):

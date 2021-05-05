@@ -325,7 +325,7 @@ class WebSocket(object):
         payload: <type>
             data payload to send server.
         """
-        if isinstance(payload, six.text_type):
+        if isinstance(payload, str):
             payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PING)
 
@@ -338,7 +338,7 @@ class WebSocket(object):
         payload: <type>
             data payload to send server.
         """
-        if isinstance(payload, six.text_type):
+        if isinstance(payload, str):
             payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PONG)
 
@@ -352,7 +352,7 @@ class WebSocket(object):
         """
         with self.readlock:
             opcode, data = self.recv_data()
-        if six.PY3 and opcode == ABNF.OPCODE_TEXT:
+        if opcode == ABNF.OPCODE_TEXT:
             return data.decode("utf-8")
         elif opcode == ABNF.OPCODE_TEXT or opcode == ABNF.OPCODE_BINARY:
             return data

@@ -28,9 +28,6 @@ import sys
 import threading
 import time
 import traceback
-
-import six
-
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
@@ -341,7 +338,7 @@ class WebSocketApp(object):
                                    frame.data, frame.fin)
                 else:
                     data = frame.data
-                    if six.PY3 and op_code == ABNF.OPCODE_TEXT:
+                    if op_code == ABNF.OPCODE_TEXT:
                         data = data.decode("utf-8")
                     self._callback(self.on_data, data, frame.opcode, True)
                     self._callback(self.on_message, data)
@@ -382,15 +379,11 @@ class WebSocketApp(object):
         if they exists, and if the self.on_close except three arguments
         """
         # if the on_close callback is "old", just return empty list
-        if sys.version_info < (3, 0):
-            if not self.on_close or len(inspect.getargspec(self.on_close).args) != 3:
-                return []
-        else:
-            if not self.on_close or len(inspect.getfullargspec(self.on_close).args) != 3:
-                return []
+        if not self.on_close or len(inspect.getfullargspec(self.on_close).args) != 3:
+            return []
 
         if data and len(data) >= 2:
-            code = 256 * six.byte2int(data[0:1]) + six.byte2int(data[1:2])
+            code = 256 * data[0] + data[1]
             reason = data[2:].decode('utf-8')
             return [code, reason]
 

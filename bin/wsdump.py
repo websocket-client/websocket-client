@@ -31,9 +31,7 @@ import time
 import ssl
 import gzip
 import zlib
-
-import six
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 import websocket
 
@@ -100,14 +98,11 @@ def parse_args():
 class RawInput:
 
     def raw_input(self, prompt):
-        if six.PY3:
-            line = input(prompt)
-        else:
-            line = raw_input(prompt)
+        line = input(prompt)
 
-        if ENCODING and ENCODING != "utf-8" and not isinstance(line, six.text_type):
+        if ENCODING and ENCODING != "utf-8" and not isinstance(line, str):
             line = line.decode(ENCODING).encode("utf-8")
-        elif isinstance(line, six.text_type):
+        elif isinstance(line, str):
             line = line.encode("utf-8")
 
         return line
@@ -185,7 +180,7 @@ def main():
         while True:
             opcode, data = recv()
             msg = None
-            if six.PY3 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
+            if opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
             if isinstance(data, bytes) and len(data) > 2 and data[:2] == b'\037\213':  # gzip magick
                 try:

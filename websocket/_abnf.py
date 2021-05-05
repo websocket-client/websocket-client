@@ -33,10 +33,7 @@ from ._utils import validate_utf8
 from threading import Lock
 
 try:
-    if six.PY3:
-        import numpy
-    else:
-        numpy = None
+    import numpy
 except ImportError:
     numpy = None
 
@@ -53,10 +50,7 @@ except ImportError:
         for i in range(len(_d)):
             _d[i] ^= _m[i % 4]
 
-        if six.PY3:
-            return _d.tobytes()
-        else:
-            return _d.tostring()
+        return _d.tobytes()
 
 
 __all__ = [
@@ -211,7 +205,7 @@ class ABNF(object):
         fin: <type>
             fin flag. if set to 0, create continue fragmentation.
         """
-        if opcode == ABNF.OPCODE_TEXT and isinstance(data, six.text_type):
+        if opcode == ABNF.OPCODE_TEXT and isinstance(data, str):
             data = data.encode("utf-8")
         # mask must be set if send data from client
         return ABNF(fin, 0, 0, 0, opcode, 1, data)
@@ -252,7 +246,7 @@ class ABNF(object):
     def _get_masked(self, mask_key):
         s = ABNF.mask(mask_key, self.data)
 
-        if isinstance(mask_key, six.text_type):
+        if isinstance(mask_key, str):
             mask_key = mask_key.encode('utf-8')
 
         return mask_key + s
@@ -272,10 +266,10 @@ class ABNF(object):
         if data is None:
             data = ""
 
-        if isinstance(mask_key, six.text_type):
+        if isinstance(mask_key, str):
             mask_key = six.b(mask_key)
 
-        if isinstance(data, six.text_type):
+        if isinstance(data, str):
             data = six.b(data)
 
         if numpy:
@@ -319,20 +313,12 @@ class frame_buffer(object):
     def recv_header(self):
         header = self.recv_strict(2)
         b1 = header[0]
-
-        if six.PY2:
-            b1 = ord(b1)
-
         fin = b1 >> 7 & 1
         rsv1 = b1 >> 6 & 1
         rsv2 = b1 >> 5 & 1
         rsv3 = b1 >> 4 & 1
         opcode = b1 & 0xf
         b2 = header[1]
-
-        if six.PY2:
-            b2 = ord(b2)
-
         has_mask = b2 >> 7 & 1
         length_bits = b2 & 0x7f
 

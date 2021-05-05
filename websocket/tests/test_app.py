@@ -25,17 +25,9 @@ import os
 import os.path
 import websocket as ws
 import sys
+import ssl
+import unittest
 sys.path[0:0] = [""]
-
-try:
-    import ssl
-except ImportError:
-    HAVE_SSL = False
-
-if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-    import unittest2 as unittest
-else:
-    import unittest
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
