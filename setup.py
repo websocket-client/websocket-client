@@ -29,7 +29,7 @@ import pkg_resources
 
 VERSION = "0.59.0"
 
-install_requires = ["six"]
+install_requires = []
 tests_require = []
 
 setup(
@@ -47,7 +47,7 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

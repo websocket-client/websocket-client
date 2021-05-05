@@ -24,9 +24,7 @@ Please see the [contribution guidelines](https://github.com/websocket-client/web
 
 ## Installation
 
-First, install dependency `six` with the command `pip install six`.
-
-You can use either `python setup.py install` or `pip install websocket-client`
+You can use either `python3 setup.py install` or `pip3 install websocket-client`
 to install. This module is tested on Python 3.6+.
 
 ## Usage Tips

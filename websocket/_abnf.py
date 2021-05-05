@@ -26,8 +26,6 @@ import array
 import os
 import struct
 
-import six
-
 from ._exceptions import *
 from ._utils import validate_utf8
 from threading import Lock
@@ -175,8 +173,7 @@ class ABNF(object):
             if l > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
                 raise WebSocketProtocolException("Invalid close frame.")
 
-            code = 256 * \
-                six.byte2int(self.data[0:1]) + six.byte2int(self.data[1:2])
+            code = 256 * self.data[0] + self.data[1]
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode.")
 
@@ -224,17 +221,14 @@ class ABNF(object):
 
         frame_header = chr(self.fin << 7 |
                            self.rsv1 << 6 | self.rsv2 << 5 | self.rsv3 << 4 |
-                           self.opcode)
+                           self.opcode).encode('latin-1')
         if length < ABNF.LENGTH_7:
-            frame_header += chr(self.mask << 7 | length)
-            frame_header = six.b(frame_header)
+            frame_header += chr(self.mask << 7 | length).encode('latin-1')
         elif length < ABNF.LENGTH_16:
-            frame_header += chr(self.mask << 7 | 0x7e)
-            frame_header = six.b(frame_header)
+            frame_header += chr(self.mask << 7 | 0x7e).encode('latin-1')
             frame_header += struct.pack("!H", length)
         else:
-            frame_header += chr(self.mask << 7 | 0x7f)
-            frame_header = six.b(frame_header)
+            frame_header += chr(self.mask << 7 | 0x7f).encode('latin-1')
             frame_header += struct.pack("!Q", length)
 
         if not self.mask:
@@ -259,7 +253,7 @@ class ABNF(object):
         Parameters
         ----------
         mask_key: <type>
-            4 byte string(byte).
+            4 byte string.
         data: <type>
             data to mask/unmask.
         """
@@ -267,17 +261,17 @@ class ABNF(object):
             data = ""
 
         if isinstance(mask_key, str):
-            mask_key = six.b(mask_key)
+            mask_key = mask_key.encode('latin-1')
 
         if isinstance(data, str):
-            data = six.b(data)
+            data = data.encode('latin-1')
 
         if numpy:
             origlen = len(data)
             _mask_key = mask_key[3] << 24 | mask_key[2] << 16 | mask_key[1] << 8 | mask_key[0]
 
             # We need data to be a multiple of four...
-            data += bytes(" " * (4 - (len(data) % 4)), "us-ascii")
+            data += b' ' * (4 - (len(data) % 4))
             a = numpy.frombuffer(data, dtype="uint32")
             masked = numpy.bitwise_xor(a, [_mask_key]).astype("uint32")
             if len(data) > origlen:
@@ -394,7 +388,7 @@ class frame_buffer(object):
             self.recv_buffer.append(bytes_)
             shortage -= len(bytes_)
 
-        unified = six.b("").join(self.recv_buffer)
+        unified = bytes("", 'utf-8').join(self.recv_buffer)
 
         if shortage == 0:
             self.recv_buffer = []

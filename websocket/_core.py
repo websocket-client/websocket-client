@@ -1,4 +1,3 @@
-from __future__ import print_function
 """
 _core.py
 ====================================
@@ -29,8 +28,6 @@ import socket
 import struct
 import threading
 import time
-
-import six
 
 # websocket modules
 from ._abnf import *
@@ -431,7 +428,7 @@ class WebSocket(object):
         """
         return self.frame_buffer.recv_frame()
 
-    def send_close(self, status=STATUS_NORMAL, reason=six.b("")):
+    def send_close(self, status=STATUS_NORMAL, reason=bytes('', encoding='utf-8')):
         """
         Send close data to the server.
 
@@ -447,7 +444,7 @@ class WebSocket(object):
         self.connected = False
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status=STATUS_NORMAL, reason=six.b(""), timeout=3):
+    def close(self, status=STATUS_NORMAL, reason=bytes('', encoding='utf-8'), timeout=3):
         """
         Close Websocket object
 

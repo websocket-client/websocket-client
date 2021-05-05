@@ -178,9 +178,6 @@ class WebSocketTest(unittest.TestCase):
         sock.send("こんにちは")
         self.assertEqual(s.sent[1], b'\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc')
 
-        sock.send(u"こんにちは")
-        self.assertEqual(s.sent[1], b'\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc')
-
 #        sock.send("x" * 5000)
 #        self.assertEqual(s.sent[1], b'\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc")
 
@@ -347,7 +344,7 @@ class WebSocketTest(unittest.TestCase):
         result = s.recv()
         self.assertEqual(result, "Hello, World")
 
-        s.send(u"こにゃにゃちは、世界")
+        s.send("こにゃにゃちは、世界")
         result = s.recv()
         self.assertEqual(result, "こにゃにゃちは、世界")
         self.assertRaises(ValueError, s.send_close, -1, "")
