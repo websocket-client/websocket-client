@@ -1,4 +1,8 @@
 """
+Define WebSocket exceptions
+"""
+
+"""
 websocket - WebSocket client library for Python
 
 Copyright (C) 2010 Hiroki Ohtani(liris)
@@ -15,34 +19,28 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor,
-    Boston, MA  02110-1335  USA
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-"""
-
-
-"""
-define websocket exceptions
 """
 
 
 class WebSocketException(Exception):
     """
-    websocket exception class.
+    WebSocket exception class.
     """
     pass
 
 
 class WebSocketProtocolException(WebSocketException):
     """
-    If the websocket protocol is invalid, this exception will be raised.
+    If the WebSocket protocol is invalid, this exception will be raised.
     """
     pass
 
 
 class WebSocketPayloadException(WebSocketException):
     """
-    If the websocket payload is invalid, this exception will be raised.
+    If the WebSocket payload is invalid, this exception will be raised.
     """
     pass
 
@@ -79,6 +77,7 @@ class WebSocketBadStatusException(WebSocketException):
         super(WebSocketBadStatusException, self).__init__(msg)
         self.status_code = status_code
         self.resp_headers = resp_headers
+
 
 class WebSocketAddressException(WebSocketException):
     """

@@ -1,0 +1,29 @@
+name: websocket-client build and test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: [2.7, 3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }} environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build websocket-client & run tests
+        run: |
+          pip install -U pip setuptools wheel readme_renderer twine six pytest PySocks
+          python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
+          pytest websocket/tests -v -rP
+          python setup.py sdist
+          twine check dist/*
+        env:
+          TEST_WITH_INTERNET: 1

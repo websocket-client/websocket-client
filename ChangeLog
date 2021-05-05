@@ -1,6 +1,47 @@
 ChangeLog
 ============
 
+- 0.59.0
+
+ - Last main release to support Python 2
+ - Fix Python 2 urlparse scheme (#332)
+ - Add support for headers with multiple values (#627)
+ - Add debug support for reserved custom status codes (#639)
+ - Allow multiple Set-Cookie: headers (#649)
+ - Simplified cookie sorting (#662)
+ - Add no_proxy support (#671)
+ - Add Host header to HTTP proxy request (#677)
+ - Improve PEP8 style compliance (dc3f5c4)
+
+- 0.58.0
+
+ - Fix README typos (#659)
+ - Create README.md from README.rst (#655)
+ - Capitalize 'Upgrade' in 'Connection: Upgrade' (#605)
+ - Add Python 3.8 and 3.9 CI support (#596)
+ - Replace deprecated `thread.isAlive` with `thread.is_alive` (#594)
+ - Revert to LGPL v2.1 license (#526)
+ - Add code coverage CI testing (#663)
+ - Properly revert callback (#442)
+ - Replace TravisCI with GitHub Actions (36e32c7)
+ - Create Sphinx readthedocs.io documentation (aace06b)
+
+- 0.57.0
+
+ - wsdump: Fix --headers option (#589)
+ - Fix getting 400 bad request with long proxy authorization string (#587)
+ - Fix for errors that occur when closing websocket from another thread (#586)
+ - avoid calling repr(data) if tracing is not enabled (#584)
+ - Fixed typo (#579)
+ - Create dummy `ssl` object (#577)
+ - Show compressed text messages in wsdump.py (#576)
+ - Resolve issue opening socket to intranet on Windows 10 with no proxy settings but behind proxy (#573)
+ - Expose http connection header to user (#566)
+ - Improve the readability of HTTP status codes. (#553)
+ - fix the compatible issue with gevent+dnspython (#547)
+ - v should be checked for empty string before splitting it (#539)
+ - _handshake: hasattr checks on six before accessing the values (#533)
+
 - 0.56.0
 
  - Don't retry sockets with timeout set to 0(#536)
@@ -35,7 +76,7 @@ ChangeLog
 
 - 0.51.0
 
-  - revert "WebSocketApp class to make it inheritable (#442)" because of breaking the compatibily
+  - revert "WebSocketApp class to make it inheritable (#442)" because of breaking the compatibility
 
 - 0.50.0
 
@@ -100,7 +141,7 @@ ChangeLog
 
 - 0.43.0
 
-  - Unkown kwarg 'ca_cert' when calling ssl wrap_socket() (#326)
+  - Unknown kwarg 'ca_cert' when calling ssl wrap_socket() (#326)
   - Race condition in WebSocket ping/pong (#327)
 
 - 0.42.0

@@ -1,4 +1,4 @@
 include LICENSE
-include README.rst
+include README.md
 include ChangeLog
 recursive-include examples *

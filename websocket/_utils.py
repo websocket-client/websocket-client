@@ -15,8 +15,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor,
-    Boston, MA 02110-1335  USA
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 """
 import six
@@ -31,6 +30,7 @@ class NoLock(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass
+
 
 try:
     # If wsaccel is available we use compiled routines to validate UTF-8

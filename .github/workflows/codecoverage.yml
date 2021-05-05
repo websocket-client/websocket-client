@@ -1,0 +1,25 @@
+name: Code Coverage
+
+on: [push, pull_request]
+
+jobs:
+  code-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }} environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: Run test cases for coverage collection
+        run: |
+          pip install six coverage pytest pytest-cov setuptools PySocks numpy
+          python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
+          python setup.py install
+          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-report=xml
+          coverage report
+        env:
+          TEST_WITH_INTERNET: 1
+      - name: Submit code coverage report to Codecov.io
+        uses: codecov/codecov-action@v1.2.1

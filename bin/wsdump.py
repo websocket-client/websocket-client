@@ -1,4 +1,27 @@
-#!/usr/bin/env python
+"""
+
+"""
+
+"""
+websocket - WebSocket client library for Python
+
+Copyright (C) 2010 Hiroki Ohtani(liris)
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+"""
 
 import argparse
 import code
@@ -6,6 +29,8 @@ import sys
 import threading
 import time
 import ssl
+import gzip
+import zlib
 
 import six
 from six.moves.urllib.parse import urlparse
@@ -130,7 +155,7 @@ def main():
     if args.nocert:
         opts = {"cert_reqs": ssl.CERT_NONE, "check_hostname": False}
     if args.headers:
-        options['header'] = map(str.strip, args.headers.split(','))
+        options['header'] = list(map(str.strip, args.headers.split(',')))
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
     if args.raw:
         console = NonInteractive()
@@ -162,10 +187,24 @@ def main():
             msg = None
             if six.PY3 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
-            if not args.verbose and opcode in OPCODE_DATA:
-                msg = data
-            elif args.verbose:
+            if isinstance(data, bytes) and len(data) > 2 and data[:2] == b'\037\213':  # gzip magick
+                try:
+                    data = "[gzip] " + str(gzip.decompress(data), "utf-8")
+                except:
+                    pass
+            elif isinstance(data, bytes):
+                try:
+                    data = "[zlib] " + str(zlib.decompress(data, -zlib.MAX_WBITS), "utf-8")
+                except:
+                    pass
+
+            if isinstance(data, bytes):
+                data = repr(data)
+
+            if args.verbose:
                 msg = "%s: %s" % (websocket.ABNF.OPCODE_MAP.get(opcode), data)
+            else:
+                msg = data
 
             if msg is not None:
                 if args.timings:
