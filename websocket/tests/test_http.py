@@ -32,6 +32,7 @@ sys.path[0:0] = [""]
 # Skip test to access the internet.
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 
+
 class SockMock(object):
     def __init__(self):
         self.data = []
