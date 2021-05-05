@@ -536,6 +536,42 @@ the demasking step in your custom project.
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message, get_mask_key=zero_mask_key)
   wsapp.run_forever()
 
+Customizing opcode
+--------------------------------
+
+WebSocket frames contain an opcode, which defines whether the frame contains
+text data, binary data, or is a special frame. The different opcode values
+are defined in
+`RFC6455 section 11.8 <https://tools.ietf.org/html/rfc6455#section-11.8>`_.
+Although the text opcode, 0x01, is the most commonly used value, the
+websocket-client library makes it possible to customize which opcode is used.
+
+
+**WebSocket custom opcode code example**
+
+::
+
+  import websocket
+
+  websocket.enableTrace(True)
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org")
+  ws.send("Hello, Server", websocket.ABNF.OPCODE_TEXT)
+  print(ws.recv())
+  ws.send("This is a ping", websocket.ABNF.OPCODE_PING)
+  ws.close()
+
+
+**WebSocketApp custom opcode code example**
+
+The WebSocketApp class contains different functions to handle different message opcodes.
+For instance, on_close, on_ping, on_pong, on_cont_message. One drawback of the current
+implementation (as of May 2021) is the lack of binary support for WebSocketApp, as noted
+by `issue #351 <https://github.com/websocket-client/websocket-client/issues/351>`_.
+
+`Work in progress - coming soon`
+
 Real-world Examples
 =========================
 
