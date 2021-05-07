@@ -282,15 +282,16 @@ class WebSocketApp(object):
             If close_frame is set, we will invoke the on_close handler with the
             statusCode and reason from there.
             """
+
             if thread and thread.is_alive():
                 event.set()
                 thread.join()
             self.keep_running = False
             if self.sock:
                 self.sock.close()
-            close_args = self._get_close_args(
-                close_frame.data if close_frame else None)
-            self._callback(self.on_close, *close_args)
+            close_status_code, close_reason = self._get_close_args(
+                close_frame if close_frame else None)
+            self._callback(self.on_close, close_status_code, close_reason)
             self.sock = None
 
         try:
@@ -373,21 +374,24 @@ class WebSocketApp(object):
 
         return Dispatcher(self, timeout)
 
-    def _get_close_args(self, data):
+    def _get_close_args(self, close_frame):
         """
-        _get_close_args extracts the code, reason from the close body
-        if they exists, and if the self.on_close except three arguments
+        _get_close_args extracts the close code and reason from the close body
+        if it exists (RFC6455 says WebSocket Connection Close Code is optional)
         """
-        # if the on_close callback is "old", just return empty list
-        if not self.on_close or len(inspect.getfullargspec(self.on_close).args) != 3:
-            return []
+        # Need to catch the case where close_frame is None
+        # Otherwise the following if statement causes an error
+        if not self.on_close or not close_frame:
+            return [None, None]
 
-        if data and len(data) >= 2:
-            code = 256 * data[0] + data[1]
-            reason = data[2:].decode('utf-8')
-            return [code, reason]
-
-        return [None, None]
+        # Extract close frame status code
+        if close_frame.data and len(close_frame.data) >= 2:
+            close_status_code = 256 * close_frame.data[0] + close_frame.data[1]
+            reason = close_frame.data[2:].decode('utf-8')
+            return [close_status_code, reason]
+        else:
+            # Most likely reached this because len(close_frame_data.data) < 2
+            return [None, None]
 
     def _callback(self, callback, *args):
         if callback:
