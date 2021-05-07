@@ -440,8 +440,8 @@ send a "pong" when it receives a "ping", per the specification.
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
   wsapp.run_forever(ping_interval=60, ping_timeout=10, ping_payload="This is an optional ping payload")
 
-Connection Close Status Codes
---------------------------------
+Sending Connection Close Status Codes
+--------------------------------------
 
 RFC6455 defines `various status codes <https://tools.ietf.org/html/rfc6455#section-7.4>`_
 that can be used to identify the reason for a close frame ending
@@ -453,7 +453,7 @@ in the .close() function, as seen in the examples below. Specifying
 a custom status code is necessary when using the custom
 status code values between 3000-4999.
 
-**WebSocket close() status code example**
+**WebSocket sending close() status code example**
 
 ::
 
@@ -469,7 +469,7 @@ status code values between 3000-4999.
   # Alternatively, use ws.close(status=1002)
 
 
-**WebSocketApp close() status code example**
+**WebSocketApp sending close() status code example**
 
 ::
 
@@ -484,6 +484,61 @@ status code values between 3000-4999.
 
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
   wsapp.run_forever(skip_utf8_validation=True)
+
+Receiving Connection Close Status Codes
+-----------------------------------------
+
+The RFC6455 spec states that it is optional for a server to send a
+close status code when closing a connection. The RFC refers to these
+codes as WebSocket Close Code Numbers, and their meanings are
+described in the RFC. It is possible to view
+this close code, if it is being sent, to understand why the connection is
+being close. One option to view the code is to
+:ref:`enable logging<Debug and Logging Options>` to view the
+status code information. If you want to use the close status code
+in your program, examples are shown below for how to do this.
+
+**WebSocket receiving close status code example**
+
+::
+
+    import websocket
+    import struct
+
+    websocket.enableTrace(True)
+
+    ws = websocket.WebSocket()
+    ws.connect("wss://tsock.us1.twilio.com/v3/wsconnect")
+    ws.send("Hello")
+    resp_opcode, msg = ws.recv_data()
+    print("Response opcode: " + str(resp_opcode))
+    if resp_opcode == 8 and len(msg) >= 2:
+        print("Response close code: " + str(struct.unpack("!H", msg[0:2])[0]))
+        print("Response message: " + str(msg[2:]))
+    else:
+        print("Response message: " + str(msg))
+
+
+**WebSocketApp receiving close status code example**
+
+::
+
+    import websocket
+
+    websocket.enableTrace(True)
+
+    def on_close(wsapp, close_status_code, close_msg):
+        # Because on_close was triggered, we know the opcode = 8
+        print("on_close args:")
+        if close_status_code or close_msg:
+            print("close status code: " + str(close_status_code))
+            print("close message: " + str(close_msg))
+
+    def on_open(wsapp):
+        wsapp.send("Hello")
+
+    wsapp = websocket.WebSocketApp("wss://tsock.us1.twilio.com/v3/wsconnect", on_open=on_open, on_close=on_close)
+    wsapp.run_forever()
 
 Customizing frame mask
 --------------------------------

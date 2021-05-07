@@ -146,6 +146,7 @@ class WebSocketTest(unittest.TestCase):
         header = required_header.copy()
         header["sec-websocket-protocol"] = "sub1"
         self.assertEqual(_validate_header(header, key, ["sub1", "sub2"]), (True, "sub1"))
+        # This case will print out a logging error using the error() function, but that is expected
         self.assertEqual(_validate_header(header, key, ["sub2", "sub3"]), (False, None))
 
         header = required_header.copy()
@@ -153,6 +154,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (True, "sub1"))
 
         header = required_header.copy()
+        # This case will print out a logging error using the error() function, but that is expected
         self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (False, None))
 
     def testReadHeader(self):
