@@ -87,11 +87,10 @@ def _open_proxied_socket(url, options, proxy):
         socket_options=DEFAULT_SOCKET_OPTION + options.sockopt
     )
 
-    if is_secure:
-        if HAVE_SSL:
-            sock = _ssl_socket(sock, options.sslopt, hostname)
-        else:
-            raise WebSocketException("SSL not available.")
+    if is_secure and HAVE_SSL:
+        sock = _ssl_socket(sock, options.sslopt, hostname)
+    elif is_secure:
+        raise WebSocketException("SSL not available.")
 
     return sock, (hostname, port, resource)
 
