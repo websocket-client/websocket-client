@@ -368,7 +368,10 @@ class WebSocketTest(unittest.TestCase):
         self.assertTrue(isinstance(s.sock, ssl.SSLSocket))
         self.assertEqual(s.getstatus(), 101)
         self.assertNotEqual(s.getheaders(), None)
-        s.close()
+        s.settimeout(10)
+        self.assertEqual(s.gettimeout(), 10)
+        self.assertEqual(s.getsubprotocol(), None)
+        s.abort()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testWebSocketWithCustomHeader(self):
