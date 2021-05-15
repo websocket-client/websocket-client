@@ -412,5 +412,36 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(state, True)
 
 
+class HandshakeTest(unittest.TestCase):
+    def testManualHeaders(self):
+        websock1 = ws.WebSocket()
+
+        self.assertRaises(ws.WebSocketBadStatusException,
+                          websock1.connect, "ws://echo.websocket.org", cookie="chocolate",
+                                           origin="testing_websockets.com",
+                                           host="echo.websocket.org/websocket-client-test",
+                                           subprotocols=["testproto"],
+                                           connection="Upgrade",
+                                           header={"CustomHeader1":"123",
+                                                   "Cookie":"TestValue",
+                                                   "Sec-WebSocket-Key":"k9kFAUWNAMmf5OEMfTlOEA==",
+                                                   "Sec-WebSocket-Protocol":"newprotocol"})
+
+
+    def testIPv6(self):
+        websock2 = ws.WebSocket()
+        self.assertRaises(ValueError, websock2.connect, "2001:4860:4860::8888")
+
+
+    def testBadURLs(self):
+        websock3 = ws.WebSocket()
+        self.assertRaises(ValueError, websock3.connect, "ws//example.com")
+
+        self.assertRaises(ws.WebSocketAddressException, websock3.connect, "ws://example")
+
+        self.assertRaises(ValueError, websock3.connect, "example.com")
+
+
+
 if __name__ == "__main__":
     unittest.main()

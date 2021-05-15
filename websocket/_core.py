@@ -223,6 +223,9 @@ class WebSocket(object):
                     cookie value.
                  - origin: str
                     custom origin url.
+                 - connection: str
+                    custom connection header value.
+                    default value "Upgrade" set in _handshake.py
                  - suppress_origin: bool
                     suppress outputting origin header.
                  - host: str
