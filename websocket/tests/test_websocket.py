@@ -40,6 +40,7 @@ from base64 import decodebytes as base64decode
 import unittest
 
 try:
+    import ssl
     from ssl import SSLError
 except ImportError:
     # dummy class of SSLError for ssl none-support environment.
@@ -413,11 +414,13 @@ class UtilsTest(unittest.TestCase):
 
 
 class HandshakeTest(unittest.TestCase):
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testManualHeaders(self):
-        websock1 = ws.WebSocket()
-
+        websock1 = ws.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE,
+                                        "ca_path": ssl.get_default_verify_paths().capath,
+                                        "ca_cert_path": ssl.get_default_verify_paths().openssl_cafile})
         self.assertRaises(ws.WebSocketBadStatusException,
-                          websock1.connect, "ws://echo.websocket.org", cookie="chocolate",
+                          websock1.connect, "wss://api.bitfinex.com/ws/2", cookie="chocolate",
                                            origin="testing_websockets.com",
                                            host="echo.websocket.org/websocket-client-test",
                                            subprotocols=["testproto"],
