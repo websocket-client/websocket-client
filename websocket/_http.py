@@ -199,10 +199,6 @@ def _open_socket(addrinfo_list, sockopt, timeout):
     return sock
 
 
-def _can_use_sni():
-    return sys.version_info >= (3, 6)
-
-
 def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_SSLv23))
 
@@ -255,12 +251,7 @@ def _ssl_socket(sock, user_sslopt, hostname):
 
     check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop(
         'check_hostname', True)
-
-    if _can_use_sni():
-        sock = _wrap_sni_socket(sock, sslopt, hostname, check_hostname)
-    else:
-        sslopt.pop('check_hostname', True)
-        sock = ssl.wrap_socket(sock, **sslopt)
+    sock = _wrap_sni_socket(sock, sslopt, hostname, check_hostname)
 
     if not HAVE_CONTEXT_CHECK_HOSTNAME and check_hostname:
         match_hostname(sock.getpeercert(), hostname)
