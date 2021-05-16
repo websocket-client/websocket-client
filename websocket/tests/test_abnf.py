@@ -50,13 +50,31 @@ class ABNFTest(unittest.TestCase):
         self.assertRaises(ws.WebSocketProtocolException, a_bad.validate)
         a_close = ABNF(0,1,0,0, opcode=ABNF.OPCODE_CLOSE, data="abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890")
         self.assertRaises(ws.WebSocketProtocolException, a_close.validate)
+        a_invalid_closecode = ABNF(0,1,0,0, opcode=ABNF.OPCODE_CLOSE, data="\xff\xffbcdefgh1234567890abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890")
+        self.assertRaises(ws.WebSocketProtocolException, a_invalid_closecode.validate)
+        a_close_long = ABNF(0,1,0,0, opcode=ABNF.OPCODE_CLOSE, data="abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890")
+        self.assertRaises(ws.WebSocketProtocolException, a_close_long.validate)
 
-#    This caused an error in the Python 2.7 Github Actions build
-#    Uncomment test case when Python 2 support no longer wanted
-#    def testMask(self):
-#        ab = ABNF(0,0,0,0, opcode=ABNF.OPCODE_PING)
-#        bytes_val = bytes("aaaa", 'utf-8')
-#        self.assertEqual(ab._get_masked(bytes_val), bytes_val)
+    def testMask(self):
+        abnf_none_data = ABNF(0,0,0,0, opcode=ABNF.OPCODE_PING, mask=1, data=None)
+        bytes_val = bytes("aaaa", 'utf-8')
+        self.assertEqual(abnf_none_data._get_masked(bytes_val), bytes_val)
+        abnf_str_data = ABNF(0,0,0,0, opcode=ABNF.OPCODE_PING, mask=1, data="a")
+        self.assertEqual(abnf_str_data._get_masked(bytes_val), b'aaaa\x00')
+
+    def testFormat(self):
+        abnf_bad_rsv_bits = ABNF(2,0,0,0, opcode=ABNF.OPCODE_TEXT)
+        self.assertRaises(ValueError, abnf_bad_rsv_bits.format)
+        abnf_bad_opcode = ABNF(0,0,0,0, opcode=5)
+        self.assertRaises(ValueError, abnf_bad_opcode.format)
+        abnf_length_10 = ABNF(0,0,0,0, opcode=ABNF.OPCODE_TEXT, data="abcdefghij")
+        self.assertEqual(b'\x01', abnf_length_10.format()[0].to_bytes(1, 'big'))
+        self.assertEqual(b'\x8a', abnf_length_10.format()[1].to_bytes(1, 'big'))
+        abnf_length_20 = ABNF(0,0,0,0, opcode=ABNF.OPCODE_BINARY, data="abcdefghijabcdefghij")
+        self.assertEqual(b'\x02', abnf_length_20.format()[0].to_bytes(1, 'big'))
+        self.assertEqual(b'\x94', abnf_length_20.format()[1].to_bytes(1, 'big'))
+        abnf_no_mask = ABNF(0,0,0,0, opcode=ABNF.OPCODE_TEXT, mask=0, data=b'\x01\x8a\xcc')
+        self.assertEqual(b'\x01\x03\x01\x8a\xcc', abnf_no_mask.format())
 
     def testFrameBuffer(self):
         fb = frame_buffer(0, True)

@@ -278,9 +278,7 @@ class ABNF(object):
                 return masked.tobytes()[:origlen]
             return masked.tobytes()
         else:
-            _m = array.array("B", mask_key)
-            _d = array.array("B", data)
-            return _mask(_m, _d)
+            return _mask(array.array("B", mask_key), array.array("B", data))
 
 
 class frame_buffer(object):

@@ -415,35 +415,39 @@ class UtilsTest(unittest.TestCase):
 
 class HandshakeTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    def test_http_SSL(self):
+        websock1 = ws.WebSocket(sslopt={"cert_chain": ssl.get_default_verify_paths().capath})
+        self.assertRaises(ValueError,
+                          websock1.connect, "wss://api.bitfinex.com/ws/2")
+        websock2 = ws.WebSocket(sslopt={"certfile": "myNonexistentCertFile"})
+        self.assertRaises(FileNotFoundError,
+                          websock2.connect, "wss://api.bitfinex.com/ws/2")
+
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testManualHeaders(self):
-        websock1 = ws.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE,
-                                        "ca_path": ssl.get_default_verify_paths().capath,
+        websock3 = ws.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE,
+                                        "ca_certs": ssl.get_default_verify_paths().capath,
                                         "ca_cert_path": ssl.get_default_verify_paths().openssl_cafile})
         self.assertRaises(ws.WebSocketBadStatusException,
-                          websock1.connect, "wss://api.bitfinex.com/ws/2", cookie="chocolate",
-                                           origin="testing_websockets.com",
-                                           host="echo.websocket.org/websocket-client-test",
-                                           subprotocols=["testproto"],
-                                           connection="Upgrade",
-                                           header={"CustomHeader1":"123",
-                                                   "Cookie":"TestValue",
-                                                   "Sec-WebSocket-Key":"k9kFAUWNAMmf5OEMfTlOEA==",
-                                                   "Sec-WebSocket-Protocol":"newprotocol"})
-
+                          websock3.connect, "wss://api.bitfinex.com/ws/2", cookie="chocolate",
+                          origin="testing_websockets.com",
+                          host="echo.websocket.org/websocket-client-test",
+                          subprotocols=["testproto"],
+                          connection="Upgrade",
+                          header={"CustomHeader1":"123",
+                                  "Cookie":"TestValue",
+                                  "Sec-WebSocket-Key":"k9kFAUWNAMmf5OEMfTlOEA==",
+                                  "Sec-WebSocket-Protocol":"newprotocol"})
 
     def testIPv6(self):
         websock2 = ws.WebSocket()
         self.assertRaises(ValueError, websock2.connect, "2001:4860:4860::8888")
 
-
     def testBadURLs(self):
         websock3 = ws.WebSocket()
         self.assertRaises(ValueError, websock3.connect, "ws//example.com")
-
         self.assertRaises(ws.WebSocketAddressException, websock3.connect, "ws://example")
-
         self.assertRaises(ValueError, websock3.connect, "example.com")
-
 
 
 if __name__ == "__main__":

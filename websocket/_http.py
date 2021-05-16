@@ -242,8 +242,7 @@ def _ssl_socket(sock, user_sslopt, hostname):
 
     certPath = os.environ.get('WEBSOCKET_CLIENT_CA_BUNDLE')
     if certPath and os.path.isfile(certPath) \
-            and user_sslopt.get('ca_certs', None) is None \
-            and user_sslopt.get('ca_cert', None) is None:
+            and user_sslopt.get('ca_certs', None) is None:
         sslopt['ca_certs'] = certPath
     elif certPath and os.path.isdir(certPath) \
             and user_sslopt.get('ca_cert_path', None) is None:
