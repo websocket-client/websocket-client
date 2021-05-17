@@ -31,10 +31,7 @@ class SimpleCookieJar(object):
 
     def add(self, set_cookie):
         if set_cookie:
-            try:
-                simpleCookie = http.cookies.SimpleCookie(set_cookie)
-            except:
-                simpleCookie = http.cookies.SimpleCookie(set_cookie.encode('ascii', 'ignore'))
+            simpleCookie = http.cookies.SimpleCookie(set_cookie)
 
             for k, v in simpleCookie.items():
                 domain = v.get("domain")
@@ -47,10 +44,7 @@ class SimpleCookieJar(object):
 
     def set(self, set_cookie):
         if set_cookie:
-            try:
-                simpleCookie = http.cookies.SimpleCookie(set_cookie)
-            except:
-                simpleCookie = http.cookies.SimpleCookie(set_cookie.encode('ascii', 'ignore'))
+            simpleCookie = http.cookies.SimpleCookie(set_cookie)
 
             for k, v in simpleCookie.items():
                 domain = v.get("domain")
