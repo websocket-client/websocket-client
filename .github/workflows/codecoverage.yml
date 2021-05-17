@@ -25,6 +25,5 @@ jobs:
           coverage report
         env:
           TEST_WITH_INTERNET: 1
-          WEBSOCKET_CLIENT_CA_BUNDLE: /etc
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v1.2.1
