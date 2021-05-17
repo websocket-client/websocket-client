@@ -122,6 +122,22 @@ class WebSocketAppTest(unittest.TestCase):
         app.run_forever(ping_interval=2, ping_timeout=1, sslopt={"cert_reqs": ssl.CERT_NONE})
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    def testOpcodeClose(self):
+        """ Test WebSocketApp close opcode
+        """
+
+        app = ws.WebSocketApp('wss://tsock.us1.twilio.com/v3/wsconnect')
+        app.run_forever(ping_interval=2, ping_timeout=1, ping_payload="Ping payload")
+
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    def testOpcodeBinary(self):
+        """ Test WebSocketApp binary opcode
+        """
+
+        app = ws.WebSocketApp('streaming.vn.teslamotors.com/streaming/')
+        app.run_forever(ping_interval=2, ping_timeout=1, ping_payload="Ping payload")
+
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testBadPingInterval(self):
         """ A WebSocketApp handling of negative ping_interval
         """

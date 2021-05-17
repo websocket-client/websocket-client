@@ -129,10 +129,14 @@ class HttpTest(unittest.TestCase):
                         ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA",
             "ecdh_curve": "prime256v1"
         }
-        ws = websocket.WebSocket(sslopt=ssloptions)
-        ws.connect("wss://api.bitfinex.com/ws/2", timeout=2)
-        ws.send("Hello")
-        ws.close()
+        ws_ssl1 = websocket.WebSocket(sslopt=ssloptions)
+        ws_ssl1.connect("wss://api.bitfinex.com/ws/2", timeout=2)
+        ws_ssl1.send("Hello")
+        ws_ssl1.close()
+
+        ws_ssl2 = websocket.WebSocket(sslopt={"check_hostname": True})
+        ws_ssl2.connect("wss://api.bitfinex.com/ws/2", timeout=2)
+        ws_ssl2.close
 
     def testProxyInfo(self):
         self.assertEqual(proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="http").type, "http")
