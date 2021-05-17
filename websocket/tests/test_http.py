@@ -130,7 +130,7 @@ class HttpTest(unittest.TestCase):
             "ecdh_curve": "prime256v1"
         }
         ws = websocket.WebSocket(sslopt=ssloptions)
-        ws.connect("wss://api.bitfinex.com/ws/2")
+        ws.connect("wss://api.bitfinex.com/ws/2", timeout=2)
         ws.send("Hello")
         ws.close()
 

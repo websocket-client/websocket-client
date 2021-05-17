@@ -286,10 +286,8 @@ class WebSocketTest(unittest.TestCase):
 
     def testClose(self):
         sock = ws.WebSocket()
-        sock.sock = SockMock()
         sock.connected = True
-        sock.close()
-        self.assertEqual(sock.connected, False)
+        self.assertRaises(ws._exceptions.WebSocketConnectionClosedException, sock.close)
 
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
@@ -428,7 +426,7 @@ class HandshakeTest(unittest.TestCase):
         websock3 = ws.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE,
                                         "ca_certs": ssl.get_default_verify_paths().capath,
                                         "ca_cert_path": ssl.get_default_verify_paths().openssl_cafile})
-        self.assertRaises(ws.WebSocketBadStatusException,
+        self.assertRaises(ws._exceptions.WebSocketBadStatusException,
                           websock3.connect, "wss://api.bitfinex.com/ws/2", cookie="chocolate",
                           origin="testing_websockets.com",
                           host="echo.websocket.org/websocket-client-test",
