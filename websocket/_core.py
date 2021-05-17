@@ -271,11 +271,11 @@ class WebSocket(object):
 
         Parameters
         ----------
-        payload:  <type>
+        payload:  str
                   Payload must be utf-8 string or unicode,
                   if the opcode is OPCODE_TEXT.
                   Otherwise, it must be string(byte array)
-        opcode:   <type>
+        opcode:   int
                   operation code to send. Please see OPCODE_XXX.
         """
 
@@ -296,7 +296,7 @@ class WebSocket(object):
 
         Parameters
         ----------
-        frame: <type>
+        frame: ABNF frame
             frame data created by ABNF.create_frame
         """
         if self.get_mask_key:
@@ -304,8 +304,8 @@ class WebSocket(object):
         data = frame.format()
         length = len(data)
         if (isEnabledForTrace()):
-            trace("send: " + repr(data))
-
+            trace("++Sent raw: " + repr(data))
+            trace("++Sent decoded: " + frame.__str__())
         with self.lock:
             while data:
                 l = self._send(data)
@@ -322,7 +322,7 @@ class WebSocket(object):
 
         Parameters
         ----------
-        payload: <type>
+        payload: str
             data payload to send server.
         """
         if isinstance(payload, str):
@@ -335,7 +335,7 @@ class WebSocket(object):
 
         Parameters
         ----------
-        payload: <type>
+        payload: str
             data payload to send server.
         """
         if isinstance(payload, str):
@@ -394,6 +394,9 @@ class WebSocket(object):
         """
         while True:
             frame = self.recv_frame()
+            if (isEnabledForTrace()):
+                trace("++Rcv raw: " + repr(frame.format()))
+                trace("++Rcv decoded: " + frame.__str__())
             if not frame:
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
@@ -453,10 +456,10 @@ class WebSocket(object):
 
         Parameters
         ----------
-        status: <type>
+        status: int
             status code to send. see STATUS_XXX.
-        reason: <type>
-            the reason to close. This must be string.
+        reason: bytes
+            the reason to close.
         timeout: int or float
             timeout until receive a close frame.
             If None, it will wait forever until receive a close frame.
@@ -488,7 +491,7 @@ class WebSocket(object):
                 self.sock.settimeout(sock_timeout)
                 self.sock.shutdown(socket.SHUT_RDWR)
             except:
-                pass
+                raise
 
             self.shutdown()
 
