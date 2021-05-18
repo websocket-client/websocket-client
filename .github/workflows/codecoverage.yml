@@ -14,20 +14,21 @@ jobs:
           python-version: "3.9"
       - name: Run test cases without internet to verify no offline test failures
         run: |
-          pip install coverage pytest pytest-cov setuptools PySocks numpy
+          pip install coverage pytest pytest-cov setuptools PySocks
           python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
           python setup.py install
-          pytest -vrP --cov=websocket websocket/tests
-          coverage report
-      - name: Run test cases for coverage collection
-        run: |
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
-        env:
-          TEST_WITH_INTERNET: 1
-      - name: Run test_abnf.py without numpy and append to coverage
+          coverage report
+      - name: Run test_abnf.py without numpy
         run: |
           pip uninstall numpy
           pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
+        env:
+          TEST_WITH_INTERNET: 1
+      - name: Install numpy, then run test cases for coverage collection
+        run: |
+          pip install numpy
+          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append
         env:
           TEST_WITH_INTERNET: 1
       - name: Run with extra environment variable and create report
