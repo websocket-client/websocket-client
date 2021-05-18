@@ -116,7 +116,7 @@ class HttpTest(unittest.TestCase):
         ssloptions = {
             "cert_reqs": ssl.CERT_NONE,
             "check_hostname": False,
-            "ssl_version": ssl.PROTOCOL_TLSv1_2,
+            "ssl_version": ssl.PROTOCOL_SSLv23,
             "ciphers": "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:\
                         TLS_AES_128_GCM_SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:\
                         ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:\
@@ -130,7 +130,7 @@ class HttpTest(unittest.TestCase):
             "ecdh_curve": "prime256v1"
         }
         ws_ssl1 = websocket.WebSocket(sslopt=ssloptions)
-        ws_ssl1.connect("wss://api.bitfinex.com/ws/2", timeout=2)
+        ws_ssl1.connect("wss://api.bitfinex.com/ws/2")
         ws_ssl1.send("Hello")
         ws_ssl1.close()
 
