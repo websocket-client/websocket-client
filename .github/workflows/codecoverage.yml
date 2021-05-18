@@ -22,7 +22,12 @@ jobs:
       - name: Run test cases for coverage collection
         run: |
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
-          coverage report
+        env:
+          TEST_WITH_INTERNET: 1
+      - name: Run test_abnf.py without numpy and append to coverage
+        run: |
+          pip uninstall numpy
+          pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
         env:
           TEST_WITH_INTERNET: 1
       - name: Run with extra environment variable and create report
@@ -30,7 +35,6 @@ jobs:
           python -c "import ssl; print(ssl.get_default_verify_paths().capath)"
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
           coverage xml
-          coverage report
         env:
           TEST_WITH_INTERNET: 1
           WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs"
