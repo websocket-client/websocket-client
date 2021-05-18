@@ -125,7 +125,7 @@ def recv(sock, bufsize):
 
     if not bytes_:
         raise WebSocketConnectionClosedException(
-            "Connection is already closed.")
+            "Connection to remote host was lost.")
 
     return bytes_
 
