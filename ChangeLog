@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 1.0.1
+ - Fix exception handling bug #694
+
 - 1.0.0
 
  - Removed Python 2 code, now only Python 3 compatible (d45343b, b7c5733, ff67af8)
