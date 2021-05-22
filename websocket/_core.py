@@ -490,10 +490,8 @@ class WebSocket(object):
                         break
                 self.sock.settimeout(sock_timeout)
                 self.sock.shutdown(socket.SHUT_RDWR)
-            except OSError:  # This happens often on Mac
-                pass
             except:
-                raise
+                pass
 
             self.shutdown()
 

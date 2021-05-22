@@ -287,7 +287,7 @@ class WebSocketTest(unittest.TestCase):
     def testClose(self):
         sock = ws.WebSocket()
         sock.connected = True
-        self.assertRaises(ws._exceptions.WebSocketConnectionClosedException, sock.close)
+        sock.close
 
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
