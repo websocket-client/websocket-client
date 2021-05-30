@@ -21,7 +21,6 @@ jobs:
           coverage report
       - name: Run test_abnf.py without numpy
         run: |
-          pip list | grep numpy
           pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
         env:
           TEST_WITH_INTERNET: 1
