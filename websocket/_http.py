@@ -79,7 +79,7 @@ def _open_proxied_socket(url, options, proxy):
         (hostname, port),
         proxy_type=ptype,
         proxy_addr=proxy.host,
-        proxy_port=proxy.port,
+        proxy_port=int(proxy.port),
         proxy_rdns=rdns,
         proxy_username=proxy.auth[0] if proxy.auth else None,
         proxy_password=proxy.auth[1] if proxy.auth else None,
