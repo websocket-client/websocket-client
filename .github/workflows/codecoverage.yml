@@ -21,7 +21,7 @@ jobs:
           coverage report
       - name: Run test_abnf.py without numpy
         run: |
-          pip uninstall numpy
+          pip list | grep numpy
           pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
         env:
           TEST_WITH_INTERNET: 1
@@ -31,6 +31,14 @@ jobs:
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append
         env:
           TEST_WITH_INTERNET: 1
+
+      - name: Install proxy.py, then run test http proxy test case
+        run: |
+          pip install proxy.py
+          proxy --hostname 127.0.0.1 --port 8899
+          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append  -k "testProxyConnect"
+        env:
+          TEST_WITH_PROXY: 1
       - name: Run with extra environment variable and create report
         run: |
           python -c "import ssl; print(ssl.get_default_verify_paths().capath)"

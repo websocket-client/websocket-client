@@ -35,6 +35,7 @@ sys.path[0:0] = [""]
 
 # Skip test to access the internet.
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
+TEST_WITH_PROXY = os.environ.get('TEST_WITH_PROXY', '0') == '1'
 
 
 class SockMock(object):
@@ -79,6 +80,7 @@ class OptsList():
     def __init__(self):
         self.timeout = 1
         self.sockopt = []
+        self.sslopt = {"cert_reqs": ssl.CERT_NONE}
 
 
 class HttpTest(unittest.TestCase):
@@ -110,6 +112,15 @@ class HttpTest(unittest.TestCase):
             (True, ("google.com", 443, "/")))
         # The following test fails on Mac OS with a gaierror, not an OverflowError
         # self.assertRaises(OverflowError, connect, "wss://example.com", OptsList(), proxy_info(http_proxy_host="127.0.0.1", http_proxy_port=99999, proxy_type="socks4", timeout=2), False)
+
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    @unittest.skipUnless(TEST_WITH_PROXY, "This test requires a HTTP proxy to be running on port 8899")
+    def testProxyConnect(self):
+        self.assertEqual(_open_proxied_socket("wss://api.bitfinex.com/ws/2", OptsList(), proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="8899", proxy_type="http"))[1], ("api.bitfinex.com", 443, '/ws/2'))
+        self.assertEqual(_get_addrinfo_list("api.bitfinex.com", 443, True, proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="8899", proxy_type="http")),
+                        (socket.getaddrinfo("127.0.0.1", 8899, 0, socket.SOCK_STREAM, socket.SOL_TCP), True, None))
+        self.assertEqual(connect("wss://api.bitfinex.com/ws/2", OptsList(), proxy_info(http_proxy_host="127.0.0.1", http_proxy_port=8899, proxy_type="http"), None)[1], ("api.bitfinex.com", 443, '/ws/2'))
+        # TO DO: Test SOCKS4 and SOCK5 proxies with unit tests
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSSLopt(self):
