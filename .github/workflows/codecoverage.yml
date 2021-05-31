@@ -19,12 +19,19 @@ jobs:
           python3 setup.py install
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
           coverage report
-      - name: Run test_abnf.py without numpy
+      - name: Run test_abnf.py with internet but without numpy or wsaccel
         run: |
           pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
         env:
           TEST_WITH_INTERNET: 1
-      - name: Install numpy, then run test cases for coverage collection
+      - name: Run test_abnf.py and test_websocket.py with wsaccel but without numpy
+        run: |
+          pip3 install wsaccel
+          pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
+          pytest -vrP --cov=websocket websocket/tests/test_websocket.py --cov-config=.coveragerc --cov-append
+        env:
+          TEST_WITH_INTERNET: 1
+      - name: Install numpy, then run all test cases for coverage collection
         run: |
           pip3 install numpy
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append

@@ -16,8 +16,10 @@ You can disable UTF8 validation in this library (and receive a
 performance enhancement) with the ``skip_utf8_validation`` parameter.
 If you want to get better performance, please install both numpy and
 wsaccel, and import them into your project files - these external
-libraries will automatically be used when available. Note that
-wsaccel can sometimes cause other issues.
+libraries will automatically be used when available. wsaccel
+doubles the speed of UTF8 validation while both numpy and wsaccel
+offer a minor performance boost when masking the payload data as
+part of the ``send`` process.
 
 How to solve the "connection is already closed" error?
 ===========================================================
