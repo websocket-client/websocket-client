@@ -25,6 +25,7 @@ Copyright (C) 2010 Hiroki Ohtani(liris)
 import array
 import os
 import struct
+import sys
 
 from ._exceptions import *
 from ._utils import validate_utf8
@@ -42,13 +43,16 @@ try:
 
         def _mask(_m, _d):
             return XorMaskerSimple(_m).process(_d)
+
 except ImportError:
     # wsaccel is not available, we rely on python implementations.
-    def _mask(_m, _d):
-        for i in range(len(_d)):
-            _d[i] ^= _m[i % 4]
+    native_byteorder = sys.byteorder
 
-        return _d.tobytes()
+    def _mask(mask_value, data_value):
+        datalen = len(data_value)
+        data_value = int.from_bytes(data_value, native_byteorder)
+        mask_value = int.from_bytes(mask_value * (datalen // 4) + mask_value[: datalen % 4], native_byteorder)
+        return (data_value ^ mask_value).to_bytes(datalen, native_byteorder)
 
 
 __all__ = [
