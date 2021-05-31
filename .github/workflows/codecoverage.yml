@@ -38,15 +38,5 @@ jobs:
         env:
           TEST_WITH_INTERNET: 1
           WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs"
-      - name: Install proxy.py, then run test http proxy test case
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip3 install proxy.py coverage pytest pytest-cov setuptools PySocks numpy
-          proxy --hostname 127.0.0.1 --port 8899
-          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append  -k "testProxyConnect"
-        env:
-          TEST_WITH_PROXY: 1
-          TEST_WITH_INTERNET: 1
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v1.2.1
