@@ -14,9 +14,9 @@ jobs:
           python-version: "3.9"
       - name: Run test cases without internet to verify no offline test failures
         run: |
-          pip install coverage pytest pytest-cov setuptools PySocks
-          python -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
-          python setup.py install
+          pip3 install coverage pytest pytest-cov setuptools PySocks
+          python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
+          python3 setup.py install
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
           coverage report
       - name: Run test_abnf.py without numpy
@@ -26,25 +26,27 @@ jobs:
           TEST_WITH_INTERNET: 1
       - name: Install numpy, then run test cases for coverage collection
         run: |
-          pip install numpy
+          pip3 install numpy
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append
         env:
           TEST_WITH_INTERNET: 1
-
-      - name: Install proxy.py, then run test http proxy test case
-        run: |
-          pip install proxy.py
-          proxy --hostname 127.0.0.1 --port 8899
-          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append  -k "testProxyConnect"
-        env:
-          TEST_WITH_PROXY: 1
       - name: Run with extra environment variable and create report
         run: |
-          python -c "import ssl; print(ssl.get_default_verify_paths().capath)"
+          python3 -c "import ssl; print(ssl.get_default_verify_paths().capath)"
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
           coverage xml
         env:
           TEST_WITH_INTERNET: 1
           WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs"
+      - name: Install proxy.py, then run test http proxy test case
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip3 install proxy.py coverage pytest pytest-cov setuptools PySocks numpy
+          proxy --hostname 127.0.0.1 --port 8899
+          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append  -k "testProxyConnect"
+        env:
+          TEST_WITH_PROXY: 1
+          TEST_WITH_INTERNET: 1
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v1.2.1
