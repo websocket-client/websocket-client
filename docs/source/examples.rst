@@ -356,11 +356,13 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
 `Work in progress - coming soon`
 
 
-Using Unix Domain Sockets
+Connecting with Custom Sockets
 --------------------------------
 
-You can also connect to a WebSocket server hosted on a unix domain socket.
-Just use the ``socket`` option when creating your connection.
+You can also connect to a WebSocket server hosted on a 
+specific socket using the ``socket`` option when
+creating your connection. Below is an example of using
+a unix domain socket.
 
 ::
 
@@ -372,6 +374,21 @@ Just use the ``socket`` option when creating your connection.
   ws = create_connection("ws://localhost/", # Dummy URL
                           socket = my_socket,
                           sockopt=((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),))
+
+Other socket types can also be used. The following example
+is for a AF_INET (IP address) socket.
+
+::
+
+  import socket
+  from websocket import create_connection
+  my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  my_socket.bind(("172.18.0.1", 3002))
+  my_socket.connect()
+
+  ws = create_connection("ws://127.0.0.1/", # Dummy URL
+                          socket = my_socket)
+
 
 Post-connection features
 ==========================
