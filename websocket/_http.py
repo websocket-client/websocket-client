@@ -248,6 +248,9 @@ def _ssl_socket(sock, user_sslopt, hostname):
             and user_sslopt.get('ca_cert_path', None) is None:
         sslopt['ca_cert_path'] = certPath
 
+    if sslopt.get('server_hostname', None):
+        hostname = sslopt['server_hostname']
+
     check_hostname = sslopt["cert_reqs"] != ssl.CERT_NONE and sslopt.pop(
         'check_hostname', True)
     sock = _wrap_sni_socket(sock, sslopt, hostname, check_hostname)
