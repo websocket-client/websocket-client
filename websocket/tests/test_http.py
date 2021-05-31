@@ -127,6 +127,7 @@ class HttpTest(unittest.TestCase):
         ssloptions = {
             "cert_reqs": ssl.CERT_NONE,
             "check_hostname": False,
+            "server_hostname": "ServerName",
             "ssl_version": ssl.PROTOCOL_SSLv23,
             "ciphers": "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:\
                         TLS_AES_128_GCM_SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:\
