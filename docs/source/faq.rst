@@ -21,6 +21,32 @@ doubles the speed of UTF8 validation while both numpy and wsaccel
 offer a minor performance boost when masking the payload data as
 part of the ``send`` process.
 
+How to troubleshoot an unclear callback error?
+===================================================
+
+To get more information about a callback error, you can
+specify a custom ``on_error()`` function that raises errors
+to provide more information. Sample code of such a solution
+is shown below, although the example URL provided will probably
+not trigger an error under normal circumstances.
+`Issue #377 <https://github.com/websocket-client/websocket-client/issues/60>`_
+discussed this topic previously.
+
+::
+
+  import websocket
+
+  def on_message(ws, message):
+    print(message)
+
+  def on_error(wsapp, err):
+    print("Got a an error: ", err)
+
+  wsapp = websocket.WebSocketApp("ws://echo.websocket.org/",
+    on_message = on_message,
+    on_error=on_error)
+  wsapp.run_forever()
+
 How to solve the "connection is already closed" error?
 ===========================================================
 
