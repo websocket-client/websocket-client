@@ -139,22 +139,21 @@ def get_proxy_info(
 
     Parameters
     ----------
-    hostname: <type>
-        websocket server name.
-    is_secure: <type>
-        is the connection secure? (wss) looks for "https_proxy" in env
+    hostname: str
+        Websocket server name.
+    is_secure: bool
+        Is the connection secure? (wss) looks for "https_proxy" in env
         before falling back to "http_proxy"
-    options: <type>
-        - http_proxy_host: <type>
-            http proxy host name.
-        - http_proxy_port: <type>
-            http proxy port.
-        - http_no_proxy: <type>
-            host names, which doesn't use proxy.
-        - http_proxy_auth: <type>
-            http proxy auth information. tuple of username and password. default is None
-        - proxy_type: <type>
-            if set to "socks5" PySocks wrapper will be used in place of a http proxy. default is "http"
+    proxy_host: str
+        http proxy host name.
+    http_proxy_port: str or int
+        http proxy port.
+    http_no_proxy: list
+        Whitelisted host names that don't use the proxy.
+    http_proxy_auth: tuple
+        HTTP proxy auth information. Tuple of username and password. Default is None.
+    proxy_type: str
+        If set to "socks4" or "socks5", a PySocks wrapper will be used in place of a HTTP proxy. Default is "http".
     """
     if _is_no_proxy_host(hostname, no_proxy):
         return None, 0, None

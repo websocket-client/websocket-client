@@ -62,19 +62,19 @@ class WebSocket(object):
     Parameters
     ----------
     get_mask_key: func
-        a callable to produce new mask keys, see the set_mask_key
-        function's docstring for more details
+        A callable function to get new mask keys, see the
+        WebSocket.set_mask_key's docstring for more information.
     sockopt: tuple
-        values for socket.setsockopt.
+        Values for socket.setsockopt.
         sockopt must be tuple and each element is argument of sock.setsockopt.
     sslopt: dict
-        optional dict object for ssl socket option.
+        Optional dict object for ssl socket options.
     fire_cont_frame: bool
-        fire recv event for each cont frame. default is False
+        Fire recv event for each cont frame. Default is False.
     enable_multithread: bool
-        if set to True, lock send method.
+        If set to True, lock send method.
     skip_utf8_validation: bool
-        skip utf8 validation.
+        Skip utf8 validation.
     """
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
@@ -85,7 +85,8 @@ class WebSocket(object):
 
         Parameters
         ----------
-        sslopt: specify ssl certification verification options
+        sslopt: dict
+            Optional dict object for ssl socket options.
         """
         self.sock_opt = sock_opt(sockopt, sslopt)
         self.handshake_response = None
@@ -210,40 +211,38 @@ class WebSocket(object):
                 ...     header=["User-Agent: MyProgram",
                 ...             "x-custom: header"])
 
-        timeout: <type>
-            socket timeout time. This value is an integer or float.
-            if you set None for this value, it means "use default_timeout value"
-
         Parameters
         ----------
-        options:
-                 - header: list or dict
-                    custom http header list or dict.
-                 - cookie: str
-                    cookie value.
-                 - origin: str
-                    custom origin url.
-                 - connection: str
-                    custom connection header value.
-                    default value "Upgrade" set in _handshake.py
-                 - suppress_origin: bool
-                    suppress outputting origin header.
-                 - host: str
-                    custom host header string.
-                 - http_proxy_host: <type>
-                    http proxy host name.
-                 - http_proxy_port: <type>
-                    http proxy port. If not set, set to 80.
-                 - http_no_proxy: <type>
-                    host names, which doesn't use proxy.
-                 - http_proxy_auth: <type>
-                    http proxy auth information. tuple of username and password. default is None
-                 - redirect_limit: <type>
-                    number of redirects to follow.
-                 - subprotocols: <type>
-                    array of available sub protocols. default is None.
-                 - socket: <type>
-                    pre-initialized stream socket.
+        header: list or dict
+            Custom http header list or dict.
+        cookie: str
+            Cookie value.
+        origin: str
+            Custom origin url.
+        connection: str
+            Custom connection header value.
+            Default value "Upgrade" set in _handshake.py
+        suppress_origin: bool
+            Suppress outputting origin header.
+        host: str
+            Custom host header string.
+        timeout: int or float
+            Socket timeout time. This value is an integer or float.
+            If you set None for this value, it means "use default_timeout value"
+        http_proxy_host: str
+            HTTP proxy host name.
+        http_proxy_port: str or int
+            HTTP proxy port. Default is 80.
+        http_no_proxy: list
+            Whitelisted host names that don't use the proxy.
+        http_proxy_auth: tuple
+            HTTP proxy auth information. Tuple of username and password. Default is None.
+        redirect_limit: int
+            Number of redirects to follow.
+        subprotocols: list
+            List of available subprotocols. Default is None.
+        socket: socket
+            Pre-initialized stream socket.
         """
         self.sock_opt.timeout = options.get('timeout', self.sock_opt.timeout)
         self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
@@ -271,12 +270,12 @@ class WebSocket(object):
 
         Parameters
         ----------
-        payload:  str
-                  Payload must be utf-8 string or unicode,
-                  if the opcode is OPCODE_TEXT.
-                  Otherwise, it must be string(byte array)
-        opcode:   int
-                  operation code to send. Please see OPCODE_XXX.
+        payload: str
+            Payload must be utf-8 string or unicode,
+            If the opcode is OPCODE_TEXT.
+            Otherwise, it must be string(byte array).
+        opcode: int
+            Operation code (opcode) to send.
         """
 
         frame = ABNF.create_frame(payload, opcode)
@@ -440,10 +439,10 @@ class WebSocket(object):
 
         Parameters
         ----------
-        status: <type>
-            status code to send. see STATUS_XXX.
+        status: int
+            Status code to send. See STATUS_XXX.
         reason: str or bytes
-            the reason to close. This must be string or bytes.
+            The reason to close. This must be string or bytes.
         """
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
@@ -457,11 +456,11 @@ class WebSocket(object):
         Parameters
         ----------
         status: int
-            status code to send. see STATUS_XXX.
+            Status code to send. See STATUS_XXX.
         reason: bytes
-            the reason to close.
+            The reason to close.
         timeout: int or float
-            timeout until receive a close frame.
+            Timeout until receive a close frame.
             If None, it will wait forever until receive a close frame.
         """
         if self.connected:
@@ -542,47 +541,46 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
 
     Parameters
     ----------
+    class_: class
+        class to instantiate when creating the connection. It has to implement
+        settimeout and connect. It's __init__ should be compatible with
+        WebSocket.__init__, i.e. accept all of it's kwargs.
+    header: list or dict
+        custom http header list or dict.
+    cookie: str
+        Cookie value.
+    origin: str
+        custom origin url.
+    suppress_origin: bool
+        suppress outputting origin header.
+    host: str
+        custom host header string.
     timeout: int or float
-             socket timeout time. This value could be either float/integer.
-             if you set None for this value,
-             it means "use default_timeout value"
-    class_: <type>
-            class to instantiate when creating the connection. It has to implement
-            settimeout and connect. It's __init__ should be compatible with
-            WebSocket.__init__, i.e. accept all of it's kwargs.
-    options: <type>
-             - header: list or dict
-                custom http header list or dict.
-             - cookie: str
-                cookie value.
-             - origin: str
-                custom origin url.
-             - suppress_origin: bool
-                suppress outputting origin header.
-             - host: <type>
-                custom host header string.
-             - http_proxy_host: <type>
-                http proxy host name.
-             - http_proxy_port: <type>
-                http proxy port. If not set, set to 80.
-             - http_no_proxy: <type>
-                host names, which doesn't use proxy.
-             - http_proxy_auth: <type>
-                http proxy auth information. tuple of username and password. default is None
-             - enable_multithread: bool
-                enable lock for multithread.
-             - redirect_limit: <type>
-                number of redirects to follow.
-             - sockopt: <type>
-                socket options
-             - sslopt: <type>
-                ssl option
-             - subprotocols: <type>
-                array of available sub protocols. default is None.
-             - skip_utf8_validation: bool
-                skip utf8 validation.
-             - socket: <type>
-                pre-initialized stream socket.
+        socket timeout time. This value could be either float/integer.
+        If set to None, it uses the default_timeout value.
+    http_proxy_host: str
+        HTTP proxy host name.
+    http_proxy_port: str or int
+        HTTP proxy port. If not set, set to 80.
+    http_no_proxy: list
+        Whitelisted host names that don't use the proxy.
+    http_proxy_auth: tuple
+        HTTP proxy auth information. tuple of username and password. Default is None.
+    enable_multithread: bool
+        Enable lock for multithread.
+    redirect_limit: int
+        Number of redirects to follow.
+    sockopt: tuple
+        Values for socket.setsockopt.
+        sockopt must be a tuple and each element is an argument of sock.setsockopt.
+    sslopt: dict
+        Optional dict object for ssl socket options.
+    subprotocols: list
+        List of available subprotocols. Default is None.
+    skip_utf8_validation: bool
+        Skip utf8 validation.
+    socket: socket
+        Pre-initialized stream socket.
     """
     sockopt = options.pop("sockopt", [])
     sslopt = options.pop("sslopt", {})
