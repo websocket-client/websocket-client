@@ -78,7 +78,7 @@ class WebSocket(object):
     """
 
     def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
-                 fire_cont_frame=False, enable_multithread=False,
+                 fire_cont_frame=False, enable_multithread=True,
                  skip_utf8_validation=False, **_):
         """
         Initialize WebSocket object.
@@ -585,7 +585,7 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
     sockopt = options.pop("sockopt", [])
     sslopt = options.pop("sslopt", {})
     fire_cont_frame = options.pop("fire_cont_frame", False)
-    enable_multithread = options.pop("enable_multithread", False)
+    enable_multithread = options.pop("enable_multithread", True)
     skip_utf8_validation = options.pop("skip_utf8_validation", False)
     websock = class_(sockopt=sockopt, sslopt=sslopt,
                      fire_cont_frame=fire_cont_frame,
