@@ -58,7 +58,7 @@ ws://echo.websocket.org, do not trigger the ``on_close()`` function.
       ws.close()
       print("Message received...")
 
-  def on_close(ws):
+  def on_close(ws, close_status_code, close_msg):
       print(">>>>>>CLOSED")
 
   wsapp = websocket.WebSocketApp("wss://api.bitfinex.com/ws/1", on_open=on_open, on_message=on_message, on_close=on_close)
@@ -86,7 +86,7 @@ ws://echo.websocket.org, do not trigger the ``on_close()`` function.
 
       threading.Thread(target=run).start()
 
-  def on_close(ws):
+  def on_close(ws, close_status_code, close_msg):
       print(">>>>>>CLOSED")
 
   wsapp = websocket.WebSocketApp("wss://api.bitfinex.com/ws/1", on_open=on_open, on_message=on_message, on_close=on_close)

@@ -10,7 +10,7 @@ ChangeLog
  - Use semver for release versions, unlike breaking release 0.58.0 (#669)
  - Enhance enableTrace output (13e83b4)
  - Improve unit tests to over 80% code coverage (1679ab0, a00dd2d, etc.)
- - Fix old _app.py close status code bug (#686)
+ - Fix old _app.py close status code bug (resulted in on_close() requiring 3 args) (#686)
  - Replace select import with selectors (#568)
 
 - 0.59.0
