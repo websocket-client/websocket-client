@@ -62,16 +62,20 @@ class WebSocketAppTest(unittest.TestCase):
             """ Set the keep_running flag for later inspection and immediately
             close the connection.
             """
+            self.send("hello!")
             WebSocketAppTest.keep_running_open = self.keep_running
+            self.keep_running = False
+
+        def on_message(wsapp, message):
+            print(message)
             self.close()
 
         def on_close(self, *args, **kwargs):
             """ Set the keep_running flag for the test to use.
             """
             WebSocketAppTest.keep_running_close = self.keep_running
-            self.send("connection should be closed here")
 
-        app = ws.WebSocketApp('ws://echo.websocket.org/', on_open=on_open, on_close=on_close)
+        app = ws.WebSocketApp('ws://echo.websocket.org/', on_open=on_open, on_close=on_close, on_message=on_message)
         app.run_forever()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")

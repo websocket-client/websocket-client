@@ -342,7 +342,8 @@ class WebSocketTest(unittest.TestCase):
         s = ws.create_connection("ws://echo.websocket.org/")
         self.assertNotEqual(s, None)
         s.send("Hello, World")
-        result = s.recv()
+        result = s.next()
+        s.fileno()
         self.assertEqual(result, "Hello, World")
 
         s.send("こにゃにゃちは、世界")
@@ -358,6 +359,12 @@ class WebSocketTest(unittest.TestCase):
         s.ping("Hello")
         s.pong("Hi")
         s.close()
+
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    def testSupportRedirect(self):
+        s = ws.WebSocket()
+        self.assertRaises(ws._exceptions.WebSocketBadStatusException, s.connect, "ws://google.com/")
+        # Need to find a URL that has a redirect code leading to a websocket
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSecureWebSocket(self):
@@ -414,7 +421,7 @@ class UtilsTest(unittest.TestCase):
 class HandshakeTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_http_SSL(self):
-        websock1 = ws.WebSocket(sslopt={"cert_chain": ssl.get_default_verify_paths().capath})
+        websock1 = ws.WebSocket(sslopt={"cert_chain": ssl.get_default_verify_paths().capath}, enable_multithread=False)
         self.assertRaises(ValueError,
                           websock1.connect, "wss://api.bitfinex.com/ws/2")
         websock2 = ws.WebSocket(sslopt={"certfile": "myNonexistentCertFile"})
