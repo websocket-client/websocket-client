@@ -37,12 +37,17 @@ support (RFC 7692) and [minimal threading documentation/support](https://websock
 
 ## Performance
 
-The `send` and `validate_utf8` methods are very slow in pure Python. You can
-disable UTF8 validation in this library (and receive a performance enhancement)
-with the `skip_utf8_validation` parameter. If you want to get better
-performance, please install both numpy and wsaccel, and import them into your
-project files - these other libraries will automatically be used when available.
-Note that wsaccel can sometimes cause other issues.
+The `send` and `validate_utf8` methods can sometimes be bottleneck.
+You can disable UTF8 validation in this library (and receive a
+performance enhancement) with the `skip_utf8_validation` parameter.
+If you want to get better performance, install wsaccel. While
+websocket-client does not depend on wsaccel, it will be used if
+available. wsaccel doubles the speed of UTF8 validation and
+offers a very minor 10% performance boost when masking the
+payload data as part of the `send` process. Numpy used to
+be a suggested performance enhancement alternative, but
+[issue #687](https://github.com/websocket-client/websocket-client/issues/687)
+found it didn't help.
 
 ## Examples
 

@@ -12,32 +12,21 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.9"
-      - name: Run test cases without internet to verify no offline test failures
+      - name: Run test cases without internet to verify no offline test failures and cover non-wsaccel functions
         run: |
           pip3 install coverage pytest pytest-cov setuptools PySocks
           python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
           python3 setup.py install
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
           coverage report
-      - name: Run test_abnf.py with internet but without numpy or wsaccel
-        run: |
-          pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
-        env:
-          TEST_WITH_INTERNET: 1
-      - name: Run test_abnf.py and test_websocket.py with wsaccel but without numpy
+      - name: Install wsaccel, then run all test cases for coverage collection
         run: |
           pip3 install wsaccel
-          pytest -vrP --cov=websocket websocket/tests/test_abnf.py --cov-config=.coveragerc --cov-append
-          pytest -vrP --cov=websocket websocket/tests/test_websocket.py --cov-config=.coveragerc --cov-append
-        env:
-          TEST_WITH_INTERNET: 1
-      - name: Install numpy, then run all test cases for coverage collection
-        run: |
-          pip3 install numpy
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append
+          coverage report
         env:
           TEST_WITH_INTERNET: 1
-      - name: Run with extra environment variable and create report
+      - name: Run SSL test with extra environment variable and create report
         run: |
           python3 -c "import ssl; print(ssl.get_default_verify_paths().capath)"
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
