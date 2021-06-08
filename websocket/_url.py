@@ -109,7 +109,7 @@ def _is_address_in_network(ip, net):
 
 def _is_no_proxy_host(hostname, no_proxy):
     if not no_proxy:
-        v = os.environ.get("no_proxy", "").replace(" ", "")
+        v = os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", "")
         if v:
             no_proxy = v.split(",")
     if not no_proxy:
@@ -168,7 +168,7 @@ def get_proxy_info(
         env_keys.insert(0, "https_proxy")
 
     for key in env_keys:
-        value = os.environ.get(key, None)
+        value = os.environ.get(key, os.environ.get(key.upper(), "")).replace(" ", "")
         if value:
             proxy = urlparse(value)
             auth = (proxy.username, proxy.password) if proxy.username else None
