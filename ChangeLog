@@ -1,6 +1,16 @@
 ChangeLog
 ============
 
+- 1.1.0
+  - Set enable_multithread to True by default (beb135a)
+  - Performance improvement in _mask() function (287970e, #433)
+  - Performance improvement in recv_strict() function (60e4711, #255)
+  - Performance improvement by removing numpy-related code (a462d45)
+  - Support uppercase no_proxy, http_proxy, https_proxy env vars (150df4f, #700)
+  - Add sslopt 'server_hostname' support (#698)
+  - Replace deprecated ssl.PROTOCOL_SSLv23 with ssl.PROTOCOL_TLS (494564f)
+  - Update documentation, README (7c9d604, #704)
+
 - 1.0.1
  - Fix exception handling bug #694
 
