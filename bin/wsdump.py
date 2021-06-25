@@ -46,7 +46,6 @@ def get_encoding():
     else:
         return encoding.lower()
 
-
 def get_auth_from_url(url):
     parsed = urlparse(url)
 
@@ -151,7 +150,7 @@ def main():
         p = urlparse(args.proxy)
         options["http_proxy_host"] = p.hostname
         options["http_proxy_port"] = p.port
-        options["http_proxy_auth"] = get_auth_from_url(args.proxy)
+        options["http_proxy_auth"] = args.proxy
     if args.origin:
         options["origin"] = args.origin
     if args.subprotocols:
@@ -192,16 +191,14 @@ def main():
             msg = None
             if opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
-            # gzip magick
-            if isinstance(data, bytes) and len(data) > 2 and data[:2] == b'\037\213':
+            if isinstance(data, bytes) and len(data) > 2 and data[:2] == b'\037\213':  # gzip magick
                 try:
                     data = "[gzip] " + str(gzip.decompress(data), "utf-8")
                 except:
                     pass
             elif isinstance(data, bytes):
                 try:
-                    data = "[zlib] " + \
-                        str(zlib.decompress(data, -zlib.MAX_WBITS), "utf-8")
+                    data = "[zlib] " + str(zlib.decompress(data, -zlib.MAX_WBITS), "utf-8")
                 except:
                     pass
 
