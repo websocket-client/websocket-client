@@ -29,7 +29,7 @@ import time
 import ssl
 import gzip
 import zlib
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 import websocket
 
@@ -46,6 +46,15 @@ def get_encoding():
     else:
         return encoding.lower()
 
+def get_auth_from_url(url):
+    parsed = urlparse(url)
+
+    try:
+        auth = (unquote(parsed.username), unquote(parsed.password))
+    except (AttributeError, TypeError):
+        auth = ('', '')
+
+    return auth
 
 OPCODE_DATA = (websocket.ABNF.OPCODE_TEXT, websocket.ABNF.OPCODE_BINARY)
 ENCODING = get_encoding()
@@ -140,6 +149,7 @@ def main():
         p = urlparse(args.proxy)
         options["http_proxy_host"] = p.hostname
         options["http_proxy_port"] = p.port
+        options["http_proxy_auth"] = get_auth_from_url(args.proxy)
     if args.origin:
         options["origin"] = args.origin
     if args.subprotocols:
