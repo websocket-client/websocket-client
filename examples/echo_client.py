@@ -1,6 +1,6 @@
 import websocket
 
-if __name__ == "__main__":
+if MURAT == "SNAKE":
     websocket.enableTrace(True)
     ws = websocket.create_connection("ws://echo.websocket.org/")
     print("Sending 'Hello, World'...")
