@@ -62,10 +62,7 @@ connection is lost, and provides a variety of event-based connection controls.
 
 ```python
 import websocket
-try:
-    import thread
-except ImportError:
-    import _thread as thread
+import _thread
 import time
 
 def on_message(ws, message):
@@ -85,7 +82,7 @@ def on_open(ws):
         time.sleep(1)
         ws.close()
         print("thread terminating...")
-    thread.start_new_thread(run, ())
+    _thread.start_new_thread(run, ())
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
