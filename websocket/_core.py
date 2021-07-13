@@ -286,7 +286,7 @@ class WebSocket(object):
         Send the data frame.
 
         >>> ws = create_connection("ws://echo.websocket.org/")
-        >>> frame = ABNF.create_frame("Hello", ABNF.OPCODE_TEXT, 0)
+        >>> frame = ABNF.create_frame("Hello. ", ABNF.OPCODE_TEXT, 0)
         >>> ws.send_frame(frame)
         >>> cont_frame = ABNF.create_frame("My name is ", ABNF.OPCODE_CONT, 0)
         >>> ws.send_frame(frame)
