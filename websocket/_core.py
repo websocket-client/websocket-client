@@ -195,7 +195,10 @@ class WebSocket(object):
             return None
 
     def is_ssl(self):
-        return isinstance(self.sock, ssl.SSLSocket)
+        try:
+            return isinstance(self.sock, ssl.SSLSocket)
+        except:
+            return False
 
     headers = property(getheaders)
 
