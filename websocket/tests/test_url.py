@@ -277,6 +277,10 @@ class ProxyInfoTest(unittest.TestCase):
         os.environ["https_proxy"] = "http://a:b@localhost2:3128/"
         self.assertEqual(get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, ("a", "b")))
 
+        os.environ["http_proxy"] = "http://john%40example.com:P%40SSWORD@localhost:3128/"
+        os.environ["https_proxy"] = "http://john%40example.com:P%40SSWORD@localhost2:3128/"
+        self.assertEqual(get_proxy_info("echo.websocket.org", True), ("localhost2", 3128, ("john@example.com", "P@SSWORD")))
+
         os.environ["http_proxy"] = "http://a:b@localhost/"
         os.environ["https_proxy"] = "http://a:b@localhost2/"
         os.environ["no_proxy"] = "example1.com,example2.com"

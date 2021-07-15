@@ -26,7 +26,7 @@ import os
 import socket
 import struct
 
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 
 __all__ = ["parse_url", "get_proxy_info"]
@@ -171,7 +171,7 @@ def get_proxy_info(
         value = os.environ.get(key, os.environ.get(key.upper(), "")).replace(" ", "")
         if value:
             proxy = urlparse(value)
-            auth = (proxy.username, proxy.password) if proxy.username else None
+            auth = (unquote(proxy.username), unquote(proxy.password)) if proxy.username else None
             return proxy.hostname, proxy.port, auth
 
     return None, 0, None
