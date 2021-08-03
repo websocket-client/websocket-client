@@ -9,7 +9,7 @@
 websocket-client is a WebSocket client for Python. It provides access
 to low level APIs for WebSockets. websocket-client implements version
 [hybi-13](https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-13)
-of the WebSocket procotol. This client does not currently support the
+of the WebSocket protocol. This client does not currently support the
 permessage-deflate extension from
 [RFC 7692](https://tools.ietf.org/html/rfc7692).
 
