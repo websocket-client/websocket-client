@@ -299,8 +299,10 @@ class WebSocketApp(object):
                 self.sock.close()
             close_status_code, close_reason = self._get_close_args(
                 close_frame if close_frame else None)
-            self._callback(self.on_close, close_status_code, close_reason)
             self.sock = None
+
+            # Finally call the callback AFTER all teardown is complete
+            self._callback(self.on_close, close_status_code, close_reason)
 
         try:
             self.sock = WebSocket(
