@@ -410,6 +410,5 @@ class WebSocketApp(object):
 
             except Exception as e:
                 _logging.error("error from callback {}: {}".format(callback, e))
-                if _logging.isEnabledForDebug():
-                    _, _, tb = sys.exc_info()
-                    traceback.print_tb(tb)
+                if self.on_error:
+                    self.on_error(self, e)
