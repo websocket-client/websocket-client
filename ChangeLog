@@ -1,6 +1,12 @@
 ChangeLog
 ============
 
+- 1.1.1
+  - Fix #377: increase exception verbosity in _app.py callback exception
+  - Fix #717: race condition during connection close
+  - Fix #722: improve handling where credentials include symbols like @
+  - Fix #711: improve handling if ssl is None
+
 - 1.1.0
   - Set enable_multithread to True by default (beb135a)
   - Performance improvement in _mask() function (287970e, #433)
