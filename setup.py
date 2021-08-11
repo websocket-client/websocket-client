@@ -42,6 +42,10 @@ setup(
     url="https://github.com/websocket-client/websocket-client.git",
     download_url='https://github.com/websocket-client/websocket-client/releases',
     python_requires='>=3.6',
+    extras_require={
+        "test": ["websockets"],
+        "optional": ["python-socks", "wsaccel"],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",

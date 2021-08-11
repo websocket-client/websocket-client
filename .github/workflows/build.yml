@@ -18,6 +18,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Run local websockets echo server on port 8765
+        run: |
+          pip3 install -U websockets asyncio
+          python3 websocket/tests/echo-server.py
       - name: Build websocket-client & run tests
         run: |
           pip3 install -U pip setuptools wheel readme_renderer twine pytest python-socks

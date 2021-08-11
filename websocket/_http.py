@@ -39,6 +39,15 @@ try:
 except:
     HAVE_PYTHON_SOCKS = False
 
+    class ProxyError(Exception):
+        pass
+
+    class ProxyTimeoutError(Exception):
+        pass
+
+    class ProxyConnectionError(Exception):
+        pass
+
 
 class proxy_info(object):
 
