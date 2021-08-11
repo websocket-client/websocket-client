@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 1.2.0
+  - Fix #697, #665: Transition from LGPL 2.1 license to Apache 2.0 license
+  - Revert #417 and reimplement SOCKS proxy support with python-socks instead of PySocks (fbcbd43)
+
 - 1.1.1
   - Fix #377: increase exception verbosity in _app.py callback exception
   - Fix #717: race condition during connection close
