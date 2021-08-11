@@ -34,58 +34,63 @@ from base64 import encodebytes as base64encode
 __all__ = ["proxy_info", "connect", "read_headers"]
 
 try:
-    import socks
-    ProxyConnectionError = socks.ProxyConnectionError
-    HAS_PYSOCKS = True
+    from python_socks.sync import Proxy
+    from python_socks._errors import *
+    from python_socks._types import ProxyType
+    HAVE_PYTHON_SOCKS = True
 except:
-    class ProxyConnectionError(BaseException):
-        pass
-    HAS_PYSOCKS = False
+    HAVE_PYTHON_SOCKS = False
 
 
 class proxy_info(object):
 
     def __init__(self, **options):
-        self.type = options.get("proxy_type") or "http"
-        if not(self.type in ['http', 'socks4', 'socks5', 'socks5h']):
-            raise ValueError("proxy_type must be 'http', 'socks4', 'socks5' or 'socks5h'")
-        self.host = options.get("http_proxy_host", None)
-        if self.host:
-            self.port = options.get("http_proxy_port", 0)
+        self.proxy_host = options.get("http_proxy_host", None)
+        if self.proxy_host:
+            self.proxy_port = options.get("http_proxy_port", 0)
             self.auth = options.get("http_proxy_auth", None)
             self.no_proxy = options.get("http_no_proxy", None)
+            self.proxy_protocol = options.get("proxy_type", "http")
+            # Note: If timeout not specified, default python-socks timeout is 60 seconds
+            self.proxy_timeout = options.get("timeout", None)
+            if self.proxy_protocol not in ['http', 'socks4', 'socks4a', 'socks5', 'socks5h']:
+                raise ProxyError("Only http, socks4, socks5 proxy protocols are supported")
         else:
-            self.port = 0
+            self.proxy_port = 0
             self.auth = None
             self.no_proxy = None
+            self.proxy_protocol = "http"
 
 
-def _open_proxied_socket(url, options, proxy):
+def _start_proxied_socket(url, options, proxy):
+    if not HAVE_PYTHON_SOCKS:
+        raise WebSocketException("Python Socks is needed for SOCKS proxying but is not available")
+
     hostname, port, resource, is_secure = parse_url(url)
 
-    if not HAS_PYSOCKS:
-        raise WebSocketException("PySocks module not found.")
-
-    ptype = socks.SOCKS5
-    rdns = False
-    if proxy.type == "socks4":
-        ptype = socks.SOCKS4
-    if proxy.type == "http":
-        ptype = socks.HTTP
-    if proxy.type[-1] == "h":
+    if proxy.proxy_protocol == "socks5":
+        rdns = False
+        proxy_type = ProxyType.SOCKS5
+    if proxy.proxy_protocol == "socks4":
+        rdns = False
+        proxy_type = ProxyType.SOCKS4
+    # socks5h and socks4a send DNS through proxy
+    if proxy.proxy_protocol == "socks5h":
         rdns = True
+        proxy_type = ProxyType.SOCKS5
+    if proxy.proxy_protocol == "socks4a":
+        rdns = True
+        proxy_type = ProxyType.SOCKS4
 
-    sock = socks.create_connection(
-        (hostname, port),
-        proxy_type=ptype,
-        proxy_addr=proxy.host,
-        proxy_port=int(proxy.port),
-        proxy_rdns=rdns,
-        proxy_username=proxy.auth[0] if proxy.auth else None,
-        proxy_password=proxy.auth[1] if proxy.auth else None,
-        timeout=options.timeout,
-        socket_options=DEFAULT_SOCKET_OPTION + options.sockopt
-    )
+    ws_proxy = Proxy.create(
+        proxy_type=proxy_type,
+        host=proxy.proxy_host,
+        port=int(proxy.proxy_port),
+        username=proxy.auth[0] if proxy.auth else None,
+        password=proxy.auth[1] if proxy.auth else None,
+        rdns=rdns)
+
+    sock = ws_proxy.connect(hostname, port, timeout=proxy.proxy_timeout)
 
     if is_secure and HAVE_SSL:
         sock = _ssl_socket(sock, options.sslopt, hostname)
@@ -96,8 +101,11 @@ def _open_proxied_socket(url, options, proxy):
 
 
 def connect(url, options, proxy, socket):
-    if proxy.host and not socket and not (proxy.type == 'http'):
-        return _open_proxied_socket(url, options, proxy)
+    # Use _start_proxied_socket() only for socks4 or socks5 proxy
+    # Use _tunnel() for http proxy
+    # TODO: Use python-socks for http protocol also, to standardize flow
+    if proxy.proxy_host and not socket and not (proxy.proxy_protocol == "http"):
+        return _start_proxied_socket(url, options, proxy)
 
     hostname, port, resource, is_secure = parse_url(url)
 
@@ -131,7 +139,7 @@ def connect(url, options, proxy, socket):
 
 def _get_addrinfo_list(hostname, port, is_secure, proxy):
     phost, pport, pauth = get_proxy_info(
-        hostname, is_secure, proxy.host, proxy.port, proxy.auth, proxy.no_proxy)
+        hostname, is_secure, proxy.proxy_host, proxy.proxy_port, proxy.auth, proxy.no_proxy)
     try:
         # when running on windows 10, getaddrinfo without socktype returns a socktype 0.
         # This generates an error exception: `_on_error: exception Socket type must be stream or datagram, not 0`
@@ -168,10 +176,6 @@ def _open_socket(addrinfo_list, sockopt, timeout):
         while not err:
             try:
                 sock.connect(address)
-            except ProxyConnectionError as error:
-                err = WebSocketProxyException(str(error))
-                err.remote_ip = str(address[0])
-                continue
             except socket.error as error:
                 error.remote_ip = str(address[0])
                 try:

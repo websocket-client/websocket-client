@@ -315,16 +315,22 @@ the timeout interval (5 seconds in the example below).
 Connecting through a proxy
 ----------------------------
 
-The example below show how to connect through a HTTP or SOCKS proxy. This
-library does support authentication to a proxy using the ``http_proxy_auth``
+websocket-client supports proxied connections. The supported
+proxy protocols are HTTP, SOCKS4, SOCKS4a, SOCKS5, and SOCKS5h.
+If you want to route DNS requests through the proxy, use SOCKS4a
+or SOCKS5h. The proxy protocol should be specified in lowercase to the
+``proxy_type`` parameter. The example below shows how to connect through a
+HTTP or SOCKS proxy. Proxy authentication is supported with the ``http_proxy_auth``
 parameter, which should be a tuple of the username and password. Be aware
 that the current implementation of websocket-client uses the "CONNECT"
-method, and the proxy server must allow the "CONNECT" method. For
-example, the squid proxy only allows the "CONNECT" method
+method for HTTP proxies (though soon the HTTP proxy handling will use
+the same ``python_socks`` library currently enabled only for SOCKS proxies),
+and the HTTP proxy server must allow the "CONNECT" method. For example,
+the squid HTTP proxy only allows the "CONNECT" method
 `on HTTPS ports <https://wiki.squid-cache.org/Features/HTTPS#CONNECT_tunnel>`_
 by default. You may encounter problems if using SSL/TLS with your proxy.
 
-**WebSocket HTTP proxy example**
+**WebSocket HTTP proxy with authentication example**
 
 ::
 
@@ -332,7 +338,8 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
 
   ws = websocket.WebSocket()
   ws.connect("ws://echo.websocket.org",
-    http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="http")
+    http_proxy_host="127.0.0.1", http_proxy_port="8080",
+    proxy_type="http", http_proxy_auth=("username", "password123"))
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()
@@ -345,7 +352,7 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
 
   ws = websocket.WebSocket()
   ws.connect("ws://echo.websocket.org",
-    http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="socks4")
+    http_proxy_host="192.168.1.18", http_proxy_port="4444", proxy_type="socks4")
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()

@@ -153,7 +153,8 @@ def get_proxy_info(
     http_proxy_auth: tuple
         HTTP proxy auth information. Tuple of username and password. Default is None.
     proxy_type: str
-        If set to "socks4" or "socks5", a PySocks wrapper will be used in place of a HTTP proxy. Default is "http".
+        Specify the proxy protocol (http, socks4, socks4a, socks5, socks5h). Default is "http".
+        Use socks4a or socks5h if you want to send DNS requests through the proxy.
     """
     if _is_no_proxy_host(hostname, no_proxy):
         return None, 0, None

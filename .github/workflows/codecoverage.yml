@@ -14,7 +14,7 @@ jobs:
           python-version: "3.9"
       - name: Run test cases without internet to verify no offline test failures and cover non-wsaccel functions
         run: |
-          pip3 install coverage pytest pytest-cov setuptools PySocks
+          pip3 install coverage pytest pytest-cov setuptools python-socks
           python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
           python3 setup.py install
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
