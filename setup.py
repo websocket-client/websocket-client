@@ -27,7 +27,9 @@ import pkg_resources
 
 VERSION = "1.2.0"
 
-install_requires = []
+install_requires = [
+    "python-socks",
+]
 tests_require = []
 
 setup(
