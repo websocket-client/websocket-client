@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 1.2.1
+  - Fix python-socks dependency issue mentioned in #728
+  - Replace echo.websocket.org with a local websockets echo server for unit tests (4951de2)
+
 - 1.2.0
   - Fix #697, #665: Transition from LGPL 2.1 license to Apache 2.0 license
   - Revert #417 and reimplement SOCKS proxy support with python-socks instead of PySocks (fbcbd43)
