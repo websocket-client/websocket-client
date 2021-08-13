@@ -15,7 +15,7 @@ jobs:
       - name: Run local websockets echo server on port 8765
         run: |
           pip3 install -U websockets asyncio
-          python3 websocket/tests/echo-server.py
+          python3 websocket/tests/echo-server.py &
       - name: Run test cases without internet or option dependencies to verify no offline test failures and verify optional dependencies are optional
         run: |
           pip3 install coverage pytest pytest-cov setuptools
