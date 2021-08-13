@@ -3,34 +3,28 @@
 """
 
 """
+_app.py
 websocket - WebSocket client library for Python
 
-Copyright (C) 2010 Hiroki Ohtani(liris)
+Copyright 2021 engn33r
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+    http://www.apache.org/licenses/LICENSE-2.0
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
-import inspect
-import select
+import selectors
 import sys
 import threading
 import time
 import traceback
-
-import six
-
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
@@ -38,6 +32,7 @@ from . import _logging
 
 
 __all__ = ["WebSocketApp"]
+
 
 class Dispatcher:
     """
@@ -49,12 +44,16 @@ class Dispatcher:
 
     def read(self, sock, read_callback, check_callback):
         while self.app.keep_running:
-            r, w, e = select.select(
-                    (self.app.sock.sock, ), (), (), self.ping_timeout)
+            sel = selectors.DefaultSelector()
+            sel.register(self.app.sock.sock, selectors.EVENT_READ)
+
+            r = sel.select(self.ping_timeout)
             if r:
                 if not read_callback():
                     break
             check_callback()
+            sel.close()
+
 
 class SSLDispatcher:
     """
@@ -77,8 +76,14 @@ class SSLDispatcher:
         if sock.pending():
             return [sock,]
 
-        r, w, e = select.select((sock, ), (), (), self.ping_timeout)
-        return r
+        sel = selectors.DefaultSelector()
+        sel.register(sock, selectors.EVENT_READ)
+
+        r = sel.select(self.ping_timeout)
+        sel.close()
+
+        if len(r) > 0:
+            return r[0][0]
 
 
 class WebSocketApp(object):
@@ -98,52 +103,56 @@ class WebSocketApp(object):
 
         Parameters
         ----------
-        url: <type>
-            websocket url.
+        url: str
+            Websocket url.
         header: list or dict
-            custom header for websocket handshake.
-        on_open: <type>
-            callable object which is called at opening websocket.
-            this function has one argument. The argument is this class object.
-        on_message: <type>
-            callable object which is called when received data.
+            Custom header for websocket handshake.
+        on_open: function
+            Callback object which is called at opening websocket.
+            on_open has one argument.
+            The 1st argument is this class object.
+        on_message: function
+            Callback object which is called when received data.
             on_message has 2 arguments.
             The 1st argument is this class object.
-            The 2nd argument is utf-8 string which we get from the server.
-        on_error: <type>
-            callable object which is called when we get error.
+            The 2nd argument is utf-8 data received from the server.
+        on_error: function
+            Callback object which is called when we get error.
             on_error has 2 arguments.
             The 1st argument is this class object.
             The 2nd argument is exception object.
-        on_close: <type>
-            callable object which is called when closed the connection.
-            this function has one argument. The argument is this class object.
-        on_cont_message: <type>
-            callback object which is called when receive continued
-            frame data.
+        on_close: function
+            Callback object which is called when connection is closed.
+            on_close has 3 arguments.
+            The 1st argument is this class object.
+            The 2nd argument is close_status_code.
+            The 3rd argument is close_msg.
+        on_cont_message: function
+            Callback object which is called when a continuation
+            frame is received.
             on_cont_message has 3 arguments.
             The 1st argument is this class object.
             The 2nd argument is utf-8 string which we get from the server.
             The 3rd argument is continue flag. if 0, the data continue
             to next frame data
-        on_data: <type>
-            callback object which is called when a message received.
+        on_data: function
+            Callback object which is called when a message received.
             This is called before on_message or on_cont_message,
             and then on_message or on_cont_message is called.
             on_data has 4 argument.
             The 1st argument is this class object.
             The 2nd argument is utf-8 string which we get from the server.
             The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
-            The 4th argument is continue flag. if 0, the data continue
-        keep_running: <type>
-            this parameter is obsolete and ignored.
-        get_mask_key: func
-            a callable to produce new mask keys,
-            see the WebSocket.set_mask_key's docstring for more information
+            The 4th argument is continue flag. If 0, the data continue
+        keep_running: bool
+            This parameter is obsolete and ignored.
+        get_mask_key: function
+            A callable function to get new mask keys, see the
+            WebSocket.set_mask_key's docstring for more information.
         cookie: str
-            cookie value.
-        subprotocols: <type>
-            array of available sub protocols. default is None.
+            Cookie value.
+        subprotocols: list
+            List of available sub protocols. Default is None.
         """
         self.url = url
         self.header = header if header is not None else []
@@ -170,11 +179,11 @@ class WebSocketApp(object):
 
         Parameters
         ----------
-        data: <type>
+        data: str
             Message to send. If you set opcode to OPCODE_TEXT,
             data must be utf-8 string or unicode.
-        opcode: <type>
-            Operation code of data. default is OPCODE_TEXT.
+        opcode: int
+            Operation code of data. Default is OPCODE_TEXT.
         """
 
         if not self.sock or self.sock.send(data, opcode) == 0:
@@ -190,18 +199,19 @@ class WebSocketApp(object):
             self.sock.close(**kwargs)
             self.sock = None
 
-    def _send_ping(self, interval, event):
+    def _send_ping(self, interval, event, payload):
         while not event.wait(interval):
             self.last_ping_tm = time.time()
             if self.sock:
                 try:
-                    self.sock.ping()
+                    self.sock.ping(payload)
                 except Exception as ex:
                     _logging.warning("send_ping routine terminated: {}".format(ex))
                     break
 
     def run_forever(self, sockopt=None, sslopt=None,
                     ping_interval=0, ping_timeout=None,
+                    ping_payload="",
                     http_proxy_host=None, http_proxy_port=None,
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
@@ -215,30 +225,32 @@ class WebSocketApp(object):
         Parameters
         ----------
         sockopt: tuple
-            values for socket.setsockopt.
+            Values for socket.setsockopt.
             sockopt must be tuple
             and each element is argument of sock.setsockopt.
         sslopt: dict
-            optional dict object for ssl socket option.
+            Optional dict object for ssl socket option.
         ping_interval: int or float
-            automatically send "ping" command
-            every specified period (in seconds)
-            if set to 0, not send automatically.
+            Automatically send "ping" command
+            every specified period (in seconds).
+            If set to 0, no ping is sent periodically.
         ping_timeout: int or float
-            timeout (in seconds) if the pong message is not received.
-        http_proxy_host: <type>
-            http proxy host name.
-        http_proxy_port: <type>
-            http proxy port. If not set, set to 80.
-        http_no_proxy: <type>
-            host names, which doesn't use proxy.
+            Timeout (in seconds) if the pong message is not received.
+        ping_payload: str
+            Payload message to send with each ping.
+        http_proxy_host: str
+            HTTP proxy host name.
+        http_proxy_port: int or str
+            HTTP proxy port. If not set, set to 80.
+        http_no_proxy: list
+            Whitelisted host names that don't use the proxy.
         skip_utf8_validation: bool
             skip utf8 validation.
         host: str
             update host header.
         origin: str
             update origin header.
-        dispatcher: <type>
+        dispatcher: Dispatcher object
             customize reading data from socket.
         suppress_origin: bool
             suppress outputting origin header.
@@ -250,7 +262,9 @@ class WebSocketApp(object):
         """
 
         if ping_timeout is not None and ping_timeout <= 0:
-            ping_timeout = None
+            raise WebSocketException("Ensure ping_timeout > 0")
+        if ping_interval is not None and ping_interval < 0:
+            raise WebSocketException("Ensure ping_interval >= 0")
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
         if not sockopt:
@@ -268,26 +282,32 @@ class WebSocketApp(object):
             """
             Tears down the connection.
 
-            If close_frame is set, we will invoke the on_close handler with the
-            statusCode and reason from there.
+            Parameters
+            ----------
+            close_frame: ABNF frame
+                If close_frame is set, the on_close handler is invoked
+                with the statusCode and reason from the provided frame.
             """
+
             if thread and thread.is_alive():
                 event.set()
                 thread.join()
             self.keep_running = False
             if self.sock:
                 self.sock.close()
-            close_args = self._get_close_args(
-                close_frame.data if close_frame else None)
-            self._callback(self.on_close, *close_args)
+            close_status_code, close_reason = self._get_close_args(
+                close_frame if close_frame else None)
             self.sock = None
+
+            # Finally call the callback AFTER all teardown is complete
+            self._callback(self.on_close, close_status_code, close_reason)
 
         try:
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message is not None,
                 skip_utf8_validation=skip_utf8_validation,
-                enable_multithread=True if ping_interval else False)
+                enable_multithread=True)
             self.sock.settimeout(getdefaulttimeout())
             self.sock.connect(
                 self.url, header=self.header, cookie=self.cookie,
@@ -304,8 +324,8 @@ class WebSocketApp(object):
             if ping_interval:
                 event = threading.Event()
                 thread = threading.Thread(
-                    target=self._send_ping, args=(ping_interval, event))
-                thread.setDaemon(True)
+                    target=self._send_ping, args=(ping_interval, event, ping_payload))
+                thread.daemon = True
                 thread.start()
 
             def read():
@@ -327,7 +347,7 @@ class WebSocketApp(object):
                                    frame.data, frame.fin)
                 else:
                     data = frame.data
-                    if six.PY3 and op_code == ABNF.OPCODE_TEXT:
+                    if op_code == ABNF.OPCODE_TEXT:
                         data = data.decode("utf-8")
                     self._callback(self.on_data, data, frame.opcode, True)
                     self._callback(self.on_message, data)
@@ -340,9 +360,9 @@ class WebSocketApp(object):
                     has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
                     has_pong_arrived_too_late = self.last_pong_tm - self.last_ping_tm > ping_timeout
 
-                    if (self.last_ping_tm
-                            and has_timeout_expired
-                            and (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
+                    if (self.last_ping_tm and
+                            has_timeout_expired and
+                            (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
                         raise WebSocketTimeoutException("ping/pong timed out")
                 return True
 
@@ -362,25 +382,24 @@ class WebSocketApp(object):
 
         return Dispatcher(self, timeout)
 
-    def _get_close_args(self, data):
+    def _get_close_args(self, close_frame):
         """
-        _get_close_args extracts the code, reason from the close body
-        if they exists, and if the self.on_close except three arguments
+        _get_close_args extracts the close code and reason from the close body
+        if it exists (RFC6455 says WebSocket Connection Close Code is optional)
         """
-        # if the on_close callback is "old", just return empty list
-        if sys.version_info < (3, 0):
-            if not self.on_close or len(inspect.getargspec(self.on_close).args) != 3:
-                return []
+        # Need to catch the case where close_frame is None
+        # Otherwise the following if statement causes an error
+        if not self.on_close or not close_frame:
+            return [None, None]
+
+        # Extract close frame status code
+        if close_frame.data and len(close_frame.data) >= 2:
+            close_status_code = 256 * close_frame.data[0] + close_frame.data[1]
+            reason = close_frame.data[2:].decode('utf-8')
+            return [close_status_code, reason]
         else:
-            if not self.on_close or len(inspect.getfullargspec(self.on_close).args) != 3:
-                return []
-
-        if data and len(data) >= 2:
-            code = 256 * six.byte2int(data[0:1]) + six.byte2int(data[1:2])
-            reason = data[2:].decode('utf-8')
-            return [code, reason]
-
-        return [None, None]
+            # Most likely reached this because len(close_frame_data.data) < 2
+            return [None, None]
 
     def _callback(self, callback, *args):
         if callback:
@@ -389,6 +408,5 @@ class WebSocketApp(object):
 
             except Exception as e:
                 _logging.error("error from callback {}: {}".format(callback, e))
-                if _logging.isEnabledForDebug():
-                    _, _, tb = sys.exc_info()
-                    traceback.print_tb(tb)
+                if self.on_error:
+                    self.on_error(self, e)

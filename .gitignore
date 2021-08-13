@@ -23,3 +23,7 @@ venv/
 # Sphinx documentation
 docs/build/
 
+# Code coverage
+.coverage
+coverage.xml
+

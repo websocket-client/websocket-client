@@ -2,8 +2,6 @@
 Examples
 ########
 
-This page needs help! Please see the :ref:`contributing` page to make it better!
-
 Creating Your First WebSocket Connection
 ==========================================
 
@@ -314,18 +312,25 @@ the timeout interval (5 seconds in the example below).
   # Program should print a "timed out" error message
 
 
-Connecting through a HTTP proxy
---------------------------------
+Connecting through a proxy
+----------------------------
 
-The example below show how to connect through a HTTP proxy. Note that this
-library does support authentication to a proxy using the ``http_proxy_auth``
-parameter. Be aware that the current implementation of websocket-client uses
-the "CONNECT" method, and the proxy server must allow the "CONNECT" method. For
-example, the squid proxy only allows the "CONNECT" method
+websocket-client supports proxied connections. The supported
+proxy protocols are HTTP, SOCKS4, SOCKS4a, SOCKS5, and SOCKS5h.
+If you want to route DNS requests through the proxy, use SOCKS4a
+or SOCKS5h. The proxy protocol should be specified in lowercase to the
+``proxy_type`` parameter. The example below shows how to connect through a
+HTTP or SOCKS proxy. Proxy authentication is supported with the ``http_proxy_auth``
+parameter, which should be a tuple of the username and password. Be aware
+that the current implementation of websocket-client uses the "CONNECT"
+method for HTTP proxies (though soon the HTTP proxy handling will use
+the same ``python_socks`` library currently enabled only for SOCKS proxies),
+and the HTTP proxy server must allow the "CONNECT" method. For example,
+the squid HTTP proxy only allows the "CONNECT" method
 `on HTTPS ports <https://wiki.squid-cache.org/Features/HTTPS#CONNECT_tunnel>`_
-by default.
+by default. You may encounter problems if using SSL/TLS with your proxy.
 
-**WebSocket proxy example**
+**WebSocket HTTP proxy with authentication example**
 
 ::
 
@@ -333,21 +338,38 @@ by default.
 
   ws = websocket.WebSocket()
   ws.connect("ws://echo.websocket.org",
-    http_proxy_host="127.0.0.1", http_proxy_port="8080")
+    http_proxy_host="127.0.0.1", http_proxy_port="8080",
+    proxy_type="http", http_proxy_auth=("username", "password123"))
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()
+
+**WebSocket SOCKS4 (or SOCKS5) proxy example**
+
+::
+
+  import websocket
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org",
+    http_proxy_host="192.168.1.18", http_proxy_port="4444", proxy_type="socks4")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close()
+
 
 **WebSocketApp proxy example**
 
 `Work in progress - coming soon`
 
 
-Using Unix Domain Sockets
+Connecting with Custom Sockets
 --------------------------------
 
-You can also connect to a WebSocket server hosted on a unix domain socket.
-Just use the ``socket`` option when creating your connection.
+You can also connect to a WebSocket server hosted on a 
+specific socket using the ``socket`` option when
+creating your connection. Below is an example of using
+a unix domain socket.
 
 ::
 
@@ -359,6 +381,21 @@ Just use the ``socket`` option when creating your connection.
   ws = create_connection("ws://localhost/", # Dummy URL
                           socket = my_socket,
                           sockopt=((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),))
+
+Other socket types can also be used. The following example
+is for a AF_INET (IP address) socket.
+
+::
+
+  import socket
+  from websocket import create_connection
+  my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  my_socket.bind(("172.18.0.1", 3002))
+  my_socket.connect()
+
+  ws = create_connection("ws://127.0.0.1/", # Dummy URL
+                          socket = my_socket)
+
 
 Post-connection features
 ==========================
@@ -399,6 +436,7 @@ This type of connection does not automatically respond to a "ping" with a "pong"
   ws = websocket.WebSocket()
   ws.connect("ws://echo.websocket.org")
   ws.ping()
+  ws.ping("This is an optional ping payload")
   ws.pong()
   ws.close()
 
@@ -424,10 +462,10 @@ send a "pong" when it receives a "ping", per the specification.
 
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
-  wsapp.run_forever(ping_interval=10, ping_timeout=60)
+  wsapp.run_forever(ping_interval=60, ping_timeout=10, ping_payload="This is an optional ping payload")
 
-Connection Close Status Codes
---------------------------------
+Sending Connection Close Status Codes
+--------------------------------------
 
 RFC6455 defines `various status codes <https://tools.ietf.org/html/rfc6455#section-7.4>`_
 that can be used to identify the reason for a close frame ending
@@ -439,7 +477,7 @@ in the .close() function, as seen in the examples below. Specifying
 a custom status code is necessary when using the custom
 status code values between 3000-4999.
 
-**WebSocket close() status code example**
+**WebSocket sending close() status code example**
 
 ::
 
@@ -455,7 +493,7 @@ status code values between 3000-4999.
   # Alternatively, use ws.close(status=1002)
 
 
-**WebSocketApp close() status code example**
+**WebSocketApp sending close() status code example**
 
 ::
 
@@ -464,12 +502,154 @@ status code values between 3000-4999.
   websocket.enableTrace(True)
 
   def on_message(wsapp, message):
-    print(message)
-    wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
-    # Alternatively, use wsapp.close(status=1002)
+      print(message)
+      wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
+      # Alternatively, use wsapp.close(status=1002)
 
   wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
   wsapp.run_forever(skip_utf8_validation=True)
+
+Receiving Connection Close Status Codes
+-----------------------------------------
+
+The RFC6455 spec states that it is optional for a server to send a
+close status code when closing a connection. The RFC refers to these
+codes as WebSocket Close Code Numbers, and their meanings are
+described in the RFC. It is possible to view
+this close code, if it is being sent, to understand why the connection is
+being close. One option to view the code is to
+:ref:`enable logging<Debug and Logging Options>` to view the
+status code information. If you want to use the close status code
+in your program, examples are shown below for how to do this.
+
+**WebSocket receiving close status code example**
+
+::
+
+    import websocket
+    import struct
+
+    websocket.enableTrace(True)
+
+    ws = websocket.WebSocket()
+    ws.connect("wss://tsock.us1.twilio.com/v3/wsconnect")
+    ws.send("Hello")
+    resp_opcode, msg = ws.recv_data()
+    print("Response opcode: " + str(resp_opcode))
+    if resp_opcode == 8 and len(msg) >= 2:
+        print("Response close code: " + str(struct.unpack("!H", msg[0:2])[0]))
+        print("Response message: " + str(msg[2:]))
+    else:
+        print("Response message: " + str(msg))
+
+
+**WebSocketApp receiving close status code example**
+
+::
+
+    import websocket
+
+    websocket.enableTrace(True)
+
+    def on_close(wsapp, close_status_code, close_msg):
+        # Because on_close was triggered, we know the opcode = 8
+        print("on_close args:")
+        if close_status_code or close_msg:
+            print("close status code: " + str(close_status_code))
+            print("close message: " + str(close_msg))
+
+    def on_open(wsapp):
+        wsapp.send("Hello")
+
+    wsapp = websocket.WebSocketApp("wss://tsock.us1.twilio.com/v3/wsconnect", on_open=on_open, on_close=on_close)
+    wsapp.run_forever()
+
+Customizing frame mask
+--------------------------------
+
+WebSocket frames use masking with a random value to add entropy. The masking
+value in websocket-client is normally set using os.urandom in the
+websocket/_abnf.py file. However, this value can be customized as you wish.
+One use case, outlined in
+`issue #473 <https://github.com/websocket-client/websocket-client/issues/473>`_,
+is to set the masking key to a null value to make it easier to decode the
+messages being sent and received. This is effectively the same as "removing" the
+mask, though the mask cannot be fully "removed" because it is a part of the
+WebSocket frame. Tools such as Wireshark can automatically remove masking
+from payloads to decode the payload message, but it may be easier to skip
+the demasking step in your custom project.
+
+**WebSocket custom masking key code example**
+
+::
+
+  import websocket
+
+  def zero_mask_key(_):
+      return "\x00\x00\x00\x00"
+
+  websocket.enableTrace(True)
+
+  ws = websocket.WebSocket()
+  ws.set_mask_key(zero_mask_key)
+  ws.connect("ws://echo.websocket.org")
+  ws.send("Hello, Server")
+  print(ws.recv())
+  ws.close()
+
+
+**WebSocketApp custom masking key code example**
+
+::
+
+  import websocket
+
+  def zero_mask_key(_):
+      return "\x00\x00\x00\x00"
+
+  websocket.enableTrace(True)
+
+  def on_message(wsapp, message):
+      print(message)
+
+  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message, get_mask_key=zero_mask_key)
+  wsapp.run_forever()
+
+Customizing opcode
+--------------------------------
+
+WebSocket frames contain an opcode, which defines whether the frame contains
+text data, binary data, or is a special frame. The different opcode values
+are defined in
+`RFC6455 section 11.8 <https://tools.ietf.org/html/rfc6455#section-11.8>`_.
+Although the text opcode, 0x01, is the most commonly used value, the
+websocket-client library makes it possible to customize which opcode is used.
+
+
+**WebSocket custom opcode code example**
+
+::
+
+  import websocket
+
+  websocket.enableTrace(True)
+
+  ws = websocket.WebSocket()
+  ws.connect("ws://echo.websocket.org")
+  ws.send("Hello, Server", websocket.ABNF.OPCODE_TEXT)
+  print(ws.recv())
+  ws.send("This is a ping", websocket.ABNF.OPCODE_PING)
+  ws.close()
+
+
+**WebSocketApp custom opcode code example**
+
+The WebSocketApp class contains different functions to handle different message opcodes.
+For instance, on_close, on_ping, on_pong, on_cont_message. One drawback of the current
+implementation (as of May 2021) is the lack of binary support for WebSocketApp, as noted
+by `issue #351 <https://github.com/websocket-client/websocket-client/issues/351>`_.
+
+`Work in progress - coming soon`
 
 Real-world Examples
 =========================
@@ -486,6 +666,7 @@ a few of the projects using websocket-client are listed below:
 - `https://github.com/slackapi/python-slack-sdk <https://github.com/slackapi/python-slack-sdk>`_
 - `https://github.com/wee-slack/wee-slack <https://github.com/wee-slack/wee-slack>`_
 - `https://github.com/aluzzardi/wssh/ <https://github.com/aluzzardi/wssh/>`_
+- `https://github.com/llimllib/limbo <https://github.com/llimllib/limbo>`_
 - `https://github.com/miguelgrinberg/python-socketio <https://github.com/miguelgrinberg/python-socketio>`_
 - `https://github.com/invisibleroads/socketIO-client <https://github.com/invisibleroads/socketIO-client>`_
 - `https://github.com/s4w3d0ff/python-poloniex <https://github.com/s4w3d0ff/python-poloniex>`_

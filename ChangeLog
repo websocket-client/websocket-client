@@ -1,6 +1,50 @@
 ChangeLog
 ============
 
+- 1.2.0
+  - Fix #697, #665: Transition from LGPL 2.1 license to Apache 2.0 license
+  - Revert #417 and reimplement SOCKS proxy support with python-socks instead of PySocks (fbcbd43)
+
+- 1.1.1
+  - Fix #377: increase exception verbosity in _app.py callback exception
+  - Fix #717: race condition during connection close
+  - Fix #722: improve handling where credentials include symbols like @
+  - Fix #711: improve handling if ssl is None
+
+- 1.1.0
+  - Set enable_multithread to True by default (beb135a)
+  - Performance improvement in _mask() function (287970e, #433)
+  - Performance improvement in recv_strict() function (60e4711, #255)
+  - Performance improvement by removing numpy-related code (a462d45)
+  - Support uppercase no_proxy, http_proxy, https_proxy env vars (150df4f, #700)
+  - Add sslopt 'server_hostname' support (#698)
+  - Replace deprecated ssl.PROTOCOL_SSLv23 with ssl.PROTOCOL_TLS (494564f)
+  - Update documentation, README (7c9d604, #704)
+
+- 1.0.1
+ - Fix exception handling bug #694
+
+- 1.0.0
+
+ - Removed Python 2 code, now only Python 3 compatible (d45343b, b7c5733, ff67af8)
+ - Use semver for release versions, unlike breaking release 0.58.0 (#669)
+ - Enhance enableTrace output (13e83b4)
+ - Improve unit tests to over 80% code coverage (1679ab0, a00dd2d, etc.)
+ - Fix old _app.py close status code bug (resulted in on_close() requiring 3 args) (#686)
+ - Replace select import with selectors (#568)
+
+- 0.59.0
+
+ - Last main release to support Python 2
+ - Fix Python 2 urlparse scheme (#332)
+ - Add support for headers with multiple values (#627)
+ - Add debug support for reserved custom status codes (#639)
+ - Allow multiple Set-Cookie: headers (#649)
+ - Simplified cookie sorting (#662)
+ - Add no_proxy support (#671)
+ - Add Host header to HTTP proxy request (#677)
+ - Improve PEP8 style compliance (dc3f5c4)
+
 - 0.58.0
 
  - Fix README typos (#659)

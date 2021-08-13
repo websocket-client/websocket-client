@@ -24,6 +24,8 @@ If you did not get your question answered from these 5 steps, then please open a
 new issue and ask your question! When you explain your problem, please:
 - [ ] [Enable the tracing feature](https://websocket-client.readthedocs.io/en/latest/examples.html#debug-and-logging-options)
 and include the entire debug trace of your connection process in the issue
+- [ ] Provide a [minimum reproducible example](https://stackoverflow.com/help/minimal-reproducible-example)
+program to allow other users to recreate and demonstrate the error
 - [ ] Add an explanation for what you are trying to accomplish. If you can
 provide your code (or example code) in the issue, this helps a lot!
 

@@ -2,12 +2,52 @@
 FAQ
 ###
 
+What about Python 2 support?
+==============================
+
+Release 0.59.0 was the last main release supporting Python 2. All
+future releases 1.X.X and beyond will only support Python 3.
+
 Why is this library slow?
 ===========================
 
 The ``send`` and ``validate_utf8`` methods are very slow in pure Python.
-If you want to get better performance, please install both numpy and wsaccel.
-Note that wsaccel can sometimes cause other issues.
+You can disable UTF8 validation in this library (and receive a
+performance enhancement) with the ``skip_utf8_validation`` parameter.
+If you want to get better performance, install wsaccel. While
+websocket-client does not depend on wsaccel, it will be used if
+available. wsaccel doubles the speed of UTF8 validation and
+offers a very minor 10% performance boost when masking the
+payload data as part of the ``send`` process. Numpy used to
+be a suggested alternative, but
+`issue #687 <https://github.com/websocket-client/websocket-client/issues/687>`_
+found it didn't help.
+
+How to troubleshoot an unclear callback error?
+===================================================
+
+To get more information about a callback error, you can
+specify a custom ``on_error()`` function that raises errors
+to provide more information. Sample code of such a solution
+is shown below, although the example URL provided will probably
+not trigger an error under normal circumstances.
+`Issue #377 <https://github.com/websocket-client/websocket-client/issues/60>`_
+discussed this topic previously.
+
+::
+
+  import websocket
+
+  def on_message(ws, message):
+    print(message)
+
+  def on_error(wsapp, err):
+    print("Got a an error: ", err)
+
+  wsapp = websocket.WebSocketApp("ws://echo.websocket.org/",
+    on_message = on_message,
+    on_error=on_error)
+  wsapp.run_forever()
 
 How to solve the "connection is already closed" error?
 ===========================================================
@@ -34,6 +74,51 @@ the choice of ``import websocket``, see
 `issue #60 <https://github.com/websocket-client/websocket-client/issues/60>`_
 and to read about websocket-client vs. websocket_client, see
 `issue #147 <https://github.com/websocket-client/websocket-client/issues/147>`_
+
+Is WebSocket Compression using the permessage-deflate extension supported?
+============================================================================
+
+No, `RFC 7692 <https://tools.ietf.org/html/rfc7692>`_ for WebSocket Compression
+is unfortunately not supported by the websocket-client library at this time.
+You can view the currently supported WebSocket features in the
+latest autobahn compliance HTML report, found under the
+`compliance folder. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
+If you use the ``Sec-WebSocket-Extensions: permessage-deflate`` header with
+websocket-client, you will probably encounter errors, such as the ones described
+in `issue #314. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
+
+If a connection is re-establish after getting disconnected, does the new connection continue where the previous one dropped off?
+=======================================================================================================================================
+
+The answer to this question depends on how the WebSocket server
+handles new connections. If the server keeps a list of recently dropped
+WebSocket connection sessions, then it may allow you to recontinue your
+WebSocket connection where you left off before disconnecting. However,
+this requires extra effort from the server and may create security issues.
+For these reasons it is rare to encounter such a WebSocket server.
+The server would need to identify each connecting client with
+authentication and keep track of which data was received using a method
+like TCP's SYN/ACK. That's a lot of overhead for a lightweight protocol!
+Both HTTP and WebSocket connections use TCP sockets, and when a new
+WebSocket connection is created, it uses a new TCP socket. Therefore,
+at the TCP layer, the default behavior is to give each WebSocket
+connection a separate TCP socket. This means the re-established connection
+after a disconnect is the same as a completely new connection. Another
+way to think about this is: what should the server do if you create two
+WebSocket connections from the same client to the same server? The easiest
+solution for the server is to treat each connection separately, unless
+the WebSocket uses an authentication method to identify individual clients
+connecting to the server.
+
+What is the difference between recv_frame(), recv_data_frame(), and recv_data()?
+==================================================================================
+
+This is explained in
+`issue #688 <https://github.com/websocket-client/websocket-client/issues/688>`_.
+This information is useful if you do NOT want to use ``run.forever()`` but want
+to have similar functionality. In short, ``recv_data()`` is the
+recommended choice and you will need to manage ping/pong on your own, while
+``run.forever()`` handles ping/pong by default.
 
 How to disable ssl cert verification?
 =======================================

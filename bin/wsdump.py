@@ -1,26 +1,22 @@
-"""
+#!/usr/bin/env python3
 
 """
-
-"""
+wsdump.py
 websocket - WebSocket client library for Python
 
-Copyright (C) 2010 Hiroki Ohtani(liris)
+Copyright 2021 engn33r
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+    http://www.apache.org/licenses/LICENSE-2.0
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
 import argparse
@@ -31,9 +27,7 @@ import time
 import ssl
 import gzip
 import zlib
-
-import six
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 import websocket
 
@@ -100,14 +94,11 @@ def parse_args():
 class RawInput:
 
     def raw_input(self, prompt):
-        if six.PY3:
-            line = input(prompt)
-        else:
-            line = raw_input(prompt)
+        line = input(prompt)
 
-        if ENCODING and ENCODING != "utf-8" and not isinstance(line, six.text_type):
+        if ENCODING and ENCODING != "utf-8" and not isinstance(line, str):
             line = line.decode(ENCODING).encode("utf-8")
-        elif isinstance(line, six.text_type):
+        elif isinstance(line, str):
             line = line.encode("utf-8")
 
         return line
@@ -185,9 +176,9 @@ def main():
         while True:
             opcode, data = recv()
             msg = None
-            if six.PY3 and opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
+            if opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
-            if isinstance(data, bytes) and len(data)>2 and data[:2] == b'\037\213':  # gzip magick
+            if isinstance(data, bytes) and len(data) > 2 and data[:2] == b'\037\213':  # gzip magick
                 try:
                     data = "[gzip] " + str(gzip.decompress(data), "utf-8")
                 except:

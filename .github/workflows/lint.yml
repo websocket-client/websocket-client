@@ -13,8 +13,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.9"
-      - name: Perform flake8 linting
+
+      - name: Perform mandatory flake8 linting
         run: |
-          pip install flake8
+          pip3 install flake8
           flake8 --version
-          flake8 . --exit-zero --statistics
+          flake8 . --builtins=FileNotFoundError --count --select=E11,E12,E22,E25,E26,E3,E71,F63,F7,F82,F84,W3,W503 --show-source --statistics
+
+      - name: Perform optional exit-zero flake8 linting
+        run: |
+          flake8 . --exit-zero --statistics --count

@@ -9,7 +9,9 @@
 websocket-client is a WebSocket client for Python. It provides access
 to low level APIs for WebSockets. websocket-client implements version
 [hybi-13](https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-13)
-of the WebSocket procotol.
+of the WebSocket protocol. This client does not currently support the
+permessage-deflate extension from
+[RFC 7692](https://tools.ietf.org/html/rfc7692).
 
 ## Documentation
 
@@ -22,49 +24,45 @@ Please see the [contribution guidelines](https://github.com/websocket-client/web
 
 ## Installation
 
-First, install the following dependencies:
-- six
-- backports.ssl\_match\_hostname for Python 2.x
-
-You can install the dependencies with the command `pip install six` and
-`pip install backports.ssl_match_hostname`
-
-You can use either `python setup.py install` or `pip install websocket-client`
-to install. This module is tested on Python 2.7 and Python 3.4+. Python 3
-support was first introduced in version 0.14.0, but is a work in progress.
+You can use either `python3 setup.py install` or `pip3 install websocket-client`
+to install. This module is tested on Python 3.6+.
 
 ## Usage Tips
 
 Check out the documentation's FAQ for additional guidelines:
 [https://websocket-client.readthedocs.io/en/latest/faq.html](https://websocket-client.readthedocs.io/en/latest/faq.html)
 
-## License
+Known issues with this library include lack of WebSocket Compression
+support (RFC 7692) and [minimal threading documentation/support](https://websocket-client.readthedocs.io/en/latest/threading.html).
 
-- LGPL version 2.1
+## Performance
 
-### Performance
+The `send` and `validate_utf8` methods can sometimes be bottleneck.
+You can disable UTF8 validation in this library (and receive a
+performance enhancement) with the `skip_utf8_validation` parameter.
+If you want to get better performance, install wsaccel. While
+websocket-client does not depend on wsaccel, it will be used if
+available. wsaccel doubles the speed of UTF8 validation and
+offers a very minor 10% performance boost when masking the
+payload data as part of the `send` process. Numpy used to
+be a suggested performance enhancement alternative, but
+[issue #687](https://github.com/websocket-client/websocket-client/issues/687)
+found it didn't help.
 
-The `send` and `validate_utf8` methods are very slow in pure Python. You can
-disable UTF8 validation in this library (and receive a performance enhancement)
-with the `skip_utf8_validation` parameter. If you want to get better
-performance, please install both numpy and wsaccel, and import them into your
-project files - these other libraries will automatically be used when available.
-Note that wsaccel can sometimes cause other issues.
+## Examples
+
+Many more examples are found in the
+[examples documentation](https://websocket-client.readthedocs.io/en/latest/examples.html).
 
 ### Long-lived Connection
 
 Most real-world WebSockets situations involve longer-lived connections.
 The WebSocketApp `run_forever` loop automatically tries to reconnect when a
 connection is lost, and provides a variety of event-based connection controls.
-The project documentation has
-[additional examples](https://websocket-client.readthedocs.io/en/latest/examples.html)
 
 ```python
 import websocket
-try:
-    import thread
-except ImportError:
-    import _thread as thread
+import _thread
 import time
 
 def on_message(ws, message):
@@ -73,7 +71,7 @@ def on_message(ws, message):
 def on_error(ws, error):
     print(error)
 
-def on_close(ws):
+def on_close(ws, close_status_code, close_msg):
     print("### closed ###")
 
 def on_open(ws):
@@ -84,15 +82,15 @@ def on_open(ws):
         time.sleep(1)
         ws.close()
         print("thread terminating...")
-    thread.start_new_thread(run, ())
+    _thread.start_new_thread(run, ())
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
     ws = websocket.WebSocketApp("ws://echo.websocket.org/",
-                              on_open = on_open,
-                              on_message = on_message,
-                              on_error = on_error,
-                              on_close = on_close)
+                              on_open=on_open,
+                              on_message=on_message,
+                              on_error=on_error,
+                              on_close=on_close)
 
     ws.run_forever()
 ```
@@ -102,8 +100,6 @@ if __name__ == "__main__":
 This is if you want to communicate a short message and disconnect
 immediately when done. For example, if you want to confirm that a WebSocket
 server is running and responds properly to a specific request.
-The project documentation has
-[additional examples](https://websocket-client.readthedocs.io/en/latest/examples.html)
 
 ```python
 from websocket import create_connection
