@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest]
 
     steps:
       - name: Check out source repository
@@ -21,7 +21,7 @@ jobs:
       - name: Run local websockets echo server on port 8765 (code is for Python 3.7+)
         run: |
           pip3 install -U websockets asyncio
-          python3 websocket/tests/echo-server.py
+          python3 websocket/tests/echo-server.py &
       - name: Build websocket-client & run tests
         run: |
           pip3 install -U pip setuptools wheel readme_renderer twine pytest python-socks
