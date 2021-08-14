@@ -338,7 +338,7 @@ class WebSocketTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testWebSocket(self):
-        s = ws.create_connection("ws://127.0.0.1:" + str(LOCAL_WS_SERVER_PORT))
+        s = ws.create_connection("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT)
         self.assertNotEqual(s, None)
         s.send("Hello, World")
         result = s.next()
@@ -353,7 +353,7 @@ class WebSocketTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testPingPong(self):
-        s = ws.create_connection("ws://127.0.0.1:" + str(LOCAL_WS_SERVER_PORT))
+        s = ws.create_connection("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT)
         self.assertNotEqual(s, None)
         s.ping("Hello")
         s.pong("Hi")
@@ -380,7 +380,7 @@ class WebSocketTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testWebSocketWithCustomHeader(self):
-        s = ws.create_connection("ws://127.0.0.1:" + str(LOCAL_WS_SERVER_PORT),
+        s = ws.create_connection("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT,
                                  headers={"User-Agent": "PythonWebsocketClient"})
         self.assertNotEqual(s, None)
         s.send("Hello, World")
@@ -391,7 +391,7 @@ class WebSocketTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testAfterClose(self):
-        s = ws.create_connection("ws://127.0.0.1:" + str(LOCAL_WS_SERVER_PORT))
+        s = ws.create_connection("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT)
         self.assertNotEqual(s, None)
         s.close()
         self.assertRaises(ws.WebSocketConnectionClosedException, s.send, "Hello")
@@ -402,7 +402,7 @@ class SockOptTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testSockOpt(self):
         sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
-        s = ws.create_connection("ws://127.0.0.1:" + str(LOCAL_WS_SERVER_PORT), sockopt=sockopt)
+        s = ws.create_connection("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT, sockopt=sockopt)
         self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
         s.close()
 

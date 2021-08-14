@@ -74,7 +74,7 @@ class WebSocketAppTest(unittest.TestCase):
             """
             WebSocketAppTest.keep_running_close = self.keep_running
 
-        app = ws.WebSocketApp('ws://127.0.0.1:' + str(LOCAL_WS_SERVER_PORT), on_open=on_open, on_close=on_close, on_message=on_message)
+        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_close=on_close, on_message=on_message)
         app.run_forever()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")

@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.9"
-      - name: Run local websockets echo server on port 8765
+      - name: Run local websockets echo server on port ${{ env.LOCAL_WS_SERVER_PORT }}
         run: |
           pip3 install -U websockets asyncio
           python3 websocket/tests/echo-server.py &
