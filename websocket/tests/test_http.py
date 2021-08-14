@@ -23,23 +23,22 @@ import os
 import os.path
 import websocket as ws
 from websocket._http import proxy_info, read_headers, _start_proxied_socket, _tunnel, _get_addrinfo_list, connect
-import sys
 import unittest
 import ssl
 import websocket
 import socket
 
 try:
-    from python_socks.sync import Proxy
-    from python_socks._errors import *
+    from python_socks._errors import ProxyError, ProxyTimeoutError, ProxyConnectionError
 except:
     from websocket._http import ProxyError, ProxyTimeoutError, ProxyConnectionError
 
-sys.path[0:0] = [""]
-
-# Skip test to access the internet.
+# Skip test to access the internet unless TEST_WITH_INTERNET == 1
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
 TEST_WITH_PROXY = os.environ.get('TEST_WITH_PROXY', '0') == '1'
+# Skip tests relying on local websockets server unless LOCAL_WS_SERVER_PORT != -1
+LOCAL_WS_SERVER_PORT = os.environ.get('LOCAL_WS_SERVER_PORT', '-1')
+TEST_WITH_LOCAL_SERVER = LOCAL_WS_SERVER_PORT != '-1'
 
 
 class SockMock(object):
@@ -123,9 +122,10 @@ class HttpTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     @unittest.skipUnless(TEST_WITH_PROXY, "This test requires a HTTP proxy to be running on port 8899")
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testProxyConnect(self):
         ws = websocket.WebSocket()
-        ws.connect("ws://127.0.0.1:8765", http_proxy_host="127.0.0.1", http_proxy_port="8899", proxy_type="http")
+        ws.connect("ws://127.0.0.1:" + str(LOCAL_WS_SERVER_PORT), http_proxy_host="127.0.0.1", http_proxy_port="8899", proxy_type="http")
         ws.send("Hello, Server")
         server_response = ws.recv()
         self.assertEqual(server_response, "Hello, Server")

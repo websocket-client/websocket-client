@@ -27,6 +27,9 @@ Please see the [contribution guidelines](https://github.com/websocket-client/web
 You can use either `python3 setup.py install` or `pip3 install websocket-client`
 to install. This module is tested on Python 3.6+.
 
+If you want to use the proxying feature of websocket-client, you
+should additionally install python-socks with `pip3 install python-socks`.
+
 ## Usage Tips
 
 Check out the documentation's FAQ for additional guidelines:

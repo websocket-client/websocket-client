@@ -30,6 +30,7 @@ jobs:
           coverage report
         env:
           TEST_WITH_INTERNET: 1
+          LOCAL_WS_SERVER_PORT: 8765
       - name: Run SSL test with extra environment variable and create report
         run: |
           python3 -c "import ssl; print(ssl.get_default_verify_paths().capath)"
@@ -37,6 +38,7 @@ jobs:
           coverage xml
         env:
           TEST_WITH_INTERNET: 1
+          LOCAL_WS_SERVER_PORT: 8765
           WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs"
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v1.2.1

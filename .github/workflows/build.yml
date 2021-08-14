@@ -31,3 +31,4 @@ jobs:
           twine check dist/*
         env:
           TEST_WITH_INTERNET: 1
+          LOCAL_WS_SERVER_PORT: 8765

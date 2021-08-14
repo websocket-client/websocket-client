@@ -19,12 +19,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os
 import websocket as ws
 from websocket._abnf import *
-import sys
 import unittest
-sys.path[0:0] = [""]
 
 
 class ABNFTest(unittest.TestCase):
