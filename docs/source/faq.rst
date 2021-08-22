@@ -175,6 +175,21 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
   ws = websocket.WebSocket(sslopt={"check_hostname": False})
   ws.connect("wss://echo.websocket.org")
 
+
+What else can I do with sslopts?
+============================================================================
+
+The ``sslopt`` parameter is a dictionary to which the following keys can be assigned:
+
+* ``certfile``, ``keyfile``, ``password`` (see `SSLContext.load_cert_chain <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.load_cert_chain>`_)
+* ``ecdh_curve`` (see `SSLContext.set_ecdh_curve <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.set_ecdh_curve>`_)
+* ``ciphers`` (see `SSLContext.set_ciphers <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.set_ciphers>`_)
+* ``cert_reqs`` (see `SSLContext.verify_mode <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.verify_mode>`_)
+* ``ssl_version`` (see `SSLContext.protocol <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.protocol>`_)
+* ``ca_certs``, ``ca_cert_path`` (see `SSLContext.load_verify_locations <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.load_verify_locations>`_)
+* ``check_hostname`` (see `SSLContext.check_hostname <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.check_hostname>`_)
+* ``server_hostname``, ``do_handshake_on_connect``, ``suppress_ragged_eofs`` (see `SSLContext.wrap_socket <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.wrap_socket>`_)
+
 How to enable `SNI <http://en.wikipedia.org/wiki/Server_Name_Indication>`_?
 ============================================================================
 
