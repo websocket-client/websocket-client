@@ -457,7 +457,7 @@ client is notified, via ``on_ping()``.
 
 Further, a ping is transmitted every 60 seconds. If a pong is received, the client
 is notified, via ``on_pong()``. If no pong is received, within 10 seconds,
-``run_forever()`` will exit with an ``WebSocketTimeoutException``.
+``run_forever()`` will exit with a ``WebSocketTimeoutException``.
 
 ::
 

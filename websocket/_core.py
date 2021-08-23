@@ -381,6 +381,8 @@ class WebSocket(object):
         """
         Receive data with operation code.
 
+        If a valid ping message is received, a pong response is sent.
+
         Parameters
         ----------
         control_frame: bool
