@@ -397,12 +397,17 @@ is for a AF_INET (IP address) socket.
                           socket = my_socket)
 
 
-Post-connection features
-==========================
+Post-connection Feature Summary
+-------------------------------
 
-You can see a summary of this library's supported WebSocket features by either
-running the autobahn test suite against this client, or by reviewing a recently
-run autobahn report, available as a .html file in the /compliance directory.
+`Autobahn|TestSuite <https://github.com/crossbario/autobahn-testsuite>`_ is an
+independent automated test suite to verify the compliance of WebSocket implementations.
+
+Running the test suite against this library will produce a summary report of the
+conformant features that have been implemented.
+
+A recently-run autobahn report (available as an .html file) is available in the
+/compliance directory.
 
 Ping/Pong Usage
 --------------------------------
@@ -411,10 +416,15 @@ The WebSocket specification defines
 `ping <https://tools.ietf.org/html/rfc6455#section-5.5.2>`_ and
 `pong <https://tools.ietf.org/html/rfc6455#section-5.5.3>`_
 message opcodes as part of the protocol. These can serve as a way to keep a
-long-lived connection active even if data is not being transmitted. However, if
-a blocking event is happening, there may be some issues with ping/pong. The
-below examples demonstrate how ping and pong can be sent by this library. You
-can get additional debugging information by using
+connection active even if data is not being transmitted.
+
+Pings may be sent in either direction. If the client receives a ping, a pong
+reply will be automatically sent.
+
+However, if a blocking event is happening, there may be some issues with
+ping/pong. Below are examples of how ping and pong can be sent by this library.
+
+You can get additional debugging information by using
 `Wireshark <https://www.wireshark.org/>`_
 to view the ping and pong messages being sent. In order for Wireshark to
 identify the WebSocket protocol properly, it should observe the initial HTTP
@@ -426,7 +436,6 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
 
 This example is best for a quick test where you want to check the effect of a
 ping, or where situations where you want to customize when the ping is sent.
-This type of connection does not automatically respond to a "ping" with a "pong".
 
 ::
 
@@ -437,15 +446,18 @@ This type of connection does not automatically respond to a "ping" with a "pong"
   ws.connect("ws://echo.websocket.org")
   ws.ping()
   ws.ping("This is an optional ping payload")
-  ws.pong()
   ws.close()
 
 **WebSocketApp ping/pong example**
 
 This example, and ``run_forever()`` in general, is better for long-lived connections.
-If a server needs a regular ping to keep the connection alive, this is probably
-the option you will want to use. The ``run_forever()`` function will automatically
-send a "pong" when it receives a "ping", per the specification.
+
+In this example, if a ping is received, and pong is sent as response, and then the
+client is notified, via ``on_ping()``.
+
+Further, a ping is transmitted every 60 seconds. If a pong is received, the client
+is notified, via ``on_pong()``. If no pong is received, within 10 seconds,
+``run_forever()`` will exit with a ``WebSocketTimeoutException``.
 
 ::
 
@@ -455,7 +467,7 @@ send a "pong" when it receives a "ping", per the specification.
       print(message)
 
   def on_ping(wsapp, message):
-      print("Got a ping!")
+      print("Got a ping! A pong reply has already been automatically sent.")
 
   def on_pong(wsapp, message):
       print("Got a pong! No need to respond")
