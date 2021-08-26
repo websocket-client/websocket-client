@@ -45,6 +45,7 @@ setup(
     extras_require={
         "test": ["websockets"],
         "optional": ["python-socks", "wsaccel"],
+        "docs": ["Sphinx >= 3.4", "sphinx_rtd_theme >= 0.5"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
