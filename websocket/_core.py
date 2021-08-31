@@ -314,6 +314,14 @@ class WebSocket(object):
         return length
 
     def send_binary(self, payload):
+        """
+        Send a binary message (OPCODE_BINARY).
+
+        Parameters
+        ----------
+        payload: bytes
+            payload of message to send.
+        """
         return self.send(payload, ABNF.OPCODE_BINARY)
 
     def ping(self, payload=""):
