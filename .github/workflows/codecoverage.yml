@@ -11,7 +11,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }} environment
         uses: actions/setup-python@v2
         with:
-          python-version: "3.9"
+          python-version: "3.10"
       - name: Run local websockets echo server on port ${{ env.LOCAL_WS_SERVER_PORT }}
         run: |
           pip3 install -U websockets asyncio
