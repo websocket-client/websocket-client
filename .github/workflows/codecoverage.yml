@@ -41,4 +41,4 @@ jobs:
           LOCAL_WS_SERVER_PORT: 8765
           WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs"
       - name: Submit code coverage report to Codecov.io
-        uses: codecov/codecov-action@v1.2.1
+        uses: codecov/codecov-action@v2
