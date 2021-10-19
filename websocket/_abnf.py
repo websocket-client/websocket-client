@@ -373,7 +373,7 @@ class frame_buffer(object):
             self.recv_buffer.append(bytes_)
             shortage -= len(bytes_)
 
-        unified = bytes("", 'utf-8').join(self.recv_buffer)
+        unified = b"".join(self.recv_buffer)
 
         if shortage == 0:
             self.recv_buffer = []

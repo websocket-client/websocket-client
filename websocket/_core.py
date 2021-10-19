@@ -444,7 +444,7 @@ class WebSocket(object):
         """
         return self.frame_buffer.recv_frame()
 
-    def send_close(self, status=STATUS_NORMAL, reason=bytes('', encoding='utf-8')):
+    def send_close(self, status=STATUS_NORMAL, reason=b''):
         """
         Send close data to the server.
 
@@ -460,7 +460,7 @@ class WebSocket(object):
         self.connected = False
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status=STATUS_NORMAL, reason=bytes('', encoding='utf-8'), timeout=3):
+    def close(self, status=STATUS_NORMAL, reason=b'', timeout=3):
         """
         Close Websocket object
 
