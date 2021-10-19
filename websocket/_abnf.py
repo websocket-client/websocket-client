@@ -96,7 +96,7 @@ VALID_CLOSE_STATUS = (
 )
 
 
-class ABNF(object):
+class ABNF:
     """
     ABNF frame class.
     See http://tools.ietf.org/html/rfc5234
@@ -268,7 +268,7 @@ class ABNF(object):
         return _mask(array.array("B", mask_key), array.array("B", data))
 
 
-class frame_buffer(object):
+class frame_buffer:
     _HEADER_MASK_INDEX = 5
     _HEADER_LENGTH_INDEX = 6
 
@@ -383,7 +383,7 @@ class frame_buffer(object):
             return unified[:bufsize]
 
 
-class continuous_frame(object):
+class continuous_frame:
 
     def __init__(self, fire_cont_frame, skip_utf8_validation):
         self.fire_cont_frame = fire_cont_frame

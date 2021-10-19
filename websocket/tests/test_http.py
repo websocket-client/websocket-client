@@ -41,7 +41,7 @@ LOCAL_WS_SERVER_PORT = os.environ.get('LOCAL_WS_SERVER_PORT', '-1')
 TEST_WITH_LOCAL_SERVER = LOCAL_WS_SERVER_PORT != '-1'
 
 
-class SockMock(object):
+class SockMock:
     def __init__(self):
         self.data = []
         self.sent = []

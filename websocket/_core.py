@@ -40,7 +40,7 @@ from ._utils import *
 __all__ = ['WebSocket', 'create_connection']
 
 
-class WebSocket(object):
+class WebSocket:
     """
     Low level WebSocket interface.
 

@@ -49,7 +49,7 @@ except:
         pass
 
 
-class proxy_info(object):
+class proxy_info:
 
     def __init__(self, **options):
         self.proxy_host = options.get("http_proxy_host", None)
