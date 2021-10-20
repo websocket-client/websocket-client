@@ -55,7 +55,7 @@ def create_mask_key(_):
     return "abcd"
 
 
-class SockMock(object):
+class SockMock:
     def __init__(self):
         self.data = []
         self.sent = []

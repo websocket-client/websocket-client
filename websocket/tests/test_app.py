@@ -35,7 +35,7 @@ TRACEABLE = True
 
 class WebSocketAppTest(unittest.TestCase):
 
-    class NotSetYet(object):
+    class NotSetYet:
         """ A marker class for signalling that a value hasn't been set yet.
         """
 
