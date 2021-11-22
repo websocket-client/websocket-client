@@ -211,7 +211,7 @@ def _open_socket(addrinfo_list, sockopt, timeout):
 
 
 def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
-    context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_TLS))
+    context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_TLS_CLIENT))
 
     if sslopt.get('cert_reqs', ssl.CERT_NONE) != ssl.CERT_NONE:
         cafile = sslopt.get('ca_certs', None)
