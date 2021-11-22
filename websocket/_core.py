@@ -444,7 +444,7 @@ class WebSocket:
         """
         return self.frame_buffer.recv_frame()
 
-    def send_close(self, status=STATUS_NORMAL, reason=bytes('', encoding='utf-8')):
+    def send_close(self, status=STATUS_NORMAL, reason=b""):
         """
         Send close data to the server.
 
@@ -453,14 +453,14 @@ class WebSocket:
         status: int
             Status code to send. See STATUS_XXX.
         reason: str or bytes
-            The reason to close. This must be string or bytes.
+            The reason to close. This must be string or UTF-8 bytes.
         """
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
         self.connected = False
         self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status=STATUS_NORMAL, reason=bytes('', encoding='utf-8'), timeout=3):
+    def close(self, status=STATUS_NORMAL, reason=b"", timeout=3):
         """
         Close Websocket object
 
@@ -469,7 +469,7 @@ class WebSocket:
         status: int
             Status code to send. See STATUS_XXX.
         reason: bytes
-            The reason to close.
+            The reason to close in UTF-8.
         timeout: int or float
             Timeout until receive a close frame.
             If None, it will wait forever until receive a close frame.
