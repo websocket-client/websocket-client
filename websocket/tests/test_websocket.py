@@ -429,9 +429,8 @@ class HandshakeTest(unittest.TestCase):
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testManualHeaders(self):
-        websock3 = ws.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE,
-                                        "ca_certs": ssl.get_default_verify_paths().capath,
-                                        "ca_cert_path": ssl.get_default_verify_paths().openssl_cafile})
+        websock3 = ws.WebSocket(sslopt={"ca_certs": ssl.get_default_verify_paths().cafile,
+                                        "ca_cert_path": ssl.get_default_verify_paths().capath})
         self.assertRaises(ws._exceptions.WebSocketBadStatusException,
                           websock3.connect, "wss://api.bitfinex.com/ws/2", cookie="chocolate",
                           origin="testing_websockets.com",

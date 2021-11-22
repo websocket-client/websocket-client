@@ -138,7 +138,6 @@ class HttpTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSSLopt(self):
         ssloptions = {
-            "cert_reqs": ssl.CERT_NONE,
             "check_hostname": False,
             "server_hostname": "ServerName",
             "ssl_version": ssl.PROTOCOL_TLS_CLIENT,
