@@ -229,15 +229,15 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
                 sslopt.get('password', None),
             )
 
-    # Python 3.10 switch to PROTOCOL_TLS_CLIENT defaults to "cert_reqs = ssl.CERT_REQUIRED" and "check_hostname = True"
-    # If both disabled, set check_hostname before verify_mode
-    # see https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
-    if sslopt.get('cert_reqs', ssl.CERT_NONE) == ssl.CERT_NONE and not sslopt.get('check_hostname', False):
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-    else:
-        context.check_hostname = sslopt.get('check_hostname', True)
-        context.verify_mode = sslopt.get('cert_reqs', ssl.CERT_REQUIRED)
+        # Python 3.10 switch to PROTOCOL_TLS_CLIENT defaults to "cert_reqs = ssl.CERT_REQUIRED" and "check_hostname = True"
+        # If both disabled, set check_hostname before verify_mode
+        # see https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
+        if sslopt.get('cert_reqs', ssl.CERT_NONE) == ssl.CERT_NONE and not sslopt.get('check_hostname', False):
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+        else:
+            context.check_hostname = sslopt.get('check_hostname', True)
+            context.verify_mode = sslopt.get('cert_reqs', ssl.CERT_REQUIRED)
 
         if 'ciphers' in sslopt:
             context.set_ciphers(sslopt['ciphers'])
