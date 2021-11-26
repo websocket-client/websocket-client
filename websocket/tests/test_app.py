@@ -35,48 +35,6 @@ TRACEABLE = True
 
 class WebSocketAppTest(unittest.TestCase):
 
-    class NotSetYet:
-        """ A marker class for signalling that a value hasn't been set yet.
-        """
-
-    def setUp(self):
-        ws.enableTrace(TRACEABLE)
-
-        WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
-        WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
-        WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
-
-    def tearDown(self):
-        WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
-        WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
-        WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
-
-    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
-    def testKeepRunning(self):
-        """ A WebSocketApp should keep running as long as its self.keep_running
-        is not False (in the boolean context).
-        """
-
-        def on_open(self, *args, **kwargs):
-            """ Set the keep_running flag for later inspection and immediately
-            close the connection.
-            """
-            self.send("hello!")
-            WebSocketAppTest.keep_running_open = self.keep_running
-            self.keep_running = False
-
-        def on_message(wsapp, message):
-            print(message)
-            self.close()
-
-        def on_close(self, *args, **kwargs):
-            """ Set the keep_running flag for the test to use.
-            """
-            WebSocketAppTest.keep_running_close = self.keep_running
-
-        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_close=on_close, on_message=on_message)
-        app.run_forever()
-
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockMaskKey(self):
         """ A WebSocketApp should forward the received mask_key function down
