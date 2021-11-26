@@ -211,33 +211,35 @@ def _open_socket(addrinfo_list, sockopt, timeout):
 
 
 def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
-    context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_TLS_CLIENT))
+    context = sslopt.get('context', None)
+    if not context:
+        context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_TLS_CLIENT))
 
-    if sslopt.get('cert_reqs', ssl.CERT_NONE) != ssl.CERT_NONE:
-        cafile = sslopt.get('ca_certs', None)
-        capath = sslopt.get('ca_cert_path', None)
-        if cafile or capath:
-            context.load_verify_locations(cafile=cafile, capath=capath)
-        elif hasattr(context, 'load_default_certs'):
-            context.load_default_certs(ssl.Purpose.SERVER_AUTH)
-    if sslopt.get('certfile', None):
-        context.load_cert_chain(
-            sslopt['certfile'],
-            sslopt.get('keyfile', None),
-            sslopt.get('password', None),
-        )
-    # see
-    # https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
-    context.verify_mode = sslopt['cert_reqs']
-    if HAVE_CONTEXT_CHECK_HOSTNAME:
-        context.check_hostname = check_hostname
-    if 'ciphers' in sslopt:
-        context.set_ciphers(sslopt['ciphers'])
-    if 'cert_chain' in sslopt:
-        certfile, keyfile, password = sslopt['cert_chain']
-        context.load_cert_chain(certfile, keyfile, password)
-    if 'ecdh_curve' in sslopt:
-        context.set_ecdh_curve(sslopt['ecdh_curve'])
+        if sslopt.get('cert_reqs', ssl.CERT_NONE) != ssl.CERT_NONE:
+            cafile = sslopt.get('ca_certs', None)
+            capath = sslopt.get('ca_cert_path', None)
+            if cafile or capath:
+                context.load_verify_locations(cafile=cafile, capath=capath)
+            elif hasattr(context, 'load_default_certs'):
+                context.load_default_certs(ssl.Purpose.SERVER_AUTH)
+        if sslopt.get('certfile', None):
+            context.load_cert_chain(
+                sslopt['certfile'],
+                sslopt.get('keyfile', None),
+                sslopt.get('password', None),
+            )
+        # see
+        # https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
+        context.verify_mode = sslopt['cert_reqs']
+        if HAVE_CONTEXT_CHECK_HOSTNAME:
+            context.check_hostname = check_hostname
+        if 'ciphers' in sslopt:
+            context.set_ciphers(sslopt['ciphers'])
+        if 'cert_chain' in sslopt:
+            certfile, keyfile, password = sslopt['cert_chain']
+            context.load_cert_chain(certfile, keyfile, password)
+        if 'ecdh_curve' in sslopt:
+            context.set_ecdh_curve(sslopt['ecdh_curve'])
 
     return context.wrap_socket(
         sock,
