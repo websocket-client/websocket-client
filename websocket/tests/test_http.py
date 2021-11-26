@@ -105,10 +105,10 @@ class HttpTest(unittest.TestCase):
         if ws._http.HAVE_PYTHON_SOCKS:
             # Need this check, otherwise case where python_socks is not installed triggers
             # websocket._exceptions.WebSocketException: Python Socks is needed for SOCKS proxying but is not available
-            self.assertRaises(ProxyTimeoutError, _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks4", timeout=1))
-            self.assertRaises(ProxyTimeoutError, _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks4a", timeout=1))
-            self.assertRaises(ProxyTimeoutError, _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks5", timeout=1))
-            self.assertRaises(ProxyTimeoutError, _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks5h", timeout=1))
+            self.assertRaises((ProxyTimeoutError, OSError), _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks4", timeout=1))
+            self.assertRaises((ProxyTimeoutError, OSError), _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks4a", timeout=1))
+            self.assertRaises((ProxyTimeoutError, OSError), _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks5", timeout=1))
+            self.assertRaises((ProxyTimeoutError, OSError), _start_proxied_socket, "wss://example.com", OptsList(), proxy_info(http_proxy_host="example.com", http_proxy_port="8080", proxy_type="socks5h", timeout=1))
             self.assertRaises(ProxyConnectionError, connect, "wss://example.com", OptsList(), proxy_info(http_proxy_host="127.0.0.1", http_proxy_port=9999, proxy_type="socks4", timeout=1), None)
 
         self.assertRaises(TypeError, _get_addrinfo_list, None, 80, True, proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="9999", proxy_type="http"))
