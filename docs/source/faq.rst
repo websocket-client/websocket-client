@@ -198,7 +198,7 @@ For example, if you wanted to load all of the default CA verification certificat
 
     my_context = ssl.create_default_context()
     my_context.load_verify_locations('my_extra_CAs.cer')
-    ws.run_forever(sslopt={'context': ssl_context})
+    ws.run_forever(sslopt={'context': my_context})
 
 Note that when passing in a custom ``context``, all of the other context-related options are ignored. In other words, only the ``server_hostname``, ``do_handshake_on_connect``, and ``suppress_ragged_eofs`` options can be used in conjunction with ``context``.
 
