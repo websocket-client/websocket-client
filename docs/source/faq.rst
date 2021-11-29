@@ -190,7 +190,7 @@ The ``sslopt`` parameter is a dictionary to which the following keys can be assi
 * ``check_hostname`` (see `SSLContext.check_hostname <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.check_hostname>`_)
 * ``server_hostname``, ``do_handshake_on_connect``, ``suppress_ragged_eofs`` (see `SSLContext.wrap_socket <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.wrap_socket>`_)
 
-If any other SSL options are required, they can be used by creating a custom SSLContext from the python SSL library and then passing that in as the value of the ``context`` key. (since v1.1.2)
+If any other SSL options are required, they can be used by creating a custom SSLContext from the python SSL library and then passing that in as the value of the ``context`` key. (since v1.2.2)
 
 For example, if you wanted to load all of the default CA verification certificates, but also add your own additional custom CAs (of which the certs are located in the file "my_extra_CAs.cer"), you could do this:
 
