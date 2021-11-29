@@ -190,6 +190,18 @@ The ``sslopt`` parameter is a dictionary to which the following keys can be assi
 * ``check_hostname`` (see `SSLContext.check_hostname <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.check_hostname>`_)
 * ``server_hostname``, ``do_handshake_on_connect``, ``suppress_ragged_eofs`` (see `SSLContext.wrap_socket <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.wrap_socket>`_)
 
+If any other SSL options are required, they can be used by creating a custom SSLContext from the python SSL library and then passing that in as the value of the ``context`` key. (since v1.1.2)
+
+For example, if you wanted to load all of the default CA verification certificates, but also add your own additional custom CAs (of which the certs are located in the file "my_extra_CAs.cer"), you could do this:
+
+::
+
+    my_context = ssl.create_default_context()
+    my_context.load_verify_locations('my_extra_CAs.cer')
+    ws.run_forever(sslopt={'context': ssl_context})
+
+Note that when passing in a custom ``context``, all of the other context-related options are ignored. In other words, only the ``server_hostname``, ``do_handshake_on_connect``, and ``suppress_ragged_eofs`` options can be used in conjunction with ``context``.
+
 How to enable `SNI <http://en.wikipedia.org/wiki/Server_Name_Indication>`_?
 ============================================================================
 
