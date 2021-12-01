@@ -28,7 +28,6 @@ jobs:
           pytest websocket/tests -v -rP
           python3 setup.py sdist
           twine check dist/*
-          wsdump -h
         env:
           TEST_WITH_INTERNET: 1
           LOCAL_WS_SERVER_PORT: 8765
