@@ -70,7 +70,7 @@ setup(
     keywords='websockets client',
     entry_points={
         'console_scripts': [
-            'wsdump=websocket.commands.wsdump:main',
+            'wsdump=websocket._wsdump:main',
         ],
     },
     install_requires=install_requires,
