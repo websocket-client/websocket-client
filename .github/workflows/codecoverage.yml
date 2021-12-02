@@ -24,7 +24,7 @@ jobs:
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
           coverage report
       - name: Confirm that wsdump script works and doesn't result in an error
-        run: /opt/hostedtoolcache/Python/3.10.0/x64/bin/wsdump -h
+        run: wsdump.py -h
       - name: Install wsaccel and python-socks, then run all test cases for coverage collection
         run: |
           pip3 install wsaccel python-socks
