@@ -452,11 +452,11 @@ ping, or where situations where you want to customize when the ping is sent.
 
 This example, and ``run_forever()`` in general, is better for long-lived connections.
 
-In this example, if a ping is received, and pong is sent as response, and then the
-client is notified, via ``on_ping()``.
+In this example, if a ping is received and a pong is sent in response, then the
+client is notified via ``on_ping()``.
 
-Further, a ping is transmitted every 60 seconds. If a pong is received, the client
-is notified, via ``on_pong()``. If no pong is received, within 10 seconds,
+Further, a ping is transmitted every 60 seconds. If a pong is received, then the client
+is notified via ``on_pong()``. If no pong is received within 10 seconds, then
 ``run_forever()`` will exit with a ``WebSocketTimeoutException``.
 
 ::
