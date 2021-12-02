@@ -671,7 +671,6 @@ complex use cases for this library. A list of 600+ dependent projects is found
 `on libraries.io <https://libraries.io/pypi/websocket-client/dependents>`_, and
 a few of the projects using websocket-client are listed below:
 
-- `https://github.com/docker/compose <https://github.com/docker/compose>`_
 - `https://github.com/apache/airflow <https://github.com/apache/airflow>`_
 - `https://github.com/docker/docker-py <https://github.com/docker/docker-py>`_
 - `https://github.com/scrapinghub/slackbot <https://github.com/scrapinghub/slackbot>`_
