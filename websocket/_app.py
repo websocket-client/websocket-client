@@ -37,21 +37,39 @@ __all__ = ["WebSocketApp"]
 class Dispatcher:
     """
     Dispatcher
-    Note: read() removed along with keep_running variable
     """
     def __init__(self, app, ping_timeout):
         self.app = app
         self.ping_timeout = ping_timeout
+
+    def read(self, sock, read_callback, check_callback):
+        while self.app.keep_running:
+            sel = selectors.DefaultSelector()
+            sel.register(self.app.sock.sock, selectors.EVENT_READ)
+
+            r = sel.select(self.ping_timeout)
+            if r:
+                if not read_callback():
+                    break
+            check_callback()
+            sel.close()
 
 
 class SSLDispatcher:
     """
     SSLDispatcher
-    Note: read() removed along with keep_running variable
     """
     def __init__(self, app, ping_timeout):
         self.app = app
         self.ping_timeout = ping_timeout
+
+    def read(self, sock, read_callback, check_callback):
+        while self.app.keep_running:
+            r = self.select()
+            if r:
+                if not read_callback():
+                    break
+            check_callback()
 
     def select(self):
         sock = self.app.sock.sock
@@ -77,7 +95,7 @@ class WebSocketApp:
                  on_open=None, on_message=None, on_error=None,
                  on_close=None, on_ping=None, on_pong=None,
                  on_cont_message=None,
-                 get_mask_key=None, cookie=None,
+                 keep_running=True, get_mask_key=None, cookie=None,
                  subprotocols=None,
                  on_data=None):
         """
@@ -126,6 +144,8 @@ class WebSocketApp:
             The 2nd argument is utf-8 string which we get from the server.
             The 3rd argument is data type. ABNF.OPCODE_TEXT or ABNF.OPCODE_BINARY will be came.
             The 4th argument is continue flag. If 0, the data continue
+        keep_running: bool
+            This parameter is obsolete and ignored.
         get_mask_key: function
             A callable function to get new mask keys, see the
             WebSocket.set_mask_key's docstring for more information.
@@ -146,6 +166,7 @@ class WebSocketApp:
         self.on_ping = on_ping
         self.on_pong = on_pong
         self.on_cont_message = on_cont_message
+        self.keep_running = False
         self.get_mask_key = get_mask_key
         self.sock = None
         self.last_ping_tm = 0
@@ -173,6 +194,7 @@ class WebSocketApp:
         """
         Close websocket connection.
         """
+        self.keep_running = False
         if self.sock:
             self.sock.close(**kwargs)
             self.sock = None
@@ -252,6 +274,7 @@ class WebSocketApp:
         if self.sock:
             raise WebSocketException("socket is already opened")
         thread = None
+        self.keep_running = True
         self.last_ping_tm = 0
         self.last_pong_tm = 0
 
@@ -269,6 +292,7 @@ class WebSocketApp:
             if thread and thread.is_alive():
                 event.set()
                 thread.join()
+            self.keep_running = False
             if self.sock:
                 self.sock.close()
             close_status_code, close_reason = self._get_close_args(
@@ -305,6 +329,9 @@ class WebSocketApp:
                 thread.start()
 
             def read():
+                if not self.keep_running:
+                    return teardown()
+
                 op_code, frame = self.sock.recv_data_frame(True)
                 if op_code == ABNF.OPCODE_CLOSE:
                     return teardown(frame)
