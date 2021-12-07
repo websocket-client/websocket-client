@@ -1,6 +1,17 @@
 ChangeLog
 ============
 
+- 1.2.2
+  - Migrate wsdump script in setup.py from scripts to newer entry_points (#763)
+  - Add support for ssl.SSLContext for arbitrary SSL parameters (#762)
+  - Remove keep_running variable (#752)
+  - Remove HAVE_CONTEXT_CHECK_HOSTNAME variable (dac1692)
+  - Replace deprecated ssl.PROTOCOL_TLS with ssl.PROTOCOL_TLS_CLIENT (#760)
+  - Simplify code and improve Python 3 support (#751, #750, #746)
+  - Fill default license template fields (#748)
+  - Update CI tests
+  - Improve documentation (#732, #733, #734, #737, #766, #768)
+
 - 1.2.1
   - Fix python-socks dependency issue mentioned in #728
   - Replace echo.websocket.org with a local websockets echo server for unit tests (4951de2)
