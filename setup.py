@@ -22,7 +22,7 @@ limitations under the License.
 """
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import pkg_resources
 
 VERSION = "1.2.1"
@@ -68,9 +68,13 @@ setup(
         'Source': 'https://github.com/websocket-client/websocket-client/',
     },
     keywords='websockets client',
-    scripts=["bin/wsdump.py"],
+    entry_points={
+        'console_scripts': [
+            'wsdump=websocket._wsdump:main',
+        ],
+    },
     install_requires=install_requires,
-    packages=["websocket", "websocket.tests"],
+    packages=find_packages(),
     package_data={
         'websocket.tests': ['data/*.txt']
     },

@@ -1,7 +1,7 @@
 [run]
 branch = True
 source = websocket-client
-omit = websocket/tests/*
+omit = websocket/tests/*,websocket/_wsdump.py
 
 [report]
 exclude_lines =
