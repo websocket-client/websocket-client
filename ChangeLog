@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 1.2.3
+  - Fix broken run_forever() functionality (#769)
+
 - 1.2.2
   - Migrate wsdump script in setup.py from scripts to newer entry_points (#763)
   - Add support for ssl.SSLContext for arbitrary SSL parameters (#762)
