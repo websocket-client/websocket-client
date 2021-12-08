@@ -668,7 +668,7 @@ Dispatching Multiple WebSocketApps
 
 You can use an asynchronous dispatcher such as `rel <https://pypi.org/project/rel/>`_ to run multiple WebSocketApps in the same application without resorting to threads.
 
-**WebSocketApp asynchronous dispatcher example**
+**WebSocketApp asynchronous dispatcher code example**
 
 ::
 
