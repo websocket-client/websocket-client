@@ -663,6 +663,24 @@ by `issue #351 <https://github.com/websocket-client/websocket-client/issues/351>
 
 `Work in progress - coming soon`
 
+Dispatching Multiple WebSocketApps
+==================================
+
+You can use an asynchronous dispatcher such as `rel <https://pypi.org/project/rel/>`_ to run multiple WebSocketApps in the same application without resorting to threads.
+
+::
+
+  import websocket, rel
+
+  addr = "wss://api.gemini.com/v1/marketdata/%s"
+
+  rel.safe_read()
+  for symbol in ["BTCUSD", "ETHUSD", "ETHBTC"]:
+    ws = websocket.WebSocketApp(addr % (symbol,), on_message=lambda w, m : print(m))
+    ws.run_forever(dispatcher=rel)
+  rel.signal(2, rel.abort)  # Keyboard Interrupt
+  rel.dispatch()
+
 Real-world Examples
 =========================
 
