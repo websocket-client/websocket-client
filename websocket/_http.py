@@ -189,9 +189,7 @@ def _open_socket(addrinfo_list, sockopt, timeout):
                     eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED)
                 except:
                     eConnRefused = (errno.ECONNREFUSED, )
-                if error.errno == errno.EINTR:
-                    continue
-                elif error.errno in eConnRefused:
+                if error.errno in eConnRefused:
                     err = error
                     continue
                 else:
