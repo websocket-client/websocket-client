@@ -77,6 +77,26 @@ class WebSocketAppTest(unittest.TestCase):
         app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_close=on_close, on_message=on_message)
         app.run_forever()
 
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
+    def testRunForeverDispatcher(self):
+        """ A WebSocketApp should keep running as long as its self.keep_running
+        is not False (in the boolean context).
+        """
+
+        def on_open(self, *args, **kwargs):
+            """ Send a message, receive, and send one more
+            """
+            self.send("hello!")
+            self.recv()
+            self.send("goodbye!")
+
+        def on_message(wsapp, message):
+            print(message)
+            self.close()
+
+        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_message=on_message)
+        app.run_forever(dispatcher="Dispatcher")
+
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockMaskKey(self):
         """ A WebSocketApp should forward the received mask_key function down
@@ -136,7 +156,7 @@ class WebSocketAppTest(unittest.TestCase):
     def testOpcodeBinary(self):
         """ Test WebSocketApp binary opcode
         """
-
+        # The lack of wss:// in the URL below is on purpose
         app = ws.WebSocketApp('streaming.vn.teslamotors.com/streaming/')
         app.run_forever(ping_interval=2, ping_timeout=1, ping_payload="Ping payload")
 

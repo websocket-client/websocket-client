@@ -383,6 +383,7 @@ class WebSocketTest(unittest.TestCase):
         s = ws.create_connection("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT,
                                  headers={"User-Agent": "PythonWebsocketClient"})
         self.assertNotEqual(s, None)
+        self.assertEqual(s.getsubprotocol(), None)
         s.send("Hello, World")
         result = s.recv()
         self.assertEqual(result, "Hello, World")
