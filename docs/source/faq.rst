@@ -62,7 +62,8 @@ connection is closed when you try to use it. In order to properly carry out
 further functions with your WebSocket connection after the connection has
 closed, you will need to reconnect the WebSocket, using ``connect()`` or
 ``create_connection()`` (from the _core.py file). The WebSocketApp ``run_forever()``
-function automatically tries to reconnect when the connection is lost.
+function automatically tries to reconnect when the connection is lost
+if a dispatcher parameter is provided to the ``run_forever()`` function.
 
 What's going on with the naming of this library?
 ==================================================
