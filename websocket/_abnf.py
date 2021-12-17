@@ -174,7 +174,7 @@ class ABNF:
 
             code = 256 * self.data[0] + self.data[1]
             if not self._is_valid_close_status(code):
-                raise WebSocketProtocolException("Invalid close opcode.")
+                raise WebSocketProtocolException("Invalid close opcode %r", code)
 
     @staticmethod
     def _is_valid_close_status(code):
