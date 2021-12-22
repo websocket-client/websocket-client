@@ -79,6 +79,8 @@ STATUS_POLICY_VIOLATION = 1008
 STATUS_MESSAGE_TOO_BIG = 1009
 STATUS_INVALID_EXTENSION = 1010
 STATUS_UNEXPECTED_CONDITION = 1011
+STATUS_SERVICE_RESTART = 1012
+STATUS_TRY_AGAIN_LATER = 1013
 STATUS_BAD_GATEWAY = 1014
 STATUS_TLS_HANDSHAKE_ERROR = 1015
 
@@ -92,6 +94,8 @@ VALID_CLOSE_STATUS = (
     STATUS_MESSAGE_TOO_BIG,
     STATUS_INVALID_EXTENSION,
     STATUS_UNEXPECTED_CONDITION,
+    STATUS_SERVICE_RESTART,
+    STATUS_TRY_AGAIN_LATER,
     STATUS_BAD_GATEWAY,
 )
 
@@ -174,7 +178,7 @@ class ABNF:
 
             code = 256 * self.data[0] + self.data[1]
             if not self._is_valid_close_status(code):
-                raise WebSocketProtocolException("Invalid close opcode.")
+                raise WebSocketProtocolException("Invalid close opcode %r", code)
 
     @staticmethod
     def _is_valid_close_status(code):
