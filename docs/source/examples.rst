@@ -94,6 +94,33 @@ The output you will see will look something like this:
 	send: b'\x88\x82 \xc3\x85E#+'
 
 
+Using websocket-client with "with" statements
+==============================================
+
+It is possible to use "with" statements, as outlined in PEP 343, to help
+manage the closing of WebSocket connections after a message is received.
+Below is one example of this being done with a short-lived connection:
+
+**Short-lived WebSocket using "with" statement**
+
+::
+
+  from websocket import create_connection
+  from contextlib import contextmanager
+
+  @contextmanager
+  def closing(thing):
+      try:
+          yield thing
+      finally:
+          thing.close()
+
+  with closing(create_connection("wss://stream.meetup.com/2/rsvps")) as conn:
+      print(conn.recv())
+
+  # Connection is now closed
+
+
 Connection Options
 ===================
 
