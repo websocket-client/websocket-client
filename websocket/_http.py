@@ -186,9 +186,9 @@ def _open_socket(addrinfo_list, sockopt, timeout):
             except socket.error as error:
                 error.remote_ip = str(address[0])
                 try:
-                    eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED)
+                    eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED, errno.ENETUNREACH)
                 except:
-                    eConnRefused = (errno.ECONNREFUSED, )
+                    eConnRefused = (errno.ECONNREFUSED, errno.ENETUNREACH)
                 if error.errno in eConnRefused:
                     err = error
                     continue
