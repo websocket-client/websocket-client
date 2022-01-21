@@ -114,7 +114,8 @@ server is running and responds properly to a specific request.
 ```python
 from websocket import create_connection
 
-ws = create_connection("ws://echo.websocket.org/")
+ws = create_connection("ws://echo.websocket.events/")
+print(ws.recv())
 print("Sending 'Hello, World'...")
 ws.send("Hello, World")
 print("Sent")
