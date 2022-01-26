@@ -24,8 +24,8 @@ indicates that websocket-client is not compatible with asyncio. The
 which is used in a popular socket-io client, specifically uses websocket-client
 as a dependency only in places where asyncio is not used. If asyncio is an
 important part of your project, you might consider using another websockets library.
-However, some simple use cases, such as asyncronously receiving data, may be
-a place to use asyncio. Here is one snippet showing how asyncronous listening
+However, some simple use cases, such as asynchronously receiving data, may be
+a place to use asyncio. Here is one snippet showing how asynchronous listening
 might be implemented.
 
 ::
