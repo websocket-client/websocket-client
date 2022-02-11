@@ -106,7 +106,7 @@ class WebSocketAppTest(unittest.TestCase):
         def my_mask_key_func():
             return "\x00\x00\x00\x00"
 
-        app = ws.WebSocketApp('wss://stream.meetup.com/2/rsvps', get_mask_key=my_mask_key_func)
+        app = ws.WebSocketApp('wss://api-pub.bitfinex.com/ws/1', get_mask_key=my_mask_key_func)
 
         # if numpy is installed, this assertion fail
         # Note: We can't use 'is' for comparing the functions directly, need to use 'id'.

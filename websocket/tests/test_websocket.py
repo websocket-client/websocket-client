@@ -201,14 +201,16 @@ class WebSocketTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testIter(self):
         count = 2
-        for _ in ws.create_connection('wss://stream.meetup.com/2/rsvps'):
+        s = ws.create_connection('wss://api.bitfinex.com/ws/2')
+        s.send('{"event": "subscribe", "channel": "ticker"}')
+        for _ in s:
             count -= 1
             if count == 0:
                 break
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testNext(self):
-        sock = ws.create_connection('wss://stream.meetup.com/2/rsvps')
+        sock = ws.create_connection('wss://api.bitfinex.com/ws/2')
         self.assertEqual(str, type(next(sock)))
 
     def testInternalRecvStrict(self):
