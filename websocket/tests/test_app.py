@@ -128,7 +128,6 @@ class WebSocketAppTest(unittest.TestCase):
         self.assertEqual(teardown, True)
         self.assertTrue(len(WebSocketAppTest.on_error_data) > 0)
 
-
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockMaskKey(self):
         """ A WebSocketApp should forward the received mask_key function down
