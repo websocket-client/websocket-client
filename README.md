@@ -71,6 +71,8 @@ Most real-world WebSockets situations involve longer-lived connections.
 The WebSocketApp `run_forever` loop will automatically try to reconnect when a
 connection is lost if it is provided with a dispatcher parameter,
 and provides a variety of event-based connection controls.
+This example uses [rel](https://github.com/bubbleboy14/registeredeventlistener)
+for the dispatcher to provide automatic reconnection.
 
 ```python
 import websocket
