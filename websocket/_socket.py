@@ -92,9 +92,7 @@ def recv(sock, bufsize):
             pass
         except socket.error as exc:
             error_code = extract_error_code(exc)
-            if error_code is None:
-                raise
-            if error_code != errno.EAGAIN or error_code != errno.EWOULDBLOCK:
+            if error_code != errno.EAGAIN and error_code != errno.EWOULDBLOCK:
                 raise
 
         sel = selectors.DefaultSelector()
@@ -111,6 +109,8 @@ def recv(sock, bufsize):
             bytes_ = sock.recv(bufsize)
         else:
             bytes_ = _recv()
+    except TimeoutError:
+        raise WebSocketTimeoutException("Connection timed out")
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
