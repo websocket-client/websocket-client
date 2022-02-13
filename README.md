@@ -68,13 +68,19 @@ Many more examples are found in the
 ### Long-lived Connection
 
 Most real-world WebSockets situations involve longer-lived connections.
-The WebSocketApp `run_forever` loop automatically tries to reconnect when a
-connection is lost, and provides a variety of event-based connection controls.
+The WebSocketApp `run_forever` loop will automatically try to reconnect when a
+connection is lost if it is provided with a dispatcher parameter,
+and provides a variety of event-based connection controls.
+This example uses [rel](https://github.com/bubbleboy14/registeredeventlistener)
+for the dispatcher to provide automatic reconnection.
 
 ```python
 import websocket
 import _thread
 import time
+import rel
+
+rel.safe_read()
 
 def on_message(ws, message):
     print(message)
@@ -86,24 +92,19 @@ def on_close(ws, close_status_code, close_msg):
     print("### closed ###")
 
 def on_open(ws):
-    def run(*args):
-        for i in range(3):
-            time.sleep(1)
-            ws.send("Hello %d" % i)
-        time.sleep(1)
-        ws.close()
-        print("thread terminating...")
-    _thread.start_new_thread(run, ())
+    print("Opened connection")
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
-    ws = websocket.WebSocketApp("ws://echo.websocket.org/",
+    ws = websocket.WebSocketApp("wss://api.gemini.com/v1/marketdata/BTCUSD",
                               on_open=on_open,
                               on_message=on_message,
                               on_error=on_error,
                               on_close=on_close)
 
-    ws.run_forever()
+    ws.run_forever(dispatcher=rel)  # Set dispatcher to automatic reconnection
+    rel.signal(2, rel.abort)  # Keyboard Interrupt
+    rel.dispatch()
 ```
 
 ### Short-lived Connection
@@ -114,7 +115,9 @@ server is running and responds properly to a specific request.
 
 ```python
 from websocket import create_connection
-ws = create_connection("ws://echo.websocket.org/")
+
+ws = create_connection("ws://echo.websocket.events/")
+print(ws.recv())
 print("Sending 'Hello, World'...")
 ws.send("Hello, World")
 print("Sent")
@@ -128,11 +131,7 @@ If you want to customize socket options, set sockopt, as seen below:
 
 ```python
 from websocket import create_connection
+
 ws = create_connection("ws://echo.websocket.org/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
 ```
-
-### Acknowledgements
-
-Thanks to @battlemidget and @ralphbean for helping migrate this project to
-Python 3.

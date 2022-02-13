@@ -2,14 +2,13 @@
 Getting Started
 ###############
 
-The quickest way to get started with this library is to use the wsdump.py
-script, found in the
-`bin/ <https://github.com/websocket-client/websocket-client/tree/master/bin>`_
-directory. For an easy example, run the following:
+The quickest way to get started with this library is to use the `_wsdump.py
+script <https://github.com/websocket-client/websocket-client/blob/master/websocket/_wsdump.py>`_.
+For an easy example, run the following:
 
 ::
 
-  python wsdump.py ws://echo.websocket.org/ -t "hello world"
+  python _wsdump.py ws://echo.websocket.events/ -t "hello world"
 
 The above command will provide you with an interactive terminal to communicate
 with the echo.websocket.org server. This server will echo back any message you

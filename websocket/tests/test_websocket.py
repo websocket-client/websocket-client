@@ -8,7 +8,7 @@
 test_websocket.py
 websocket - WebSocket client library for Python
 
-Copyright 2021 engn33r
+Copyright 2022 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -383,6 +383,7 @@ class WebSocketTest(unittest.TestCase):
         s = ws.create_connection("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT,
                                  headers={"User-Agent": "PythonWebsocketClient"})
         self.assertNotEqual(s, None)
+        self.assertEqual(s.getsubprotocol(), None)
         s.send("Hello, World")
         result = s.recv()
         self.assertEqual(result, "Hello, World")
