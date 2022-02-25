@@ -250,14 +250,14 @@ class WebSocket:
                                    options.pop('socket', None))
 
         try:
-            self.handshake_response = handshake(self.sock, *addrs, **options)
+            self.handshake_response = handshake(self.sock, url, *addrs, **options)
             for attempt in range(options.pop('redirect_limit', 3)):
                 if self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES:
                     url = self.handshake_response.headers['location']
                     self.sock.close()
                     self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
                                                options.pop('socket', None))
-                    self.handshake_response = handshake(self.sock, *addrs, **options)
+                    self.handshake_response = handshake(self.sock, url, *addrs, **options)
             self.connected = True
         except:
             if self.sock:
