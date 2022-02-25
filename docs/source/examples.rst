@@ -169,12 +169,16 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
 
 **WebSocket subprotocols example**
 
+Use this to specify STOMP, WAMP, MQTT, or other values of the "Sec-WebSocket-Protocol" header.
+Be aware that websocket-client does not include support for these protocols,
+so your code must handle the data sent over the WebSocket connection.
+
 ::
 
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("wss://ws.kraken.com", subprotocols=["testproto"])
+  ws.connect("wss://ws.kraken.com", subprotocols=["mqtt"])
 
 **WebSocketApp subprotocols example**
 
@@ -186,7 +190,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
       print(message)
 
   wsapp = websocket.WebSocketApp("wss://ws.kraken.com",
-    subprotocols=["testproto"], on_message=on_message)
+    subprotocols=["STOMP"], on_message=on_message)
   wsapp.run_forever()
 
 Suppress Origin Header
@@ -227,6 +231,8 @@ Setting custom header values, other than ``Host``, ``Origin``, ``Cookie``, or
 handshake request is similar to setting common header values. Use the ``header``
 option to provide custom header values in a list or dict.
 For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
+There is no built-in support for "Sec-WebSocket-Extensions" header values as
+defined in RFC 7692.
 
 **WebSocket custom headers example**
 
@@ -320,7 +326,7 @@ the timeout interval (5 seconds in the example below).
   import websocket
 
   def on_error(wsapp, err):
-    print("Got a an error: ", err)
+    print("EXAMPLE error encountered: ", err)
 
   websocket.setdefaulttimeout(5)
   wsapp = websocket.WebSocketApp("ws://nexus-websocket-a.intercom.io",
