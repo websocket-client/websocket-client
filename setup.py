@@ -25,7 +25,7 @@ import sys
 from setuptools import setup, find_packages
 import pkg_resources
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 install_requires = []
 tests_require = []

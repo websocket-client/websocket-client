@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 1.3.1
+  - Fix 10 year old bug and improve dispatcher handling for run_forever (#795)
+  - Fix run_forever to never return None, only return True or False, and add two tests (#788)
+  - Remove Python 3.6 support, EOL in Dec 2021
+
 - 1.3.0
   - BREAKING: Set Origin header to use https:// scheme when wss:// WebSocket URL is passed (#787)
   - Replace deprecated/broken WebSocket URLs with working ones (6ad5197)

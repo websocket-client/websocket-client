@@ -25,3 +25,7 @@ twine upload --repository testpypi dist/*
 # Then pass __token__ as the username and the token value as password
 # https://packaging.python.org/en/latest/tutorials/packaging-projects/#uploading-the-distribution-archives
 twine upload dist/*
+
+# Clean up
+# Delete the build/, dist/, and websocket_client.egg-info/ directories
+rm -r build dist websocket_client.egg-info
