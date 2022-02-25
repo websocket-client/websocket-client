@@ -15,7 +15,13 @@ python3 setup.py sdist bdist_wheel
 twine check dist/*
 
 # Upload to test PyPI first to verify everything
+# The secure approach is to get an API token
+# Then pass __token__ as the username and the token value as password
+# https://packaging.python.org/en/latest/tutorials/packaging-projects/#uploading-the-distribution-archives
 twine upload --repository testpypi dist/*
 
-# Now upload to actual PyPI
+# Now upload to production PyPI
+# The secure approach is to get an API token
+# Then pass __token__ as the username and the token value as password
+# https://packaging.python.org/en/latest/tutorials/packaging-projects/#uploading-the-distribution-archives
 twine upload dist/*

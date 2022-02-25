@@ -97,7 +97,6 @@ def _get_handshake_headers(resource, url, host, port, options):
         else:
             headers.append("Origin: http://%s" % hostport)
 
-
     key = _create_sec_websocket_key()
 
     # Append Sec-WebSocket-Key & Sec-WebSocket-Version if not manually specified
