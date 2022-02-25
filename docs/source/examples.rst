@@ -64,31 +64,31 @@ The output you will see will look something like this:
 ::
 
   --- request header ---
-GET / HTTP/1.1
-Upgrade: websocket
-Host: echo.websocket.events
-Origin: testing_websockets.com
-Sec-WebSocket-Key: GnuCGEiF3OuyRESXiVnsAQ==
-Sec-WebSocket-Version: 13
-Connection: Upgrade
+  GET / HTTP/1.1
+  Upgrade: websocket
+  Host: echo.websocket.events
+  Origin: testing_websockets.com
+  Sec-WebSocket-Key: GnuCGEiF3OuyRESXiVnsAQ==
+  Sec-WebSocket-Version: 13
+  Connection: Upgrade
 
 
------------------------
---- response header ---
-HTTP/1.1 101 Switching Protocols
-Connection: Upgrade
-Upgrade: websocket
-Sec-Websocket-Accept: wvhwrjThsVAyr/V4Hzn5tWMSomI=
-Via: 1.1 vegur
------------------------
-++Sent raw: b'\x81\x8d\xd4\xda9\xee\x9c\xbfU\x82\xbb\xf6\x19\xbd\xb1\xa8O\x8b\xa6'
-++Sent decoded: fin=1 opcode=1 data=b'Hello, Server'
-19
-++Rcv raw: b'\x81*echo.websocket.events sponsored by Lob.com'
-++Rcv decoded: fin=1 opcode=1 data=b'echo.websocket.events sponsored by Lob.com'
-echo.websocket.events sponsored by Lob.com
-++Sent raw: b'\x88\x82\xc9\x8c\x14\x99\xcad'
-++Sent decoded: fin=1 opcode=8 data=b'\x03\xe8'
+  -----------------------
+  --- response header ---
+  HTTP/1.1 101 Switching Protocols
+  Connection: Upgrade
+  Upgrade: websocket
+  Sec-Websocket-Accept: wvhwrjThsVAyr/V4Hzn5tWMSomI=
+  Via: 1.1 vegur
+  -----------------------
+  ++Sent raw: b'\x81\x8d\xd4\xda9\xee\x9c\xbfU\x82\xbb\xf6\x19\xbd\xb1\xa8O\x8b\xa6'
+  ++Sent decoded: fin=1 opcode=1 data=b'Hello, Server'
+  19
+  ++Rcv raw: b'\x81*echo.websocket.events sponsored by Lob.com'
+  ++Rcv decoded: fin=1 opcode=1 data=b'echo.websocket.events sponsored by Lob.com'
+  echo.websocket.events sponsored by Lob.com
+  ++Sent raw: b'\x88\x82\xc9\x8c\x14\x99\xcad'
+  ++Sent decoded: fin=1 opcode=8 data=b'\x03\xe8'
 
 
 Using websocket-client with "with" statements
