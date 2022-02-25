@@ -86,6 +86,20 @@ class SSLDispatcher:
             return r[0][0]
 
 
+class WrappedDispatcher:
+    """
+    WrappedDispatcher
+    """
+    def __init__(self, app, ping_timeout, dispatcher):
+        self.app = app
+        self.ping_timeout = ping_timeout
+        self.dispatcher = dispatcher
+
+    def read(self, sock, read_callback, check_callback):
+        self.dispatcher.read(sock, read_callback)
+        self.ping_timeout and self.dispatcher.timeout(self.ping_timeout, check_callback)
+
+
 class WebSocketApp:
     """
     Higher level of APIs are provided. The interface is like JavaScript WebSocket object.
@@ -317,8 +331,7 @@ class WebSocketApp:
                 http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
                 host=host, origin=origin, suppress_origin=suppress_origin,
                 proxy_type=proxy_type)
-            if not dispatcher:
-                dispatcher = self.create_dispatcher(ping_timeout)
+            dispatcher = self.create_dispatcher(ping_timeout, dispatcher)
 
             self._callback(self.on_open)
 
@@ -377,7 +390,9 @@ class WebSocketApp:
             teardown()
             return not isinstance(e, KeyboardInterrupt)
 
-    def create_dispatcher(self, ping_timeout):
+    def create_dispatcher(self, ping_timeout, dispatcher=None):
+        if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
+            return WrappedDispatcher(self, ping_timeout, dispatcher)
         timeout = ping_timeout or 10
         if self.sock.is_ssl():
             return SSLDispatcher(self, timeout)

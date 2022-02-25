@@ -11,7 +11,7 @@ For an easy example, run the following:
   python _wsdump.py ws://echo.websocket.events/ -t "hello world"
 
 The above command will provide you with an interactive terminal to communicate
-with the echo.websocket.org server. This server will echo back any message you
+with the echo.websocket.events server. This server will echo back any message you
 send it. You can test this WebSocket connection in your browser, without this
 library, by visiting the URL https://websocket.org/echo.html.
 
@@ -31,7 +31,7 @@ using this library without writing any custom code. The output of
   WebSocket Simple Dump Tool
 
   positional arguments:
-    ws_url                websocket url. ex. ws://echo.websocket.org/
+    ws_url                websocket url. ex. ws://echo.websocket.events/
 
   optional arguments:
     -h, --help            show this help message and exit

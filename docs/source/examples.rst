@@ -22,7 +22,7 @@ connection.
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org")
+  ws.connect("ws://echo.websocket.events")
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()
@@ -36,7 +36,7 @@ connection.
   def on_message(wsapp, message):
       print(message)
 
-  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
+  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
   wsapp.run_forever()
 
 Debug and Logging Options
@@ -54,7 +54,7 @@ following example shows how you can verify that the proper Origin header is set.
 
   websocket.enableTrace(True)
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org", origin="testing_websockets.com")
+  ws.connect("ws://echo.websocket.events/", origin="testing_websockets.com")
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()
@@ -66,32 +66,29 @@ The output you will see will look something like this:
   --- request header ---
   GET / HTTP/1.1
   Upgrade: websocket
-	Host: echo.websocket.org
-	Origin: testing123.com
-	Sec-WebSocket-Key: k9kFAUWNAMmf5OEMfTlOEA==
-	Sec-WebSocket-Version: 13
-	Connection: Upgrade
+  Host: echo.websocket.events
+  Origin: testing_websockets.com
+  Sec-WebSocket-Key: GnuCGEiF3OuyRESXiVnsAQ==
+  Sec-WebSocket-Version: 13
+  Connection: Upgrade
 
 
-	-----------------------
-	--- response header ---
-	HTTP/1.1 101 Web Socket Protocol Handshake
-	Access-Control-Allow-Credentials: true
-	Access-Control-Allow-Headers: content-type
-	Access-Control-Allow-Headers: authorization
-	Access-Control-Allow-Headers: x-websocket-extensions
-	Access-Control-Allow-Headers: x-websocket-version
-	Access-Control-Allow-Headers: x-websocket-protocol
-	Access-Control-Allow-Origin: testing123.com
-	Connection: Upgrade
-	Date: Sat, 06 Feb 2021 12:34:56 GMT
-	Sec-WebSocket-Accept: 4hNxSu7OllvQZJ43LGpQTuR8+QA=
-	Server: Kaazing Gateway
-	Upgrade: websocket
-	-----------------------
-	send: b'\x81\x8dS\xfb\xc3a\x1b\x9e\xaf\r<\xd7\xe326\x89\xb5\x04!'
-	Hello, Server
-	send: b'\x88\x82 \xc3\x85E#+'
+  -----------------------
+  --- response header ---
+  HTTP/1.1 101 Switching Protocols
+  Connection: Upgrade
+  Upgrade: websocket
+  Sec-Websocket-Accept: wvhwrjThsVAyr/V4Hzn5tWMSomI=
+  Via: 1.1 vegur
+  -----------------------
+  ++Sent raw: b'\x81\x8d\xd4\xda9\xee\x9c\xbfU\x82\xbb\xf6\x19\xbd\xb1\xa8O\x8b\xa6'
+  ++Sent decoded: fin=1 opcode=1 data=b'Hello, Server'
+  19
+  ++Rcv raw: b'\x81*echo.websocket.events sponsored by Lob.com'
+  ++Rcv decoded: fin=1 opcode=1 data=b'echo.websocket.events sponsored by Lob.com'
+  echo.websocket.events sponsored by Lob.com
+  ++Sent raw: b'\x88\x82\xc9\x8c\x14\x99\xcad'
+  ++Sent decoded: fin=1 opcode=8 data=b'\x03\xe8'
 
 
 Using websocket-client with "with" statements
@@ -108,7 +105,7 @@ Below is one example of this being done with a short-lived connection:
   from contextlib import closing
   from websocket import create_connection
 
-  with closing(create_connection("wss://stream.meetup.com/2/rsvps")) as conn:
+  with closing(create_connection("wss://testnet-explorer.binance.org/ws/block")) as conn:
       print(conn.recv())
 
   # Connection is now closed
@@ -154,8 +151,8 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org", cookie="chocolate",
-    origin="testing_websockets.com", host="echo.websocket.org/websocket-client-test")
+  ws.connect("ws://echo.websocket.events", cookie="chocolate",
+    origin="testing_websockets-client.com", host="echo.websocket.events")
 
 **WebSocketApp common headers example**
 
@@ -166,7 +163,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   def on_message(wsapp, message):
       print(message)
 
-  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
     cookie="chocolate", on_message=on_message)
   wsapp.run_forever(origin="testing_websockets.com", host="127.0.0.1")
 
@@ -207,7 +204,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org", suppress_origin=True)
+  ws.connect("ws://echo.websocket.events", suppress_origin=True)
 
 **WebSocketApp suppress origin example**
 
@@ -218,7 +215,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   def on_message(wsapp, message):
       print(message)
 
-  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
     on_message=on_message)
   wsapp.run_forever(suppress_origin=True)
 
@@ -238,7 +235,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org",
+  ws.connect("ws://echo.websocket.events",
     header={"CustomHeader1":"123", "NewHeader2":"Test"})
 
 **WebSocketApp custom headers example**
@@ -250,7 +247,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   def on_message(wsapp, message):
       print(message)
 
-  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
     header={"CustomHeader1":"123", "NewHeader2":"Test"}, on_message=on_message)
   wsapp.run_forever()
 
@@ -275,7 +272,7 @@ the nitty-gritty connection details yourself.
         print('yay! I got this frame: ', frame)
         return frame
 
-  ws = create_connection("ws://echo.websocket.org/",
+  ws = create_connection("ws://echo.websocket.events/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 
 
@@ -305,7 +302,7 @@ no response is received from the server after 5 seconds.
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org", timeout=5)
+  ws.connect("ws://echo.websocket.events", timeout=5)
   #ws.send("Hello, Server") # Commented out to trigger WebSocketTimeoutException
   print(ws.recv())
   # Program should end with a WebSocketTimeoutException
@@ -357,7 +354,7 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org",
+  ws.connect("ws://echo.websocket.events",
     http_proxy_host="127.0.0.1", http_proxy_port="8080",
     proxy_type="http", http_proxy_auth=("username", "password123"))
   ws.send("Hello, Server")
@@ -371,7 +368,7 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org",
+  ws.connect("ws://echo.websocket.events",
     http_proxy_host="192.168.1.18", http_proxy_port="4444", proxy_type="socks4")
   ws.send("Hello, Server")
   print(ws.recv())
@@ -463,7 +460,7 @@ ping, or where situations where you want to customize when the ping is sent.
 
   websocket.enableTrace(True)
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org")
+  ws.connect("ws://echo.websocket.events")
   ws.ping()
   ws.ping("This is an optional ping payload")
   ws.close()
@@ -492,7 +489,7 @@ is notified via ``on_pong()``. If no pong is received within 10 seconds, then
   def on_pong(wsapp, message):
       print("Got a pong! No need to respond")
 
-  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps",
+  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
     on_message=on_message, on_ping=on_ping, on_pong=on_pong)
   wsapp.run_forever(ping_interval=60, ping_timeout=10, ping_payload="This is an optional ping payload")
 
@@ -518,7 +515,7 @@ status code values between 3000-4999.
   websocket.enableTrace(True)
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org")
+  ws.connect("ws://echo.websocket.events")
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close(websocket.STATUS_PROTOCOL_ERROR)
@@ -538,7 +535,7 @@ status code values between 3000-4999.
       wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
       # Alternatively, use wsapp.close(status=1002)
 
-  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message)
+  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
   wsapp.run_forever(skip_utf8_validation=True)
 
 Receiving Connection Close Status Codes
@@ -624,7 +621,7 @@ the demasking step in your custom project.
 
   ws = websocket.WebSocket()
   ws.set_mask_key(zero_mask_key)
-  ws.connect("ws://echo.websocket.org")
+  ws.connect("ws://echo.websocket.events")
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()
@@ -644,7 +641,7 @@ the demasking step in your custom project.
   def on_message(wsapp, message):
       print(message)
 
-  wsapp = websocket.WebSocketApp("wss://stream.meetup.com/2/rsvps", on_message=on_message, get_mask_key=zero_mask_key)
+  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message, get_mask_key=zero_mask_key)
   wsapp.run_forever()
 
 Customizing opcode
@@ -667,7 +664,7 @@ websocket-client library makes it possible to customize which opcode is used.
   websocket.enableTrace(True)
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.org")
+  ws.connect("ws://echo.websocket.events")
   ws.send("Hello, Server", websocket.ABNF.OPCODE_TEXT)
   print(ws.recv())
   ws.send("This is a ping", websocket.ABNF.OPCODE_PING)

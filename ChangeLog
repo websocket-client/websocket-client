@@ -1,6 +1,14 @@
 ChangeLog
 ============
 
+- 1.3.0
+  - BREAKING: Set Origin header to use https:// scheme when wss:// WebSocket URL is passed (#787)
+  - Replace deprecated/broken WebSocket URLs with working ones (6ad5197)
+  - Add documentation referencing rel for automatic reconnection with run_forever()
+  - Add missing opcodes 1012, 1013 (#771)
+  - Add errno.ENETUNREACH to improve error handling (da1b050)
+  - Minor documentation improvements and typo fixes
+
 - 1.2.3
   - Fix broken run_forever() functionality (#769)
 
