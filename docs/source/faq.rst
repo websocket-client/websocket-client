@@ -44,7 +44,7 @@ discussed this topic previously.
   def on_error(wsapp, err):
     print("Got a an error: ", err)
 
-  wsapp = websocket.WebSocketApp("ws://echo.websocket.org/",
+  wsapp = websocket.WebSocketApp("ws://echo.websocket.events/",
     on_message = on_message,
     on_error=on_error)
   wsapp.run_forever()
@@ -131,7 +131,7 @@ provided for all examples seen below.
 
 ::
 
-  ws = websocket.WebSocketApp("wss://echo.websocket.org")
+  ws = websocket.WebSocketApp("wss://echo.websocket.events")
   ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 
@@ -139,7 +139,7 @@ provided for all examples seen below.
 
 ::
 
-  ws = websocket.create_connection("wss://echo.websocket.org",
+  ws = websocket.create_connection("wss://echo.websocket.events",
     sslopt={"cert_reqs": ssl.CERT_NONE})
 
 **WebSocket example**
@@ -147,7 +147,7 @@ provided for all examples seen below.
 ::
 
   ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
-  ws.connect("wss://echo.websocket.org")
+  ws.connect("wss://echo.websocket.events")
 
 
 How to disable hostname verification?
@@ -159,14 +159,14 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 
 ::
 
-  ws = websocket.WebSocketApp("wss://echo.websocket.org")
+  ws = websocket.WebSocketApp("wss://echo.websocket.events")
   ws.run_forever(sslopt={"check_hostname": False})
 
 **create_connection example**
 
 ::
 
-  ws = websocket.create_connection("wss://echo.websocket.org",
+  ws = websocket.create_connection("wss://echo.websocket.events",
     sslopt={"check_hostname": False})
 
 **WebSocket example**
@@ -174,7 +174,7 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 ::
 
   ws = websocket.WebSocket(sslopt={"check_hostname": False})
-  ws.connect("wss://echo.websocket.org")
+  ws.connect("wss://echo.websocket.events")
 
 
 What else can I do with sslopts?

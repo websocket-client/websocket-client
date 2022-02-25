@@ -132,6 +132,6 @@ If you want to customize socket options, set sockopt, as seen below:
 ```python
 from websocket import create_connection
 
-ws = create_connection("ws://echo.websocket.org/",
+ws = create_connection("ws://echo.websocket.events/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
 ```
