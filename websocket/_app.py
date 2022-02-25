@@ -389,7 +389,7 @@ class WebSocketApp:
             return not isinstance(e, KeyboardInterrupt)
 
     def create_dispatcher(self, ping_timeout, dispatcher=None):
-        if dispatcher:
+        if dispatcher: # If custom dispatcher is set, use WrappedDispatcher
             return WrappedDispatcher(self, ping_timeout, dispatcher)
         timeout = ping_timeout or 10
         if self.sock.is_ssl():
