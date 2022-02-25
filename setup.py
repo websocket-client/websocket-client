@@ -37,7 +37,7 @@ setup(
     license="Apache-2.0",
     url="https://github.com/websocket-client/websocket-client.git",
     download_url='https://github.com/websocket-client/websocket-client/releases',
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     extras_require={
         "test": ["websockets"],
         "optional": ["python-socks", "wsaccel"],
