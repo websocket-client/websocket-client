@@ -272,7 +272,8 @@ class WebSocketApp:
         Returns
         -------
         teardown: bool
-            False if caught KeyboardInterrupt, True if other exception was raised during a loop
+            False if the `WebSocketApp` is closed or caught KeyboardInterrupt,
+            True if any other exception was raised during a loop.
         """
 
         if ping_timeout is not None and ping_timeout <= 0:
@@ -380,6 +381,7 @@ class WebSocketApp:
                 return True
 
             dispatcher.read(self.sock.sock, read, check)
+            return False
         except (Exception, KeyboardInterrupt, SystemExit) as e:
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
