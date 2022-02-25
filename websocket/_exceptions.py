@@ -1,8 +1,4 @@
 """
-Define WebSocket exceptions
-"""
-
-"""
 _exceptions.py
 websocket - WebSocket client library for Python
 

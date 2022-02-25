@@ -1,6 +1,10 @@
-"""
+import errno
+import selectors
+import socket
 
-"""
+from ._exceptions import *
+from ._ssl_compat import *
+from ._utils import *
 
 """
 _socket.py
@@ -20,13 +24,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import errno
-import selectors
-import socket
-
-from ._exceptions import *
-from ._ssl_compat import *
-from ._utils import *
 
 DEFAULT_SOCKET_OPTION = [(socket.SOL_TCP, socket.TCP_NODELAY, 1)]
 if hasattr(socket, "SO_KEEPALIVE"):

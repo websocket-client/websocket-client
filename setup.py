@@ -1,6 +1,6 @@
-"""
-
-"""
+import sys
+import pkg_resources
+from setuptools import setup, find_packages
 
 """
 setup.py
@@ -20,10 +20,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import sys
-
-from setuptools import setup, find_packages
-import pkg_resources
 
 VERSION = "1.3.1"
 

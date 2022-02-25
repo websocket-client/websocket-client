@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 #
+import websocket as ws
+from websocket._abnf import *
+import unittest
+
 """
 test_abnf.py
 websocket - WebSocket client library for Python
@@ -18,10 +22,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import websocket as ws
-from websocket._abnf import *
-import unittest
 
 
 class ABNFTest(unittest.TestCase):

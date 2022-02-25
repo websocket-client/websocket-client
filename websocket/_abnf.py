@@ -1,6 +1,11 @@
-"""
+import array
+import os
+import struct
+import sys
 
-"""
+from ._exceptions import *
+from ._utils import validate_utf8
+from threading import Lock
 
 """
 _abnf.py
@@ -20,14 +25,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import array
-import os
-import struct
-import sys
-
-from ._exceptions import *
-from ._utils import validate_utf8
-from threading import Lock
 
 try:
     # If wsaccel is available, use compiled routines to mask data.

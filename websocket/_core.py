@@ -1,8 +1,17 @@
-"""
-_core.py
-====================================
-WebSocket Python client
-"""
+import socket
+import struct
+import threading
+import time
+
+# websocket modules
+from ._abnf import *
+from ._exceptions import *
+from ._handshake import *
+from ._http import *
+from ._logging import *
+from ._socket import *
+from ._ssl_compat import *
+from ._utils import *
 
 """
 _core.py
@@ -22,20 +31,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import socket
-import struct
-import threading
-import time
-
-# websocket modules
-from ._abnf import *
-from ._exceptions import *
-from ._handshake import *
-from ._http import *
-from ._logging import *
-from ._socket import *
-from ._ssl_compat import *
-from ._utils import *
 
 __all__ = ['WebSocket', 'create_connection']
 

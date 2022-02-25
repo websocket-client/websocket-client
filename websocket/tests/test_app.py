@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 #
+import os
+import os.path
+import threading
+import websocket as ws
+import ssl
+import unittest
+
 """
 test_app.py
 websocket - WebSocket client library for Python
@@ -18,13 +25,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import os
-import os.path
-import threading
-import websocket as ws
-import ssl
-import unittest
 
 # Skip test to access the internet unless TEST_WITH_INTERNET == 1
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 #
+import os
+import unittest
+from websocket._url import get_proxy_info, parse_url, _is_address_in_network, _is_no_proxy_host
+
 """
 test_url.py
 websocket - WebSocket client library for Python
@@ -18,10 +22,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import os
-import unittest
-from websocket._url import get_proxy_info, parse_url, _is_address_in_network, _is_no_proxy_host
 
 
 class UrlTest(unittest.TestCase):
