@@ -147,7 +147,7 @@ class ABNF:
         self.data = data
         self.get_mask_key = os.urandom
 
-    def validate(self, skip_utf8_validation=False):
+    def validate(self, skip_utf8_validation=False) -> None:
         """
         Validate the ABNF frame.
 
@@ -178,10 +178,10 @@ class ABNF:
                 raise WebSocketProtocolException("Invalid close opcode %r", code)
 
     @staticmethod
-    def _is_valid_close_status(code):
+    def _is_valid_close_status(code: int) -> bool:
         return code in VALID_CLOSE_STATUS or (3000 <= code < 5000)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "fin=" + str(self.fin) \
             + " opcode=" + str(self.opcode) \
             + " data=" + str(self.data)
@@ -207,7 +207,7 @@ class ABNF:
         # mask must be set if send data from client
         return ABNF(fin, 0, 0, 0, opcode, 1, data)
 
-    def format(self):
+    def format(self) -> bytes:
         """
         Format this object to string(byte array) to send data to server.
         """
@@ -252,9 +252,9 @@ class ABNF:
 
         Parameters
         ----------
-        mask_key: <type>
-            4 byte string.
-        data: <type>
+        mask_key: bytes or str
+            4 byte mask.
+        data: bytes or str
             data to mask/unmask.
         """
         if data is None:
@@ -287,7 +287,7 @@ class frame_buffer:
         self.length = None
         self.mask = None
 
-    def has_received_header(self):
+    def has_received_header(self) -> bool:
         return self.header is None
 
     def recv_header(self):
@@ -309,7 +309,7 @@ class frame_buffer:
             return False
         return self.header[frame_buffer._HEADER_MASK_INDEX]
 
-    def has_received_length(self):
+    def has_received_length(self) -> bool:
         return self.length is None
 
     def recv_length(self):
@@ -324,7 +324,7 @@ class frame_buffer:
         else:
             self.length = length_bits
 
-    def has_received_mask(self):
+    def has_received_mask(self) -> bool:
         return self.mask is None
 
     def recv_mask(self):
@@ -361,7 +361,7 @@ class frame_buffer:
 
         return frame
 
-    def recv_strict(self, bufsize):
+    def recv_strict(self, bufsize: int) -> bytes:
         shortage = bufsize - sum(map(len, self.recv_buffer))
         while shortage > 0:
             # Limit buffer size that we pass to socket.recv() to avoid
