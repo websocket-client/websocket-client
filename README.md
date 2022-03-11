@@ -80,8 +80,6 @@ import _thread
 import time
 import rel
 
-rel.safe_read()
-
 def on_message(ws, message):
     print(message)
 
