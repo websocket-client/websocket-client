@@ -185,7 +185,6 @@ class WebSocketApp:
         self.last_ping_tm = 0
         self.last_pong_tm = 0
         self.subprotocols = subprotocols
-        
         self.prepared_socket = socket
 
     def send(self, data, opcode=ABNF.OPCODE_TEXT):
