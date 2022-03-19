@@ -107,7 +107,8 @@ class WebSocketApp:
                  on_cont_message=None,
                  keep_running=True, get_mask_key=None, cookie=None,
                  subprotocols=None,
-                 on_data=None):
+                 on_data=None,
+                 socket=None):
         """
         WebSocketApp initialization
 
@@ -163,6 +164,8 @@ class WebSocketApp:
             Cookie value.
         subprotocols: list
             List of available sub protocols. Default is None.
+        socket: socket
+            Pre-initialized stream socket.
         """
         self.url = url
         self.header = header if header is not None else []
@@ -182,6 +185,8 @@ class WebSocketApp:
         self.last_ping_tm = 0
         self.last_pong_tm = 0
         self.subprotocols = subprotocols
+        
+        self.prepared_socket = socket
 
     def send(self, data, opcode=ABNF.OPCODE_TEXT):
         """
@@ -326,7 +331,7 @@ class WebSocketApp:
                 http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
                 http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
                 host=host, origin=origin, suppress_origin=suppress_origin,
-                proxy_type=proxy_type)
+                proxy_type=proxy_type, socket=self.prepared_socket)
             dispatcher = self.create_dispatcher(ping_timeout, dispatcher)
 
             self._callback(self.on_open)
