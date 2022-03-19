@@ -116,10 +116,10 @@ What is the difference between recv_frame(), recv_data_frame(), and recv_data()?
 
 This is explained in
 `issue #688 <https://github.com/websocket-client/websocket-client/issues/688>`_.
-This information is useful if you do NOT want to use ``run.forever()`` but want
+This information is useful if you do NOT want to use ``run_forever()`` but want
 to have similar functionality. In short, ``recv_data()`` is the
 recommended choice and you will need to manage ping/pong on your own, while
-``run.forever()`` handles ping/pong by default.
+``run_forever()`` handles ping/pong by default.
 
 How to disable ssl cert verification?
 =======================================
