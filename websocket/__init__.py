@@ -23,4 +23,4 @@ from ._exceptions import *
 from ._logging import *
 from ._socket import *
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
