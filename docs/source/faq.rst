@@ -88,7 +88,16 @@ If you use the ``Sec-WebSocket-Extensions: permessage-deflate`` header with
 websocket-client, you will probably encounter errors, such as the ones described
 in `issue #314. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
 
-If a connection is re-establish after getting disconnected, does the new connection continue where the previous one dropped off?
+I get the error 'utf8' codec can't decode byte 0x81 in position 0
+============================================================================
+
+This error is caused when you receive a character that is not a UTF-8 character,
+so the UTF-8 decoding fails. You can set `skip_utf8_validation` to false,
+but if this does not work, you can change the encoding to ISO-8859-1 which
+was a workaround suggested in
+[issue 481](https://github.com/websocket-client/websocket-client/issues/481#issuecomment-1112506666).
+
+If a connection is re-established after getting disconnected, does the new connection continue where the previous one dropped off?
 =======================================================================================================================================
 
 The answer to this question depends on how the WebSocket server
