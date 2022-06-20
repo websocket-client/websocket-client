@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 1.3.3
+  - Fix unclosed socket error (#826)
+  - Update header dict access (#818)
+  - Add utf8 workaround to docs (fc9ee9f)
+
 - 1.3.2
   - Add support for pre-initialized stream socket in new WebSocketApp (#804)
   - Remove rel.saferead() in examples (f0bf03d)
