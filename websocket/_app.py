@@ -318,7 +318,6 @@ class WebSocketApp:
             self._callback(self.on_close, close_status_code, close_reason)
 
         def setSock():
-            print("setSock")
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message is not None,
@@ -334,22 +333,18 @@ class WebSocketApp:
                     host=host, origin=origin, suppress_origin=suppress_origin,
                     proxy_type=proxy_type, socket=self.prepared_socket)
 
-                print("_callback on_open")
-
                 self._callback(self.on_open)
 
             except ConnectionRefusedError as e:
                 handleDisconnect()
 
         def read():
-            print("read")
             if not self.keep_running:
                 return teardown()
 
             try:
                 op_code, frame = self.sock.recv_data_frame(True)
             except WebSocketConnectionClosedException as e:
-                print("readerrr", e)
                 _logging.error("WebSocketConnectionClosedException - %s"%(reconnect and "reconnecting" or "goodbye"))
                 return handleDisconnect()
             if op_code == ABNF.OPCODE_CLOSE:
@@ -374,7 +369,6 @@ class WebSocketApp:
             return True
 
         def check():
-            print("check")
             if (ping_timeout):
                 has_timeout_expired = time.time() - self.last_ping_tm > ping_timeout
                 has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
@@ -387,7 +381,6 @@ class WebSocketApp:
             return True
 
         def handleDisconnect():
-            print("handleDisconnect")
             if reconnect:
                 time.sleep(5)
                 setSock()
@@ -406,15 +399,10 @@ class WebSocketApp:
         setSock()
 
         try:
-            print("dispatcher read")
-
             dispatcher.read(self.sock.sock, read, check)
-
-            print("bingo")
 
             return False
         except (Exception, KeyboardInterrupt, SystemExit) as e:
-            print("errrrr", e)
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
                 # propagate SystemExit further
