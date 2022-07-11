@@ -1,6 +1,6 @@
-"""
-
-"""
+import sys
+import pkg_resources
+from setuptools import setup, find_packages
 
 """
 setup.py
@@ -20,12 +20,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import sys
 
-from setuptools import setup, find_packages
-import pkg_resources
-
-VERSION = "1.2.3"
+VERSION = "1.3.3"
 
 install_requires = []
 tests_require = []
@@ -41,7 +37,7 @@ setup(
     license="Apache-2.0",
     url="https://github.com/websocket-client/websocket-client.git",
     download_url='https://github.com/websocket-client/websocket-client/releases',
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     extras_require={
         "test": ["websockets"],
         "optional": ["python-socks", "wsaccel"],
@@ -51,7 +47,6 @@ setup(
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

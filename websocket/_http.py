@@ -184,17 +184,16 @@ def _open_socket(addrinfo_list, sockopt, timeout):
             try:
                 sock.connect(address)
             except socket.error as error:
+                sock.close()
                 error.remote_ip = str(address[0])
                 try:
                     eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED, errno.ENETUNREACH)
-                except:
+                except AttributeError:
                     eConnRefused = (errno.ECONNREFUSED, errno.ENETUNREACH)
                 if error.errno in eConnRefused:
                     err = error
                     continue
                 else:
-                    if sock:
-                        sock.close()
                     raise error
             else:
                 break

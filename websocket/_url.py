@@ -1,6 +1,9 @@
-"""
+import os
+import socket
+import struct
 
-"""
+from urllib.parse import unquote, urlparse
+
 """
 _url.py
 websocket - WebSocket client library for Python
@@ -19,13 +22,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import os
-import socket
-import struct
-
-from urllib.parse import unquote, urlparse
-
 
 __all__ = ["parse_url", "get_proxy_info"]
 

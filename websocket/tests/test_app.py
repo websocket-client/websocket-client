@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 #
+import os
+import os.path
+import threading
+import websocket as ws
+import ssl
+import unittest
+
 """
 test_app.py
 websocket - WebSocket client library for Python
@@ -18,12 +25,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import os
-import os.path
-import websocket as ws
-import ssl
-import unittest
 
 # Skip test to access the internet unless TEST_WITH_INTERNET == 1
 TEST_WITH_INTERNET = os.environ.get('TEST_WITH_INTERNET', '0') == '1'
@@ -45,11 +46,13 @@ class WebSocketAppTest(unittest.TestCase):
         WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
+        WebSocketAppTest.on_error_data = WebSocketAppTest.NotSetYet()
 
     def tearDown(self):
         WebSocketAppTest.keep_running_open = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.keep_running_close = WebSocketAppTest.NotSetYet()
         WebSocketAppTest.get_mask_key_id = WebSocketAppTest.NotSetYet()
+        WebSocketAppTest.on_error_data = WebSocketAppTest.NotSetYet()
 
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testKeepRunning(self):
@@ -97,6 +100,34 @@ class WebSocketAppTest(unittest.TestCase):
         app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_message=on_message)
         app.run_forever(dispatcher="Dispatcher")
 
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
+    def testRunForeverTeardownCleanExit(self):
+        """ The WebSocketApp.run_forever() method should return `False` when the application ends gracefully.
+        """
+        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT)
+        threading.Timer(interval=0.2, function=app.close).start()
+        teardown = app.run_forever()
+        self.assertEqual(teardown, False)
+
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
+    def testRunForeverTeardownExceptionalExit(self):
+        """ The WebSocketApp.run_forever() method should return `True` when the application ends with an exception.
+        It should also invoke the `on_error` callback before exiting.
+        """
+
+        def break_it():
+            # Deliberately break the WebSocketApp by closing the inner socket.
+            app.sock.close()
+
+        def on_error(_, err):
+            WebSocketAppTest.on_error_data = str(err)
+
+        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_error=on_error)
+        threading.Timer(interval=0.2, function=break_it).start()
+        teardown = app.run_forever(ping_timeout=0.1)
+        self.assertEqual(teardown, True)
+        self.assertTrue(len(WebSocketAppTest.on_error_data) > 0)
+
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testSockMaskKey(self):
         """ A WebSocketApp should forward the received mask_key function down
@@ -106,7 +137,7 @@ class WebSocketAppTest(unittest.TestCase):
         def my_mask_key_func():
             return "\x00\x00\x00\x00"
 
-        app = ws.WebSocketApp('wss://stream.meetup.com/2/rsvps', get_mask_key=my_mask_key_func)
+        app = ws.WebSocketApp('wss://api-pub.bitfinex.com/ws/1', get_mask_key=my_mask_key_func)
 
         # if numpy is installed, this assertion fail
         # Note: We can't use 'is' for comparing the functions directly, need to use 'id'.

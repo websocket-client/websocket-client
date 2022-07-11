@@ -25,7 +25,7 @@ Please see the [contribution guidelines](https://github.com/websocket-client/web
 ## Installation
 
 You can use either `python3 setup.py install` or `pip3 install websocket-client`
-to install. This module is tested on Python 3.6+.
+to install. This module is tested on Python 3.7+.
 
 There are several optional dependencies that can be installed to enable
 specific websocket-client features.
@@ -80,8 +80,6 @@ import _thread
 import time
 import rel
 
-rel.safe_read()
-
 def on_message(ws, message):
     print(message)
 
@@ -132,6 +130,6 @@ If you want to customize socket options, set sockopt, as seen below:
 ```python
 from websocket import create_connection
 
-ws = create_connection("ws://echo.websocket.org/",
+ws = create_connection("ws://echo.websocket.events/",
                         sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
 ```

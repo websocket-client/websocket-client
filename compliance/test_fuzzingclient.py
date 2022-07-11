@@ -1,6 +1,6 @@
-"""
-
-"""
+import json
+import traceback
+import websocket
 
 """
 test_fuzzingclient.py
@@ -20,10 +20,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
-import traceback
-
-import websocket
 
 SERVER = 'ws://127.0.0.1:8642'
 AGENT = 'py-websockets-client'

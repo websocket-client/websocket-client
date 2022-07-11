@@ -44,7 +44,7 @@ discussed this topic previously.
   def on_error(wsapp, err):
     print("Got a an error: ", err)
 
-  wsapp = websocket.WebSocketApp("ws://echo.websocket.org/",
+  wsapp = websocket.WebSocketApp("ws://echo.websocket.events/",
     on_message = on_message,
     on_error=on_error)
   wsapp.run_forever()
@@ -88,7 +88,16 @@ If you use the ``Sec-WebSocket-Extensions: permessage-deflate`` header with
 websocket-client, you will probably encounter errors, such as the ones described
 in `issue #314. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
 
-If a connection is re-establish after getting disconnected, does the new connection continue where the previous one dropped off?
+I get the error 'utf8' codec can't decode byte 0x81 in position 0
+============================================================================
+
+This error is caused when you receive a character that is not a UTF-8 character,
+so the UTF-8 decoding fails. You can set `skip_utf8_validation` to false,
+but if this does not work, you can change the encoding to ISO-8859-1 which
+was a workaround suggested in
+[issue 481](https://github.com/websocket-client/websocket-client/issues/481#issuecomment-1112506666).
+
+If a connection is re-established after getting disconnected, does the new connection continue where the previous one dropped off?
 =======================================================================================================================================
 
 The answer to this question depends on how the WebSocket server
@@ -116,10 +125,10 @@ What is the difference between recv_frame(), recv_data_frame(), and recv_data()?
 
 This is explained in
 `issue #688 <https://github.com/websocket-client/websocket-client/issues/688>`_.
-This information is useful if you do NOT want to use ``run.forever()`` but want
+This information is useful if you do NOT want to use ``run_forever()`` but want
 to have similar functionality. In short, ``recv_data()`` is the
 recommended choice and you will need to manage ping/pong on your own, while
-``run.forever()`` handles ping/pong by default.
+``run_forever()`` handles ping/pong by default.
 
 How to disable ssl cert verification?
 =======================================
@@ -131,7 +140,7 @@ provided for all examples seen below.
 
 ::
 
-  ws = websocket.WebSocketApp("wss://echo.websocket.org")
+  ws = websocket.WebSocketApp("wss://echo.websocket.events")
   ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 
@@ -139,7 +148,7 @@ provided for all examples seen below.
 
 ::
 
-  ws = websocket.create_connection("wss://echo.websocket.org",
+  ws = websocket.create_connection("wss://echo.websocket.events",
     sslopt={"cert_reqs": ssl.CERT_NONE})
 
 **WebSocket example**
@@ -147,7 +156,7 @@ provided for all examples seen below.
 ::
 
   ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
-  ws.connect("wss://echo.websocket.org")
+  ws.connect("wss://echo.websocket.events")
 
 
 How to disable hostname verification?
@@ -159,14 +168,14 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 
 ::
 
-  ws = websocket.WebSocketApp("wss://echo.websocket.org")
+  ws = websocket.WebSocketApp("wss://echo.websocket.events")
   ws.run_forever(sslopt={"check_hostname": False})
 
 **create_connection example**
 
 ::
 
-  ws = websocket.create_connection("wss://echo.websocket.org",
+  ws = websocket.create_connection("wss://echo.websocket.events",
     sslopt={"check_hostname": False})
 
 **WebSocket example**
@@ -174,7 +183,7 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 ::
 
   ws = websocket.WebSocket(sslopt={"check_hostname": False})
-  ws.connect("wss://echo.websocket.org")
+  ws.connect("wss://echo.websocket.events")
 
 
 What else can I do with sslopts?
