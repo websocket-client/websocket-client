@@ -382,8 +382,10 @@ class WebSocketApp:
 
         def handleDisconnect():
             if reconnect:
+                _logging.warning("websocket disconnected (retrying in 5 seconds)")
                 time.sleep(5)
                 setSock()
+                _logging.warning("websocket reconnected")
                 dispatcher.read(self.sock.sock, read, check)
                 return True
 
