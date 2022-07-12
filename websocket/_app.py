@@ -317,7 +317,7 @@ class WebSocketApp:
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
-        def setSock():
+        def setSock(doread=False):
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message is not None,
@@ -335,6 +335,8 @@ class WebSocketApp:
 
                 self._callback(self.on_open)
 
+                _logging.warning("websocket connected")
+                doread and dispatcher.read(self.sock.sock, read, check)
             except ConnectionRefusedError as e:
                 handleDisconnect()
 
@@ -384,9 +386,7 @@ class WebSocketApp:
             if reconnect:
                 _logging.warning("websocket disconnected (retrying in 5 seconds)")
                 time.sleep(5)
-                setSock()
-                _logging.warning("websocket reconnected")
-                dispatcher.read(self.sock.sock, read, check)
+                setSock(True)
                 return True
 
         dispatcher = self.create_dispatcher(ping_timeout, dispatcher, not not sslopt)
