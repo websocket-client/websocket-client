@@ -230,7 +230,7 @@ class WebSocketApp:
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    suppress_origin=False, proxy_type=None, reconnect=True):
+                    suppress_origin=False, proxy_type=None, reconnect=5):
         """
         Run event loop for WebSocket framework.
 
@@ -385,7 +385,7 @@ class WebSocketApp:
         def handleDisconnect():
             if reconnect:
                 _logging.warning("websocket disconnected (retrying in 5 seconds)")
-                time.sleep(5)
+                time.sleep(reconnect)
                 setSock(True)
                 return True
 
