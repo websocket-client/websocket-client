@@ -30,15 +30,19 @@ limitations under the License.
 
 __all__ = ["WebSocketApp"]
 
-
-class Dispatcher:
+class DispatcherBase:
     """
-    Dispatcher
+    DispatcherBase
     """
     def __init__(self, app, ping_timeout):
         self.app = app
         self.ping_timeout = ping_timeout
 
+
+class Dispatcher(DispatcherBase):
+    """
+    Dispatcher
+    """
     def read(self, sock, read_callback, check_callback):
         while self.app.keep_running:
             sel = selectors.DefaultSelector()
@@ -51,15 +55,15 @@ class Dispatcher:
             check_callback()
             sel.close()
 
+    def timeout(self, seconds, callback):
+        time.sleep(seconds)
+        callback()
 
-class SSLDispatcher:
+
+class SSLDispatcher(DispatcherBase):
     """
     SSLDispatcher
     """
-    def __init__(self, app, ping_timeout):
-        self.app = app
-        self.ping_timeout = ping_timeout
-
     def read(self, sock, read_callback, check_callback):
         while self.app.keep_running:
             r = self.select()
@@ -95,6 +99,9 @@ class WrappedDispatcher:
     def read(self, sock, read_callback, check_callback):
         self.dispatcher.read(sock, read_callback)
         self.ping_timeout and self.dispatcher.timeout(self.ping_timeout, check_callback)
+
+    def timeout(self, seconds, callback):
+        self.dispatcher.timeout(seconds, callback)
 
 
 class WebSocketApp:
@@ -390,15 +397,10 @@ class WebSocketApp:
                 raise
             if reconnect and not isinstance(e, KeyboardInterrupt):
                 _logging.warning("websocket disconnected (retrying in %s seconds) [%s frames in stack]"%(reconnect, len(inspect.stack())))
-                if custom_dispatcher:
-                    custom_dispatcher.timeout(reconnect, setSock)
-                else:
-                    time.sleep(reconnect)
-                    setSock()
+                dispatcher.timeout(reconnect, setSock)
             else:
                 teardown()
 
-        custom_dispatcher = dispatcher
         dispatcher = self.create_dispatcher(ping_timeout, dispatcher, not not sslopt)
 
         if ping_interval:
