@@ -396,7 +396,7 @@ class WebSocketApp:
                 # propagate SystemExit further
                 raise
             if reconnect and not isinstance(e, KeyboardInterrupt):
-                _logging.warning("websocket disconnected (retrying in %s seconds) [%s frames in stack]"%(reconnect, len(inspect.stack())))
+                _logging.info("websocket disconnected (retrying in %s seconds) [%s frames in stack]"%(reconnect, len(inspect.stack())))
                 dispatcher.timeout(reconnect, setSock)
             else:
                 teardown()
