@@ -1,3 +1,4 @@
+import inspect
 import selectors
 import sys
 import threading
@@ -317,7 +318,7 @@ class WebSocketApp:
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
-        def setSock(doread=False):
+        def setSock():
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message is not None,
@@ -336,9 +337,9 @@ class WebSocketApp:
                 self._callback(self.on_open)
 
                 _logging.warning("websocket connected")
-                doread and dispatcher.read(self.sock.sock, read, check)
-            except ConnectionRefusedError as e:
-                handleDisconnect()
+                dispatcher.read(self.sock.sock, read, check)
+            except (Exception, ConnectionRefusedError, KeyboardInterrupt, SystemExit) as e:
+                handleDisconnect(e)
 
         def read():
             if not self.keep_running:
@@ -348,7 +349,7 @@ class WebSocketApp:
                 op_code, frame = self.sock.recv_data_frame(True)
             except WebSocketConnectionClosedException as e:
                 _logging.error("WebSocketConnectionClosedException - %s"%(reconnect and "reconnecting" or "goodbye"))
-                return handleDisconnect()
+                return handleDisconnect(e)
             if op_code == ABNF.OPCODE_CLOSE:
                 return teardown(frame)
             elif op_code == ABNF.OPCODE_PING:
@@ -382,13 +383,22 @@ class WebSocketApp:
                     raise WebSocketTimeoutException("ping/pong timed out")
             return True
 
-        def handleDisconnect():
-            if reconnect:
-                _logging.warning("websocket disconnected (retrying in %s seconds)"%(reconnect,))
-                time.sleep(reconnect)
-                setSock(True)
-                return True
+        def handleDisconnect(e):
+            self._callback(self.on_error, e)
+            if isinstance(e, SystemExit):
+                # propagate SystemExit further
+                raise
+            if reconnect and not isinstance(e, KeyboardInterrupt):
+                _logging.warning("websocket disconnected (retrying in %s seconds) [%s frames in stack]"%(reconnect, len(inspect.stack())))
+                if custom_dispatcher:
+                    custom_dispatcher.timeout(reconnect, setSock)
+                else:
+                    time.sleep(reconnect)
+                    setSock()
+            else:
+                teardown()
 
+        custom_dispatcher = dispatcher
         dispatcher = self.create_dispatcher(ping_timeout, dispatcher, not not sslopt)
 
         if ping_interval:
@@ -399,20 +409,6 @@ class WebSocketApp:
             thread.start()
 
         setSock()
-
-        try:
-            dispatcher.read(self.sock.sock, read, check)
-
-            return False
-        except (Exception, KeyboardInterrupt, SystemExit) as e:
-            self._callback(self.on_error, e)
-            if isinstance(e, SystemExit):
-                # propagate SystemExit further
-                raise
-            teardown()
-            shouldRetry = not isinstance(e, KeyboardInterrupt)
-            shouldRetry and handleDisconnect()
-            return shouldRetry
 
     def create_dispatcher(self, ping_timeout, dispatcher=None, is_ssl=False):
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
