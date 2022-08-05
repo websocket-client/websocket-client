@@ -258,7 +258,7 @@ class WebSocketApp:
         http_proxy_port: int or str
             HTTP proxy port. If not set, set to 80.
         http_proxy_timeout: int or float
-            HTTP proxy timeout, defaults to 60 sec.
+            HTTP proxy timeout, default is 60 sec as per python-socks.
         http_proxy_auth: tuple
             HTTP proxy auth information. tuple of username and password. Default is None.
         http_no_proxy: list
