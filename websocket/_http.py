@@ -59,7 +59,7 @@ class proxy_info:
             self.no_proxy = options.get("http_no_proxy", None)
             self.proxy_protocol = options.get("proxy_type", "http")
             # Note: If timeout not specified, default python-socks timeout is 60 seconds
-            self.proxy_timeout = options.get("timeout", None)
+            self.proxy_timeout = options.get("http_proxy_timeout", None)
             if self.proxy_protocol not in ['http', 'socks4', 'socks4a', 'socks5', 'socks5h']:
                 raise ProxyError("Only http, socks4, socks5 proxy protocols are supported")
         else:

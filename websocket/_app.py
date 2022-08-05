@@ -228,6 +228,7 @@ class WebSocketApp:
                     ping_payload="",
                     http_proxy_host=None, http_proxy_port=None,
                     http_no_proxy=None, http_proxy_auth=None,
+                    http_proxy_timeout=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
                     suppress_origin=False, proxy_type=None):
@@ -256,6 +257,10 @@ class WebSocketApp:
             HTTP proxy host name.
         http_proxy_port: int or str
             HTTP proxy port. If not set, set to 80.
+        http_proxy_timeout: int or float
+            HTTP proxy timeout, defaults to 60 sec.
+        http_proxy_auth: tuple
+            HTTP proxy auth information. tuple of username and password. Default is None.
         http_no_proxy: list
             Whitelisted host names that don't use the proxy.
         skip_utf8_validation: bool
@@ -328,7 +333,8 @@ class WebSocketApp:
                 self.url, header=self.header, cookie=self.cookie,
                 http_proxy_host=http_proxy_host,
                 http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
-                http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
+                http_proxy_auth=http_proxy_auth, http_proxy_timeout=http_proxy_timeout,
+                subprotocols=self.subprotocols,
                 host=host, origin=origin, suppress_origin=suppress_origin,
                 proxy_type=proxy_type, socket=self.prepared_socket)
             dispatcher = self.create_dispatcher(ping_timeout, dispatcher)
