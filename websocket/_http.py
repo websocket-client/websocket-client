@@ -23,7 +23,7 @@ import sys
 
 from ._exceptions import *
 from ._logging import *
-from ._socket import*
+from ._socket import *
 from ._ssl_compat import *
 from ._url import *
 
