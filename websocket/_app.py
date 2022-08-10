@@ -30,6 +30,7 @@ limitations under the License.
 
 __all__ = ["WebSocketApp"]
 
+
 class DispatcherBase:
     """
     DispatcherBase
@@ -355,7 +356,7 @@ class WebSocketApp:
             try:
                 op_code, frame = self.sock.recv_data_frame(True)
             except WebSocketConnectionClosedException as e:
-                _logging.error("WebSocketConnectionClosedException - %s"%(reconnect and "reconnecting" or "goodbye"))
+                _logging.error("WebSocketConnectionClosedException - %s" % (reconnect and "reconnecting" or "goodbye"))
                 return handleDisconnect(e)
             if op_code == ABNF.OPCODE_CLOSE:
                 return teardown(frame)
@@ -396,7 +397,7 @@ class WebSocketApp:
                 # propagate SystemExit further
                 raise
             if reconnect and not isinstance(e, KeyboardInterrupt):
-                _logging.info("websocket disconnected (retrying in %s seconds) [%s frames in stack]"%(reconnect, len(inspect.stack())))
+                _logging.info("websocket disconnected (retrying in %s seconds) [%s frames in stack]" % (reconnect, len(inspect.stack())))
                 dispatcher.timeout(reconnect, setSock)
             else:
                 teardown()
