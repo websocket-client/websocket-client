@@ -36,6 +36,9 @@ specific websocket-client features.
 - To install `Sphinx` and `sphinx_rtd_theme` to build project documentation, use:
  `pip3 install websocket-client[docs]`
 
+While not a strict dependency, [rel](https://github.com/bubbleboy14/registeredeventlistener)
+is useful when using `run_forever` with automatic reconnect. Install rel with `pip3 install rel`.
+
 Footnote: Some shells, such as zsh, require you to escape the `[` and `]` characters with a `\`.
 
 ## Usage Tips
