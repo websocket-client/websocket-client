@@ -1,3 +1,4 @@
+import inspect
 import selectors
 import sys
 import threading
@@ -30,14 +31,19 @@ limitations under the License.
 __all__ = ["WebSocketApp"]
 
 
-class Dispatcher:
+class DispatcherBase:
     """
-    Dispatcher
+    DispatcherBase
     """
     def __init__(self, app, ping_timeout):
         self.app = app
         self.ping_timeout = ping_timeout
 
+
+class Dispatcher(DispatcherBase):
+    """
+    Dispatcher
+    """
     def read(self, sock, read_callback, check_callback):
         while self.app.keep_running:
             sel = selectors.DefaultSelector()
@@ -50,15 +56,15 @@ class Dispatcher:
             check_callback()
             sel.close()
 
+    def timeout(self, seconds, callback):
+        time.sleep(seconds)
+        callback()
 
-class SSLDispatcher:
+
+class SSLDispatcher(DispatcherBase):
     """
     SSLDispatcher
     """
-    def __init__(self, app, ping_timeout):
-        self.app = app
-        self.ping_timeout = ping_timeout
-
     def read(self, sock, read_callback, check_callback):
         while self.app.keep_running:
             r = self.select()
@@ -94,6 +100,9 @@ class WrappedDispatcher:
     def read(self, sock, read_callback, check_callback):
         self.dispatcher.read(sock, read_callback)
         self.ping_timeout and self.dispatcher.timeout(self.ping_timeout, check_callback)
+
+    def timeout(self, seconds, callback):
+        self.dispatcher.timeout(seconds, callback)
 
 
 class WebSocketApp:
@@ -231,7 +240,7 @@ class WebSocketApp:
                     http_proxy_timeout=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    suppress_origin=False, proxy_type=None):
+                    suppress_origin=False, proxy_type=None, reconnect=5):
         """
         Run event loop for WebSocket framework.
 
@@ -322,85 +331,99 @@ class WebSocketApp:
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
-        try:
+        def setSock():
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message is not None,
                 skip_utf8_validation=skip_utf8_validation,
                 enable_multithread=True)
             self.sock.settimeout(getdefaulttimeout())
-            self.sock.connect(
-                self.url, header=self.header, cookie=self.cookie,
-                http_proxy_host=http_proxy_host,
-                http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
-                http_proxy_auth=http_proxy_auth, http_proxy_timeout=http_proxy_timeout,
-                subprotocols=self.subprotocols,
-                host=host, origin=origin, suppress_origin=suppress_origin,
-                proxy_type=proxy_type, socket=self.prepared_socket)
-            dispatcher = self.create_dispatcher(ping_timeout, dispatcher)
+            try:
+                self.sock.connect(
+                    self.url, header=self.header, cookie=self.cookie,
+                    http_proxy_host=http_proxy_host,
+                    http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
+                    http_proxy_auth=http_proxy_auth, http_proxy_timeout=http_proxy_timeout,
+                    subprotocols=self.subprotocols,
+                    host=host, origin=origin, suppress_origin=suppress_origin,
+                    proxy_type=proxy_type, socket=self.prepared_socket)
 
-            self._callback(self.on_open)
+                self._callback(self.on_open)
 
-            if ping_interval:
-                event = threading.Event()
-                thread = threading.Thread(
-                    target=self._send_ping, args=(ping_interval, event, ping_payload))
-                thread.daemon = True
-                thread.start()
+                _logging.warning("websocket connected")
+                dispatcher.read(self.sock.sock, read, check)
+            except (Exception, ConnectionRefusedError, KeyboardInterrupt, SystemExit) as e:
+                handleDisconnect(e)
 
-            def read():
-                if not self.keep_running:
-                    return teardown()
+        def read():
+            if not self.keep_running:
+                return teardown()
 
+            try:
                 op_code, frame = self.sock.recv_data_frame(True)
-                if op_code == ABNF.OPCODE_CLOSE:
-                    return teardown(frame)
-                elif op_code == ABNF.OPCODE_PING:
-                    self._callback(self.on_ping, frame.data)
-                elif op_code == ABNF.OPCODE_PONG:
-                    self.last_pong_tm = time.time()
-                    self._callback(self.on_pong, frame.data)
-                elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
-                    self._callback(self.on_data, frame.data,
-                                   frame.opcode, frame.fin)
-                    self._callback(self.on_cont_message,
-                                   frame.data, frame.fin)
-                else:
-                    data = frame.data
-                    if op_code == ABNF.OPCODE_TEXT:
-                        data = data.decode("utf-8")
-                    self._callback(self.on_data, data, frame.opcode, True)
-                    self._callback(self.on_message, data)
+            except WebSocketConnectionClosedException as e:
+                _logging.error("WebSocketConnectionClosedException - %s" % (reconnect and "reconnecting" or "goodbye"))
+                return handleDisconnect(e)
+            if op_code == ABNF.OPCODE_CLOSE:
+                return teardown(frame)
+            elif op_code == ABNF.OPCODE_PING:
+                self._callback(self.on_ping, frame.data)
+            elif op_code == ABNF.OPCODE_PONG:
+                self.last_pong_tm = time.time()
+                self._callback(self.on_pong, frame.data)
+            elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
+                self._callback(self.on_data, frame.data,
+                               frame.opcode, frame.fin)
+                self._callback(self.on_cont_message,
+                               frame.data, frame.fin)
+            else:
+                data = frame.data
+                if op_code == ABNF.OPCODE_TEXT:
+                    data = data.decode("utf-8")
+                self._callback(self.on_data, data, frame.opcode, True)
+                self._callback(self.on_message, data)
 
-                return True
+            return True
 
-            def check():
-                if (ping_timeout):
-                    has_timeout_expired = time.time() - self.last_ping_tm > ping_timeout
-                    has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
-                    has_pong_arrived_too_late = self.last_pong_tm - self.last_ping_tm > ping_timeout
+        def check():
+            if (ping_timeout):
+                has_timeout_expired = time.time() - self.last_ping_tm > ping_timeout
+                has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
+                has_pong_arrived_too_late = self.last_pong_tm - self.last_ping_tm > ping_timeout
 
-                    if (self.last_ping_tm and
-                            has_timeout_expired and
-                            (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
-                        raise WebSocketTimeoutException("ping/pong timed out")
-                return True
+                if (self.last_ping_tm and
+                        has_timeout_expired and
+                        (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)):
+                    raise WebSocketTimeoutException("ping/pong timed out")
+            return True
 
-            dispatcher.read(self.sock.sock, read, check)
-            return False
-        except (Exception, KeyboardInterrupt, SystemExit) as e:
+        def handleDisconnect(e):
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
                 # propagate SystemExit further
                 raise
-            teardown()
-            return not isinstance(e, KeyboardInterrupt)
+            if reconnect and not isinstance(e, KeyboardInterrupt):
+                _logging.info("websocket disconnected (retrying in %s seconds) [%s frames in stack]" % (reconnect, len(inspect.stack())))
+                dispatcher.timeout(reconnect, setSock)
+            else:
+                teardown()
 
-    def create_dispatcher(self, ping_timeout, dispatcher=None):
+        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, not not sslopt)
+
+        if ping_interval:
+            event = threading.Event()
+            thread = threading.Thread(
+                target=self._send_ping, args=(ping_interval, event, ping_payload))
+            thread.daemon = True
+            thread.start()
+
+        setSock()
+
+    def create_dispatcher(self, ping_timeout, dispatcher=None, is_ssl=False):
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
             return WrappedDispatcher(self, ping_timeout, dispatcher)
         timeout = ping_timeout or 10
-        if self.sock.is_ssl():
+        if is_ssl:
             return SSLDispatcher(self, timeout)
 
         return Dispatcher(self, timeout)
