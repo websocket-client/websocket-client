@@ -17,27 +17,26 @@ connection.
 
 **WebSocket example**
 
-::
+.. doctest:: sample-connection
 
-  import websocket
-
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events")
-  ws.send("Hello, Server")
-  print(ws.recv())
-  ws.close()
+    >>> import websocket
+    >>> ws = websocket.WebSocket()
+    >>> ws.connect("ws://echo.websocket.events")
+    >>> ws.send("Hello, Server")
+    19
+    >>> print(ws.recv())
+    echo.websocket.events sponsored by Lob.com
+    >>> ws.close()
 
 **WebSocketApp example**
 
-::
+.. doctest:: sample-connection
 
-  import websocket
-
-  def on_message(wsapp, message):
-      print(message)
-
-  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
-  wsapp.run_forever()
+    >>> import websocket
+    >>> def on_message(wsapp, message):
+    ...     print(message)
+    >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
+    >>> wsapp.run_forever() # doctest: +SKIP
 
 Debug and Logging Options
 ==========================
@@ -100,13 +99,12 @@ Below is one example of this being done with a short-lived connection:
 
 **Short-lived WebSocket using "with" statement**
 
-.. code-block:: python
+.. doctest:: sample-connection
 
-  from contextlib import closing
-  from websocket import create_connection
-
-  with closing(create_connection("wss://testnet-explorer.binance.org/ws/block")) as conn:
-      print(conn.recv())
+  >>> from contextlib import closing
+  >>> from websocket import create_connection
+  >>> with closing(create_connection("wss://testnet-explorer.binance.org/ws/block")) as conn:
+  ...     print(conn.recv())  # doctest: +SKIP
 
   # Connection is now closed
 
@@ -146,26 +144,25 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
 
 **WebSocket common headers example**
 
-::
+.. doctest:: headers
 
-  import websocket
+  >>> import websocket
 
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events", cookie="chocolate",
-    origin="testing_websockets-client.com", host="echo.websocket.events")
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://echo.websocket.events", cookie="chocolate",
+  ... origin="testing_websockets-client.com", host="echo.websocket.events")
 
 **WebSocketApp common headers example**
 
-::
+.. doctest:: headers
 
-  import websocket
+  >>> import websocket
 
-  def on_message(wsapp, message):
-      print(message)
-
-  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
-    cookie="chocolate", on_message=on_message)
-  wsapp.run_forever(origin="testing_websockets.com", host="127.0.0.1")
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  ... cookie="chocolate", on_message=on_message)
+  >>> wsapp.run_forever(origin="testing_websockets.com", host="127.0.0.1")  # doctest: +SKIP
 
 **WebSocket subprotocols example**
 
@@ -173,25 +170,24 @@ Use this to specify STOMP, WAMP, MQTT, or other values of the "Sec-WebSocket-Pro
 Be aware that websocket-client does not include support for these protocols,
 so your code must handle the data sent over the WebSocket connection.
 
-::
+.. doctest:: subprotocols
 
-  import websocket
+  >>> import websocket
 
-  ws = websocket.WebSocket()
-  ws.connect("wss://ws.kraken.com", subprotocols=["mqtt"])
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("wss://ws.kraken.com", subprotocols=["mqtt"])
 
 **WebSocketApp subprotocols example**
 
-::
+.. doctest:: subprotocols
 
-  import websocket
+  >>> import websocket
 
-  def on_message(wsapp, message):
-      print(message)
-
-  wsapp = websocket.WebSocketApp("wss://ws.kraken.com",
-    subprotocols=["STOMP"], on_message=on_message)
-  wsapp.run_forever()
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  >>> wsapp = websocket.WebSocketApp("wss://ws.kraken.com",
+  ... subprotocols=["STOMP"], on_message=on_message)
+  >>> wsapp.run_forever()  # doctest: +SKIP
 
 Suppress Origin Header
 -------------------------
@@ -203,25 +199,24 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
 
 **WebSocket suppress origin example**
 
-::
+.. doctest:: suppress-origin
 
-  import websocket
+  >>> import websocket
 
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events", suppress_origin=True)
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://echo.websocket.events", suppress_origin=True)
 
 **WebSocketApp suppress origin example**
 
-::
+.. doctest:: suppress-origin
 
-  import websocket
+  >>> import websocket
 
-  def on_message(wsapp, message):
-      print(message)
-
-  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
-    on_message=on_message)
-  wsapp.run_forever(suppress_origin=True)
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  ... on_message=on_message)
+  >>> wsapp.run_forever(suppress_origin=True)  # doctest: +SKIP
 
 Setting Custom Header Values
 --------------------------------
@@ -236,26 +231,25 @@ defined in RFC 7692.
 
 **WebSocket custom headers example**
 
-::
+.. doctest:: custom-headers
 
-  import websocket
+  >>> import websocket
 
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events",
-    header={"CustomHeader1":"123", "NewHeader2":"Test"})
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://echo.websocket.events",
+  ... header={"CustomHeader1":"123", "NewHeader2":"Test"})
 
 **WebSocketApp custom headers example**
 
-::
+.. doctest:: custom-headers
 
-  import websocket
+  >>> import websocket
 
-  def on_message(wsapp, message):
-      print(message)
-
-  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
-    header={"CustomHeader1":"123", "NewHeader2":"Test"}, on_message=on_message)
-  wsapp.run_forever()
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  ... header={"CustomHeader1":"123", "NewHeader2":"Test"}, on_message=on_message)
+  >>> wsapp.run_forever()  # doctest: +SKIP
 
 Disabling SSL or Hostname Verification
 ---------------------------------------
@@ -268,18 +262,18 @@ Using a Custom Class
 You can also write your own class for the connection, if you want to handle
 the nitty-gritty connection details yourself.
 
-::
+.. doctest:: custom-class
 
-  import socket
-  from websocket import create_connection, WebSocket
-  class MyWebSocket(WebSocket):
-    def recv_frame(self):
-        frame = super().recv_frame()
-        print('yay! I got this frame: ', frame)
-        return frame
+  >>> import socket
+  >>> from websocket import create_connection, WebSocket
 
-  ws = create_connection("ws://echo.websocket.events/",
-                        sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
+  >>> class MyWebSocket(WebSocket):
+  ...     def recv_frame(self):
+  ...         frame = super().recv_frame()
+  ...         print('yay! I got this frame: ', frame)
+  ...         return frame
+  >>> ws = create_connection("ws://echo.websocket.events/",
+  ... sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 
 
 Setting Timeout Value
@@ -303,14 +297,14 @@ no response is received from the server after 5 seconds.
 
 **WebSocket timeout example**
 
-::
+.. doctest:: timeout-example
 
-  import websocket
+  >>> import websocket
 
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events", timeout=5)
-  #ws.send("Hello, Server") # Commented out to trigger WebSocketTimeoutException
-  print(ws.recv())
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://echo.websocket.events", timeout=5)
+  >>> # ws.send("Hello, Server") # Commented out to trigger WebSocketTimeoutException
+  >>> print(ws.recv())   # doctest: +SKIP
   # Program should end with a WebSocketTimeoutException
 
 The WebSocketApp timeout example works a bit differently than the WebSocket
@@ -321,17 +315,16 @@ the timeout interval (5 seconds in the example below).
 
 **WebSocketApp timeout example**
 
-::
+.. doctest:: timeout-example
 
-  import websocket
+  >>> import websocket
 
-  def on_error(wsapp, err):
-    print("EXAMPLE error encountered: ", err)
-
-  websocket.setdefaulttimeout(5)
-  wsapp = websocket.WebSocketApp("ws://nexus-websocket-a.intercom.io",
-    on_error=on_error)
-  wsapp.run_forever()
+  >>> def on_error(wsapp, err):
+  ...     print("EXAMPLE error encountered: ", err)
+  >>> websocket.setdefaulttimeout(5)
+  >>> wsapp = websocket.WebSocketApp("ws://nexus-websocket-a.intercom.io",
+  ... on_error=on_error)
+  >>> wsapp.run_forever()  # doctest: +SKIP
   # Program should print a "timed out" error message
 
 
@@ -460,16 +453,16 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
 This example is best for a quick test where you want to check the effect of a
 ping, or where situations where you want to customize when the ping is sent.
 
-::
+.. doctest:: ping-pong
 
-  import websocket
+  >>> import websocket
+  >>> websocket.enableTrace(True)
 
-  websocket.enableTrace(True)
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events")
-  ws.ping()
-  ws.ping("This is an optional ping payload")
-  ws.close()
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.ping()
+  >>> ws.ping("This is an optional ping payload")
+  >>> ws.close()
 
 **WebSocketApp ping/pong example**
 
@@ -482,22 +475,19 @@ Further, a ping is transmitted every 60 seconds. If a pong is received, then the
 is notified via ``on_pong()``. If no pong is received within 10 seconds, then
 ``run_forever()`` will exit with a ``WebSocketTimeoutException``.
 
-::
+.. doctest:: ping-pong
 
-  import websocket
+  >>> import websocket
 
-  def on_message(wsapp, message):
-      print(message)
-
-  def on_ping(wsapp, message):
-      print("Got a ping! A pong reply has already been automatically sent.")
-
-  def on_pong(wsapp, message):
-      print("Got a pong! No need to respond")
-
-  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
-    on_message=on_message, on_ping=on_ping, on_pong=on_pong)
-  wsapp.run_forever(ping_interval=60, ping_timeout=10, ping_payload="This is an optional ping payload")
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  >>> def on_ping(wsapp, message):
+  ...     print("Got a ping! A pong reply has already been automatically sent.")
+  >>> def on_pong(wsapp, message):
+  ...     print("Got a pong! No need to respond")
+  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  ... on_message=on_message, on_ping=on_ping, on_pong=on_pong)
+  >>> wsapp.run_forever(ping_interval=60, ping_timeout=10, ping_payload="This is an optional ping payload")  # doctest: +SKIP
 
 Sending Connection Close Status Codes
 --------------------------------------
@@ -514,35 +504,33 @@ status code values between 3000-4999.
 
 **WebSocket sending close() status code example**
 
-::
+.. doctest:: close-status
 
-  import websocket
+  >>> import websocket
+  >>> websocket.enableTrace(True)
 
-  websocket.enableTrace(True)
-
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events")
-  ws.send("Hello, Server")
-  print(ws.recv())
-  ws.close(websocket.STATUS_PROTOCOL_ERROR)
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.send("Hello, Server")
+  19
+  >>> print(ws.recv())
+  echo.websocket.events sponsored by Lob.com
+  >>> ws.close(websocket.STATUS_PROTOCOL_ERROR)  # doctest: +SKIP
   # Alternatively, use ws.close(status=1002)
 
 
 **WebSocketApp sending close() status code example**
 
-::
+.. doctest:: close-status
 
-  import websocket
+  >>> import websocket
+  >>> websocket.enableTrace(True)
 
-  websocket.enableTrace(True)
-
-  def on_message(wsapp, message):
-      print(message)
-      wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR)
-      # Alternatively, use wsapp.close(status=1002)
-
-  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
-  wsapp.run_forever(skip_utf8_validation=True)
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  ...     wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR) # Alternatively, use wsapp.close(status=1002)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
+  >>> wsapp.run_forever(skip_utf8_validation=True)  # doctest: +SKIP
 
 Receiving Connection Close Status Codes
 -----------------------------------------
@@ -559,45 +547,42 @@ in your program, examples are shown below for how to do this.
 
 **WebSocket receiving close status code example**
 
-::
+.. doctest:: close-status
 
-    import websocket
-    import struct
+  >>> import websocket
+  >>> import struct
 
-    websocket.enableTrace(True)
-
-    ws = websocket.WebSocket()
-    ws.connect("wss://tsock.us1.twilio.com/v3/wsconnect")
-    ws.send("Hello")
-    resp_opcode, msg = ws.recv_data()
-    print("Response opcode: " + str(resp_opcode))
-    if resp_opcode == 8 and len(msg) >= 2:
-        print("Response close code: " + str(struct.unpack("!H", msg[0:2])[0]))
-        print("Response message: " + str(msg[2:]))
-    else:
-        print("Response message: " + str(msg))
+  >>> websocket.enableTrace(True)
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("wss://tsock.us1.twilio.com/v3/wsconnect")
+  >>> ws.send("Hello")
+  11
+  >>> resp_opcode, msg = ws.recv_data()
+  >>> print("Response opcode: " + str(resp_opcode))  # doctest: +SKIP
+  >>> if resp_opcode == 8 and len(msg) >= 2:
+  ...     print("Response close code: " + str(struct.unpack("!H", msg[0:2])[0]))  # doctest: +SKIP
+  ...     print("Response message: " + str(msg[2:]))  # doctest: +SKIP
+  ... else:
+  ...     print("Response message: " + str(msg))  # doctest: +SKIP
 
 
 **WebSocketApp receiving close status code example**
 
-::
+.. doctest:: close-status
 
-    import websocket
+  >>> import websocket
+  >>> websocket.enableTrace(True)
 
-    websocket.enableTrace(True)
-
-    def on_close(wsapp, close_status_code, close_msg):
-        # Because on_close was triggered, we know the opcode = 8
-        print("on_close args:")
-        if close_status_code or close_msg:
-            print("close status code: " + str(close_status_code))
-            print("close message: " + str(close_msg))
-
-    def on_open(wsapp):
-        wsapp.send("Hello")
-
-    wsapp = websocket.WebSocketApp("wss://tsock.us1.twilio.com/v3/wsconnect", on_open=on_open, on_close=on_close)
-    wsapp.run_forever()
+  >>> def on_close(wsapp, close_status_code, close_msg):
+  ...     # Because on_close was triggered, we know the opcode = 8
+  ...     print("on_close args:")
+  ...     if close_status_code or close_msg:
+  ...         print("close status code: " + str(close_status_code))
+  ...         print("close message: " + str(close_msg))
+  >>> def on_open(wsapp):
+  ...     wsapp.send("Hello")
+  >>> wsapp = websocket.WebSocketApp("wss://tsock.us1.twilio.com/v3/wsconnect", on_close=on_close, on_open=on_open)
+  >>> wsapp.run_forever()  # doctest: +SKIP
 
 Customizing frame mask
 --------------------------------
@@ -616,39 +601,34 @@ the demasking step in your custom project.
 
 **WebSocket custom masking key code example**
 
-::
+.. doctest:: frame-mask
 
-  import websocket
+  >>> import websocket
+  >>> websocket.enableTrace(True)
 
-  def zero_mask_key(_):
-      return "\x00\x00\x00\x00"
-
-  websocket.enableTrace(True)
-
-  ws = websocket.WebSocket()
-  ws.set_mask_key(zero_mask_key)
-  ws.connect("ws://echo.websocket.events")
-  ws.send("Hello, Server")
-  print(ws.recv())
-  ws.close()
+  >>> def zero_mask_key(_):
+  ...     return "\x00\x00\x00\x00"
+  >>> ws = websocket.WebSocket()
+  >>> ws.set_mask_key(zero_mask_key)
+  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.send("Hello, Server")  # doctest: +SKIP
+  >>> print(ws.recv())  # doctest: +SKIP
+  >>> ws.close()
 
 
 **WebSocketApp custom masking key code example**
 
-::
+.. doctest:: frame-mask
 
-  import websocket
+  >>> import websocket
+  >>> websocket.enableTrace(True)
 
-  def zero_mask_key(_):
-      return "\x00\x00\x00\x00"
-
-  websocket.enableTrace(True)
-
-  def on_message(wsapp, message):
-      print(message)
-
-  wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message, get_mask_key=zero_mask_key)
-  wsapp.run_forever()
+  >>> def zero_mask_key(_):
+  ...     return "\x00\x00\x00\x00"
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message, get_mask_key=zero_mask_key)
+  >>> wsapp.run_forever()  # doctest: +SKIP
 
 Customizing opcode
 --------------------------------
@@ -663,18 +643,17 @@ websocket-client library makes it possible to customize which opcode is used.
 
 **WebSocket custom opcode code example**
 
-::
+.. doctest:: custom-opcode
 
-  import websocket
+  >>> import websocket
+  >>> websocket.enableTrace(True)
 
-  websocket.enableTrace(True)
-
-  ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events")
-  ws.send("Hello, Server", websocket.ABNF.OPCODE_TEXT)
-  print(ws.recv())
-  ws.send("This is a ping", websocket.ABNF.OPCODE_PING)
-  ws.close()
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.send("Hello, Server", websocket.ABNF.OPCODE_TEXT)  # doctest: +SKIP
+  >>> print(ws.recv())  # doctest: +SKIP
+  >>> ws.send("This is a ping", websocket.ABNF.OPCODE_PING)  # doctest: +SKIP
+  >>> ws.close()
 
 
 **WebSocketApp custom opcode code example**
@@ -693,16 +672,16 @@ You can use an asynchronous dispatcher such as `rel <https://pypi.org/project/re
 
 **WebSocketApp asynchronous dispatcher code example**
 
-::
+.. doctest:: multiple-dispatchers
 
-  import websocket, rel
+  >>> import websocket, rel
 
-  addr = "wss://api.gemini.com/v1/marketdata/%s"
-  for symbol in ["BTCUSD", "ETHUSD", "ETHBTC"]:
-    ws = websocket.WebSocketApp(addr % (symbol,), on_message=lambda w, m : print(m))
-    ws.run_forever(dispatcher=rel)
-  rel.signal(2, rel.abort)  # Keyboard Interrupt
-  rel.dispatch()
+  >>> addr = "wss://api.gemini.com/v1/marketdata/%s"
+  >>> for symbol in ["BTCUSD", "ETHUSD", "ETHBTC"]:
+  ...     ws = websocket.WebSocketApp(addr % (symbol,), on_message=lambda w, m : print(m))
+  ...     ws.run_forever(dispatcher=rel)  # doctest: +SKIP
+  >>> rel.signal(2, rel.abort)  # Keyboard Interrupt  # doctest: +SKIP
+  >>> rel.dispatch()  # doctest: +SKIP
 
 Real-world Examples
 =========================
