@@ -138,16 +138,16 @@ provided for all examples seen below.
 
 .. doctest:: disable-ssl-verification
 
-  >>> import websocket
+  >>> import websocket, ssl
   >>> ws = websocket.WebSocketApp("wss://echo.websocket.events")
-  >>> ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+  >>> ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})  # doctest: +SKIP
 
 
 **create_connection example**
 
 .. doctest:: disable-ssl-verification
 
-  >>> import websocket
+  >>> import websocket, ssl
   >>> ws = websocket.create_connection("wss://echo.websocket.events",
   ... sslopt={"cert_reqs": ssl.CERT_NONE})
 
@@ -155,7 +155,7 @@ provided for all examples seen below.
 
 .. doctest:: disable-ssl-verification
 
-  >>> import websocket
+  >>> import websocket, ssl
   >>> ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
   >>> ws.connect("wss://echo.websocket.events")
 
@@ -171,7 +171,7 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 
   >>> import websocket
   >>> ws = websocket.WebSocketApp("wss://echo.websocket.events")
-  >>> ws.run_forever(sslopt={"check_hostname": False})
+  >>> ws.run_forever(sslopt={"check_hostname": False})  # doctest: +SKIP
 
 **create_connection example**
 
