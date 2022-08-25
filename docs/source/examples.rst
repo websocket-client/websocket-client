@@ -376,7 +376,12 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
 
 **WebSocketApp proxy example**
 
-`Work in progress - coming soon`
+::
+
+  import websocket
+
+  ws = websocket.WebSocketApp("ws://echo.websocket.events")
+  wsapp.run_forever(proxy_type="socks5", http_proxy_host=proxy_ip, http_proxy_auth=(proxy_username, proxy_password))
 
 
 Connecting with Custom Sockets
@@ -663,7 +668,23 @@ For instance, on_close, on_ping, on_pong, on_cont_message. One drawback of the c
 implementation (as of May 2021) is the lack of binary support for WebSocketApp, as noted
 by `issue #351 <https://github.com/websocket-client/websocket-client/issues/351>`_.
 
-`Work in progress - coming soon`
+.. doctest:: custom-opcode
+
+  >>> import websocket
+  >>> websocket.enableTrace(True)
+
+  >>> def on_open(wsapp):
+  ...     wsapp.send("Hello")
+
+  >>> def on_message(ws, message):
+  ...     print(message)
+  ...     ws.send("Send a ping", websocket.ABNF.OPCODE_PING)
+
+  >>> def on_pong(wsapp, message):
+  ...     print("Got a pong! No need to respond")
+
+  >>> wsapp = websocket.WebSocketApp("ws://echo.websocket.events", on_open=on_open, on_message=on_message, on_pong=on_pong)
+  >>> wsapp.run_forever()  # doctest: +SKIP
 
 Dispatching Multiple WebSocketApps
 ==================================
