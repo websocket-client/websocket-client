@@ -17,4 +17,4 @@ jobs:
       - name: Run pytest with doctest args
         run: |
           pip3 install pytest
-          pytest ./source -v --doctest-glob=examples.rst --doctest-modules  
+          pytest ./docs/source -v --doctest-glob="*.rst" --doctest-modules
