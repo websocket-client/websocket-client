@@ -114,22 +114,22 @@ def connect(url, options, proxy, socket):
     if proxy.proxy_host and not socket and not (proxy.proxy_protocol == "http"):
         return _start_proxied_socket(url, options, proxy)
 
-    hostname, port, resource, is_secure = parse_url(url)
+    hostname, unused_port, resource, is_secure = parse_url(url)
 
     if socket:
-        return socket, (hostname, port, resource)
+        return socket, (hostname, int(proxy.proxy_port), resource)
 
     addrinfo_list, need_tunnel, auth = _get_addrinfo_list(
-        hostname, port, is_secure, proxy)
+        hostname, int(proxy.proxy_port), is_secure, proxy)
     if not addrinfo_list:
         raise WebSocketException(
-            "Host not found.: " + hostname + ":" + str(port))
+            "Host not found.: " + hostname + ":" + str(int(proxy.proxy_port)))
 
     sock = None
     try:
         sock = _open_socket(addrinfo_list, options.sockopt, options.timeout)
         if need_tunnel:
-            sock = _tunnel(sock, hostname, port, auth)
+            sock = _tunnel(sock, hostname, int(proxy.proxy_port), auth)
 
         if is_secure:
             if HAVE_SSL:
@@ -137,7 +137,7 @@ def connect(url, options, proxy, socket):
             else:
                 raise WebSocketException("SSL not available.")
 
-        return sock, (hostname, port, resource)
+        return sock, (hostname, int(proxy.proxy_port), resource)
     except:
         if sock:
             sock.close()
