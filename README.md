@@ -71,9 +71,13 @@ Many more examples are found in the
 ### Long-lived Connection
 
 Most real-world WebSockets situations involve longer-lived connections.
-The WebSocketApp `run_forever` loop will automatically try to reconnect when a
+The WebSocketApp `run_forever` loop will automatically try to reconnect
+to an open WebSocket connection when a network
 connection is lost if it is provided with a dispatcher parameter,
 and provides a variety of event-based connection controls.
+`run_forever` does not automatically reconnect if the server
+closes the WebSocket. Customizing behavior when the server closes
+the WebSocket should be handled in the `on_close` callback.
 This example uses [rel](https://github.com/bubbleboy14/registeredeventlistener)
 for the dispatcher to provide automatic reconnection.
 
