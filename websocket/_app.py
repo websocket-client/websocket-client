@@ -39,6 +39,10 @@ class DispatcherBase:
         self.app = app
         self.ping_timeout = ping_timeout
 
+    def timeout(self, seconds, callback):
+        time.sleep(seconds)
+        callback()
+
 
 class Dispatcher(DispatcherBase):
     """
@@ -55,10 +59,6 @@ class Dispatcher(DispatcherBase):
                     break
             check_callback()
             sel.close()
-
-    def timeout(self, seconds, callback):
-        time.sleep(seconds)
-        callback()
 
 
 class SSLDispatcher(DispatcherBase):
