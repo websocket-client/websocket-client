@@ -361,7 +361,8 @@ class WebSocketApp:
 
                 _logging.warning("websocket connected")
                 dispatcher.read(self.sock.sock, read, check)
-            except (Exception, ConnectionRefusedError, KeyboardInterrupt, SystemExit) as e:
+            except (WebSocketConnectionClosedException, ConnectionRefusedError, KeyboardInterrupt, SystemExit, Exception) as e:
+                _logging.error("%s - %s" % (e, reconnect and "reconnecting" or "goodbye"))
                 reconnecting or handleDisconnect(e)
 
         def read():
@@ -371,8 +372,10 @@ class WebSocketApp:
             try:
                 op_code, frame = self.sock.recv_data_frame(True)
             except WebSocketConnectionClosedException as e:
-                _logging.error("WebSocketConnectionClosedException - %s" % (reconnect and "reconnecting" or "goodbye"))
-                return handleDisconnect(e)
+                if custom_dispatcher:
+                    return handleDisconnect(e)
+                else:
+                    raise e
             if op_code == ABNF.OPCODE_CLOSE:
                 return teardown(frame)
             elif op_code == ABNF.OPCODE_PING:
@@ -417,6 +420,7 @@ class WebSocketApp:
             else:
                 teardown()
 
+        custom_dispatcher = bool(dispatcher)
         dispatcher = self.create_dispatcher(ping_timeout, dispatcher, not not sslopt)
 
         if ping_interval:
