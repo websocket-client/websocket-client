@@ -704,6 +704,68 @@ You can use an asynchronous dispatcher such as `rel <https://pypi.org/project/re
   >>> rel.signal(2, rel.abort)  # Keyboard Interrupt  # doctest: +SKIP
   >>> rel.dispatch()  # doctest: +SKIP
 
+
+README Examples
+=========================
+
+The examples are found in the README and are copied here for sphinx doctests to verify they run without errors.
+
+**Long-lived Connection**
+
+.. doctest:: long-lived-connection
+
+  >>> import websocket
+  >>> import _thread
+  >>> import time
+  >>> import rel
+
+  >>> def on_message(ws, message):
+  ...     print(message)
+
+  >>> def on_error(ws, error):
+  ...     print(error)
+
+  >>> def on_close(ws, close_status_code, close_msg):
+  ...     print("### closed ###")
+
+  >>> def on_open(ws):
+  ...     print("Opened connection")
+
+  >>> if __name__ == "__main__":
+  ...     websocket.enableTrace(True)
+  ...     ws = websocket.WebSocketApp("wss://api.gemini.com/v1/marketdata/BTCUSD",
+  ...                               on_open=on_open,
+  ...                               on_message=on_message,
+  ...                               on_error=on_error,
+  ...                               on_close=on_close)
+
+  >>> ws.run_forever(dispatcher=rel)  # Set dispatcher to automatic reconnection  # doctest: +SKIP
+  >>> rel.signal(2, rel.abort)  # Keyboard Interrupt
+  <Signal Object | Callback:"abort">
+  >>> rel.dispatch()  # doctest: +SKIP
+
+**Short-lived Connection**
+
+.. doctest:: short-lived-connection
+
+  >>> from websocket import create_connection
+
+  >>> ws = create_connection("ws://echo.websocket.events/")
+  >>> print(ws.recv())
+  echo.websocket.events sponsored by Lob.com
+  >>> print("Sending 'Hello, World'...")
+  Sending 'Hello, World'...
+  >>> ws.send("Hello, World")
+  18
+  >>> print("Sent")
+  Sent
+  >>> print("Receiving...")
+  Receiving...
+  >>> result =  ws.recv()
+  >>> print("Received '%s'" % result)
+  Received ...
+  >>> ws.close()
+
 Real-world Examples
 =========================
 
