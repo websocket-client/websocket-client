@@ -43,6 +43,12 @@ class DispatcherBase:
         time.sleep(seconds)
         callback()
 
+    def reconnect(self, seconds, reconnector):
+        while True:
+            _logging.info("reconnect() - retrying in %s seconds [%s frames in stack]" % (seconds, len(inspect.stack())))
+            time.sleep(seconds)
+            reconnector(reconnecting=True)
+
 
 class Dispatcher(DispatcherBase):
     """
@@ -99,10 +105,13 @@ class WrappedDispatcher:
 
     def read(self, sock, read_callback, check_callback):
         self.dispatcher.read(sock, read_callback)
-        self.ping_timeout and self.dispatcher.timeout(self.ping_timeout, check_callback)
+        self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
 
     def timeout(self, seconds, callback):
         self.dispatcher.timeout(seconds, callback)
+
+    def reconnect(self, seconds, reconnector):
+        self.timeout(seconds, reconnector)
 
 
 class WebSocketApp:
@@ -331,7 +340,7 @@ class WebSocketApp:
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
-        def setSock():
+        def setSock(reconnecting=False):
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message is not None,
@@ -353,7 +362,7 @@ class WebSocketApp:
                 _logging.warning("websocket connected")
                 dispatcher.read(self.sock.sock, read, check)
             except (Exception, ConnectionRefusedError, KeyboardInterrupt, SystemExit) as e:
-                handleDisconnect(e)
+                reconnecting or handleDisconnect(e)
 
         def read():
             if not self.keep_running:
@@ -404,7 +413,7 @@ class WebSocketApp:
                 raise
             if reconnect and not isinstance(e, KeyboardInterrupt):
                 _logging.info("websocket disconnected (retrying in %s seconds) [%s frames in stack]" % (reconnect, len(inspect.stack())))
-                dispatcher.timeout(reconnect, setSock)
+                dispatcher.reconnect(reconnect, setSock)
             else:
                 teardown()
 
