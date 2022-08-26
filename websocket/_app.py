@@ -30,6 +30,7 @@ limitations under the License.
 
 __all__ = ["WebSocketApp"]
 
+
 class DispatcherBase:
     """
     DispatcherBase
@@ -236,6 +237,7 @@ class WebSocketApp:
                     ping_payload="",
                     http_proxy_host=None, http_proxy_port=None,
                     http_no_proxy=None, http_proxy_auth=None,
+                    http_proxy_timeout=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
                     suppress_origin=False, proxy_type=None, reconnect=5):
@@ -264,6 +266,10 @@ class WebSocketApp:
             HTTP proxy host name.
         http_proxy_port: int or str
             HTTP proxy port. If not set, set to 80.
+        http_proxy_timeout: int or float
+            HTTP proxy timeout, default is 60 sec as per python-socks.
+        http_proxy_auth: tuple
+            HTTP proxy auth information. tuple of username and password. Default is None.
         http_no_proxy: list
             Whitelisted host names that don't use the proxy.
         skip_utf8_validation: bool
@@ -337,7 +343,8 @@ class WebSocketApp:
                     self.url, header=self.header, cookie=self.cookie,
                     http_proxy_host=http_proxy_host,
                     http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
-                    http_proxy_auth=http_proxy_auth, subprotocols=self.subprotocols,
+                    http_proxy_auth=http_proxy_auth, http_proxy_timeout=http_proxy_timeout,
+                    subprotocols=self.subprotocols,
                     host=host, origin=origin, suppress_origin=suppress_origin,
                     proxy_type=proxy_type, socket=self.prepared_socket)
 
@@ -355,7 +362,7 @@ class WebSocketApp:
             try:
                 op_code, frame = self.sock.recv_data_frame(True)
             except WebSocketConnectionClosedException as e:
-                _logging.error("WebSocketConnectionClosedException - %s"%(reconnect and "reconnecting" or "goodbye"))
+                _logging.error("WebSocketConnectionClosedException - %s" % (reconnect and "reconnecting" or "goodbye"))
                 return handleDisconnect(e)
             if op_code == ABNF.OPCODE_CLOSE:
                 return teardown(frame)
@@ -396,7 +403,7 @@ class WebSocketApp:
                 # propagate SystemExit further
                 raise
             if reconnect and not isinstance(e, KeyboardInterrupt):
-                _logging.info("websocket disconnected (retrying in %s seconds) [%s frames in stack]"%(reconnect, len(inspect.stack())))
+                _logging.info("websocket disconnected (retrying in %s seconds) [%s frames in stack]" % (reconnect, len(inspect.stack())))
                 dispatcher.timeout(reconnect, setSock)
             else:
                 teardown()

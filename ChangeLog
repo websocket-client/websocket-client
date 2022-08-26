@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 1.4.0
+  - Fix automatic reconnect with `run_forever` (#838)
+  - Allow a timeout to be set when using a proxy (#842)
+
 - 1.3.3
   - Fix unclosed socket error (#826)
   - Update header dict access (#818)

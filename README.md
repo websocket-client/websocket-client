@@ -36,6 +36,9 @@ specific websocket-client features.
 - To install `Sphinx` and `sphinx_rtd_theme` to build project documentation, use:
  `pip3 install websocket-client[docs]`
 
+While not a strict dependency, [rel](https://github.com/bubbleboy14/registeredeventlistener)
+is useful when using `run_forever` with automatic reconnect. Install rel with `pip3 install rel`.
+
 Footnote: Some shells, such as zsh, require you to escape the `[` and `]` characters with a `\`.
 
 ## Usage Tips
@@ -68,9 +71,13 @@ Many more examples are found in the
 ### Long-lived Connection
 
 Most real-world WebSockets situations involve longer-lived connections.
-The WebSocketApp `run_forever` loop will automatically try to reconnect when a
+The WebSocketApp `run_forever` loop will automatically try to reconnect
+to an open WebSocket connection when a network
 connection is lost if it is provided with a dispatcher parameter,
 and provides a variety of event-based connection controls.
+`run_forever` does not automatically reconnect if the server
+closes the WebSocket. Customizing behavior when the server closes
+the WebSocket should be handled in the `on_close` callback.
 This example uses [rel](https://github.com/bubbleboy14/registeredeventlistener)
 for the dispatcher to provide automatic reconnection.
 
@@ -123,13 +130,4 @@ print("Receiving...")
 result =  ws.recv()
 print("Received '%s'" % result)
 ws.close()
-```
-
-If you want to customize socket options, set sockopt, as seen below:
-
-```python
-from websocket import create_connection
-
-ws = create_connection("ws://echo.websocket.events/",
-                        sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY),))
 ```

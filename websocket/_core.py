@@ -233,6 +233,8 @@ class WebSocket:
             Whitelisted host names that don't use the proxy.
         http_proxy_auth: tuple
             HTTP proxy auth information. Tuple of username and password. Default is None.
+        http_proxy_timeout: int or float
+            HTTP proxy timeout, default is 60 sec as per python-socks.
         redirect_limit: int
             Number of redirects to follow.
         subprotocols: list
@@ -572,6 +574,8 @@ def create_connection(url, timeout=None, class_=WebSocket, **options):
         Whitelisted host names that don't use the proxy.
     http_proxy_auth: tuple
         HTTP proxy auth information. tuple of username and password. Default is None.
+    http_proxy_timeout: int or float
+        HTTP proxy timeout, default is 60 sec as per python-socks.
     enable_multithread: bool
         Enable lock for multithread.
     redirect_limit: int

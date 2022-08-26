@@ -34,7 +34,7 @@ copyright = '2022'
 author = 'liris'
 
 # The full version, including alpha/beta/rc tags
-release = '1.3.3'
+release = '1.4.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -44,7 +44,7 @@ release = '1.3.3'
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage',
               'sphinx.ext.napoleon', 'sphinx.ext.viewcode',
-              'sphinx.ext.autosectionlabel']
+              'sphinx.ext.autosectionlabel', 'sphinx.ext.doctest']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

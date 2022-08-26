@@ -34,20 +34,18 @@ not trigger an error under normal circumstances.
 `Issue #377 <https://github.com/websocket-client/websocket-client/issues/60>`_
 discussed this topic previously.
 
-::
+.. doctest:: print-callback
 
-  import websocket
-
-  def on_message(ws, message):
-    print(message)
-
-  def on_error(wsapp, err):
-    print("Got a an error: ", err)
-
-  wsapp = websocket.WebSocketApp("ws://echo.websocket.events/",
-    on_message = on_message,
-    on_error=on_error)
-  wsapp.run_forever()
+  >>> import websocket
+  >>>
+  >>> def on_message(ws, message):
+  ...     print(message)
+  >>> def on_error(wsapp, err):
+  ...     print("Got a an error: ", err)
+  >>> wsapp = websocket.WebSocketApp("ws://echo.websocket.events/",
+  ... on_message = on_message,
+  ... on_error=on_error)
+  >>> wsapp.run_forever()  # doctest: +SKIP
 
 How to solve the "connection is already closed" error?
 ===========================================================
@@ -138,25 +136,28 @@ provided for all examples seen below.
 
 **WebSocketApp example**
 
-::
+.. doctest:: disable-ssl-verification
 
-  ws = websocket.WebSocketApp("wss://echo.websocket.events")
-  ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+  >>> import websocket, ssl
+  >>> ws = websocket.WebSocketApp("wss://echo.websocket.events")
+  >>> ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})  # doctest: +SKIP
 
 
 **create_connection example**
 
-::
+.. doctest:: disable-ssl-verification
 
-  ws = websocket.create_connection("wss://echo.websocket.events",
-    sslopt={"cert_reqs": ssl.CERT_NONE})
+  >>> import websocket, ssl
+  >>> ws = websocket.create_connection("wss://echo.websocket.events",
+  ... sslopt={"cert_reqs": ssl.CERT_NONE})
 
 **WebSocket example**
 
-::
+.. doctest:: disable-ssl-verification
 
-  ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
-  ws.connect("wss://echo.websocket.events")
+  >>> import websocket, ssl
+  >>> ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
+  >>> ws.connect("wss://echo.websocket.events")
 
 
 How to disable hostname verification?
@@ -166,24 +167,27 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 
 **WebSocketApp example**
 
-::
+.. doctest:: disable-hostname-verification
 
-  ws = websocket.WebSocketApp("wss://echo.websocket.events")
-  ws.run_forever(sslopt={"check_hostname": False})
+  >>> import websocket
+  >>> ws = websocket.WebSocketApp("wss://echo.websocket.events")
+  >>> ws.run_forever(sslopt={"check_hostname": False})  # doctest: +SKIP
 
 **create_connection example**
 
-::
+.. doctest:: disable-hostname-verification
 
-  ws = websocket.create_connection("wss://echo.websocket.events",
-    sslopt={"check_hostname": False})
+  >>> import websocket
+  >>> ws = websocket.create_connection("wss://echo.websocket.events",
+  ... sslopt={"check_hostname": False})
 
 **WebSocket example**
 
-::
+.. doctest:: disable-hostname-verification
 
-  ws = websocket.WebSocket(sslopt={"check_hostname": False})
-  ws.connect("wss://echo.websocket.events")
+  >>> import websocket
+  >>> ws = websocket.WebSocket(sslopt={"check_hostname": False})
+  >>> ws.connect("wss://echo.websocket.events")
 
 
 What else can I do with sslopts?
@@ -204,11 +208,12 @@ If any other SSL options are required, they can be used by creating a custom SSL
 
 For example, if you wanted to load all of the default CA verification certificates, but also add your own additional custom CAs (of which the certs are located in the file "my_extra_CAs.cer"), you could do this:
 
-::
+.. doctest:: sslopts
 
-    my_context = ssl.create_default_context()
-    my_context.load_verify_locations('my_extra_CAs.cer')
-    ws.run_forever(sslopt={'context': my_context})
+  >>> import ssl
+  >>> my_context = ssl.create_default_context()
+  >>> my_context.load_verify_locations('my_extra_CAs.cer')  # doctest: +SKIP
+  >>> ws.run_forever(sslopt={'context': my_context})  # doctest: +SKIP
 
 Note that when passing in a custom ``context``, all of the other context-related options are ignored. In other words, only the ``server_hostname``, ``do_handshake_on_connect``, and ``suppress_ragged_eofs`` options can be used in conjunction with ``context``.
 
@@ -233,5 +238,7 @@ The WebSocket RFC
 `outlines the usage of subprotocols <https://tools.ietf.org/html/rfc6455#section-1.9>`_.
 The subprotocol can be specified as in the example below:
 
->>> ws = websocket.create_connection("ws://example.com/websocket",
-  subprotocols=["binary", "base64"])
+.. doctest:: subprotocols
+
+  >>> import websocket
+  >>> ws = websocket.create_connection("ws://echo.websocket.events", subprotocols=["binary", "base64"])  # doctest: +SKIP
