@@ -102,6 +102,7 @@ class WrappedDispatcher:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
+        dispatcher.signal(2, dispatcher.abort) # keyboard interrupt
 
     def read(self, sock, read_callback, check_callback):
         self.dispatcher.read(sock, read_callback)
@@ -371,7 +372,7 @@ class WebSocketApp:
 
             try:
                 op_code, frame = self.sock.recv_data_frame(True)
-            except WebSocketConnectionClosedException as e:
+            except (WebSocketConnectionClosedException, KeyboardInterrupt) as e:
                 if custom_dispatcher:
                     return handleDisconnect(e)
                 else:
