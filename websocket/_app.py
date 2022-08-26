@@ -44,10 +44,13 @@ class DispatcherBase:
         callback()
 
     def reconnect(self, seconds, reconnector):
-        while True:
-            _logging.info("reconnect() - retrying in %s seconds [%s frames in stack]" % (seconds, len(inspect.stack())))
-            time.sleep(seconds)
-            reconnector(reconnecting=True)
+        try:
+            while True:
+                _logging.info("reconnect() - retrying in %s seconds [%s frames in stack]" % (seconds, len(inspect.stack())))
+                time.sleep(seconds)
+                reconnector(reconnecting=True)
+        except KeyboardInterrupt as e:
+            pass
 
 
 class Dispatcher(DispatcherBase):
