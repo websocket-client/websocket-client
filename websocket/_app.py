@@ -32,6 +32,7 @@ __all__ = ["WebSocketApp"]
 
 RECONNECT = 5
 
+
 def setReconnect(reconnectInterval):
     global RECONNECT
     RECONNECT = reconnectInterval
