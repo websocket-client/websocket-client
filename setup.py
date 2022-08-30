@@ -24,7 +24,7 @@ limitations under the License.
 VERSION = "1.4.0"
 
 install_requires = []
-tests_require = []
+tests_require = ["rel"]
 
 setup(
     name="websocket-client",
@@ -39,7 +39,7 @@ setup(
     download_url='https://github.com/websocket-client/websocket-client/releases',
     python_requires='>=3.7',
     extras_require={
-        "test": ["websockets", "rel"],
+        "test": ["websockets"],
         "optional": ["python-socks", "wsaccel"],
         "docs": ["Sphinx >= 3.4", "sphinx_rtd_theme >= 0.5"],
     },
