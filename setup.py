@@ -39,7 +39,7 @@ setup(
     download_url='https://github.com/websocket-client/websocket-client/releases',
     python_requires='>=3.7',
     extras_require={
-        "test": ["websockets"],
+        "test": ["websockets", "rel"],
         "optional": ["python-socks", "wsaccel"],
         "docs": ["Sphinx >= 3.4", "sphinx_rtd_theme >= 0.5"],
     },
