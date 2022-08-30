@@ -50,7 +50,7 @@ class DispatcherBase:
                 time.sleep(seconds)
                 reconnector(reconnecting=True)
         except KeyboardInterrupt as e:
-            pass
+            _logging.info("User exited %s" % (e,))
 
 
 class Dispatcher(DispatcherBase):
@@ -105,7 +105,7 @@ class WrappedDispatcher:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
-        dispatcher.signal(2, dispatcher.abort) # keyboard interrupt
+        dispatcher.signal(2, dispatcher.abort)  # keyboard interrupt
 
     def read(self, sock, read_callback, check_callback):
         self.dispatcher.read(sock, read_callback)
