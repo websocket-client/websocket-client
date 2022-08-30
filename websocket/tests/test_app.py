@@ -35,6 +35,7 @@ TRACEABLE = True
 
 ws.setReconnect(0)
 
+
 class WebSocketAppTest(unittest.TestCase):
 
     class NotSetYet:
