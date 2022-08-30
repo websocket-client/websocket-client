@@ -30,6 +30,12 @@ limitations under the License.
 
 __all__ = ["WebSocketApp"]
 
+RECONNECT = 5
+
+def setReconnect(reconnectInterval):
+    global RECONNECT
+    RECONNECT = reconnectInterval
+
 
 class DispatcherBase:
     """
@@ -253,7 +259,7 @@ class WebSocketApp:
                     http_proxy_timeout=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    suppress_origin=False, proxy_type=None, reconnect=5):
+                    suppress_origin=False, proxy_type=None, reconnect=RECONNECT):
         """
         Run event loop for WebSocket framework.
 
