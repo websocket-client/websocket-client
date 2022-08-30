@@ -33,6 +33,7 @@ LOCAL_WS_SERVER_PORT = os.environ.get('LOCAL_WS_SERVER_PORT', '-1')
 TEST_WITH_LOCAL_SERVER = LOCAL_WS_SERVER_PORT != '-1'
 TRACEABLE = True
 
+ws.setReconnect(0)
 
 class WebSocketAppTest(unittest.TestCase):
 
