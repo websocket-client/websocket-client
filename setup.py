@@ -23,8 +23,8 @@ limitations under the License.
 
 VERSION = "1.4.0"
 
-install_requires = []
-tests_require = ["rel"]
+install_requires = ["rel"]
+tests_require = []
 
 setup(
     name="websocket-client",
