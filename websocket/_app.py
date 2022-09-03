@@ -445,6 +445,7 @@ class WebSocketApp:
             thread.start()
 
         setSock()
+        return False
 
     def create_dispatcher(self, ping_timeout, dispatcher=None, is_ssl=False):
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
