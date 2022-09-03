@@ -30,7 +30,7 @@ limitations under the License.
 
 __all__ = ["WebSocketApp"]
 
-RECONNECT = 5
+RECONNECT = 0
 
 
 def setReconnect(reconnectInterval):
