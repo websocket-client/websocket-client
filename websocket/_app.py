@@ -260,7 +260,7 @@ class WebSocketApp:
                     http_proxy_timeout=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    suppress_origin=False, proxy_type=None, reconnect=RECONNECT):
+                    suppress_origin=False, proxy_type=None, reconnect=None):
         """
         Run event loop for WebSocket framework.
 
@@ -309,6 +309,9 @@ class WebSocketApp:
             False if the `WebSocketApp` is closed or caught KeyboardInterrupt,
             True if any other exception was raised during a loop.
         """
+
+        if reconnect is None:
+            reconnect = RECONNECT
 
         if ping_timeout is not None and ping_timeout <= 0:
             raise WebSocketException("Ensure ping_timeout > 0")
