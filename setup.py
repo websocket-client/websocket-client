@@ -23,7 +23,7 @@ limitations under the License.
 
 VERSION = "1.4.0"
 
-install_requires = ["rel"]
+install_requires = []
 tests_require = []
 
 setup(
