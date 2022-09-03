@@ -6,7 +6,6 @@ import threading
 import websocket as ws
 import ssl
 import unittest
-#import rel
 
 """
 test_app.py
@@ -100,8 +99,9 @@ class WebSocketAppTest(unittest.TestCase):
             self.close()
 
         app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_message=on_message)
-        app.run_forever(dispatcher=rel)
-        rel.dispatch()
+        app.run_forever(dispatcher="Dispatcher") # doesn't work
+#        app.run_forever(dispatcher=rel)         # would work
+#        rel.dispatch()
 
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testRunForeverTeardownCleanExit(self):
