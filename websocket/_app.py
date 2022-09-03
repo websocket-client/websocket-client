@@ -329,6 +329,7 @@ class WebSocketApp:
         self.keep_running = True
         self.last_ping_tm = 0
         self.last_pong_tm = 0
+        rval = False
 
         def teardown(close_frame=None):
             """
@@ -424,6 +425,7 @@ class WebSocketApp:
             return True
 
         def handleDisconnect(e):
+            rval = True
             self._callback(self.on_error, e)
             if isinstance(e, SystemExit):
                 # propagate SystemExit further
@@ -445,7 +447,7 @@ class WebSocketApp:
             thread.start()
 
         setSock()
-        return False
+        return rval
 
     def create_dispatcher(self, ping_timeout, dispatcher=None, is_ssl=False):
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
