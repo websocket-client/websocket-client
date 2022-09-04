@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 1.4.1
+  - Fix stack growth bug when `run_forever` reconnects (#854)
+  - Add doctest CI for sphinx docs code examples (d150099)
+  - General docs improvements
+
 - 1.4.0
   - Fix automatic reconnect with `run_forever` (#838)
   - Allow a timeout to be set when using a proxy (#842)
