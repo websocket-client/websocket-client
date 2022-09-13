@@ -251,7 +251,7 @@ class WebSocketApp:
                     self.sock.ping(payload)
                 except Exception as ex:
                     _logging.warning("send_ping routine terminated: {}".format(ex))
-                    break
+#                    break # do we need this break for something?
 
     def run_forever(self, sockopt=None, sslopt=None,
                     ping_interval=0, ping_timeout=None,
