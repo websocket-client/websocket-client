@@ -356,6 +356,8 @@ class WebSocketApp:
             self._callback(self.on_close, close_status_code, close_reason)
 
         def setSock(reconnecting=False):
+            if reconnecting and self.sock:
+                self.sock.shutdown()
             self.sock = WebSocket(
                 self.get_mask_key, sockopt=sockopt, sslopt=sslopt,
                 fire_cont_frame=self.on_cont_message is not None,
