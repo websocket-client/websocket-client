@@ -228,6 +228,64 @@ class WebSocketAppTest(unittest.TestCase):
 
         self.assertRaises(ws.WebSocketConnectionClosedException, app.send, data="test if connection is closed")
 
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
+    def testRunForeverTeardownCleanExit(self):
+        """ The WebSocketApp.run_forever() method should return `False` when the application ends gracefully.
+        """
+        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT)
+        threading.Timer(interval=0.2, function=app.close).start()
+        teardown = app.run_forever()
+        self.assertEqual(teardown, False)
+
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
+    def testCallbackException(self):
+        """ Test callback exception handling """
+
+        exc = None
+
+        def on_open(app):
+            raise RuntimeError("Callback failed")
+
+        def on_error(app, err):
+            nonlocal exc
+            exc = err
+
+        def on_pong(app, msg):
+            app.close()
+
+        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_error=on_error, on_pong=on_pong)
+        app.run_forever(ping_interval=2, ping_timeout=1)
+
+        self.assertIsInstance(exc, RuntimeError)
+        self.assertEqual(str(exc), "Callback failed")
+
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
+    def testReconnect(self):
+        """ Test reconnect """
+        pong_count = 0
+        exc = None
+
+        def on_error(app, err):
+            nonlocal exc
+            exc = err
+
+        def on_pong(app, msg):
+            nonlocal pong_count
+            pong_count += 1
+            if pong_count == 1:
+                # First pong, shutdown socket, enforce read error
+                app.sock.shutdown()
+            if pong_count >= 2:
+                # Got second pong after reconnect
+                app.close()
+
+        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_pong=on_pong, on_error=on_error)
+        app.run_forever(ping_interval=2, ping_timeout=1, reconnect=3)
+
+        self.assertEqual(pong_count, 2)
+        self.assertIsInstance(exc, ValueError)
+        self.assertEqual(str(exc), "Invalid file object: None")
+
 
 if __name__ == "__main__":
     unittest.main()
