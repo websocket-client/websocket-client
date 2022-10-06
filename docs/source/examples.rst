@@ -700,7 +700,7 @@ You can use an asynchronous dispatcher such as `rel <https://pypi.org/project/re
   >>> addr = "wss://api.gemini.com/v1/marketdata/%s"
   >>> for symbol in ["BTCUSD", "ETHUSD", "ETHBTC"]:
   ...     ws = websocket.WebSocketApp(addr % (symbol,), on_message=lambda w, m : print(m))
-  ...     ws.run_forever(dispatcher=rel)  # doctest: +SKIP
+  ...     ws.run_forever(dispatcher=rel, reconnect=3)  # doctest: +SKIP
   >>> rel.signal(2, rel.abort)  # Keyboard Interrupt  # doctest: +SKIP
   >>> rel.dispatch()  # doctest: +SKIP
 
@@ -739,7 +739,7 @@ The examples are found in the README and are copied here for sphinx doctests to 
   ...                               on_error=on_error,
   ...                               on_close=on_close)
 
-  >>> ws.run_forever(dispatcher=rel)  # Set dispatcher to automatic reconnection  # doctest: +SKIP
+  >>> ws.run_forever(dispatcher=rel, reconnect=5)  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly  # doctest: +SKIP
   >>> rel.signal(2, rel.abort)  # Keyboard Interrupt
   <Signal Object | Callback:"abort">
   >>> rel.dispatch()  # doctest: +SKIP

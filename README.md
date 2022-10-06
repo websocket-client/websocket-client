@@ -73,10 +73,15 @@ Many more examples are found in the
 Most real-world WebSockets situations involve longer-lived connections.
 The WebSocketApp `run_forever` loop will automatically try to reconnect
 to an open WebSocket connection when a network
-connection is lost if it is provided with a dispatcher parameter,
-and provides a variety of event-based connection controls.
+connection is lost if it is provided with:
+
+- a `dispatcher` argument (async dispatcher like rel or pyevent)
+- a non-zero `reconnect` argument (delay between disconnection and attempted reconnection)
+
+`run_forever` provides a variety of event-based connection controls
+using callbacks like `on_message` and `on_error`.
 `run_forever` does not automatically reconnect if the server
-closes the WebSocket. Customizing behavior when the server closes
+closes the WebSocket gracefully (returning [a standard websocket close code](https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1)). Customizing behavior when the server closes
 the WebSocket should be handled in the `on_close` callback.
 This example uses [rel](https://github.com/bubbleboy14/registeredeventlistener)
 for the dispatcher to provide automatic reconnection.
@@ -107,7 +112,7 @@ if __name__ == "__main__":
                               on_error=on_error,
                               on_close=on_close)
 
-    ws.run_forever(dispatcher=rel)  # Set dispatcher to automatic reconnection
+    ws.run_forever(dispatcher=rel, reconnect=5)  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
     rel.signal(2, rel.abort)  # Keyboard Interrupt
     rel.dispatch()
 ```
