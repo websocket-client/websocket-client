@@ -3,6 +3,7 @@ import os
 import struct
 import sys
 
+from enum import Enum
 from ._exceptions import *
 from ._utils import validate_utf8
 from threading import Lock
@@ -81,6 +82,24 @@ STATUS_TRY_AGAIN_LATER = 1013
 STATUS_BAD_GATEWAY = 1014
 STATUS_TLS_HANDSHAKE_ERROR = 1015
 
+class CloseStatus(int, Enum):
+    STATUS_NORMAL = 1000
+    STATUS_GOING_AWAY = 1001
+    STATUS_PROTOCOL_ERROR = 1002
+    STATUS_UNSUPPORTED_DATA_TYPE = 1003
+    STATUS_STATUS_NOT_AVAILABLE = 1005
+    STATUS_ABNORMAL_CLOSED = 1006
+    STATUS_INVALID_PAYLOAD = 1007
+    STATUS_POLICY_VIOLATION = 1008
+    STATUS_MESSAGE_TOO_BIG = 1009
+    STATUS_INVALID_EXTENSION = 1010
+    STATUS_UNEXPECTED_CONDITION = 1011
+    STATUS_SERVICE_RESTART = 1012
+    STATUS_TRY_AGAIN_LATER = 1013
+    STATUS_BAD_GATEWAY = 1014
+    STATUS_TLS_HANDSHAKE_ERROR = 1015
+
+
 VALID_CLOSE_STATUS = (
     STATUS_NORMAL,
     STATUS_GOING_AWAY,
@@ -146,7 +165,7 @@ class ABNF:
             data = ""
         self.data = data
         self.get_mask_key = os.urandom
-
+        
     def validate(self, skip_utf8_validation=False) -> None:
         """
         Validate the ABNF frame.
@@ -168,14 +187,23 @@ class ABNF:
             l = len(self.data)
             if not l:
                 return
-            if l == 1 or l >= 126:
+
+            # TODO: fix below kalau thomas udah fix
+            if l == 1: #or l >= 126:
                 raise WebSocketProtocolException("Invalid close frame.")
             if l > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
                 raise WebSocketProtocolException("Invalid close frame.")
 
             code = 256 * self.data[0] + self.data[1]
+
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode %r", code)
+
+            code_msg = CloseStatus(code).name
+            self.data = self.data[2:]
+
+            return (code, code_msg)
+        return (None, None)
 
     @staticmethod
     def _is_valid_close_status(code: int) -> bool:
@@ -357,9 +385,9 @@ class frame_buffer:
             self.clear()
 
             frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
-            frame.validate(self.skip_utf8_validation)
+            error_code, error_msg = frame.validate(self.skip_utf8_validation)
 
-        return frame
+        return (frame, error_code, error_msg)
 
     def recv_strict(self, bufsize: int) -> bytes:
         shortage = bufsize - sum(map(len, self.recv_buffer))

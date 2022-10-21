@@ -356,13 +356,14 @@ class WebSocket:
         data: string (byte array) value.
         """
         with self.readlock:
-            opcode, data = self.recv_data()
-        if opcode == ABNF.OPCODE_TEXT:
-            return data.decode("utf-8")
+            opcode, data, error_code, error_msg = self.recv_data()
+
+        if opcode == ABNF.OPCODE_TEXT or opcode == ABNF.OPCODE_CLOSE:
+            return (opcode, data.decode("utf-8"), error_code, error_msg)
         elif opcode == ABNF.OPCODE_TEXT or opcode == ABNF.OPCODE_BINARY:
-            return data
+            return (opcode, data, error_code, error_msg)
         else:
-            return ''
+            return (opcode, None, None, None)
 
     def recv_data(self, control_frame=False):
         """
@@ -379,8 +380,9 @@ class WebSocket:
         opcode, frame.data: tuple
             tuple of operation code and string(byte array) value.
         """
-        opcode, frame = self.recv_data_frame(control_frame)
-        return opcode, frame.data
+        opcode, frame, error_code, error_msg = self.recv_data_frame(control_frame)
+
+        return opcode, frame.data, error_code, error_msg
 
     def recv_data_frame(self, control_frame=False):
         """
@@ -400,7 +402,7 @@ class WebSocket:
             tuple of operation code and string(byte array) value.
         """
         while True:
-            frame = self.recv_frame()
+            frame, error_code, error_msg = self.recv_frame()
             if (isEnabledForTrace()):
                 trace("++Rcv raw: " + repr(frame.format()))
                 trace("++Rcv decoded: " + frame.__str__())
@@ -414,11 +416,12 @@ class WebSocket:
                 self.cont_frame.add(frame)
 
                 if self.cont_frame.is_fire(frame):
-                    return self.cont_frame.extract(frame)
+                    opcode, frame = self.cont_frame.extract(frame)
+                    return opcode, frame, error_code, error_msg
 
             elif frame.opcode == ABNF.OPCODE_CLOSE:
                 self.send_close()
-                return frame.opcode, frame
+                return frame.opcode, frame, error_code, error_msg
             elif frame.opcode == ABNF.OPCODE_PING:
                 if len(frame.data) < 126:
                     self.pong(frame.data)
@@ -426,10 +429,10 @@ class WebSocket:
                     raise WebSocketProtocolException(
                         "Ping message is too long")
                 if control_frame:
-                    return frame.opcode, frame
+                    return frame.opcode, frame, error_code, error_msg
             elif frame.opcode == ABNF.OPCODE_PONG:
                 if control_frame:
-                    return frame.opcode, frame
+                    return frame.opcode, frame, error_code, error_msg
 
     def recv_frame(self):
         """
