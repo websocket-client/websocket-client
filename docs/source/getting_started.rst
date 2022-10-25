@@ -12,8 +12,7 @@ For an easy example, run the following:
 
 The above command will provide you with an interactive terminal to communicate
 with the echo.websocket.events server. This server will echo back any message you
-send it. You can test this WebSocket connection in your browser, without this
-library, by visiting the URL https://websocket.org/echo.html.
+send it.
 
 The wsdump.py script has many additional options too, so it's a great way to try
 using this library without writing any custom code. The output of
