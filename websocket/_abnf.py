@@ -188,8 +188,7 @@ class ABNF:
             if not l:
                 return
 
-            # TODO: fix below kalau thomas udah fix
-            if l == 1: #or l >= 126:
+            if l == 1 or l >= 126:
                 raise WebSocketProtocolException("Invalid close frame.")
             if l > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
                 raise WebSocketProtocolException("Invalid close frame.")
@@ -364,7 +363,7 @@ class frame_buffer:
             # Header
             if self.has_received_header():
                 self.recv_header()
-            (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = self.header
+            (fin, rsv1, rsv2, rsv3, opcode, has_mask, aa) = self.header
 
             # Frame length
             if self.has_received_length():

@@ -526,7 +526,8 @@ class WebSocket:
 
     def _recv(self, bufsize):
         try:
-            return recv(self.sock, bufsize)
+            response = recv(self.sock, bufsize)
+            return response
         except WebSocketConnectionClosedException:
             if self.sock:
                 self.sock.close()
