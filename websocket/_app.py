@@ -441,7 +441,7 @@ class WebSocketApp:
                 teardown()
 
         custom_dispatcher = bool(dispatcher)
-        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, self.url.startswith("wss://"))
+        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, self.url.lower().startswith("wss://"))
 
         if ping_interval:
             event = threading.Event()
