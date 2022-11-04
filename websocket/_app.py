@@ -5,6 +5,7 @@ import threading
 import time
 import traceback
 from ._abnf import ABNF
+from ._url import parse_url
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
 from . import _logging
@@ -441,7 +442,7 @@ class WebSocketApp:
                 teardown()
 
         custom_dispatcher = bool(dispatcher)
-        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, not not sslopt)
+        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, parse_url(self.url)[3])
 
         if ping_interval:
             event = threading.Event()
