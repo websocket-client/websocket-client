@@ -410,7 +410,7 @@ class WebSocketApp:
                                frame.data, frame.fin)
             else:
                 data = frame.data
-                if op_code == ABNF.OPCODE_TEXT:
+                if op_code == ABNF.OPCODE_TEXT and not skip_utf8_validation:
                     data = data.decode("utf-8")
                 self._callback(self.on_data, data, frame.opcode, True)
                 self._callback(self.on_message, data)
