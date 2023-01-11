@@ -379,7 +379,7 @@ class WebSocketApp:
 
                 self._callback(self.on_open)
 
-                _logging.warning("websocket connected")
+                _logging.info("websocket connected")
                 dispatcher.read(self.sock.sock, read, check)
             except (WebSocketConnectionClosedException, ConnectionRefusedError, KeyboardInterrupt, SystemExit, Exception) as e:
                 _logging.error("%s - %s" % (e, reconnect and "reconnecting" or "goodbye"))
