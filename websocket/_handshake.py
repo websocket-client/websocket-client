@@ -101,7 +101,6 @@ def _get_handshake_headers(resource, url, host, port, options):
 
     # Append Sec-WebSocket-Key & Sec-WebSocket-Version if not manually specified
     if not options.get('header') or 'Sec-WebSocket-Key' not in options['header']:
-        key = _create_sec_websocket_key()
         headers.append("Sec-WebSocket-Key: %s" % key)
     else:
         key = options['header']['Sec-WebSocket-Key']
