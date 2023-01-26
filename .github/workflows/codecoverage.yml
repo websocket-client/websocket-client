@@ -7,9 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }} environment
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Run local websockets echo server on port ${{ env.LOCAL_WS_SERVER_PORT }}
@@ -51,4 +51,4 @@ jobs:
           LOCAL_WS_SERVER_PORT: 8765
           WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs/Baltimore_CyberTrust_Root.pem"
       - name: Submit code coverage report to Codecov.io
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3

@@ -7,6 +7,7 @@ import traceback
 
 from . import _logging
 from ._abnf import ABNF
+from ._url import parse_url
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import *
 
@@ -308,12 +309,12 @@ class WebSocketApp:
             HTTP proxy host name.
         http_proxy_port: int or str
             HTTP proxy port. If not set, set to 80.
+        http_no_proxy: list
+            Whitelisted host names that don't use the proxy.
         http_proxy_timeout: int or float
             HTTP proxy timeout, default is 60 sec as per python-socks.
         http_proxy_auth: tuple
             HTTP proxy auth information. tuple of username and password. Default is None.
-        http_no_proxy: list
-            Whitelisted host names that don't use the proxy.
         skip_utf8_validation: bool
             skip utf8 validation.
         host: str
@@ -324,6 +325,10 @@ class WebSocketApp:
             customize reading data from socket.
         suppress_origin: bool
             suppress outputting origin header.
+        proxy_type: str
+            type of proxy from: http, socks4, socks4a, socks5, socks5h
+        reconnect: int
+            delay interval when reconnecting
 
         Returns
         -------
@@ -433,7 +438,7 @@ class WebSocketApp:
                                frame.data, frame.fin)
             else:
                 data = frame.data
-                if op_code == ABNF.OPCODE_TEXT:
+                if op_code == ABNF.OPCODE_TEXT and not skip_utf8_validation:
                     data = data.decode("utf-8")
                 self._callback(self.on_data, data, frame.opcode, True)
                 self._callback(self.on_message, data)
@@ -473,7 +478,7 @@ class WebSocketApp:
                 teardown()
 
         custom_dispatcher = bool(dispatcher)
-        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, not not sslopt)
+        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, parse_url(self.url)[3])
 
         setSock()
         if not custom_dispatcher and reconnect:

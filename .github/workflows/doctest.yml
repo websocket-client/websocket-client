@@ -8,13 +8,13 @@ jobs:
     name: doctest check
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }} environment
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Run pytest with doctest args
         run: |
-          pip3 install pytest 'websocket-client[optional]' rel
+          pip3 install pytest 'websocket-client[docs]' rel
           pytest ./docs/source -v --doctest-glob="*.rst" --doctest-modules

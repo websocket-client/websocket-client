@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 1.4.2
+  - create_dispatcher is determined by URL ws/wss, NOT by presence of sslopt args, to maintain consistency (#875)
+  - Remove redundant key generation line (#864)
+  - Updated docs to fix old links and updated CI to include Python 3.11
+
 - 1.4.1
   - Fix stack growth bug when `run_forever` reconnects (#854)
   - Add doctest CI for sphinx docs code examples (d150099)

@@ -186,13 +186,14 @@ class WebSocketAppTest(unittest.TestCase):
         app = ws.WebSocketApp('wss://tsock.us1.twilio.com/v3/wsconnect')
         app.run_forever(ping_interval=2, ping_timeout=1, ping_payload="Ping payload")
 
-    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
-    def testOpcodeBinary(self):
-        """ Test WebSocketApp binary opcode
-        """
-        # The lack of wss:// in the URL below is on purpose
-        app = ws.WebSocketApp('streaming.vn.teslamotors.com/streaming/')
-        app.run_forever(ping_interval=2, ping_timeout=1, ping_payload="Ping payload")
+    # This is commented out because the URL no longer responds in the expected way
+    # @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    # def testOpcodeBinary(self):
+    #     """ Test WebSocketApp binary opcode
+    #     """
+    #     # The lack of wss:// in the URL below is on purpose
+    #     app = ws.WebSocketApp('wss://streaming.vn.teslamotors.com/streaming/')
+    #     app.run_forever(ping_interval=2, ping_timeout=1, ping_payload="Ping payload")
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def testBadPingInterval(self):

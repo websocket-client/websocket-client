@@ -60,7 +60,7 @@ trigger the ``on_close()`` function. The highlighted rows show the lines added
 exclusively in the second example. This threading approach is identical to the
 `echoapp_client.py example <https://github.com/websocket-client/websocket-client/blob/master/examples/echoapp_client.py>`_.
 However, further testing found that some WebSocket servers, such as
-ws://echo.websocket.org, do not trigger the ``on_close()`` function.
+ws://echo.websocket.events, do not trigger the ``on_close()`` function.
 
 
 **NOT working on_close() example, without threading**
