@@ -80,9 +80,10 @@ connection is lost if it is provided with:
 
 `run_forever` provides a variety of event-based connection controls
 using callbacks like `on_message` and `on_error`.
-`run_forever` does not automatically reconnect if the server
+`run_forever` **does not automatically reconnect** if the server
 closes the WebSocket gracefully (returning
 [a standard websocket close code](https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1)).
+[This is the logic](https://github.com/websocket-client/websocket-client/pull/838#issuecomment-1228454826) behind the decision.
 Customizing behavior when the server closes
 the WebSocket should be handled in the `on_close` callback.
 This example uses [rel](https://github.com/bubbleboy14/registeredeventlistener)
