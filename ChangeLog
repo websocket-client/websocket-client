@@ -1,6 +1,13 @@
 ChangeLog
 ============
 
+- 1.5.0
+  - Refactor and improve ping/pong logic to resolve several issues, including an infinite loop issue during reconnect (#862)
+  - Fix issue where `skip_utf8_validation = True` is ignored (#886)
+  - Fix issue where sslopt `is_ssl` is ignored (#875)
+  - Downgrade "websocket connected" message from logging.warning to logging.info (#888)
+  - Update github actions to newer versions (669fe1b)
+
 - 1.4.2
   - create_dispatcher is determined by URL ws/wss, NOT by presence of sslopt args, to maintain consistency (#875)
   - Remove redundant key generation line (#864)
