@@ -191,7 +191,6 @@ class WebSocketAppTest(unittest.TestCase):
     # def testOpcodeBinary(self):
     #     """ Test WebSocketApp binary opcode
     #     """
-    #     # The lack of wss:// in the URL below is on purpose
     #     app = ws.WebSocketApp('wss://streaming.vn.teslamotors.com/streaming/')
     #     app.run_forever(ping_interval=2, ping_timeout=1, ping_payload="Ping payload")
 
