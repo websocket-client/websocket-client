@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 1.5.1
+  - Fix logic bug that can cause disconnects (#893)
+
 - 1.5.0
   - Refactor and improve ping/pong logic to resolve several issues, including an infinite loop issue during reconnect (#862)
   - Fix issue where `skip_utf8_validation = True` is ignored (#886)
