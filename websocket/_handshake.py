@@ -144,7 +144,8 @@ def _get_handshake_headers(resource, url, host, port, options):
 def _get_resp_headers(sock, success_statuses=SUCCESS_STATUSES):
     status, resp_headers, status_message = read_headers(sock)
     if status not in success_statuses:
-        raise WebSocketBadStatusException("Handshake status %d %s", status, status_message, resp_headers)
+        response_body = sock.recv(int(resp_headers['content-length']))  # read the body of the HTTP error message response and include it in the exception
+        raise WebSocketBadStatusException("Handshake status {status} {message} -+-+- {headers} -+-+- {body}".format(status = status, message = status_message, headers = resp_headers, body = response_body), status, status_message, resp_headers, response_body)
     return status, resp_headers
 
 
