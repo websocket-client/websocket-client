@@ -59,7 +59,7 @@ def parse_url(url):
         if not port:
             port = 443
     else:
-        raise ValueError("scheme %s is invalid" % scheme)
+        raise ValueError("scheme {scheme} is invalid".format(scheme=scheme))
 
     if parsed.path:
         resource = parsed.path

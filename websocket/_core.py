@@ -411,7 +411,7 @@ class WebSocket:
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketProtocolException(
-                    "Not a valid frame %s" % frame)
+                    "Not a valid frame {frame}".format(frame=frame))
             elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
                 self.cont_frame.validate(frame)
                 self.cont_frame.add(frame)

@@ -60,5 +60,5 @@ class SimpleCookieJar:
 
         return "; ".join(filter(
             None, sorted(
-                ["%s=%s" % (k, v.value) for cookie in filter(None, cookies) for k, v in cookie.items()]
+                ["{key}={value}".format(key=k, value=v.value) for cookie in filter(None, cookies) for k, v in cookie.items()]
             )))

@@ -275,8 +275,8 @@ def _ssl_socket(sock, user_sslopt, hostname):
 
 def _tunnel(sock, host, port, auth):
     debug("Connecting proxy...")
-    connect_header = "CONNECT %s:%d HTTP/1.1\r\n" % (host, port)
-    connect_header += "Host: %s:%d\r\n" % (host, port)
+    connect_header = "CONNECT {h}:{p} HTTP/1.1\r\n".format(h=host, p=port)
+    connect_header += "Host: {h}:{p}\r\n".format(h=host, p=port)
 
     # TODO: support digest auth.
     if auth and auth[0]:
@@ -284,7 +284,7 @@ def _tunnel(sock, host, port, auth):
         if auth[1]:
             auth_str += ":" + auth[1]
         encoded_str = base64encode(auth_str.encode()).strip().decode().replace('\n', '')
-        connect_header += "Proxy-Authorization: Basic %s\r\n" % encoded_str
+        connect_header += "Proxy-Authorization: Basic {str}\r\n".format(str=encoded_str)
     connect_header += "\r\n"
     dump("request header", connect_header)
 
@@ -297,7 +297,7 @@ def _tunnel(sock, host, port, auth):
 
     if status != 200:
         raise WebSocketProxyException(
-            "failed CONNECT via proxy status: %r" % status)
+            "failed CONNECT via proxy status: {status}".format(status=status))
 
     return sock
 
