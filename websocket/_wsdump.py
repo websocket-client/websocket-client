@@ -93,7 +93,7 @@ def parse_args():
 
 class RawInput:
 
-    def raw_input(self, prompt):
+    def raw_input(self, prompt=""):
         line = input(prompt)
 
         if ENCODING and ENCODING != "utf-8" and not isinstance(line, str):
