@@ -30,6 +30,7 @@ count = json.loads(ws.recv())
 ws.close()
 
 
+case = 0
 for case in range(1, count + 1):
     url = SERVER + '/runCase?case={0}&agent={1}'.format(case, AGENT)
     status = websocket.STATUS_NORMAL
