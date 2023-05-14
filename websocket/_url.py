@@ -26,7 +26,7 @@ limitations under the License.
 __all__ = ["parse_url", "get_proxy_info"]
 
 
-def parse_url(url):
+def parse_url(url: str) -> tuple[str, int, str, bool]:
     """
     parse url and the result is tuple of
     (hostname, port, resource path and the flag of secure mode)
@@ -59,7 +59,7 @@ def parse_url(url):
         if not port:
             port = 443
     else:
-        raise ValueError("scheme {scheme} is invalid".format(scheme=scheme))
+        raise ValueError("scheme %s is invalid" % scheme)
 
     if parsed.path:
         resource = parsed.path
@@ -75,7 +75,7 @@ def parse_url(url):
 DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
 
 
-def _is_ip_address(addr):
+def _is_ip_address(addr: str) -> bool:
     try:
         socket.inet_aton(addr)
     except socket.error:
@@ -84,7 +84,7 @@ def _is_ip_address(addr):
         return True
 
 
-def _is_subnet_address(hostname):
+def _is_subnet_address(hostname: str) -> bool:
     try:
         addr, netmask = hostname.split("/")
         return _is_ip_address(addr) and 0 <= int(netmask) < 32
@@ -92,7 +92,7 @@ def _is_subnet_address(hostname):
         return False
 
 
-def _is_address_in_network(ip, net):
+def _is_address_in_network(ip: str, net: str) -> bool:
     ipaddr = struct.unpack('!I', socket.inet_aton(ip))[0]
     netaddr, netmask = net.split('/')
     netaddr = struct.unpack('!I', socket.inet_aton(netaddr))[0]
@@ -101,7 +101,7 @@ def _is_address_in_network(ip, net):
     return ipaddr & netmask == netaddr
 
 
-def _is_no_proxy_host(hostname, no_proxy):
+def _is_no_proxy_host(hostname: str, no_proxy: list[str]) -> bool:
     if not no_proxy:
         v = os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", "")
         if v:
@@ -122,8 +122,8 @@ def _is_no_proxy_host(hostname, no_proxy):
 
 
 def get_proxy_info(
-        hostname, is_secure, proxy_host=None, proxy_port=0, proxy_auth=None,
-        no_proxy=None, proxy_type='http'):
+        hostname: str, is_secure: bool, proxy_host: str = None, proxy_port: int = 0, proxy_auth: tuple = None,
+        no_proxy: list = None, proxy_type: str = 'http') -> tuple:
     """
     Try to retrieve proxy host and port from environment
     if not provided in options.
