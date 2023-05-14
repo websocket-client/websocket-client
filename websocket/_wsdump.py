@@ -37,7 +37,7 @@ except ImportError:
     pass
 
 
-def get_encoding():
+def get_encoding() -> str:
     encoding = getattr(sys.stdin, "encoding", "")
     if not encoding:
         return "utf-8"
@@ -51,7 +51,7 @@ ENCODING = get_encoding()
 
 class VAction(argparse.Action):
 
-    def __call__(self, parser, args, values, option_string=None):
+    def __call__(self, parser: argparse.Namespace, args: tuple, values: str, option_string: str = None) -> None:
         if values is None:
             values = "1"
         try:
@@ -61,7 +61,7 @@ class VAction(argparse.Action):
         setattr(args, self.dest, values)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="WebSocket Simple Dump Tool")
     parser.add_argument("url", metavar="ws_url",
                         help="websocket url. ex. ws://echo.websocket.events/")
@@ -93,7 +93,7 @@ def parse_args():
 
 class RawInput:
 
-    def raw_input(self, prompt=""):
+    def raw_input(self, prompt: str = "") -> str:
         line = input(prompt)
 
         if ENCODING and ENCODING != "utf-8" and not isinstance(line, str):
@@ -106,29 +106,29 @@ class RawInput:
 
 class InteractiveConsole(RawInput, code.InteractiveConsole):
 
-    def write(self, data):
+    def write(self, data: str) -> None:
         sys.stdout.write("\033[2K\033[E")
         # sys.stdout.write("\n")
         sys.stdout.write("\033[34m< " + data + "\033[39m")
         sys.stdout.write("\n> ")
         sys.stdout.flush()
 
-    def read(self):
+    def read(self) -> str:
         return self.raw_input("> ")
 
 
 class NonInteractive(RawInput):
 
-    def write(self, data):
+    def write(self, data: str) -> None:
         sys.stdout.write(data)
         sys.stdout.write("\n")
         sys.stdout.flush()
 
-    def read(self):
+    def read(self) -> str:
         return self.raw_input("")
 
 
-def main():
+def main() -> None:
     start_time = time.time()
     args = parse_args()
     if args.verbose > 1:
@@ -154,7 +154,7 @@ def main():
         console = InteractiveConsole()
         print("Press Ctrl+C to quit")
 
-    def recv():
+    def recv() -> tuple(int, str):
         try:
             frame = ws.recv_frame()
         except websocket.WebSocketException:
@@ -172,7 +172,7 @@ def main():
 
         return frame.opcode, frame.data
 
-    def recv_ws():
+    def recv_ws() -> None:
         while True:
             opcode, data = recv()
             msg = None
