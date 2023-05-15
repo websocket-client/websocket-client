@@ -35,9 +35,9 @@ __all__ = ["enableTrace", "dump", "error", "warning", "debug", "trace",
            "isEnabledForError", "isEnabledForDebug", "isEnabledForTrace"]
 
 
-def enableTrace(traceable: bool, 
-                handler: logging.StreamHandler = logging.StreamHandler(), 
-                level : str="DEBUG") -> None:
+def enableTrace(traceable: bool,
+                handler: logging.StreamHandler = logging.StreamHandler(),
+                level: str = "DEBUG") -> None:
     """
     Turn on/off the traceability.
 

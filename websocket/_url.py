@@ -26,7 +26,7 @@ limitations under the License.
 __all__ = ["parse_url", "get_proxy_info"]
 
 
-def parse_url(url: str) -> tuple[str, int, str, bool]:
+def parse_url(url: str) -> tuple:
     """
     parse url and the result is tuple of
     (hostname, port, resource path and the flag of secure mode)
