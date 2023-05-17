@@ -102,4 +102,3 @@ def extract_err_message(exception: Exception) -> str or None:
 def extract_error_code(exception: Exception) -> int or None:
     if exception.args and len(exception.args) > 1:
         return exception.args[0] if isinstance(exception.args[0], int) else None
-
