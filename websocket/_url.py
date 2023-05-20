@@ -101,7 +101,7 @@ def _is_address_in_network(ip: str, net: str) -> bool:
     return ipaddr & netmask == netaddr
 
 
-def _is_no_proxy_host(hostname: str, no_proxy: list[str]) -> bool:
+def _is_no_proxy_host(hostname: str, no_proxy: list) -> bool:
     if not no_proxy:
         v = os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", "")
         if v:
