@@ -1,6 +1,13 @@
 ChangeLog
 ============
 
+- 1.5.2
+  - Add typehints (#908)
+  - Fix pytype errors (#906)
+  - Fix args passed to logging function (#898)
+  - Standardize PEP 3101 formatting (c6a445f)
+  - Add more verbose exception for unsuccessful handshake for #900 (f85ae1f)
+
 - 1.5.1
   - Fix logic bug that can cause disconnects (#893)
 
