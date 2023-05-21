@@ -4,6 +4,9 @@ import sys
 import threading
 import time
 import traceback
+import socket
+
+from typing import Callable, Any
 
 from . import _logging
 from ._abnf import ABNF
@@ -35,7 +38,7 @@ __all__ = ["WebSocketApp"]
 RECONNECT = 0
 
 
-def setReconnect(reconnectInterval):
+def setReconnect(reconnectInterval: int) -> None:
     global RECONNECT
     RECONNECT = reconnectInterval
 
@@ -44,17 +47,18 @@ class DispatcherBase:
     """
     DispatcherBase
     """
-    def __init__(self, app, ping_timeout):
+    def __init__(self, app: Any, ping_timeout: int or float) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
 
-    def timeout(self, seconds, callback):
+    def timeout(self, seconds: int, callback: Callable) -> None:
         time.sleep(seconds)
         callback()
 
-    def reconnect(self, seconds, reconnector):
+    def reconnect(self, seconds: int, reconnector: Callable) -> None:
         try:
-            _logging.info("reconnect() - retrying in {seconds_count} seconds [{frame_count} frames in stack]".format(seconds_count=seconds, frame_count=len(inspect.stack())))
+            _logging.info("reconnect() - retrying in {seconds_count} seconds [{frame_count} frames in stack]".format(
+                seconds_count=seconds, frame_count=len(inspect.stack())))
             time.sleep(seconds)
             reconnector(reconnecting=True)
         except KeyboardInterrupt as e:
@@ -65,7 +69,7 @@ class Dispatcher(DispatcherBase):
     """
     Dispatcher
     """
-    def read(self, sock, read_callback, check_callback):
+    def read(self, sock: socket, read_callback: Callable, check_callback: Callable) -> None:
         while self.app.keep_running:
             sel = selectors.DefaultSelector()
             sel.register(self.app.sock.sock, selectors.EVENT_READ)
@@ -82,7 +86,7 @@ class SSLDispatcher(DispatcherBase):
     """
     SSLDispatcher
     """
-    def read(self, sock, read_callback, check_callback):
+    def read(self, sock: socket, read_callback: Callable, check_callback: Callable) -> None:
         while self.app.keep_running:
             r = self.select()
             if r:
@@ -90,7 +94,7 @@ class SSLDispatcher(DispatcherBase):
                     break
             check_callback()
 
-    def select(self):
+    def select(self) -> list:
         sock = self.app.sock.sock
         if sock.pending():
             return [sock,]
@@ -109,20 +113,20 @@ class WrappedDispatcher:
     """
     WrappedDispatcher
     """
-    def __init__(self, app, ping_timeout, dispatcher):
+    def __init__(self, app, ping_timeout: int or float, dispatcher: Dispatcher) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
         dispatcher.signal(2, dispatcher.abort)  # keyboard interrupt
 
-    def read(self, sock, read_callback, check_callback):
+    def read(self, sock: socket, read_callback: Callable, check_callback: Callable) -> None:
         self.dispatcher.read(sock, read_callback)
         self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
 
-    def timeout(self, seconds, callback):
+    def timeout(self, seconds: int, callback: Callable) -> None:
         self.dispatcher.timeout(seconds, callback)
 
-    def reconnect(self, seconds, reconnector):
+    def reconnect(self, seconds: int, reconnector: Callable) -> None:
         self.timeout(seconds, reconnector)
 
 
@@ -131,14 +135,14 @@ class WebSocketApp:
     Higher level of APIs are provided. The interface is like JavaScript WebSocket object.
     """
 
-    def __init__(self, url, header=None,
-                 on_open=None, on_message=None, on_error=None,
-                 on_close=None, on_ping=None, on_pong=None,
-                 on_cont_message=None,
-                 keep_running=True, get_mask_key=None, cookie=None,
-                 subprotocols=None,
-                 on_data=None,
-                 socket=None):
+    def __init__(self, url: str, header: list or dict = None,
+                 on_open: Callable = None, on_message: Callable = None, on_error: Callable = None,
+                 on_close: Callable = None, on_ping: Callable = None, on_pong: Callable = None,
+                 on_cont_message: Callable = None,
+                 keep_running: bool = True, get_mask_key: Callable = None, cookie: str = None,
+                 subprotocols: list = None,
+                 on_data: Callable = None,
+                 socket: socket = None) -> None:
         """
         WebSocketApp initialization
 
@@ -223,7 +227,7 @@ class WebSocketApp:
         self.prepared_socket = socket
         self.has_errored = False
 
-    def send(self, data, opcode=ABNF.OPCODE_TEXT):
+    def send(self, data: str, opcode: int = ABNF.OPCODE_TEXT) -> None:
         """
         send message
 
@@ -240,7 +244,7 @@ class WebSocketApp:
             raise WebSocketConnectionClosedException(
                 "Connection is already closed.")
 
-    def close(self, **kwargs):
+    def close(self, **kwargs) -> None:
         """
         Close websocket connection.
         """
@@ -249,21 +253,21 @@ class WebSocketApp:
             self.sock.close(**kwargs)
             self.sock = None
 
-    def _start_ping_thread(self):
+    def _start_ping_thread(self) -> None:
         self.last_ping_tm = self.last_pong_tm = 0
         self.stop_ping = threading.Event()
         self.ping_thread = threading.Thread(target=self._send_ping)
         self.ping_thread.daemon = True
         self.ping_thread.start()
 
-    def _stop_ping_thread(self):
+    def _stop_ping_thread(self) -> None:
         if self.stop_ping:
             self.stop_ping.set()
         if self.ping_thread and self.ping_thread.is_alive():
             self.ping_thread.join(3)
         self.last_ping_tm = self.last_pong_tm = 0
 
-    def _send_ping(self):
+    def _send_ping(self) -> None:
         if self.stop_ping.wait(self.ping_interval):
             return
         while not self.stop_ping.wait(self.ping_interval):
@@ -275,15 +279,15 @@ class WebSocketApp:
                 except Exception as e:
                     _logging.debug("Failed to send ping: {err}".format(err=e))
 
-    def run_forever(self, sockopt=None, sslopt=None,
-                    ping_interval=0, ping_timeout=None,
-                    ping_payload="",
-                    http_proxy_host=None, http_proxy_port=None,
-                    http_no_proxy=None, http_proxy_auth=None,
-                    http_proxy_timeout=None,
-                    skip_utf8_validation=False,
-                    host=None, origin=None, dispatcher=None,
-                    suppress_origin=False, proxy_type=None, reconnect=None):
+    def run_forever(self, sockopt: tuple = None, sslopt: dict = None,
+                    ping_interval: int or float = 0, ping_timeout: int or float = None,
+                    ping_payload: str = "",
+                    http_proxy_host: str = None, http_proxy_port: int or str = None,
+                    http_no_proxy: list = None, http_proxy_auth: tuple = None,
+                    http_proxy_timeout: int or float = None,
+                    skip_utf8_validation: bool = False,
+                    host: str = None, origin: str = None, dispatcher: Dispatcher = None,
+                    suppress_origin: bool = False, proxy_type: str = None, reconnect: int = None) -> bool:
         """
         Run event loop for WebSocket framework.
 
@@ -358,7 +362,7 @@ class WebSocketApp:
         self.ping_payload = ping_payload
         self.keep_running = True
 
-        def teardown(close_frame=None):
+        def teardown(close_frame: ABNF = None) -> None:
             """
             Tears down the connection.
 
@@ -380,7 +384,7 @@ class WebSocketApp:
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
-        def setSock(reconnecting=False):
+        def setSock(reconnecting: bool = False) -> None:
             if reconnecting and self.sock:
                 self.sock.shutdown()
 
@@ -412,7 +416,7 @@ class WebSocketApp:
             except (WebSocketConnectionClosedException, ConnectionRefusedError, KeyboardInterrupt, SystemExit, Exception) as e:
                 handleDisconnect(e, reconnecting)
 
-        def read():
+        def read() -> bool:
             if not self.keep_running:
                 return teardown()
 
@@ -445,7 +449,7 @@ class WebSocketApp:
 
             return True
 
-        def check():
+        def check() -> bool:
             if (self.ping_timeout):
                 has_timeout_expired = time.time() - self.last_ping_tm > self.ping_timeout
                 has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
@@ -457,7 +461,7 @@ class WebSocketApp:
                     raise WebSocketTimeoutException("ping/pong timed out")
             return True
 
-        def handleDisconnect(e, reconnecting=False):
+        def handleDisconnect(e: Exception, reconnecting: bool = False) -> bool:
             self.has_errored = True
             self._stop_ping_thread()
             if not reconnecting:
@@ -488,7 +492,7 @@ class WebSocketApp:
 
         return self.has_errored
 
-    def create_dispatcher(self, ping_timeout, dispatcher=None, is_ssl=False):
+    def create_dispatcher(self, ping_timeout: int, dispatcher: Dispatcher = None, is_ssl: bool = False) -> DispatcherBase:
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
             return WrappedDispatcher(self, ping_timeout, dispatcher)
         timeout = ping_timeout or 10
@@ -497,7 +501,7 @@ class WebSocketApp:
 
         return Dispatcher(self, timeout)
 
-    def _get_close_args(self, close_frame):
+    def _get_close_args(self, close_frame: ABNF) -> list:
         """
         _get_close_args extracts the close code and reason from the close body
         if it exists (RFC6455 says WebSocket Connection Close Code is optional)
@@ -516,7 +520,7 @@ class WebSocketApp:
             # Most likely reached this because len(close_frame_data.data) < 2
             return [None, None]
 
-    def _callback(self, callback, *args):
+    def _callback(self, callback: Callable, *args: tuple) -> None:
         if callback:
             try:
                 callback(self, *args)
