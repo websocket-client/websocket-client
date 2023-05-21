@@ -70,8 +70,7 @@ class Dispatcher(DispatcherBase):
             sel = selectors.DefaultSelector()
             sel.register(self.app.sock.sock, selectors.EVENT_READ)
 
-            r = sel.select(self.ping_timeout)
-            if r:
+            if r := sel.select(self.ping_timeout):
                 if not read_callback():
                     break
             check_callback()
@@ -84,8 +83,7 @@ class SSLDispatcher(DispatcherBase):
     """
     def read(self, sock, read_callback, check_callback):
         while self.app.keep_running:
-            r = self.select()
-            if r:
+            if r := self.select():
                 if not read_callback():
                     break
             check_callback()
@@ -409,7 +407,7 @@ class WebSocketApp:
                 self._callback(self.on_open)
 
                 dispatcher.read(self.sock.sock, read, check)
-            except (WebSocketConnectionClosedException, ConnectionRefusedError, KeyboardInterrupt, SystemExit, Exception) as e:
+            except (WebSocketConnectionClosedException, KeyboardInterrupt, SystemExit, Exception) as e:
                 handleDisconnect(e, reconnecting)
 
         def read():
@@ -492,10 +490,7 @@ class WebSocketApp:
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
             return WrappedDispatcher(self, ping_timeout, dispatcher)
         timeout = ping_timeout or 10
-        if is_ssl:
-            return SSLDispatcher(self, timeout)
-
-        return Dispatcher(self, timeout)
+        return SSLDispatcher(self, timeout) if is_ssl else Dispatcher(self, timeout)
 
     def _get_close_args(self, close_frame):
         """

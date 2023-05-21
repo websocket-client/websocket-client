@@ -53,7 +53,7 @@ def enableTrace(traceable, handler=logging.StreamHandler(), level="DEBUG"):
 
 def dump(title, message):
     if _traceEnabled:
-        _logger.debug("--- " + title + " ---")
+        _logger.debug(f"--- {title} ---")
         _logger.debug(message)
         _logger.debug("-----------------------")
 

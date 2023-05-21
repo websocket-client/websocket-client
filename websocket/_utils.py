@@ -93,10 +93,7 @@ def validate_utf8(utfbytes):
 
 
 def extract_err_message(exception):
-    if exception.args:
-        return exception.args[0]
-    else:
-        return None
+    return exception.args[0] if exception.args else None
 
 
 def extract_error_code(exception):
