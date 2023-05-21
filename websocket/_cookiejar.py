@@ -21,10 +21,10 @@ limitations under the License.
 
 
 class SimpleCookieJar:
-    def __init__(self):
-        self.jar = {}
+    def __init__(self) -> None:
+        self.jar = dict()
 
-    def add(self, set_cookie):
+    def add(self, set_cookie: str) -> None:
         if set_cookie:
             simpleCookie = http.cookies.SimpleCookie(set_cookie)
 
@@ -36,7 +36,7 @@ class SimpleCookieJar:
                     cookie.update(simpleCookie)
                     self.jar[domain.lower()] = cookie
 
-    def set(self, set_cookie):
+    def set(self, set_cookie: str) -> None:
         if set_cookie:
             simpleCookie = http.cookies.SimpleCookie(set_cookie)
 
@@ -46,7 +46,7 @@ class SimpleCookieJar:
                         domain = f".{domain}"
                     self.jar[domain.lower()] = simpleCookie
 
-    def get(self, host):
+    def get(self, host: str) -> str:
         if not host:
             return ""
 
@@ -58,5 +58,5 @@ class SimpleCookieJar:
 
         return "; ".join(filter(
             None, sorted(
-                ["{key}={value}".format(key=k, value=v.value) for cookie in filter(None, cookies) for k, v in cookie.items()]
+                ["%s=%s" % (k, v.value) for cookie in filter(None, cookies) for k, v in cookie.items()]
             )))
