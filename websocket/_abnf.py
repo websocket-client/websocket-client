@@ -182,9 +182,7 @@ class ABNF:
         return code in VALID_CLOSE_STATUS or (3000 <= code < 5000)
 
     def __str__(self) -> str:
-        return "fin=" + str(self.fin) \
-            + " opcode=" + str(self.opcode) \
-            + " data=" + str(self.data)
+        return f"fin={str(self.fin)} opcode={str(self.opcode)} data={str(self.data)}"
 
     @staticmethod
     def create_frame(data, opcode, fin=1):
@@ -233,9 +231,8 @@ class ABNF:
 
         if not self.mask:
             return frame_header + self.data
-        else:
-            mask_key = self.get_mask_key(4)
-            return frame_header + self._get_masked(mask_key)
+        mask_key = self.get_mask_key(4)
+        return frame_header + self._get_masked(mask_key)
 
     def _get_masked(self, mask_key):
         s = ABNF.mask(mask_key, self.data)
@@ -305,9 +302,7 @@ class frame_buffer:
         self.header = (fin, rsv1, rsv2, rsv3, opcode, has_mask, length_bits)
 
     def has_mask(self):
-        if not self.header:
-            return False
-        return self.header[frame_buffer._HEADER_MASK_INDEX]
+        return self.header[frame_buffer._HEADER_MASK_INDEX] if self.header else False
 
     def has_received_length(self) -> bool:
         return self.length is None
@@ -418,7 +413,6 @@ class continuous_frame:
         self.cont_data = None
         frame.data = data[1]
         if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not self.skip_utf8_validation and not validate_utf8(frame.data):
-            raise WebSocketPayloadException(
-                "cannot decode: " + repr(frame.data))
+            raise WebSocketPayloadException(f"cannot decode: {repr(frame.data)}")
 
         return [data[0], frame]

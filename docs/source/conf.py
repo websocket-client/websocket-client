@@ -19,9 +19,7 @@ sys.path.append(os.path.abspath('websocket'))
 
 # Don't skip __init__, which is skipped by default
 def skip(app, what, name, obj, would_skip, options):
-    if name == "__init__":
-        return False
-    return would_skip
+    return False if name == "__init__" else would_skip
 
 
 def setup(app):

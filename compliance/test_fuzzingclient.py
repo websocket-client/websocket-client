@@ -25,7 +25,7 @@ SERVER = 'ws://127.0.0.1:8642'
 AGENT = 'py-websockets-client'
 
 
-ws = websocket.create_connection(SERVER + "/getCaseCount")
+ws = websocket.create_connection(f"{SERVER}/getCaseCount")
 count = json.loads(ws.recv())
 ws.close()
 
@@ -56,6 +56,6 @@ for case in range(1, count + 1):
     finally:
         ws.close(status)
 
-print("Ran {} test cases.".format(case))
+print(f"Ran {case} test cases.")
 url = SERVER + '/updateReports?agent={0}'.format(AGENT)
 ws = websocket.create_connection(url)

@@ -125,7 +125,12 @@ class HttpTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def testProxyConnect(self):
         ws = websocket.WebSocket()
-        ws.connect("ws://127.0.0.1:" + LOCAL_WS_SERVER_PORT, http_proxy_host="127.0.0.1", http_proxy_port="8899", proxy_type="http")
+        ws.connect(
+            f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}",
+            http_proxy_host="127.0.0.1",
+            http_proxy_port="8899",
+            proxy_type="http",
+        )
         ws.send("Hello, Server")
         server_response = ws.recv()
         self.assertEqual(server_response, "Hello, Server")

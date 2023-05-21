@@ -39,10 +39,7 @@ except ImportError:
 
 def get_encoding():
     encoding = getattr(sys.stdin, "encoding", "")
-    if not encoding:
-        return "utf-8"
-    else:
-        return encoding.lower()
+    return "utf-8" if not encoding else encoding.lower()
 
 
 OPCODE_DATA = (websocket.ABNF.OPCODE_TEXT, websocket.ABNF.OPCODE_BINARY)
@@ -199,7 +196,7 @@ def main():
 
             if msg is not None:
                 if args.timings:
-                    console.write(str(time.time() - start_time) + ": " + msg)
+                    console.write(f"{str(time.time() - start_time)}: {msg}")
                 else:
                     console.write(msg)
 

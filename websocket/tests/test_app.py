@@ -77,7 +77,12 @@ class WebSocketAppTest(unittest.TestCase):
             """
             WebSocketAppTest.keep_running_close = self.keep_running
 
-        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_close=on_close, on_message=on_message)
+        app = ws.WebSocketApp(
+            f'ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}',
+            on_open=on_open,
+            on_close=on_close,
+            on_message=on_message,
+        )
         app.run_forever()
 
 #    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
@@ -98,7 +103,11 @@ class WebSocketAppTest(unittest.TestCase):
             print(message)
             self.close()
 
-        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_message=on_message)
+        app = ws.WebSocketApp(
+            f'ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}',
+            on_open=on_open,
+            on_message=on_message,
+        )
         app.run_forever(dispatcher="Dispatcher")  # doesn't work
 #        app.run_forever(dispatcher=rel)          # would work
 #        rel.dispatch()
@@ -107,7 +116,7 @@ class WebSocketAppTest(unittest.TestCase):
     def testRunForeverTeardownCleanExit(self):
         """ The WebSocketApp.run_forever() method should return `False` when the application ends gracefully.
         """
-        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT)
+        app = ws.WebSocketApp(f'ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}')
         threading.Timer(interval=0.2, function=app.close).start()
         teardown = app.run_forever()
         self.assertEqual(teardown, False)
@@ -125,7 +134,9 @@ class WebSocketAppTest(unittest.TestCase):
         def on_error(_, err):
             WebSocketAppTest.on_error_data = str(err)
 
-        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_error=on_error)
+        app = ws.WebSocketApp(
+            f'ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}', on_error=on_error
+        )
         threading.Timer(interval=0.2, function=break_it).start()
         teardown = app.run_forever(ping_timeout=0.1)
         self.assertEqual(teardown, True)
@@ -247,7 +258,12 @@ class WebSocketAppTest(unittest.TestCase):
         def on_pong(app, msg):
             app.close()
 
-        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_open=on_open, on_error=on_error, on_pong=on_pong)
+        app = ws.WebSocketApp(
+            f'ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}',
+            on_open=on_open,
+            on_error=on_error,
+            on_pong=on_pong,
+        )
         app.run_forever(ping_interval=2, ping_timeout=1)
 
         self.assertEqual(passed_app, app)
@@ -258,15 +274,17 @@ class WebSocketAppTest(unittest.TestCase):
     def testCallbackMethodException(self):
         """ Test callback method exception handling """
 
+
+
         class Callbacks:
             def __init__(self):
                 self.exc = None
                 self.passed_app = None
                 self.app = ws.WebSocketApp(
-                    'ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT,
+                    f'ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}',
                     on_open=self.on_open,
                     on_error=self.on_error,
-                    on_pong=self.on_pong
+                    on_pong=self.on_pong,
                 )
                 self.app.run_forever(ping_interval=2, ping_timeout=1)
 
@@ -279,6 +297,7 @@ class WebSocketAppTest(unittest.TestCase):
 
             def on_pong(self, app, msg):
                 app.close()
+
 
         callbacks = Callbacks()
 
@@ -306,7 +325,11 @@ class WebSocketAppTest(unittest.TestCase):
                 # Got second pong after reconnect
                 app.close()
 
-        app = ws.WebSocketApp('ws://127.0.0.1:' + LOCAL_WS_SERVER_PORT, on_pong=on_pong, on_error=on_error)
+        app = ws.WebSocketApp(
+            f'ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}',
+            on_pong=on_pong,
+            on_error=on_error,
+        )
         app.run_forever(ping_interval=2, ping_timeout=1, reconnect=3)
 
         self.assertEqual(pong_count, 2)
