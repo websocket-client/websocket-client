@@ -270,7 +270,9 @@ class WebSocketApp:
     def _send_ping(self) -> None:
         if self.stop_ping.wait(self.ping_interval):
             return
-        while not self.stop_ping.wait(self.ping_interval):
+        first_round = True
+        while first_round or not self.stop_ping.wait(self.ping_interval):
+            first_round = False
             if self.sock:
                 self.last_ping_tm = time.time()
                 try:
