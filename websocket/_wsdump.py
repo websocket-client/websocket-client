@@ -154,18 +154,18 @@ def main() -> None:
         console = InteractiveConsole()
         print("Press Ctrl+C to quit")
 
-    def recv() -> tuple(int, str):
+    def recv() -> tuple[int, str]:
         try:
             frame = ws.recv_frame()
         except websocket.WebSocketException:
-            return websocket.ABNF.OPCODE_CLOSE, None
+            return websocket.ABNF.OPCODE_CLOSE, ""
         if not frame:
             raise websocket.WebSocketException("Not a valid frame {frame}".format(frame=frame))
         elif frame.opcode in OPCODE_DATA:
             return frame.opcode, frame.data
         elif frame.opcode == websocket.ABNF.OPCODE_CLOSE:
             ws.send_close()
-            return frame.opcode, None
+            return frame.opcode, ""
         elif frame.opcode == websocket.ABNF.OPCODE_PING:
             ws.pong(frame.data)
             return frame.opcode, frame.data
