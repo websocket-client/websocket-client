@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 1.5.3
+  - Add logic to avoid error in the case where content-length header does not exist, bug introduced in 1.5.2 (#911)
+  - Fix wsdump.py script typing, bug introduced in 1.5.2 (#914)
+
 - 1.5.2
   - Add typehints (#908)
   - Fix pytype errors (#906)
