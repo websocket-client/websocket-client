@@ -113,6 +113,72 @@ ws://echo.websocket.events, do not trigger the ``on_close()`` function.
   wsapp = websocket.WebSocketApp("wss://api.bitfinex.com/ws/1", on_open=on_open, on_message=on_message, on_close=on_close)
   wsapp.run_forever()
 
+
+Another example of code that does not trigger `on_close` is below. The fix is to use a timer.
+
+**NOT working on_close() example, with sleep delay**
+
+.. code-block:: python
+  :emphasize-lines: 11
+
+  import websocket
+  from threading import Thread
+  import sys
+  import time
+
+  def on_close(ws, close_status_code, close_msg):
+      print("### closed ###")
+
+  def on_message(ws, message):
+      print(message)
+      time.sleep(2)
+
+  if __name__ == "__main__":
+      websocket.enableTrace(True)
+      if len(sys.argv) < 2:
+          host = "ws://echo.websocket.events/"
+      else:
+          host = sys.argv[1]
+      ws = websocket.WebSocketApp(host,
+                                  on_message=on_message,
+                                  on_close=on_close)
+      Thread(target=ws.run_forever).start()
+      time.sleep(1)
+      ws.close()
+
+
+**Working on_close() example, with threading delay**
+
+.. code-block:: python
+  :emphasize-lines: 11,12
+
+  import websocket
+  from threading import Thread
+  import sys
+  import time
+
+  def on_close(ws, close_status_code, close_msg):
+      print("### closed ###")
+
+  def on_message(ws, message):
+      print(message)
+      timer = threading.Timer(2, ws.close)
+      timer.start()
+
+  if __name__ == "__main__":
+      websocket.enableTrace(True)
+      if len(sys.argv) < 2:
+          host = "ws://echo.websocket.events/"
+      else:
+          host = sys.argv[1]
+      ws = websocket.WebSocketApp(host,
+                                  on_message=on_message,
+                                  on_close=on_close)
+      Thread(target=ws.run_forever).start()
+      time.sleep(1)
+      ws.close()
+
+
 In part because threading is hard, but also because this project has (until recently)
 lacked any threading documentation, there are many issues on this topic, including:
 
