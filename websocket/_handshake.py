@@ -131,7 +131,7 @@ def _get_handshake_headers(resource, url, host, port, options):
     client_cookie = options.get("cookie", None)
 
     cookie = "; ".join(filter(None, [server_cookie, client_cookie]))
-    
+
     if cookie:
         headers.append("Cookie: {cookie}".format(cookie=cookie))
 
