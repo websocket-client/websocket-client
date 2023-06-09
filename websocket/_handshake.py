@@ -135,16 +135,18 @@ def _get_handshake_headers(resource, url, host, port, options):
     if cookie:
         headers.append("Cookie: {cookie}".format(cookie=cookie))
 
-    headers.append("")
-    headers.append("")
-
+    headers.extend(("", ""))
     return headers, key
 
 
 def _get_resp_headers(sock, success_statuses=SUCCESS_STATUSES):
     status, resp_headers, status_message = read_headers(sock)
     if status not in success_statuses:
-        response_body = sock.recv(int(resp_headers['content-length']))  # read the body of the HTTP error message response and include it in the exception
+        content_len = resp_headers.get('content-length')
+        if content_len:
+            response_body = sock.recv(int(content_len))  # read the body of the HTTP error message response and include it in the exception
+        else:
+            response_body = None
         raise WebSocketBadStatusException("Handshake status {status} {message} -+-+- {headers} -+-+- {body}".format(status=status, message=status_message, headers=resp_headers, body=response_body), status, status_message, resp_headers, response_body)
     return status, resp_headers
 
