@@ -375,7 +375,7 @@ class WebSocketApp:
                 with the statusCode and reason from the provided frame.
             """
 
-            # teardown is called in many code paths to ensure resources are cleaned up and on_close is fired.
+            # teardown() is called in many code paths to ensure resources are cleaned up and on_close is fired.
             # To ensure the work is only done once, we use this bool and lock.
             with self.has_done_teardown_lock:
                 if self.has_done_teardown:
