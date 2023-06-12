@@ -226,6 +226,8 @@ class WebSocketApp:
         self.subprotocols = subprotocols
         self.prepared_socket = socket
         self.has_errored = False
+        self.has_done_teardown = False
+        self.has_done_teardown_lock = threading.Lock()
 
     def send(self, data: str, opcode: int = ABNF.OPCODE_TEXT) -> None:
         """
@@ -268,9 +270,9 @@ class WebSocketApp:
         self.last_ping_tm = self.last_pong_tm = 0
 
     def _send_ping(self) -> None:
-        if self.stop_ping.wait(self.ping_interval):
+        if self.stop_ping.wait(self.ping_interval) or self.keep_running is False:
             return
-        while not self.stop_ping.wait(self.ping_interval):
+        while not self.stop_ping.wait(self.ping_interval) and self.keep_running is True:
             if self.sock:
                 self.last_ping_tm = time.time()
                 try:
@@ -372,6 +374,13 @@ class WebSocketApp:
                 If close_frame is set, the on_close handler is invoked
                 with the statusCode and reason from the provided frame.
             """
+
+            # teardown is called in many code paths to ensure resources are cleaned up and on_close is fired.
+            # To ensure the work is only done once, we use this bool and lock.
+            with self.has_done_teardown_lock:
+                if self.has_done_teardown:
+                    return
+                self.has_done_teardown = True
 
             self._stop_ping_thread()
             self.keep_running = False
@@ -484,11 +493,15 @@ class WebSocketApp:
         custom_dispatcher = bool(dispatcher)
         dispatcher = self.create_dispatcher(ping_timeout, dispatcher, parse_url(self.url)[3])
 
-        setSock()
-        if not custom_dispatcher and reconnect:
-            while self.keep_running:
-                _logging.debug("Calling dispatcher reconnect [{frame_count} frames in stack]".format(frame_count=len(inspect.stack())))
-                dispatcher.reconnect(reconnect, setSock)
+        try:
+            setSock()
+            if not custom_dispatcher and reconnect:
+                while self.keep_running:
+                    _logging.debug("Calling dispatcher reconnect [{frame_count} frames in stack]".format(frame_count=len(inspect.stack())))
+                    dispatcher.reconnect(reconnect, setSock)
+        finally:
+            # Ensure teardown was called before returning from run_forever
+            teardown()
 
         return self.has_errored
 
