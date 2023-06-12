@@ -10,7 +10,7 @@ from ._utils import *
 _socket.py
 websocket - WebSocket client library for Python
 
-Copyright 2022 engn33r
+Copyright 2023 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ def getdefaulttimeout() -> int or float:
     return _default_timeout
 
 
-def recv(sock: socket, bufsize: int) -> bytes:
+def recv(sock: socket.socket, bufsize: int) -> bytes:
     if not sock:
         raise WebSocketConnectionClosedException("socket is already closed.")
 
@@ -125,7 +125,7 @@ def recv(sock: socket, bufsize: int) -> bytes:
     return bytes_
 
 
-def recv_line(sock: socket) -> bytes:
+def recv_line(sock: socket.socket) -> bytes:
     line = []
     while True:
         c = recv(sock, 1)
@@ -135,7 +135,7 @@ def recv_line(sock: socket) -> bytes:
     return b''.join(line)
 
 
-def send(sock: socket, data: bytes) -> int:
+def send(sock: socket.socket, data: bytes) -> int:
     if isinstance(data, str):
         data = data.encode('utf-8')
 

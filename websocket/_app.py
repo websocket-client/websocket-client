@@ -18,7 +18,7 @@ from ._exceptions import *
 _app.py
 websocket - WebSocket client library for Python
 
-Copyright 2022 engn33r
+Copyright 2023 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class DispatcherBase:
     """
     DispatcherBase
     """
-    def __init__(self, app: Any, ping_timeout: int or float) -> None:
+    def __init__(self, app: Any, ping_timeout: float) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
 
@@ -69,7 +69,7 @@ class Dispatcher(DispatcherBase):
     """
     Dispatcher
     """
-    def read(self, sock, read_callback, check_callback):
+    def read(self, sock: socket.socket, read_callback: Callable, check_callback: Callable) -> None:
         sel = selectors.DefaultSelector()
         sel.register(self.app.sock.sock, selectors.EVENT_READ)
         try:
@@ -87,7 +87,7 @@ class SSLDispatcher(DispatcherBase):
     """
     SSLDispatcher
     """
-    def read(self, sock, read_callback, check_callback):
+    def read(self, sock: socket.socket, read_callback: Callable, check_callback: Callable) -> None:
         sock = self.app.sock.sock
         sel = selectors.DefaultSelector()
         sel.register(sock, selectors.EVENT_READ)
@@ -116,13 +116,13 @@ class WrappedDispatcher:
     """
     WrappedDispatcher
     """
-    def __init__(self, app, ping_timeout: int or float, dispatcher: Dispatcher) -> None:
+    def __init__(self, app, ping_timeout: float, dispatcher: Dispatcher) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
         dispatcher.signal(2, dispatcher.abort)  # keyboard interrupt
 
-    def read(self, sock: socket, read_callback: Callable, check_callback: Callable) -> None:
+    def read(self, sock: socket.socket, read_callback: Callable, check_callback: Callable) -> None:
         self.dispatcher.read(sock, read_callback)
         self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
 
@@ -145,7 +145,7 @@ class WebSocketApp:
                  keep_running: bool = True, get_mask_key: Callable = None, cookie: str = None,
                  subprotocols: list = None,
                  on_data: Callable = None,
-                 socket: socket = None) -> None:
+                 socket: socket.socket = None) -> None:
         """
         WebSocketApp initialization
 
@@ -285,11 +285,11 @@ class WebSocketApp:
                     _logging.debug("Failed to send ping: {err}".format(err=e))
 
     def run_forever(self, sockopt: tuple = None, sslopt: dict = None,
-                    ping_interval: int or float = 0, ping_timeout: int or float = None,
+                    ping_interval: float = 0, ping_timeout: float or None = None,
                     ping_payload: str = "",
                     http_proxy_host: str = None, http_proxy_port: int or str = None,
                     http_no_proxy: list = None, http_proxy_auth: tuple = None,
-                    http_proxy_timeout: int or float = None,
+                    http_proxy_timeout: float = None,
                     skip_utf8_validation: bool = False,
                     host: str = None, origin: str = None, dispatcher: Dispatcher = None,
                     suppress_origin: bool = False, proxy_type: str = None, reconnect: int = None) -> bool:
@@ -367,7 +367,7 @@ class WebSocketApp:
         self.ping_payload = ping_payload
         self.keep_running = True
 
-        def teardown(close_frame: ABNF = None) -> None:
+        def teardown(close_frame: ABNF = None):
             """
             Tears down the connection.
 
@@ -536,7 +536,7 @@ class WebSocketApp:
             # Most likely reached this because len(close_frame_data.data) < 2
             return [None, None]
 
-    def _callback(self, callback: Callable, *args: tuple) -> None:
+    def _callback(self, callback, *args) -> None:
         if callback:
             try:
                 callback(self, *args)

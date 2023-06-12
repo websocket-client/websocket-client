@@ -2,7 +2,7 @@
 _http.py
 websocket - WebSocket client library for Python
 
-Copyright 2022 engn33r
+Copyright 2023 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ class proxy_info:
             self.proxy_protocol = "http"
 
 
-def _start_proxied_socket(url, options, proxy):
+def _start_proxied_socket(url: str, options, proxy):
     if not HAVE_PYTHON_SOCKS:
         raise WebSocketException("Python Socks is needed for SOCKS proxying but is not available")
 
@@ -107,7 +107,7 @@ def _start_proxied_socket(url, options, proxy):
     return sock, (hostname, port, resource)
 
 
-def connect(url, options, proxy, socket):
+def connect(url: str, options, proxy, socket):
     # Use _start_proxied_socket() only for socks4 or socks5 proxy
     # Use _tunnel() for http proxy
     # TODO: Use python-socks for http protocol also, to standardize flow

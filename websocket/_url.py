@@ -8,7 +8,7 @@ from urllib.parse import unquote, urlparse
 _url.py
 websocket - WebSocket client library for Python
 
-Copyright 2022 engn33r
+Copyright 2023 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -140,11 +140,11 @@ def get_proxy_info(
         before falling back to "http_proxy"
     proxy_host: str
         http proxy host name.
-    http_proxy_port: str or int
+    proxy_port: str or int
         http proxy port.
-    http_no_proxy: list
+    no_proxy: list
         Whitelisted host names that don't use the proxy.
-    http_proxy_auth: tuple
+    proxy_auth: tuple
         HTTP proxy auth information. Tuple of username and password. Default is None.
     proxy_type: str
         Specify the proxy protocol (http, socks4, socks4a, socks5, socks5h). Default is "http".
