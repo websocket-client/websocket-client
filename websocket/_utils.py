@@ -63,7 +63,7 @@ except ImportError:
         12,12,12,12,12,12,12,36,12,36,12,12, 12,36,12,12,12,12,12,36,12,36,12,12,
         12,36,12,12,12,12,12,12,12,12,12,12, ]
 
-    def _decode(state, codep, ch) -> tuple:
+    def _decode(state: int, codep: int, ch: int) -> tuple[int, int]:
         tp = _UTF8D[ch]
 
         codep = (ch & 0x3f) | (codep << 6) if (
@@ -72,7 +72,7 @@ except ImportError:
 
         return state, codep
 
-    def _validate_utf8(utfbytes: bytes) -> bool:
+    def _validate_utf8(utfbytes: str or bytes) -> bool:
         state = _UTF8_ACCEPT
         codep = 0
         for i in utfbytes:
@@ -83,7 +83,7 @@ except ImportError:
         return True
 
 
-def validate_utf8(utfbytes: str) -> bool:
+def validate_utf8(utfbytes: str or bytes) -> bool:
     """
     validate utf8 byte string.
     utfbytes: utf byte string to check.

@@ -40,7 +40,7 @@ except ImportError:
     # wsaccel is not available, use websocket-client _mask()
     native_byteorder = sys.byteorder
 
-    def _mask(mask_value: int, data_value: int) -> bytes:
+    def _mask(mask_value: array.array, data_value: array.array) -> bytes:
         datalen = len(data_value)
         data_value = int.from_bytes(data_value, native_byteorder)
         mask_value = int.from_bytes(mask_value * (datalen // 4) + mask_value[: datalen % 4], native_byteorder)
@@ -132,7 +132,7 @@ class ABNF:
     LENGTH_63 = 1 << 63
 
     def __init__(self, fin: int = 0, rsv1: int = 0, rsv2: int = 0, rsv3: int = 0,
-                 opcode: int = OPCODE_TEXT, mask: int = 1, data: str = "") -> None:
+                 opcode: int = OPCODE_TEXT, mask: int = 1, data: str or bytes = "") -> None:
         """
         Constructor for ABNF. Please check RFC for arguments.
         """
@@ -193,13 +193,13 @@ class ABNF:
 
         Parameters
         ----------
-        data: <type>
+        data: str
             data to send. This is string value(byte array).
             If opcode is OPCODE_TEXT and this value is unicode,
             data value is converted into unicode string, automatically.
-        opcode: <type>
-            operation code. please see OPCODE_XXX.
-        fin: <type>
+        opcode: int
+            operation code. please see OPCODE_MAP.
+        fin: int
             fin flag. if set to 0, create continue fragmentation.
         """
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, str):
@@ -237,7 +237,7 @@ class ABNF:
             mask_key = self.get_mask_key(4)
             return frame_header + self._get_masked(mask_key)
 
-    def _get_masked(self, mask_key: bytes) -> bytes:
+    def _get_masked(self, mask_key: str or bytes) -> bytes:
         s = ABNF.mask(mask_key, self.data)
 
         if isinstance(mask_key, str):
@@ -246,7 +246,7 @@ class ABNF:
         return mask_key + s
 
     @staticmethod
-    def mask(mask_key: bytes, data: bytes) -> bytes:
+    def mask(mask_key: str or bytes, data: str or bytes) -> bytes:
         """
         Mask or unmask data. Just do xor for each byte
 
