@@ -69,16 +69,17 @@ class Dispatcher(DispatcherBase):
     """
     Dispatcher
     """
-    def read(self, sock: socket, read_callback: Callable, check_callback: Callable) -> None:
-        while self.app.keep_running:
-            sel = selectors.DefaultSelector()
-            sel.register(self.app.sock.sock, selectors.EVENT_READ)
-
-            r = sel.select(self.ping_timeout)
-            if r:
-                if not read_callback():
-                    break
-            check_callback()
+    def read(self, sock, read_callback, check_callback):
+        sel = selectors.DefaultSelector()
+        sel.register(self.app.sock.sock, selectors.EVENT_READ)
+        try:
+            while self.app.keep_running:
+                r = sel.select(self.ping_timeout)
+                if r:
+                    if not read_callback():
+                        break
+                check_callback()
+        finally:
             sel.close()
 
 
@@ -86,24 +87,26 @@ class SSLDispatcher(DispatcherBase):
     """
     SSLDispatcher
     """
-    def read(self, sock: socket, read_callback: Callable, check_callback: Callable) -> None:
-        while self.app.keep_running:
-            r = self.select()
-            if r:
-                if not read_callback():
-                    break
-            check_callback()
+    def read(self, sock, read_callback, check_callback):
+        sock = self.app.sock.sock
+        sel = selectors.DefaultSelector()
+        sel.register(sock, selectors.EVENT_READ)
+        try:
+            while self.app.keep_running:
+                r = self.select(sock, sel)
+                if r:
+                    if not read_callback():
+                        break
+                check_callback()
+        finally:
+            sel.close()
 
-    def select(self) -> list:
+    def select(self, sock, sel:selectors.DefaultSelector):
         sock = self.app.sock.sock
         if sock.pending():
             return [sock,]
 
-        sel = selectors.DefaultSelector()
-        sel.register(sock, selectors.EVENT_READ)
-
         r = sel.select(self.ping_timeout)
-        sel.close()
 
         if len(r) > 0:
             return r[0][0]
