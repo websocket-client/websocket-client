@@ -63,7 +63,7 @@ except ImportError:
         12,12,12,12,12,12,12,36,12,36,12,12, 12,36,12,12,12,12,12,36,12,36,12,12,
         12,36,12,12,12,12,12,12,12,12,12,12, ]
 
-    def _decode(state: int, codep: int, ch: int) -> tuple[int, int]:
+    def _decode(state: int, codep: int, ch: int) -> tuple:
         tp = _UTF8D[ch]
 
         codep = (ch & 0x3f) | (codep << 6) if (

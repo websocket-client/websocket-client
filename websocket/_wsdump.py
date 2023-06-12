@@ -154,7 +154,7 @@ def main() -> None:
         console = InteractiveConsole()
         print("Press Ctrl+C to quit")
 
-    def recv() -> tuple[int, str]:
+    def recv() -> tuple:
         try:
             frame = ws.recv_frame()
         except websocket.WebSocketException:

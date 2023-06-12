@@ -367,7 +367,7 @@ class WebSocket:
         else:
             return ''
 
-    def recv_data(self, control_frame: bool = False) -> tuple[int, bytes]:
+    def recv_data(self, control_frame: bool = False) -> tuple:
         """
         Receive data with operation code.
 

@@ -26,7 +26,7 @@ limitations under the License.
 __all__ = ["parse_url", "get_proxy_info"]
 
 
-def parse_url(url: str) -> tuple[str, int, str, bool]:
+def parse_url(url: str) -> tuple:
     """
     parse url and the result is tuple of
     (hostname, port, resource path and the flag of secure mode)
@@ -101,7 +101,7 @@ def _is_address_in_network(ip: str, net: str) -> bool:
     return ipaddr & netmask == netaddr
 
 
-def _is_no_proxy_host(hostname: str, no_proxy: list[str]) -> bool:
+def _is_no_proxy_host(hostname: str, no_proxy: list) -> bool:
     if not no_proxy:
         v = os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", "")
         if v:
@@ -122,8 +122,8 @@ def _is_no_proxy_host(hostname: str, no_proxy: list[str]) -> bool:
 
 
 def get_proxy_info(
-        hostname: str, is_secure: bool, proxy_host: str = None, proxy_port: int = 0, proxy_auth: tuple[str, str] = None,
-        no_proxy: list[str] = None, proxy_type: str = 'http') -> tuple:
+        hostname: str, is_secure: bool, proxy_host: str = None, proxy_port: int = 0, proxy_auth: tuple = None,
+        no_proxy: list = None, proxy_type: str = 'http') -> tuple:
     """
     Try to retrieve proxy host and port from environment
     if not provided in options.

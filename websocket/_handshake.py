@@ -40,7 +40,7 @@ CookieJar = SimpleCookieJar()
 
 class handshake_response:
 
-    def __init__(self, status: int, headers: dict[str, str], subprotocol):
+    def __init__(self, status: int, headers: dict, subprotocol):
         self.status = status
         self.headers = headers
         self.subprotocol = subprotocol
@@ -72,7 +72,7 @@ def _pack_hostname(hostname: str) -> str:
     return hostname
 
 
-def _get_handshake_headers(resource: str, url: str, host: str, port: int, options: dict[str, str]):
+def _get_handshake_headers(resource: str, url: str, host: str, port: int, options: dict):
     headers = [
         "GET {resource} HTTP/1.1".format(resource=resource),
         "Upgrade: websocket"
@@ -139,7 +139,7 @@ def _get_handshake_headers(resource: str, url: str, host: str, port: int, option
     return headers, key
 
 
-def _get_resp_headers(sock, success_statuses: tuple[int, ...] = SUCCESS_STATUSES) -> tuple[int, dict[str, str]]:
+def _get_resp_headers(sock, success_statuses: tuple = SUCCESS_STATUSES) -> tuple:
     status, resp_headers, status_message = read_headers(sock)
     if status not in success_statuses:
         content_len = resp_headers.get('content-length')

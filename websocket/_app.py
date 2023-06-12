@@ -135,7 +135,7 @@ class WebSocketApp:
     Higher level of APIs are provided. The interface is like JavaScript WebSocket object.
     """
 
-    def __init__(self, url: str, header: list or dict[str, str] = None,
+    def __init__(self, url: str, header: list or dict = None,
                  on_open: Callable = None, on_message: Callable = None, on_error: Callable = None,
                  on_close: Callable = None, on_ping: Callable = None, on_pong: Callable = None,
                  on_cont_message: Callable = None,
