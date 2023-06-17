@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 1.6.0
+  - Fix teardown issue when ping thread is not properly ended (#918)
+  - Fix double ping wait time on first ping (#912)
+  - Minor typehints improvements (eda6724, 54b3013)
+
 - 1.5.3
   - Add logic to avoid error in the case where content-length header does not exist, bug introduced in 1.5.2 (#911)
   - Fix wsdump.py script typing, bug introduced in 1.5.2 (#914)
