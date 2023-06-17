@@ -310,8 +310,8 @@ class WebSocketAppTest(unittest.TestCase):
         app.run_forever(ping_interval=2, ping_timeout=1, reconnect=3)
 
         self.assertEqual(pong_count, 2)
-        self.assertIsInstance(exc, ValueError)
-        self.assertEqual(str(exc), "Invalid file object: None")
+        self.assertIsInstance(exc, ws.WebSocketTimeoutException)
+        self.assertEqual(str(exc), "ping/pong timed out")
 
 
 if __name__ == "__main__":
