@@ -503,8 +503,8 @@ class WebSocketApp:
                 while self.keep_running:
                     _logging.debug("Calling dispatcher reconnect [{frame_count} frames in stack]".format(frame_count=len(inspect.stack())))
                     dispatcher.reconnect(reconnect, setSock)
-        except:
-            _logging.info("tearing down on exception")
+        except (KeyboardInterrupt, Exception) as e:
+            _logging.info("tearing down on exception {err}".format(err=e))
             teardown()
         finally:
             if not custom_dispatcher:
