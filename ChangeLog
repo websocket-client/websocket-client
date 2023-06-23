@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 1.6.1
+  - Fix Dispatcher keyboard interrupt. Should solve reconnect loop with rel (#924)
+
 - 1.6.0
   - Fix teardown issue when ping thread is not properly ended (#918)
   - Fix double ping wait time on first ping (#912)
