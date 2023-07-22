@@ -139,7 +139,7 @@ class WebSocketApp:
     Higher level of APIs are provided. The interface is like JavaScript WebSocket object.
     """
 
-    def __init__(self, url: str, header: list or dict = None,
+    def __init__(self, url: str, header: list or dict or Callable = None,
                  on_open: Callable = None, on_message: Callable = None, on_error: Callable = None,
                  on_close: Callable = None, on_ping: Callable = None, on_pong: Callable = None,
                  on_cont_message: Callable = None,
@@ -154,8 +154,11 @@ class WebSocketApp:
         ----------
         url: str
             Websocket url.
-        header: list or dict
+        header: list or dict or Callable
             Custom header for websocket handshake.
+            If the parameter is a callable object, it is called just before the connection attempt.
+            The returned dict or list is used as custom header value.
+            This could be useful in order to properly setup timestamp dependent headers.
         on_open: function
             Callback object which is called at opening websocket.
             on_open has one argument.
@@ -409,8 +412,11 @@ class WebSocketApp:
 
             self.sock.settimeout(getdefaulttimeout())
             try:
+
+                header = self.header() if callable(self.header) else self.header
+
                 self.sock.connect(
-                    self.url, header=self.header, cookie=self.cookie,
+                    self.url, header=header, cookie=self.cookie,
                     http_proxy_host=http_proxy_host,
                     http_proxy_port=http_proxy_port, http_no_proxy=http_no_proxy,
                     http_proxy_auth=http_proxy_auth, http_proxy_timeout=http_proxy_timeout,
