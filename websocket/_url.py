@@ -137,7 +137,7 @@ def get_proxy_info(
         Websocket server name.
     is_secure: bool
         Is the connection secure? (wss) looks for "https_proxy" in env
-        before falling back to "http_proxy"
+        instead of "http_proxy"
     proxy_host: str
         http proxy host name.
     proxy_port: str or int
@@ -158,15 +158,11 @@ def get_proxy_info(
         auth = proxy_auth
         return proxy_host, port, auth
 
-    env_keys = ["http_proxy"]
-    if is_secure:
-        env_keys.insert(0, "https_proxy")
-
-    for key in env_keys:
-        value = os.environ.get(key, os.environ.get(key.upper(), "")).replace(" ", "")
-        if value:
-            proxy = urlparse(value)
-            auth = (unquote(proxy.username), unquote(proxy.password)) if proxy.username else None
-            return proxy.hostname, proxy.port, auth
+    env_key = "https_proxy" if is_secure else "http_proxy"
+    value = os.environ.get(env_key, os.environ.get(env_key.upper(), "")).replace(" ", "")
+    if value:
+        proxy = urlparse(value)
+        auth = (unquote(proxy.username), unquote(proxy.password)) if proxy.username else None
+        return proxy.hostname, proxy.port, auth
 
     return None, 0, None
