@@ -19,7 +19,6 @@ limitations under the License.
 import errno
 import os
 import socket
-import sys
 
 from ._exceptions import *
 from ._logging import *
@@ -211,6 +210,11 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     context = sslopt.get('context', None)
     if not context:
         context = ssl.SSLContext(sslopt.get('ssl_version', ssl.PROTOCOL_TLS_CLIENT))
+        # Non default context need to manually enable SSLKEYLOGFILE support by setting the keylog_filename attribute.
+        # For more details see also:
+        # * https://docs.python.org/3.8/library/ssl.html?highlight=sslkeylogfile#context-creation
+        # * https://docs.python.org/3.8/library/ssl.html?highlight=sslkeylogfile#ssl.SSLContext.keylog_filename
+        context.keylog_filename = os.environ.get("SSLKEYLOGFILE", None)
 
         if sslopt.get('cert_reqs', ssl.CERT_NONE) != ssl.CERT_NONE:
             cafile = sslopt.get('ca_certs', None)
