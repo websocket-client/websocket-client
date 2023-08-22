@@ -1,8 +1,10 @@
 ChangeLog
 ============
 
-- Unreleased
-  - Add support for SSLKEYLOGFILE
+- 1.6.2
+  - Add support for SSLKEYLOGFILE environment variable (#943)
+  - Add support for callable header arguments (#932)
+  - Change handling of proxy environment variables, is_secure set to true now prevents http_proxy from getting used (#929)
 
 - 1.6.1
   - Fix Dispatcher keyboard interrupt. Should solve reconnect loop with rel (#924)
