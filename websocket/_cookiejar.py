@@ -24,7 +24,7 @@ class SimpleCookieJar:
     def __init__(self) -> None:
         self.jar = dict()
 
-    def add(self, set_cookie: str) -> None:
+    def add(self, set_cookie: str | None) -> None:
         if set_cookie:
             simpleCookie = http.cookies.SimpleCookie(set_cookie)
 
