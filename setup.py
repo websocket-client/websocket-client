@@ -34,6 +34,8 @@ setup(
     long_description_content_type='text/markdown',
     author="liris",
     author_email="liris.pp@gmail.com",
+    maintainer="engn33r",
+    maintainer_email="websocket.client@proton.me",
     license="Apache-2.0",
     url="https://github.com/websocket-client/websocket-client.git",
     download_url='https://github.com/websocket-client/websocket-client/releases',
