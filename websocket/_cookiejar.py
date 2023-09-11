@@ -1,5 +1,7 @@
 import http.cookies
 
+from typing import Optional
+
 """
 _cookiejar.py
 websocket - WebSocket client library for Python
@@ -24,7 +26,7 @@ class SimpleCookieJar:
     def __init__(self) -> None:
         self.jar = dict()
 
-    def add(self, set_cookie: str) -> None:
+    def add(self, set_cookie: Optional[str]) -> None:
         if set_cookie:
             simpleCookie = http.cookies.SimpleCookie(set_cookie)
 

@@ -2,6 +2,8 @@ import errno
 import selectors
 import socket
 
+from typing import Union
+
 from ._exceptions import *
 from ._ssl_compat import *
 from ._utils import *
@@ -53,7 +55,7 @@ class sock_opt:
         self.timeout = None
 
 
-def setdefaulttimeout(timeout: int or float) -> None:
+def setdefaulttimeout(timeout: Union[int, float, None]) -> None:
     """
     Set the global timeout setting to connect.
 
@@ -66,7 +68,7 @@ def setdefaulttimeout(timeout: int or float) -> None:
     _default_timeout = timeout
 
 
-def getdefaulttimeout() -> int or float:
+def getdefaulttimeout() -> Union[int, float, None]:
     """
     Get default timeout
 
@@ -135,7 +137,7 @@ def recv_line(sock: socket.socket) -> bytes:
     return b''.join(line)
 
 
-def send(sock: socket.socket, data: bytes) -> int:
+def send(sock: socket.socket, data: Union[bytes, str]) -> int:
     if isinstance(data, str):
         data = data.encode('utf-8')
 

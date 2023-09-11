@@ -1,12 +1,12 @@
 import inspect
 import selectors
+import socket
 import sys
 import threading
 import time
 import traceback
-import socket
 
-from typing import Callable, Any
+from typing import Any, Callable, Optional, Union
 
 from . import _logging
 from ._abnf import ABNF
@@ -139,7 +139,7 @@ class WebSocketApp:
     Higher level of APIs are provided. The interface is like JavaScript WebSocket object.
     """
 
-    def __init__(self, url: str, header: list or dict or Callable = None,
+    def __init__(self, url: str, header: Union[list, dict, Callable] = None,
                  on_open: Callable = None, on_message: Callable = None, on_error: Callable = None,
                  on_close: Callable = None, on_ping: Callable = None, on_pong: Callable = None,
                  on_cont_message: Callable = None,
@@ -289,9 +289,9 @@ class WebSocketApp:
                     _logging.debug("Failed to send ping: {err}".format(err=e))
 
     def run_forever(self, sockopt: tuple = None, sslopt: dict = None,
-                    ping_interval: float = 0, ping_timeout: float or None = None,
+                    ping_interval: float = 0, ping_timeout: Optional[float] = None,
                     ping_payload: str = "",
-                    http_proxy_host: str = None, http_proxy_port: int or str = None,
+                    http_proxy_host: str = None, http_proxy_port: Union[int, str] = None,
                     http_no_proxy: list = None, http_proxy_auth: tuple = None,
                     http_proxy_timeout: float = None,
                     skip_utf8_validation: bool = False,

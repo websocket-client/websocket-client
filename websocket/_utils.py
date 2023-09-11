@@ -1,3 +1,5 @@
+from typing import Union
+
 """
 _url.py
 websocket - WebSocket client library for Python
@@ -72,7 +74,7 @@ except ImportError:
 
         return state, codep
 
-    def _validate_utf8(utfbytes: str or bytes) -> bool:
+    def _validate_utf8(utfbytes: Union[str, bytes]) -> bool:
         state = _UTF8_ACCEPT
         codep = 0
         for i in utfbytes:
@@ -83,7 +85,7 @@ except ImportError:
         return True
 
 
-def validate_utf8(utfbytes: str or bytes) -> bool:
+def validate_utf8(utfbytes: Union[str, bytes]) -> bool:
     """
     validate utf8 byte string.
     utfbytes: utf byte string to check.
@@ -92,13 +94,13 @@ def validate_utf8(utfbytes: str or bytes) -> bool:
     return _validate_utf8(utfbytes)
 
 
-def extract_err_message(exception: Exception) -> str or None:
+def extract_err_message(exception: Exception) -> Union[str, None]:
     if exception.args:
         return exception.args[0]
     else:
         return None
 
 
-def extract_error_code(exception: Exception) -> int or None:
+def extract_error_code(exception: Exception) -> Union[int, None]:
     if exception.args and len(exception.args) > 1:
         return exception.args[0] if isinstance(exception.args[0], int) else None

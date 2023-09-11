@@ -3,6 +3,8 @@ import struct
 import threading
 import time
 
+from typing import Optional, Union
+
 # websocket modules
 from ._abnf import *
 from ._exceptions import *
@@ -144,7 +146,7 @@ class WebSocket:
         """
         return self.sock_opt.timeout
 
-    def settimeout(self, timeout: float):
+    def settimeout(self, timeout: Optional[float]):
         """
         Set the timeout to the websocket.
 
@@ -265,7 +267,7 @@ class WebSocket:
                 self.sock = None
             raise
 
-    def send(self, payload: bytes or str, opcode: int = ABNF.OPCODE_TEXT) -> int:
+    def send(self, payload: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT) -> int:
         """
         Send the data as string.
 
@@ -324,7 +326,7 @@ class WebSocket:
         """
         return self.send(payload, ABNF.OPCODE_BINARY)
 
-    def ping(self, payload: str or bytes = ""):
+    def ping(self, payload: Union[str, bytes] = ""):
         """
         Send ping data.
 
@@ -337,7 +339,7 @@ class WebSocket:
             payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PING)
 
-    def pong(self, payload: str or bytes = ""):
+    def pong(self, payload: Union[str, bytes] = ""):
         """
         Send pong data.
 
@@ -350,7 +352,7 @@ class WebSocket:
             payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PONG)
 
-    def recv(self) -> str or bytes:
+    def recv(self) -> Union[str, bytes]:
         """
         Receive string data(byte array) from the server.
 
@@ -521,7 +523,7 @@ class WebSocket:
             self.sock = None
             self.connected = False
 
-    def _send(self, data: str or bytes):
+    def _send(self, data: Union[str, bytes]):
         return send(self.sock, data)
 
     def _recv(self, bufsize):

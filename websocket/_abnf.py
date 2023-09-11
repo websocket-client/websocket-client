@@ -3,9 +3,11 @@ import os
 import struct
 import sys
 
+from threading import Lock
+from typing import Callable, Union
+
 from ._exceptions import *
 from ._utils import validate_utf8
-from threading import Lock
 
 """
 _abnf.py
@@ -42,9 +44,9 @@ except ImportError:
 
     def _mask(mask_value: array.array, data_value: array.array) -> bytes:
         datalen = len(data_value)
-        data_value = int.from_bytes(data_value, native_byteorder)
-        mask_value = int.from_bytes(mask_value * (datalen // 4) + mask_value[: datalen % 4], native_byteorder)
-        return (data_value ^ mask_value).to_bytes(datalen, native_byteorder)
+        int_data_value = int.from_bytes(data_value, native_byteorder)
+        int_mask_value = int.from_bytes(mask_value * (datalen // 4) + mask_value[: datalen % 4], native_byteorder)
+        return (int_data_value ^ int_mask_value).to_bytes(datalen, native_byteorder)
 
 
 __all__ = [
@@ -132,7 +134,7 @@ class ABNF:
     LENGTH_63 = 1 << 63
 
     def __init__(self, fin: int = 0, rsv1: int = 0, rsv2: int = 0, rsv3: int = 0,
-                 opcode: int = OPCODE_TEXT, mask: int = 1, data: str or bytes = "") -> None:
+                 opcode: int = OPCODE_TEXT, mask: int = 1, data: Union[str, bytes] = "") -> None:
         """
         Constructor for ABNF. Please check RFC for arguments.
         """
@@ -187,7 +189,7 @@ class ABNF:
             + " data=" + str(self.data)
 
     @staticmethod
-    def create_frame(data: str, opcode: int, fin: int = 1) -> 'ABNF':
+    def create_frame(data: Union[bytes, str], opcode: int, fin: int = 1) -> 'ABNF':
         """
         Create frame to send text, binary and other data.
 
@@ -237,7 +239,7 @@ class ABNF:
             mask_key = self.get_mask_key(4)
             return frame_header + self._get_masked(mask_key)
 
-    def _get_masked(self, mask_key: str or bytes) -> bytes:
+    def _get_masked(self, mask_key: Union[str, bytes]) -> bytes:
         s = ABNF.mask(mask_key, self.data)
 
         if isinstance(mask_key, str):
@@ -246,7 +248,7 @@ class ABNF:
         return mask_key + s
 
     @staticmethod
-    def mask(mask_key: str or bytes, data: str or bytes) -> bytes:
+    def mask(mask_key: Union[str, bytes], data: Union[str, bytes]) -> bytes:
         """
         Mask or unmask data. Just do xor for each byte
 
@@ -273,7 +275,7 @@ class frame_buffer:
     _HEADER_MASK_INDEX = 5
     _HEADER_LENGTH_INDEX = 6
 
-    def __init__(self, recv_fn: int, skip_utf8_validation: bool) -> None:
+    def __init__(self, recv_fn: Callable[[int], int], skip_utf8_validation: bool) -> None:
         self.recv = recv_fn
         self.skip_utf8_validation = skip_utf8_validation
         # Buffers over the packets from the layer beneath until desired amount
@@ -304,7 +306,7 @@ class frame_buffer:
 
         self.header = (fin, rsv1, rsv2, rsv3, opcode, has_mask, length_bits)
 
-    def has_mask(self) -> bool or int:
+    def has_mask(self) -> Union[bool, int]:
         if not self.header:
             return False
         return self.header[frame_buffer._HEADER_MASK_INDEX]
@@ -410,7 +412,7 @@ class continuous_frame:
         if frame.fin:
             self.recving_frames = None
 
-    def is_fire(self, frame: ABNF) -> bool or int:
+    def is_fire(self, frame: ABNF) -> Union[bool, int]:
         return frame.fin or self.fire_cont_frame
 
     def extract(self, frame: ABNF) -> list:
