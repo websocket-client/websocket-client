@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- 1.6.4
+  - Fix #952, add support for HTTP 307 and 308 redirect codes (69468ad)
+
 - 1.6.3
   - Fix type hints issues (#949)
   - Add support for Python beta release 3.12 in CI (#946)
