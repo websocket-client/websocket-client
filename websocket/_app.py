@@ -335,13 +335,13 @@ class WebSocketApp:
 
     def _send_ping(self) -> None:
         if (
-            self.stop_ping.wait(self.ping_interval)
-            or self.keep_running is False
+            self.stop_ping.wait(self.ping_interval) or
+            self.keep_running is False
         ):
             return
         while (
-            not self.stop_ping.wait(self.ping_interval)
-            and self.keep_running is True
+            not self.stop_ping.wait(self.ping_interval) and
+            self.keep_running is True
         ):
             if self.sock:
                 self.last_ping_tm = time.time()
@@ -577,11 +577,10 @@ class WebSocketApp:
                 )
 
                 if (
-                    self.last_ping_tm
-                    and has_timeout_expired
-                    and (
-                        has_pong_not_arrived_after_last_ping
-                        or has_pong_arrived_too_late
+                    self.last_ping_tm and
+                    has_timeout_expired and (
+                        has_pong_not_arrived_after_last_ping or
+                        has_pong_arrived_too_late
                     )
                 ):
                     raise WebSocketTimeoutException("ping/pong timed out")
