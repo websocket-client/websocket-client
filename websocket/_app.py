@@ -236,7 +236,7 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.has_done_teardown_lock = threading.Lock()
 
-    def send(self, data: str, opcode: int = ABNF.OPCODE_TEXT) -> None:
+    def send(self, data: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT) -> None:
         """
         send message
 
