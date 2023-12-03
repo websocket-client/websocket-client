@@ -288,7 +288,7 @@ def _tunnel(sock, host, port, auth):
         if auth[1]:
             auth_str += f":{auth[1]}"
         encoded_str = base64encode(auth_str.encode()).strip().decode().replace('\n', '')
-        connect_header += "Proxy-Authorization: Basic {str}\r\n".format(str=encoded_str)
+        connect_header += f"Proxy-Authorization: Basic {encoded_str}\r\n".
     connect_header += "\r\n"
     dump("request header", connect_header)
 
@@ -300,8 +300,7 @@ def _tunnel(sock, host, port, auth):
         raise WebSocketProxyException(str(e))
 
     if status != 200:
-        raise WebSocketProxyException(
-            "failed CONNECT via proxy status: {status}".format(status=status))
+        raise WebSocketProxyException(f"failed CONNECT via proxy status: {status}")
 
     return sock
 

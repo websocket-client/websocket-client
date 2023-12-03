@@ -142,7 +142,7 @@ def _get_resp_headers(sock, success_statuses: tuple = SUCCESS_STATUSES) -> tuple
             response_body = sock.recv(int(content_len))  # read the body of the HTTP error message response and include it in the exception
         else:
             response_body = None
-        raise WebSocketBadStatusException("Handshake status {status} {message} -+-+- {headers} -+-+- {body}".format(status=status, message=status_message, headers=resp_headers, body=response_body), status, status_message, resp_headers, response_body)
+        raise WebSocketBadStatusException(f"Handshake status {status} {status_message} -+-+- {resp_headers} -+-+- {response_body}", status, status_message, resp_headers, response_body)
     return status, resp_headers
 
 

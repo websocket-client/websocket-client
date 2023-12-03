@@ -160,7 +160,7 @@ def main() -> None:
         except websocket.WebSocketException:
             return websocket.ABNF.OPCODE_CLOSE, ""
         if not frame:
-            raise websocket.WebSocketException("Not a valid frame {frame}".format(frame=frame))
+            raise websocket.WebSocketException(f"Not a valid frame {frame}"
         elif frame.opcode in OPCODE_DATA:
             return frame.opcode, frame.data
         elif frame.opcode == websocket.ABNF.OPCODE_CLOSE:
@@ -193,7 +193,7 @@ def main() -> None:
                 data = repr(data)
 
             if args.verbose:
-                msg = "{opcode}: {data}".format(opcode=websocket.ABNF.OPCODE_MAP.get(opcode), data=data)
+                msg = f"{websocket.ABNF.OPCODE_MAP.get(opcode)}: {data}"
             else:
                 msg = data
 

@@ -61,14 +61,12 @@ class DispatcherBase:
     def reconnect(self, seconds: int, reconnector: Callable) -> None:
         try:
             _logging.info(
-                "reconnect() - retrying in {seconds_count} seconds [{frame_count} frames in stack]".format(
-                    seconds_count=seconds, frame_count=len(inspect.stack())
-                )
+                f"reconnect() - retrying in {seconds} seconds [{len(inspect.stack())} frames in stack]"
             )
             time.sleep(seconds)
             reconnector(reconnecting=True)
         except KeyboardInterrupt as e:
-            _logging.info("User exited {err}".format(err=e))
+            _logging.info(f"User exited {e}")
             raise e
 
 
@@ -347,7 +345,7 @@ class WebSocketApp:
                     _logging.debug("Sending ping")
                     self.sock.ping(self.ping_payload)
                 except Exception as e:
-                    _logging.debug("Failed to send ping: {err}".format(err=e))
+                    _logging.debug(f"Failed to send ping: {e}")
 
     def run_forever(
         self,
@@ -596,16 +594,14 @@ class WebSocketApp:
                 raise
 
             if reconnect:
-                _logging.info("{err} - reconnect".format(err=e))
+                _logging.info(f"{e} - reconnect")
                 if custom_dispatcher:
                     _logging.debug(
-                        "Calling custom dispatcher reconnect [{frame_count} frames in stack]".format(
-                            frame_count=len(inspect.stack())
-                        )
+                        f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
                     dispatcher.reconnect(reconnect, setSock)
             else:
-                _logging.error("{err} - goodbye".format(err=e))
+                _logging.error(f"{e} - goodbye")
                 teardown()
 
         custom_dispatcher = bool(dispatcher)
@@ -618,13 +614,11 @@ class WebSocketApp:
             if not custom_dispatcher and reconnect:
                 while self.keep_running:
                     _logging.debug(
-                        "Calling dispatcher reconnect [{frame_count} frames in stack]".format(
-                            frame_count=len(inspect.stack())
-                        )
+                        f"Calling dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
                     dispatcher.reconnect(reconnect, setSock)
         except (KeyboardInterrupt, Exception) as e:
-            _logging.info("tearing down on exception {err}".format(err=e))
+            _logging.info(f"tearing down on exception {e}")
             teardown()
         finally:
             if not custom_dispatcher:
@@ -671,10 +665,6 @@ class WebSocketApp:
                 callback(self, *args)
 
             except Exception as e:
-                _logging.error(
-                    "error from callback {callback}: {err}".format(
-                        callback=callback, err=e
-                    )
-                )
+                _logging.error(f"error from callback {callback}: {e}")
                 if self.on_error:
                     self.on_error(self, e)

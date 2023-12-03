@@ -32,7 +32,7 @@ ws.close()
 
 case = 0
 for case in range(1, count + 1):
-    url = SERVER + '/runCase?case={0}&agent={1}'.format(case, AGENT)
+    url =  f'{SERVER}/runCase?case={case}&agent={AGENT}'
     status = websocket.STATUS_NORMAL
     try:
         ws = websocket.create_connection(url)
@@ -57,5 +57,5 @@ for case in range(1, count + 1):
         ws.close(status)
 
 print(f"Ran {case} test cases.")
-url = SERVER + '/updateReports?agent={0}'.format(AGENT)
+url = f'{SERVER}/updateReports?agent={AGENT}'
 ws = websocket.create_connection(url)
