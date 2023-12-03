@@ -284,6 +284,18 @@ class WebSocket:
         frame = ABNF.create_frame(payload, opcode)
         return self.send_frame(frame)
 
+    def send_text(self, text_data: str) -> int:
+        """
+        Sends UTF-8 encoded text.
+        """
+        return self.send(text_data, ABNF.OPCODE_TEXT)
+
+    def send_bytes(self, data: Union[bytes, bytearray]) -> int:
+        """
+        Sends a sequence of bytes.
+        """
+        return self.send(data, ABNF.OPCODE_BINARY)
+
     def send_frame(self, frame) -> int:
         """
         Send the data frame.
