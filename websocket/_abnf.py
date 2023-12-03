@@ -202,7 +202,7 @@ class ABNF:
         return code in VALID_CLOSE_STATUS or (3000 <= code < 5000)
 
     def __str__(self) -> str:
-        return f"fin={self.fin} opcode={self.opcode} data={self.data!r}"
+        return f"fin={self.fin} opcode={self.opcode} data={self.data}"
 
     @staticmethod
     def create_frame(data: Union[bytes, str], opcode: int, fin: int = 1) -> "ABNF":

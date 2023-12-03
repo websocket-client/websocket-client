@@ -81,10 +81,14 @@ class ABNFTest(unittest.TestCase):
         )
 
     def testMask(self):
-        abnf_none_data = ABNF(0, 0, 0, 0, opcode=ABNF.OPCODE_PING, mask=1, data=None)
+        abnf_none_data = ABNF(
+            0, 0, 0, 0, opcode=ABNF.OPCODE_PING, mask_value=1, data=None
+        )
         bytes_val = b"aaaa"
         self.assertEqual(abnf_none_data._get_masked(bytes_val), bytes_val)
-        abnf_str_data = ABNF(0, 0, 0, 0, opcode=ABNF.OPCODE_PING, mask=1, data="a")
+        abnf_str_data = ABNF(
+            0, 0, 0, 0, opcode=ABNF.OPCODE_PING, mask_value=1, data="a"
+        )
         self.assertEqual(abnf_str_data._get_masked(bytes_val), b"aaaa\x00")
 
     def testFormat(self):
@@ -102,7 +106,7 @@ class ABNFTest(unittest.TestCase):
         self.assertEqual(b"\x02", abnf_length_20.format()[0].to_bytes(1, "big"))
         self.assertEqual(b"\x94", abnf_length_20.format()[1].to_bytes(1, "big"))
         abnf_no_mask = ABNF(
-            0, 0, 0, 0, opcode=ABNF.OPCODE_TEXT, mask=0, data=b"\x01\x8a\xcc"
+            0, 0, 0, 0, opcode=ABNF.OPCODE_TEXT, mask_value=0, data=b"\x01\x8a\xcc"
         )
         self.assertEqual(b"\x01\x03\x01\x8a\xcc", abnf_no_mask.format())
 
@@ -113,7 +117,7 @@ class ABNFTest(unittest.TestCase):
         fb.clear
         self.assertEqual(fb.header, None)
         self.assertEqual(fb.length, None)
-        self.assertEqual(fb.mask, None)
+        self.assertEqual(fb.mask_value, None)
         self.assertEqual(fb.has_mask(), False)
 
 
