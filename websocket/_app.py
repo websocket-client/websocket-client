@@ -85,7 +85,7 @@ class Dispatcher(DispatcherBase):
         sel.register(self.app.sock.sock, selectors.EVENT_READ)
         try:
             while self.app.keep_running:
-                if r:= sel.select(self.ping_timeout):
+                if sel.select(self.ping_timeout):
                     if not read_callback():
                         break
                 check_callback()
@@ -109,7 +109,7 @@ class SSLDispatcher(DispatcherBase):
         sel.register(sock, selectors.EVENT_READ)
         try:
             while self.app.keep_running:
-                if r:= self.select(sock, sel):
+                if self.select(sock, sel):
                     if not read_callback():
                         break
                 check_callback()

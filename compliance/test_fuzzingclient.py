@@ -32,7 +32,7 @@ ws.close()
 
 case = 0
 for case in range(1, count + 1):
-    url =  f'{SERVER}/runCase?case={case}&agent={AGENT}'
+    url = f'{SERVER}/runCase?case={case}&agent={AGENT}'
     status = websocket.STATUS_NORMAL
     try:
         ws = websocket.create_connection(url)

@@ -180,7 +180,7 @@ def _validate(headers, key: str, subprotocols):
     value = f"{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11".encode('utf-8')
     hashed = base64encode(hashlib.sha1(value).digest()).strip().lower()
 
-    if success := hmac.compare_digest(hashed, result):
+    if hmac.compare_digest(hashed, result):
         return True, subproto
     else:
         return False, None

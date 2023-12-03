@@ -288,7 +288,7 @@ def _tunnel(sock, host, port, auth):
         if auth[1]:
             auth_str += f":{auth[1]}"
         encoded_str = base64encode(auth_str.encode()).strip().decode().replace('\n', '')
-        connect_header += f"Proxy-Authorization: Basic {encoded_str}\r\n".
+        connect_header += f"Proxy-Authorization: Basic {encoded_str}\r\n"
     connect_header += "\r\n"
     dump("request header", connect_header)
 
@@ -332,7 +332,6 @@ def read_headers(sock):
                 headers["set-cookie"] = headers.get("set-cookie") + "; " + value.strip()
             else:
                 headers[key.lower()] = value.strip()
-                
 
     trace("-----------------------")
 
