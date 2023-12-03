@@ -1,6 +1,3 @@
-import sys
-
-import pkg_resources
 from setuptools import find_packages, setup
 
 """
