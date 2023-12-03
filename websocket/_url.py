@@ -104,7 +104,7 @@ def _is_address_in_network(ip: str, net: str) -> bool:
 
 def _is_no_proxy_host(hostname: str, no_proxy: Optional[list]) -> bool:
     if not no_proxy:
-        if v:= os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", "")
+        if v:= os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", ""):
             no_proxy = v.split(",")
     if not no_proxy:
         no_proxy = DEFAULT_NO_PROXY_HOST

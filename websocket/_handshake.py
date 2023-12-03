@@ -73,39 +73,39 @@ def _pack_hostname(hostname: str) -> str:
 
 def _get_handshake_headers(resource: str, url: str, host: str, port: int, options: dict):
     headers = [
-        "GET {resource} HTTP/1.1".format(resource=resource),
+        f"GET {resource} HTTP/1.1",
         "Upgrade: websocket"
     ]
     if port in [80, 443]:
         hostport = _pack_hostname(host)
     else:
-        hostport = "{h}:{p}".format(h=_pack_hostname(host), p=port)
+        hostport = f"{_pack_hostname(host)}:{port}"
     if options.get("host"):
-        headers.append("Host: {h}".format(h=options["host"]))
+        headers.append(f'Host: {options["host"]}')
     else:
-        headers.append("Host: {hp}".format(hp=hostport))
+        headers.append(f"Host: {hostport}")
 
     # scheme indicates whether http or https is used in Origin
     # The same approach is used in parse_url of _url.py to set default port
     scheme, url = url.split(":", 1)
     if not options.get("suppress_origin"):
         if "origin" in options and options["origin"] is not None:
-            headers.append("Origin: {origin}".format(origin=options["origin"]))
+            headers.append(f'Origin: {options["origin"]}')
         elif scheme == "wss":
-            headers.append("Origin: https://{hp}".format(hp=hostport))
+            headers.append(f"Origin: https://{hostport}")
         else:
-            headers.append("Origin: http://{hp}".format(hp=hostport))
+            headers.append(f"Origin: http://{hostport}")
 
     key = _create_sec_websocket_key()
 
     # Append Sec-WebSocket-Key & Sec-WebSocket-Version if not manually specified
     if not options.get('header') or 'Sec-WebSocket-Key' not in options['header']:
-        headers.append("Sec-WebSocket-Key: {key}".format(key=key))
+        headers.append(f"Sec-WebSocket-Key: {key}")
     else:
         key = options['header']['Sec-WebSocket-Key']
 
     if not options.get('header') or 'Sec-WebSocket-Version' not in options['header']:
-        headers.append("Sec-WebSocket-Version: {version}".format(version=VERSION))
+        headers.append(f"Sec-WebSocket-Version: {VERSION}")
 
     if not options.get('connection'):
         headers.append('Connection: Upgrade')
@@ -113,7 +113,7 @@ def _get_handshake_headers(resource: str, url: str, host: str, port: int, option
         headers.append(options['connection'])
 
     if subprotocols := options.get("subprotocols"):
-        headers.append("Sec-WebSocket-Protocol: {protocols}".format(protocols=",".join(subprotocols)))
+        headers.append(f'Sec-WebSocket-Protocol: {",".join(subprotocols)}')
 
     if header := options.get("header"):
         if isinstance(header, dict):
@@ -128,7 +128,7 @@ def _get_handshake_headers(resource: str, url: str, host: str, port: int, option
     client_cookie = options.get("cookie", None)
 
     if cookie := "; ".join(filter(None, [server_cookie, client_cookie])):
-        headers.append("Cookie: {cookie}".format(cookie=cookie))
+        headers.append(f"Cookie: {cookie}")
 
     headers.extend(("", ""))
     return headers, key
