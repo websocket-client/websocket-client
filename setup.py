@@ -22,7 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = "1.6.4"
+VERSION = "1.7.0"
 
 install_requires = []
 tests_require = []

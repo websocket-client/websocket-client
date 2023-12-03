@@ -34,7 +34,7 @@ copyright = "2023"
 author = "liris"
 
 # The full version, including alpha/beta/rc tags
-release = "1.6.4"
+release = "1.7.0"
 
 
 # -- General configuration ---------------------------------------------------

@@ -1,6 +1,14 @@
 ChangeLog
 ============
 
+- 1.7.0
+  - Renamed `mask` variable in ABNF to prevent name collision with `mask()` function (9b51f73)
+  - Fixed old http import of HTTPStatus in _handshake.py (9b51f73)
+  - Add `send_text()` and `send_bytes()` to _app.py (#953)
+  - Improved typehint support (#953, 9b51f73, 8b73d00)
+  - General readability improvements, made all string concatenations use f-strings (#909, 780584f, 3eabc6e)
+  - Applied black formatting style to code (da7f286)
+
 - 1.6.4
   - Fix #952, add support for HTTP 307 and 308 redirect codes (69468ad)
 
