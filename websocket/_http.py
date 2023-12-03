@@ -75,7 +75,7 @@ class proxy_info:
             self.proxy_protocol = "http"
 
 
-def _start_proxied_socket(url: str, options, proxy):
+def _start_proxied_socket(url: str, options, proxy) -> tuple:
     if not HAVE_PYTHON_SOCKS:
         raise WebSocketException(
             "Python Socks is needed for SOCKS proxying but is not available"
@@ -155,7 +155,7 @@ def connect(url: str, options, proxy, socket):
         raise
 
 
-def _get_addrinfo_list(hostname, port, is_secure, proxy):
+def _get_addrinfo_list(hostname, port: int, is_secure: bool, proxy) -> tuple:
     phost, pport, pauth = get_proxy_info(
         hostname,
         is_secure,
@@ -230,7 +230,7 @@ def _open_socket(addrinfo_list, sockopt, timeout):
     return sock
 
 
-def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
+def _wrap_sni_socket(sock: socket.socket, sslopt: dict, hostname, check_hostname):
     context = sslopt.get("context", None)
     if not context:
         context = ssl.SSLContext(sslopt.get("ssl_version", ssl.PROTOCOL_TLS_CLIENT))
@@ -282,8 +282,8 @@ def _wrap_sni_socket(sock, sslopt, hostname, check_hostname):
     )
 
 
-def _ssl_socket(sock, user_sslopt, hostname):
-    sslopt = dict(cert_reqs=ssl.CERT_REQUIRED)
+def _ssl_socket(sock: socket.socket, user_sslopt: dict, hostname):
+    sslopt: dict = dict(cert_reqs=ssl.CERT_REQUIRED)
     sslopt.update(user_sslopt)
 
     certPath = os.environ.get("WEBSOCKET_CLIENT_CA_BUNDLE")
@@ -309,7 +309,7 @@ def _ssl_socket(sock, user_sslopt, hostname):
     return sock
 
 
-def _tunnel(sock, host, port, auth):
+def _tunnel(sock: socket.socket, host, port: int, auth) -> socket.socket:
     debug("Connecting proxy...")
     connect_header = f"CONNECT {host}:{port} HTTP/1.1\r\n"
     connect_header += f"Host: {host}:{port}\r\n"
@@ -337,10 +337,10 @@ def _tunnel(sock, host, port, auth):
     return sock
 
 
-def read_headers(sock):
+def read_headers(sock: socket.socket) -> tuple:
     status = None
     status_message = None
-    headers = {}
+    headers: dict = {}
     trace("--- response header ---")
 
     while True:

@@ -34,8 +34,9 @@ try:
     # strings.
     from wsaccel.utf8validator import Utf8Validator
 
-    def _validate_utf8(utfbytes: bytes) -> bool:
-        return Utf8Validator().validate(utfbytes)[0]
+    def _validate_utf8(utfbytes: Union[str, bytes]) -> bool:
+        result: bool = Utf8Validator().validate(utfbytes)[0]
+        return result
 
 except ImportError:
     # UTF-8 validator
@@ -429,7 +430,7 @@ except ImportError:
         state = _UTF8_ACCEPT
         codep = 0
         for i in utfbytes:
-            state, codep = _decode(state, codep, i)
+            state, codep = _decode(state, codep, int(i))
             if state == _UTF8_REJECT:
                 return False
 
@@ -447,7 +448,8 @@ def validate_utf8(utfbytes: Union[str, bytes]) -> bool:
 
 def extract_err_message(exception: Exception) -> Union[str, None]:
     if exception.args:
-        return exception.args[0]
+        exception_message: str = exception.args[0]
+        return exception_message
     else:
         return None
 

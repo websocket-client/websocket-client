@@ -93,9 +93,9 @@ def _is_subnet_address(hostname: str) -> bool:
 
 
 def _is_address_in_network(ip: str, net: str) -> bool:
-    ipaddr = struct.unpack("!I", socket.inet_aton(ip))[0]
+    ipaddr: int = struct.unpack("!I", socket.inet_aton(ip))[0]
     netaddr, netmask = net.split("/")
-    netaddr = struct.unpack("!I", socket.inet_aton(netaddr))[0]
+    netaddr: int = struct.unpack("!I", socket.inet_aton(netaddr))[0]
 
     netmask = (0xFFFFFFFF << (32 - int(netmask))) & 0xFFFFFFFF
     return ipaddr & netmask == netaddr

@@ -20,7 +20,7 @@ import hashlib
 import hmac
 import os
 from base64 import encodebytes as base64encode
-from http import client as HTTPStatus
+from http import HTTPStatus
 
 from ._cookiejar import SimpleCookieJar
 from ._exceptions import *
@@ -53,7 +53,9 @@ class handshake_response:
         CookieJar.add(headers.get("set-cookie"))
 
 
-def handshake(sock, url: str, hostname: str, port: int, resource: str, **options):
+def handshake(
+    sock, url: str, hostname: str, port: int, resource: str, **options
+) -> handshake_response:
     headers, key = _get_handshake_headers(resource, url, hostname, port, options)
 
     header_str = "\r\n".join(headers)
@@ -79,7 +81,7 @@ def _pack_hostname(hostname: str) -> str:
 
 def _get_handshake_headers(
     resource: str, url: str, host: str, port: int, options: dict
-):
+) -> tuple:
     headers = [f"GET {resource} HTTP/1.1", "Upgrade: websocket"]
     if port in [80, 443]:
         hostport = _pack_hostname(host)
@@ -161,7 +163,7 @@ _HEADERS_TO_CHECK = {
 }
 
 
-def _validate(headers, key: str, subprotocols):
+def _validate(headers, key: str, subprotocols) -> tuple:
     subproto = None
     for k, v in _HEADERS_TO_CHECK.items():
         r = headers.get(k, None)

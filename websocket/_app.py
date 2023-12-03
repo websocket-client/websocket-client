@@ -49,11 +49,11 @@ class DispatcherBase:
     DispatcherBase
     """
 
-    def __init__(self, app: Any, ping_timeout: float) -> None:
+    def __init__(self, app: Any, ping_timeout: Union[float, int, None]) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
 
-    def timeout(self, seconds: int, callback: Callable) -> None:
+    def timeout(self, seconds: Union[float, int, None], callback: Callable) -> None:
         time.sleep(seconds)
         callback()
 
@@ -133,7 +133,7 @@ class WrappedDispatcher:
     WrappedDispatcher
     """
 
-    def __init__(self, app, ping_timeout: float, dispatcher: Dispatcher) -> None:
+    def __init__(self, app, ping_timeout: Union[float, int, None], dispatcher) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
@@ -148,7 +148,7 @@ class WrappedDispatcher:
         self.dispatcher.read(sock, read_callback)
         self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
 
-    def timeout(self, seconds: int, callback: Callable) -> None:
+    def timeout(self, seconds: float, callback: Callable) -> None:
         self.dispatcher.timeout(seconds, callback)
 
     def reconnect(self, seconds: int, reconnector: Callable) -> None:
@@ -164,19 +164,19 @@ class WebSocketApp:
         self,
         url: str,
         header: Union[list, dict, Callable, None] = None,
-        on_open: Union[Callable[[WebSocket], None], None] = None,
-        on_message: Union[Callable[[WebSocket, Any], None], None] = None,
-        on_error: Union[Callable[[WebSocket, Any], None], None] = None,
-        on_close: Union[Callable[[WebSocket, Any, Any], None], None] = None,
-        on_ping: Union[Callable, None] = None,
-        on_pong: Union[Callable, None] = None,
-        on_cont_message: Union[Callable, None] = None,
+        on_open: Optional[Callable[[WebSocket], None]] = None,
+        on_message: Optional[Callable[[WebSocket, Any], None]] = None,
+        on_error: Optional[Callable[[WebSocket, Any], None]] = None,
+        on_close: Optional[Callable[[WebSocket, Any, Any], None]] = None,
+        on_ping: Optional[Callable] = None,
+        on_pong: Optional[Callable] = None,
+        on_cont_message: Optional[Callable] = None,
         keep_running: bool = True,
-        get_mask_key: Union[Callable, None] = None,
-        cookie: Union[str, None] = None,
-        subprotocols: Union[list, None] = None,
-        on_data: Union[Callable, None] = None,
-        socket: Union[socket.socket, None] = None,
+        get_mask_key: Optional[Callable] = None,
+        cookie: Optional[str] = None,
+        subprotocols: Optional[list] = None,
+        on_data: Optional[Callable] = None,
+        socket: Optional[socket.socket] = None,
     ) -> None:
         """
         WebSocketApp initialization
@@ -253,13 +253,13 @@ class WebSocketApp:
         self.on_cont_message = on_cont_message
         self.keep_running = False
         self.get_mask_key = get_mask_key
-        self.sock = None
-        self.last_ping_tm = 0
-        self.last_pong_tm = 0
-        self.ping_thread = None
-        self.stop_ping = None
-        self.ping_interval = 0
-        self.ping_timeout = None
+        self.sock: Optional[WebSocket] = None
+        self.last_ping_tm = float(0)
+        self.last_pong_tm = float(0)
+        self.ping_thread: Optional[threading.Thread] = None
+        self.stop_ping: Optional[threading.Event] = None
+        self.ping_interval = float(0)
+        self.ping_timeout: Union[float, int, None] = None
         self.ping_payload = ""
         self.subprotocols = subprotocols
         self.prepared_socket = socket
@@ -307,7 +307,7 @@ class WebSocketApp:
             self.sock = None
 
     def _start_ping_thread(self) -> None:
-        self.last_ping_tm = self.last_pong_tm = 0
+        self.last_ping_tm = self.last_pong_tm = float(0)
         self.stop_ping = threading.Event()
         self.ping_thread = threading.Thread(target=self._send_ping)
         self.ping_thread.daemon = True
@@ -318,7 +318,7 @@ class WebSocketApp:
             self.stop_ping.set()
         if self.ping_thread and self.ping_thread.is_alive():
             self.ping_thread.join(3)
-        self.last_ping_tm = self.last_pong_tm = 0
+        self.last_ping_tm = self.last_pong_tm = float(0)
 
     def _send_ping(self) -> None:
         if self.stop_ping.wait(self.ping_interval) or self.keep_running is False:
@@ -336,18 +336,18 @@ class WebSocketApp:
         self,
         sockopt: tuple = None,
         sslopt: dict = None,
-        ping_interval: float = 0,
-        ping_timeout: Optional[float] = None,
+        ping_interval: Union[float, int] = 0,
+        ping_timeout: Union[float, int, None] = None,
         ping_payload: str = "",
         http_proxy_host: str = None,
         http_proxy_port: Union[int, str] = None,
         http_no_proxy: list = None,
         http_proxy_auth: tuple = None,
-        http_proxy_timeout: float = None,
+        http_proxy_timeout: Optional[float] = None,
         skip_utf8_validation: bool = False,
         host: str = None,
         origin: str = None,
-        dispatcher: Dispatcher = None,
+        dispatcher=None,
         suppress_origin: bool = False,
         proxy_type: str = None,
         reconnect: int = None,
@@ -415,7 +415,7 @@ class WebSocketApp:
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
         if not sockopt:
-            sockopt = []
+            sockopt = ()
         if not sslopt:
             sslopt = {}
         if self.sock:
@@ -564,7 +564,16 @@ class WebSocketApp:
                     raise WebSocketTimeoutException("ping/pong timed out")
             return True
 
-        def handleDisconnect(e: Exception, reconnecting: bool = False) -> bool:
+        def handleDisconnect(
+            e: Union[
+                WebSocketConnectionClosedException,
+                ConnectionRefusedError,
+                KeyboardInterrupt,
+                SystemExit,
+                Exception,
+            ],
+            reconnecting: bool = False,
+        ) -> bool:
             self.has_errored = True
             self._stop_ping_thread()
             if not reconnecting:
@@ -611,10 +620,10 @@ class WebSocketApp:
 
     def create_dispatcher(
         self,
-        ping_timeout: int,
-        dispatcher: Dispatcher = None,
+        ping_timeout: Union[float, int, None],
+        dispatcher: Optional[DispatcherBase] = None,
         is_ssl: bool = False,
-    ) -> DispatcherBase:
+    ) -> Union[Dispatcher, SSLDispatcher, WrappedDispatcher]:
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
             return WrappedDispatcher(self, ping_timeout, dispatcher)
         timeout = ping_timeout or 10
@@ -634,8 +643,12 @@ class WebSocketApp:
 
         # Extract close frame status code
         if close_frame.data and len(close_frame.data) >= 2:
-            close_status_code = 256 * close_frame.data[0] + close_frame.data[1]
-            reason = close_frame.data[2:].decode("utf-8")
+            close_status_code = 256 * int(close_frame.data[0]) + int(
+                close_frame.data[1]
+            )
+            reason = close_frame.data[2:]
+            if isinstance(reason, bytes):
+                reason = reason.decode("utf-8")
             return [close_status_code, reason]
         else:
             # Most likely reached this because len(close_frame_data.data) < 2

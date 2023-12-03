@@ -23,7 +23,7 @@ limitations under the License.
 
 class SimpleCookieJar:
     def __init__(self) -> None:
-        self.jar = dict()
+        self.jar: dict = dict()
 
     def add(self, set_cookie: Optional[str]) -> None:
         if set_cookie:

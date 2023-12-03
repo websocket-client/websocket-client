@@ -94,7 +94,7 @@ class WebSocket:
         """
         self.sock_opt = sock_opt(sockopt, sslopt)
         self.handshake_response = None
-        self.sock = None
+        self.sock: Optional[socket.socket] = None
 
         self.connected = False
         self.get_mask_key = get_mask_key
@@ -140,7 +140,7 @@ class WebSocket:
         """
         self.get_mask_key = func
 
-    def gettimeout(self) -> float:
+    def gettimeout(self) -> Union[float, int, None]:
         """
         Get the websocket timeout (in seconds) as an int or float
 
@@ -151,7 +151,7 @@ class WebSocket:
         """
         return self.sock_opt.timeout
 
-    def settimeout(self, timeout: Optional[float]):
+    def settimeout(self, timeout: Union[float, int, None]):
         """
         Set the timeout to the websocket.
 
@@ -387,9 +387,14 @@ class WebSocket:
         with self.readlock:
             opcode, data = self.recv_data()
         if opcode == ABNF.OPCODE_TEXT:
-            return data.decode("utf-8")
+            data_received: Union[bytes, str] = data
+            if isinstance(data_received, bytes):
+                return data_received.decode("utf-8")
+            elif isinstance(data_received, str):
+                return data_received
         elif opcode == ABNF.OPCODE_BINARY:
-            return data
+            data_binary: bytes = data
+            return data_binary
         else:
             return ""
 
@@ -411,7 +416,7 @@ class WebSocket:
         opcode, frame = self.recv_data_frame(control_frame)
         return opcode, frame.data
 
-    def recv_data_frame(self, control_frame: bool = False):
+    def recv_data_frame(self, control_frame: bool = False) -> tuple:
         """
         Receive data with operation code.
 
@@ -488,9 +493,7 @@ class WebSocket:
         self.connected = False
         self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(
-        self, status: int = STATUS_NORMAL, reason: bytes = b"", timeout: float = 3
-    ):
+    def close(self, status: int = STATUS_NORMAL, reason: bytes = b"", timeout: int = 3):
         """
         Close Websocket object
 
