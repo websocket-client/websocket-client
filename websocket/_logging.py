@@ -19,25 +19,38 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-_logger = logging.getLogger('websocket')
+_logger = logging.getLogger("websocket")
 try:
     from logging import NullHandler
 except ImportError:
+
     class NullHandler(logging.Handler):
         def emit(self, record) -> None:
             pass
+
 
 _logger.addHandler(NullHandler())
 
 _traceEnabled = False
 
-__all__ = ["enableTrace", "dump", "error", "warning", "debug", "trace",
-           "isEnabledForError", "isEnabledForDebug", "isEnabledForTrace"]
+__all__ = [
+    "enableTrace",
+    "dump",
+    "error",
+    "warning",
+    "debug",
+    "trace",
+    "isEnabledForError",
+    "isEnabledForDebug",
+    "isEnabledForTrace",
+]
 
 
-def enableTrace(traceable: bool,
-                handler: logging.StreamHandler = logging.StreamHandler(),
-                level: str = "DEBUG") -> None:
+def enableTrace(
+    traceable: bool,
+    handler: logging.StreamHandler = logging.StreamHandler(),
+    level: str = "DEBUG",
+) -> None:
     """
     Turn on/off the traceability.
 

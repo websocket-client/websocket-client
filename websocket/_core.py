@@ -2,7 +2,6 @@ import socket
 import struct
 import threading
 import time
-
 from typing import Optional, Union
 
 # websocket modules
@@ -34,7 +33,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__all__ = ['WebSocket', 'create_connection']
+__all__ = ["WebSocket", "create_connection"]
 
 
 class WebSocket:
@@ -75,9 +74,16 @@ class WebSocket:
         Skip utf8 validation.
     """
 
-    def __init__(self, get_mask_key=None, sockopt=None, sslopt=None,
-                 fire_cont_frame: bool = False, enable_multithread: bool = True,
-                 skip_utf8_validation: bool = False, **_):
+    def __init__(
+        self,
+        get_mask_key=None,
+        sockopt=None,
+        sslopt=None,
+        fire_cont_frame: bool = False,
+        enable_multithread: bool = True,
+        skip_utf8_validation: bool = False,
+        **_,
+    ):
         """
         Initialize WebSocket object.
 
@@ -94,8 +100,7 @@ class WebSocket:
         self.get_mask_key = get_mask_key
         # These buffer over the build-up of a single frame.
         self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
-        self.cont_frame = continuous_frame(
-            fire_cont_frame, skip_utf8_validation)
+        self.cont_frame = continuous_frame(fire_cont_frame, skip_utf8_validation)
 
         if enable_multithread:
             self.lock = threading.Lock()
@@ -247,19 +252,26 @@ class WebSocket:
         socket: socket
             Pre-initialized stream socket.
         """
-        self.sock_opt.timeout = options.get('timeout', self.sock_opt.timeout)
-        self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
-                                   options.pop('socket', None))
+        self.sock_opt.timeout = options.get("timeout", self.sock_opt.timeout)
+        self.sock, addrs = connect(
+            url, self.sock_opt, proxy_info(**options), options.pop("socket", None)
+        )
 
         try:
             self.handshake_response = handshake(self.sock, url, *addrs, **options)
-            for attempt in range(options.pop('redirect_limit', 3)):
+            for attempt in range(options.pop("redirect_limit", 3)):
                 if self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES:
-                    url = self.handshake_response.headers['location']
+                    url = self.handshake_response.headers["location"]
                     self.sock.close()
-                    self.sock, addrs = connect(url, self.sock_opt, proxy_info(**options),
-                                               options.pop('socket', None))
-                    self.handshake_response = handshake(self.sock, url, *addrs, **options)
+                    self.sock, addrs = connect(
+                        url,
+                        self.sock_opt,
+                        proxy_info(**options),
+                        options.pop("socket", None),
+                    )
+                    self.handshake_response = handshake(
+                        self.sock, url, *addrs, **options
+                    )
             self.connected = True
         except:
             if self.sock:
@@ -317,7 +329,7 @@ class WebSocket:
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
         length = len(data)
-        if (isEnabledForTrace()):
+        if isEnabledForTrace():
             trace(f"++Sent raw: {repr(data)}")
             trace(f"++Sent decoded: {frame.__str__()}")
         with self.lock:
@@ -379,7 +391,7 @@ class WebSocket:
         elif opcode == ABNF.OPCODE_BINARY:
             return data
         else:
-            return ''
+            return ""
 
     def recv_data(self, control_frame: bool = False) -> tuple:
         """
@@ -418,14 +430,18 @@ class WebSocket:
         """
         while True:
             frame = self.recv_frame()
-            if (isEnabledForTrace()):
+            if isEnabledForTrace():
                 trace(f"++Rcv raw: {repr(frame.format())}")
                 trace(f"++Rcv decoded: {frame.__str__()}")
             if not frame:
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
                 raise WebSocketProtocolException(f"Not a valid frame {frame}")
-            elif frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY, ABNF.OPCODE_CONT):
+            elif frame.opcode in (
+                ABNF.OPCODE_TEXT,
+                ABNF.OPCODE_BINARY,
+                ABNF.OPCODE_CONT,
+            ):
                 self.cont_frame.validate(frame)
                 self.cont_frame.add(frame)
 
@@ -439,8 +455,7 @@ class WebSocket:
                 if len(frame.data) < 126:
                     self.pong(frame.data)
                 else:
-                    raise WebSocketProtocolException(
-                        "Ping message is too long")
+                    raise WebSocketProtocolException("Ping message is too long")
                 if control_frame:
                     return frame.opcode, frame
             elif frame.opcode == ABNF.OPCODE_PONG:
@@ -471,9 +486,11 @@ class WebSocket:
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
         self.connected = False
-        self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
+        self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status: int = STATUS_NORMAL, reason: bytes = b"", timeout: float = 3):
+    def close(
+        self, status: int = STATUS_NORMAL, reason: bytes = b"", timeout: float = 3
+    ):
         """
         Close Websocket object
 
@@ -494,7 +511,7 @@ class WebSocket:
 
         try:
             self.connected = False
-            self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
+            self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
             sock_timeout = self.sock.gettimeout()
             self.sock.settimeout(timeout)
             start_time = time.time()
@@ -614,10 +631,14 @@ def create_connection(url: str, timeout=None, class_=WebSocket, **options):
     fire_cont_frame = options.pop("fire_cont_frame", False)
     enable_multithread = options.pop("enable_multithread", True)
     skip_utf8_validation = options.pop("skip_utf8_validation", False)
-    websock = class_(sockopt=sockopt, sslopt=sslopt,
-                     fire_cont_frame=fire_cont_frame,
-                     enable_multithread=enable_multithread,
-                     skip_utf8_validation=skip_utf8_validation, **options)
+    websock = class_(
+        sockopt=sockopt,
+        sslopt=sslopt,
+        fire_cont_frame=fire_cont_frame,
+        enable_multithread=enable_multithread,
+        skip_utf8_validation=skip_utf8_validation,
+        **options,
+    )
     websock.settimeout(timeout if timeout is not None else getdefaulttimeout())
     websock.connect(url, **options)
     return websock

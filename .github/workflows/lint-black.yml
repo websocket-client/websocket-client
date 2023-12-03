@@ -1,0 +1,16 @@
+name: Linting with black
+
+on: [push, pull_request]
+
+jobs:
+  black-lint:
+    runs-on: ubuntu-latest
+    name: black linting
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Run black linting
+        uses: psf/black@stable
+        with:
+          options: "--check"
+          src: "."

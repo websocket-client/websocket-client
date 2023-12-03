@@ -1,5 +1,6 @@
-import websocket
 import rel
+
+import websocket
 
 addr = "wss://api.gemini.com/v1/marketdata/%s"
 

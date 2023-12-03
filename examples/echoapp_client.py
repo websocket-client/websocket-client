@@ -1,7 +1,8 @@
-import websocket
-from threading import Thread
-import time
 import sys
+import time
+from threading import Thread
+
+import websocket
 
 
 def on_message(ws, message):
@@ -38,9 +39,8 @@ if __name__ == "__main__":
         host = "ws://echo.websocket.events/"
     else:
         host = sys.argv[1]
-    ws = websocket.WebSocketApp(host,
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
+    ws = websocket.WebSocketApp(
+        host, on_message=on_message, on_error=on_error, on_close=on_close
+    )
     ws.on_open = on_open
     ws.run_forever()

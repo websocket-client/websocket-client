@@ -1,4 +1,4 @@
-name: websocket-client build and test
+name: build and test
 
 on: [push, pull_request]
 

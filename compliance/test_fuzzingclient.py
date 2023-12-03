@@ -1,5 +1,6 @@
 import json
 import traceback
+
 import websocket
 
 """
@@ -21,8 +22,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-SERVER = 'ws://127.0.0.1:8642'
-AGENT = 'py-websockets-client'
+SERVER = "ws://127.0.0.1:8642"
+AGENT = "py-websockets-client"
 
 
 ws = websocket.create_connection(f"{SERVER}/getCaseCount")
@@ -32,7 +33,7 @@ ws.close()
 
 case = 0
 for case in range(1, count + 1):
-    url = f'{SERVER}/runCase?case={case}&agent={AGENT}'
+    url = f"{SERVER}/runCase?case={case}&agent={AGENT}"
     status = websocket.STATUS_NORMAL
     try:
         ws = websocket.create_connection(url)
@@ -57,5 +58,5 @@ for case in range(1, count + 1):
         ws.close(status)
 
 print(f"Ran {case} test cases.")
-url = f'{SERVER}/updateReports?agent={AGENT}'
+url = f"{SERVER}/updateReports?agent={AGENT}"
 ws = websocket.create_connection(url)

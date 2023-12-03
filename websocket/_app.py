@@ -3,18 +3,17 @@ import selectors
 import socket
 import threading
 import time
-
 from typing import Any, Callable, Optional, Union
 
 from . import _logging
 from ._abnf import ABNF
-from ._url import parse_url
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import (
     WebSocketConnectionClosedException,
-    WebSocketTimeoutException,
     WebSocketException,
+    WebSocketTimeoutException,
 )
+from ._url import parse_url
 
 """
 _app.py
@@ -134,9 +133,7 @@ class WrappedDispatcher:
     WrappedDispatcher
     """
 
-    def __init__(
-        self, app, ping_timeout: float, dispatcher: Dispatcher
-    ) -> None:
+    def __init__(self, app, ping_timeout: float, dispatcher: Dispatcher) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
@@ -284,27 +281,21 @@ class WebSocketApp:
         """
 
         if not self.sock or self.sock.send(data, opcode) == 0:
-            raise WebSocketConnectionClosedException(
-                "Connection is already closed."
-            )
+            raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def send_text(self, text_data: str) -> None:
         """
         Sends UTF-8 encoded text.
         """
         if not self.sock or self.sock.send(text_data, ABNF.OPCODE_TEXT) == 0:
-            raise WebSocketConnectionClosedException(
-                "Connection is already closed."
-            )
+            raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def send_bytes(self, data: Union[bytes, bytearray]) -> None:
         """
         Sends a sequence of bytes.
         """
         if not self.sock or self.sock.send(data, ABNF.OPCODE_BINARY) == 0:
-            raise WebSocketConnectionClosedException(
-                "Connection is already closed."
-            )
+            raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def close(self, **kwargs) -> None:
         """
@@ -330,15 +321,9 @@ class WebSocketApp:
         self.last_ping_tm = self.last_pong_tm = 0
 
     def _send_ping(self) -> None:
-        if (
-            self.stop_ping.wait(self.ping_interval) or
-            self.keep_running is False
-        ):
+        if self.stop_ping.wait(self.ping_interval) or self.keep_running is False:
             return
-        while (
-            not self.stop_ping.wait(self.ping_interval) and
-            self.keep_running is True
-        ):
+        while not self.stop_ping.wait(self.ping_interval) and self.keep_running is True:
             if self.sock:
                 self.last_ping_tm = time.time()
                 try:
@@ -486,9 +471,7 @@ class WebSocketApp:
 
             self.sock.settimeout(getdefaulttimeout())
             try:
-                header = (
-                    self.header() if callable(self.header) else self.header
-                )
+                header = self.header() if callable(self.header) else self.header
 
                 self.sock.connect(
                     self.url,
@@ -547,9 +530,7 @@ class WebSocketApp:
                 self.last_pong_tm = time.time()
                 self._callback(self.on_pong, frame.data)
             elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
-                self._callback(
-                    self.on_data, frame.data, frame.opcode, frame.fin
-                )
+                self._callback(self.on_data, frame.data, frame.opcode, frame.fin)
                 self._callback(self.on_cont_message, frame.data, frame.fin)
             else:
                 data = frame.data
@@ -573,10 +554,11 @@ class WebSocketApp:
                 )
 
                 if (
-                    self.last_ping_tm and
-                    has_timeout_expired and (
-                        has_pong_not_arrived_after_last_ping or
-                        has_pong_arrived_too_late
+                    self.last_ping_tm
+                    and has_timeout_expired
+                    and (
+                        has_pong_not_arrived_after_last_ping
+                        or has_pong_arrived_too_late
                     )
                 ):
                     raise WebSocketTimeoutException("ping/pong timed out")

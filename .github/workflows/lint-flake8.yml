@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   flake8-lint:
     runs-on: ubuntu-latest
-    name: lint
+    name: flake8 linting
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3
@@ -18,7 +18,7 @@ jobs:
         run: |
           pip3 install flake8
           flake8 --version
-          flake8 . --show-source --statistics --count --ignore E231,E241,E501,E722,E741,F401,F403,F405,W504
+          flake8 . --show-source --statistics --count --ignore E231,E241,E501,E722,E741,F401,F403,F405,W503,W504
 
       - name: Perform optional exit-zero flake8 linting
         run: |

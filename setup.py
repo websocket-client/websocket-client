@@ -1,6 +1,7 @@
 import sys
+
 import pkg_resources
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 """
 setup.py
@@ -31,15 +32,15 @@ setup(
     version=VERSION,
     description="WebSocket client for Python with low level API options",
     long_description=open("README.md").read(),
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     author="liris",
     author_email="liris.pp@gmail.com",
     maintainer="engn33r",
     maintainer_email="websocket.client@proton.me",
     license="Apache-2.0",
     url="https://github.com/websocket-client/websocket-client.git",
-    download_url='https://github.com/websocket-client/websocket-client/releases',
-    python_requires='>=3.8',
+    download_url="https://github.com/websocket-client/websocket-client/releases",
+    python_requires=">=3.8",
     extras_require={
         "test": ["websockets"],
         "optional": ["python-socks", "wsaccel"],
@@ -62,20 +63,18 @@ setup(
         "Intended Audience :: Developers",
     ],
     project_urls={
-        'Documentation': 'https://websocket-client.readthedocs.io/',
-        'Source': 'https://github.com/websocket-client/websocket-client/',
+        "Documentation": "https://websocket-client.readthedocs.io/",
+        "Source": "https://github.com/websocket-client/websocket-client/",
     },
-    keywords='websockets client',
+    keywords="websockets client",
     entry_points={
-        'console_scripts': [
-            'wsdump=websocket._wsdump:main',
+        "console_scripts": [
+            "wsdump=websocket._wsdump:main",
         ],
     },
     install_requires=install_requires,
     packages=find_packages(),
-    package_data={
-        'websocket.tests': ['data/*.txt']
-    },
+    package_data={"websocket.tests": ["data/*.txt"]},
     tests_require=tests_require,
-    test_suite="websocket.tests"
+    test_suite="websocket.tests",
 )

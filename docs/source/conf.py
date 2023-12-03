@@ -13,8 +13,8 @@
 import os
 import sys
 
-sys.path.append(os.path.abspath('../..'))
-sys.path.append(os.path.abspath('websocket'))
+sys.path.append(os.path.abspath("../.."))
+sys.path.append(os.path.abspath("websocket"))
 
 
 # Don't skip __init__, which is skipped by default
@@ -29,12 +29,12 @@ def setup(app):
 
 
 # -- Project information -----------------------------------------------------
-project = 'websocket-client'
-copyright = '2023'
-author = 'liris'
+project = "websocket-client"
+copyright = "2023"
+author = "liris"
 
 # The full version, including alpha/beta/rc tags
-release = '1.6.4'
+release = "1.6.4"
 
 
 # -- General configuration ---------------------------------------------------
@@ -42,12 +42,17 @@ release = '1.6.4'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage',
-              'sphinx.ext.napoleon', 'sphinx.ext.viewcode',
-              'sphinx.ext.autosectionlabel', 'sphinx.ext.doctest']
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.doctest",
+]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -60,7 +65,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
