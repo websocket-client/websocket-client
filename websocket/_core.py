@@ -318,8 +318,8 @@ class WebSocket:
         data = frame.format()
         length = len(data)
         if (isEnabledForTrace()):
-            trace("++Sent raw: " + repr(data))
-            trace("++Sent decoded: " + frame.__str__())
+            trace(f"++Sent raw: {repr(data)}")
+            trace(f"++Sent decoded: {frame.__str__()}")
         with self.lock:
             while data:
                 l = self._send(data)
@@ -376,7 +376,7 @@ class WebSocket:
             opcode, data = self.recv_data()
         if opcode == ABNF.OPCODE_TEXT:
             return data.decode("utf-8")
-        elif opcode == ABNF.OPCODE_TEXT or opcode == ABNF.OPCODE_BINARY:
+        elif opcode == ABNF.OPCODE_BINARY:
             return data
         else:
             return ''
@@ -419,8 +419,8 @@ class WebSocket:
         while True:
             frame = self.recv_frame()
             if (isEnabledForTrace()):
-                trace("++Rcv raw: " + repr(frame.format()))
-                trace("++Rcv decoded: " + frame.__str__())
+                trace(f"++Rcv raw: {repr(frame.format())}")
+                trace(f"++Rcv decoded: {frame.__str__()}")
             if not frame:
                 # handle error:
                 # 'NoneType' object has no attribute 'opcode'
@@ -488,36 +488,37 @@ class WebSocket:
             Timeout until receive a close frame.
             If None, it will wait forever until receive a close frame.
         """
-        if self.connected:
-            if status < 0 or status >= ABNF.LENGTH_16:
-                raise ValueError("code is invalid range")
+        if not self.connected:
+            return
+        if status < 0 or status >= ABNF.LENGTH_16:
+            raise ValueError("code is invalid range")
 
-            try:
-                self.connected = False
-                self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
-                sock_timeout = self.sock.gettimeout()
-                self.sock.settimeout(timeout)
-                start_time = time.time()
-                while timeout is None or time.time() - start_time < timeout:
-                    try:
-                        frame = self.recv_frame()
-                        if frame.opcode != ABNF.OPCODE_CLOSE:
-                            continue
-                        if isEnabledForError():
-                            recv_status = struct.unpack("!H", frame.data[0:2])[0]
-                            if recv_status >= 3000 and recv_status <= 4999:
-                                debug("close status: " + repr(recv_status))
-                            elif recv_status != STATUS_NORMAL:
-                                error("close status: " + repr(recv_status))
-                        break
-                    except:
-                        break
-                self.sock.settimeout(sock_timeout)
-                self.sock.shutdown(socket.SHUT_RDWR)
-            except:
-                pass
+        try:
+            self.connected = False
+            self.send(struct.pack('!H', status) + reason, ABNF.OPCODE_CLOSE)
+            sock_timeout = self.sock.gettimeout()
+            self.sock.settimeout(timeout)
+            start_time = time.time()
+            while timeout is None or time.time() - start_time < timeout:
+                try:
+                    frame = self.recv_frame()
+                    if frame.opcode != ABNF.OPCODE_CLOSE:
+                        continue
+                    if isEnabledForError():
+                        recv_status = struct.unpack("!H", frame.data[0:2])[0]
+                        if recv_status >= 3000 and recv_status <= 4999:
+                            debug(f"close status: {repr(recv_status)}")
+                        elif recv_status != STATUS_NORMAL:
+                            error(f"close status: {repr(recv_status)}")
+                    break
+                except:
+                    break
+            self.sock.settimeout(sock_timeout)
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except:
+            pass
 
-            self.shutdown()
+        self.shutdown()
 
     def abort(self):
         """

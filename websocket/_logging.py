@@ -55,7 +55,7 @@ def enableTrace(traceable: bool,
 
 def dump(title: str, message: str) -> None:
     if _traceEnabled:
-        _logger.debug("--- " + title + " ---")
+        _logger.debug(f"--- {title} ---")
         _logger.debug(message)
         _logger.debug("-----------------------")
 

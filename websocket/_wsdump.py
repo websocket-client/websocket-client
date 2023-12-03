@@ -199,7 +199,7 @@ def main() -> None:
 
             if msg is not None:
                 if args.timings:
-                    console.write(str(time.time() - start_time) + ": " + msg)
+                    console.write(f"{time.time() - start_time}: {msg}")
                 else:
                     console.write(msg)
 

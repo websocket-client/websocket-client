@@ -68,7 +68,7 @@ def parse_url(url: str) -> tuple:
         resource = "/"
 
     if parsed.query:
-        resource += "?" + parsed.query
+        resource += f"?{parsed.query}"
 
     return hostname, port, resource, is_secure
 
@@ -104,8 +104,7 @@ def _is_address_in_network(ip: str, net: str) -> bool:
 
 def _is_no_proxy_host(hostname: str, no_proxy: Optional[list]) -> bool:
     if not no_proxy:
-        v = os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", "")
-        if v:
+        if v:= os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(" ", "")
             no_proxy = v.split(",")
     if not no_proxy:
         no_proxy = DEFAULT_NO_PROXY_HOST

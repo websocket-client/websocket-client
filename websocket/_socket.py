@@ -91,7 +91,7 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
             pass
         except socket.error as exc:
             error_code = extract_error_code(exc)
-            if error_code != errno.EAGAIN and error_code != errno.EWOULDBLOCK:
+            if error_code not in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 raise
 
         sel = selectors.DefaultSelector()
@@ -153,7 +153,7 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
             error_code = extract_error_code(exc)
             if error_code is None:
                 raise
-            if error_code != errno.EAGAIN and error_code != errno.EWOULDBLOCK:
+            if error_code not in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 raise
 
         sel = selectors.DefaultSelector()

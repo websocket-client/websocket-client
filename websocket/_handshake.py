@@ -67,8 +67,7 @@ def handshake(sock, url: str, hostname: str, port: int, resource: str, **options
 def _pack_hostname(hostname: str) -> str:
     # IPv6 address
     if ':' in hostname:
-        return '[' + hostname + ']'
-
+        return f'[{hostname}]'
     return hostname
 
 
@@ -77,7 +76,7 @@ def _get_handshake_headers(resource: str, url: str, host: str, port: int, option
         "GET {resource} HTTP/1.1".format(resource=resource),
         "Upgrade: websocket"
     ]
-    if port == 80 or port == 443:
+    if port in [80, 443]:
         hostport = _pack_hostname(host)
     else:
         hostport = "{h}:{p}".format(h=_pack_hostname(host), p=port)
@@ -113,12 +112,10 @@ def _get_handshake_headers(resource: str, url: str, host: str, port: int, option
     else:
         headers.append(options['connection'])
 
-    subprotocols = options.get("subprotocols")
-    if subprotocols:
+    if subprotocols := options.get("subprotocols"):
         headers.append("Sec-WebSocket-Protocol: {protocols}".format(protocols=",".join(subprotocols)))
 
-    header = options.get("header")
-    if header:
+    if header := options.get("header"):
         if isinstance(header, dict):
             header = [
                 ": ".join([k, v])
@@ -130,9 +127,7 @@ def _get_handshake_headers(resource: str, url: str, host: str, port: int, option
     server_cookie = CookieJar.get(host)
     client_cookie = options.get("cookie", None)
 
-    cookie = "; ".join(filter(None, [server_cookie, client_cookie]))
-
-    if cookie:
+    if cookie := "; ".join(filter(None, [server_cookie, client_cookie])):
         headers.append("Cookie: {cookie}".format(cookie=cookie))
 
     headers.extend(("", ""))
@@ -170,7 +165,7 @@ def _validate(headers, key: str, subprotocols):
     if subprotocols:
         subproto = headers.get("sec-websocket-protocol", None)
         if not subproto or subproto.lower() not in [s.lower() for s in subprotocols]:
-            error("Invalid subprotocol: " + str(subprotocols))
+            error(f"Invalid subprotocol: {subprotocols}")
             return False, None
         subproto = subproto.lower()
 
@@ -182,11 +177,10 @@ def _validate(headers, key: str, subprotocols):
     if isinstance(result, str):
         result = result.encode('utf-8')
 
-    value = (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode('utf-8')
+    value = f"{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11".encode('utf-8')
     hashed = base64encode(hashlib.sha1(value).digest()).strip().lower()
-    success = hmac.compare_digest(hashed, result)
 
-    if success:
+    if success := hmac.compare_digest(hashed, result):
         return True, subproto
     else:
         return False, None

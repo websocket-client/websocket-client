@@ -87,8 +87,7 @@ class Dispatcher(DispatcherBase):
         sel.register(self.app.sock.sock, selectors.EVENT_READ)
         try:
             while self.app.keep_running:
-                r = sel.select(self.ping_timeout)
-                if r:
+                if r:= sel.select(self.ping_timeout)
                     if not read_callback():
                         break
                 check_callback()
@@ -112,8 +111,7 @@ class SSLDispatcher(DispatcherBase):
         sel.register(sock, selectors.EVENT_READ)
         try:
             while self.app.keep_running:
-                r = self.select(sock, sel)
-                if r:
+                if r:= self.select(sock, sel)
                     if not read_callback():
                         break
                 check_callback()
@@ -646,7 +644,6 @@ class WebSocketApp:
         timeout = ping_timeout or 10
         if is_ssl:
             return SSLDispatcher(self, timeout)
-
         return Dispatcher(self, timeout)
 
     def _get_close_args(self, close_frame: ABNF) -> list:

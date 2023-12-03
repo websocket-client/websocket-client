@@ -74,19 +74,20 @@ def _start_proxied_socket(url: str, options, proxy):
 
     hostname, port, resource, is_secure = parse_url(url)
 
-    if proxy.proxy_protocol == "socks5":
-        rdns = False
-        proxy_type = ProxyType.SOCKS5
     if proxy.proxy_protocol == "socks4":
         rdns = False
         proxy_type = ProxyType.SOCKS4
-    # socks5h and socks4a send DNS through proxy
-    if proxy.proxy_protocol == "socks5h":
-        rdns = True
-        proxy_type = ProxyType.SOCKS5
-    if proxy.proxy_protocol == "socks4a":
+    # socks4a sends DNS through proxy
+    elif proxy.proxy_protocol == "socks4a":
         rdns = True
         proxy_type = ProxyType.SOCKS4
+    elif proxy.proxy_protocol == "socks5":
+        rdns = False
+        proxy_type = ProxyType.SOCKS5
+    # socks5h sends DNS through proxy
+    elif proxy.proxy_protocol == "socks5h":
+        rdns = True
+        proxy_type = ProxyType.SOCKS5
 
     ws_proxy = Proxy.create(
         proxy_type=proxy_type,
@@ -98,10 +99,11 @@ def _start_proxied_socket(url: str, options, proxy):
 
     sock = ws_proxy.connect(hostname, port, timeout=proxy.proxy_timeout)
 
-    if is_secure and HAVE_SSL:
-        sock = _ssl_socket(sock, options.sslopt, hostname)
-    elif is_secure:
-        raise WebSocketException("SSL not available.")
+    if is_secure:
+        if HAVE_SSL:
+            sock = _ssl_socket(sock, options.sslopt, hostname)
+        else:
+            raise WebSocketException("SSL not available.")
 
     return sock, (hostname, port, resource)
 
@@ -110,7 +112,7 @@ def connect(url: str, options, proxy, socket):
     # Use _start_proxied_socket() only for socks4 or socks5 proxy
     # Use _tunnel() for http proxy
     # TODO: Use python-socks for http protocol also, to standardize flow
-    if proxy.proxy_host and not socket and not (proxy.proxy_protocol == "http"):
+    if proxy.proxy_host and not socket and proxy.proxy_protocol != "http":
         return _start_proxied_socket(url, options, proxy)
 
     hostname, port_from_url, resource, is_secure = parse_url(url)
@@ -121,8 +123,7 @@ def connect(url: str, options, proxy, socket):
     addrinfo_list, need_tunnel, auth = _get_addrinfo_list(
         hostname, port_from_url, is_secure, proxy)
     if not addrinfo_list:
-        raise WebSocketException(
-            "Host not found.: " + hostname + ":" + str(port_from_url))
+        raise WebSocketException(f"Host not found.: {hostname}:{port_from_url}")
 
     sock = None
     try:
@@ -189,11 +190,10 @@ def _open_socket(addrinfo_list, sockopt, timeout):
                     eConnRefused = (errno.ECONNREFUSED, errno.WSAECONNREFUSED, errno.ENETUNREACH)
                 except AttributeError:
                     eConnRefused = (errno.ECONNREFUSED, errno.ENETUNREACH)
-                if error.errno in eConnRefused:
-                    err = error
-                    continue
-                else:
+                if error.errno not in eConnRefused:
                     raise error
+                err = error
+                continue
             else:
                 break
         else:
@@ -279,14 +279,14 @@ def _ssl_socket(sock, user_sslopt, hostname):
 
 def _tunnel(sock, host, port, auth):
     debug("Connecting proxy...")
-    connect_header = "CONNECT {h}:{p} HTTP/1.1\r\n".format(h=host, p=port)
-    connect_header += "Host: {h}:{p}\r\n".format(h=host, p=port)
+    connect_header = f"CONNECT {host}:{port} HTTP/1.1\r\n"
+    connect_header += f"Host: {host}:{port}\r\n"
 
     # TODO: support digest auth.
     if auth and auth[0]:
         auth_str = auth[0]
         if auth[1]:
-            auth_str += ":" + auth[1]
+            auth_str += f":{auth[1]}"
         encoded_str = base64encode(auth_str.encode()).strip().decode().replace('\n', '')
         connect_header += "Proxy-Authorization: Basic {str}\r\n".format(str=encoded_str)
     connect_header += "\r\n"
@@ -326,14 +326,14 @@ def read_headers(sock):
                 status_message = status_info[2]
         else:
             kv = line.split(":", 1)
-            if len(kv) == 2:
-                key, value = kv
-                if key.lower() == "set-cookie" and headers.get("set-cookie"):
-                    headers["set-cookie"] = headers.get("set-cookie") + "; " + value.strip()
-                else:
-                    headers[key.lower()] = value.strip()
-            else:
+            if len(kv) != 2:
                 raise WebSocketException("Invalid header")
+            key, value = kv
+            if key.lower() == "set-cookie" and headers.get("set-cookie"):
+                headers["set-cookie"] = headers.get("set-cookie") + "; " + value.strip()
+            else:
+                headers[key.lower()] = value.strip()
+                
 
     trace("-----------------------")
 

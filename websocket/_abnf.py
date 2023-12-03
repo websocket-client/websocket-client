@@ -184,9 +184,7 @@ class ABNF:
         return code in VALID_CLOSE_STATUS or (3000 <= code < 5000)
 
     def __str__(self) -> str:
-        return "fin=" + str(self.fin) \
-            + " opcode=" + str(self.opcode) \
-            + " data=" + str(self.data)
+        return f"fin={self.fin} opcode={self.opcode} data={self.data}"
 
     @staticmethod
     def create_frame(data: Union[bytes, str], opcode: int, fin: int = 1) -> 'ABNF':
@@ -235,9 +233,8 @@ class ABNF:
 
         if not self.mask:
             return frame_header + self.data
-        else:
-            mask_key = self.get_mask_key(4)
-            return frame_header + self._get_masked(mask_key)
+        mask_key = self.get_mask_key(4)
+        return frame_header + self._get_masked(mask_key)
 
     def _get_masked(self, mask_key: Union[str, bytes]) -> bytes:
         s = ABNF.mask(mask_key, self.data)
@@ -420,7 +417,5 @@ class continuous_frame:
         self.cont_data = None
         frame.data = data[1]
         if not self.fire_cont_frame and data[0] == ABNF.OPCODE_TEXT and not self.skip_utf8_validation and not validate_utf8(frame.data):
-            raise WebSocketPayloadException(
-                "cannot decode: " + repr(frame.data))
-
+            raise WebSocketPayloadException(f"cannot decode: {repr(frame.data)}")
         return [data[0], frame]
