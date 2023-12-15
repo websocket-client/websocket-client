@@ -16,16 +16,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__all__ = ["HAVE_SSL", "ssl", "SSLError", "SSLWantReadError", "SSLWantWriteError"]
+__all__ = ["HAVE_SSL", "ssl", "SSLError", "SSLEOFError",
+    "SSLWantReadError", "SSLWantWriteError"]
 
 try:
     import ssl
-    from ssl import SSLError, SSLWantReadError, SSLWantWriteError
+    from ssl import SSLError, SSLEOFError, SSLWantReadError, SSLWantWriteError
 
     HAVE_SSL = True
 except ImportError:
     # dummy class of SSLError for environment without ssl support
     class SSLError(Exception):
+        pass
+
+    class SSLEOFError(Exception):
         pass
 
     class SSLWantReadError(Exception):
