@@ -1,3 +1,4 @@
+import ssl
 import inspect
 import selectors
 import socket
@@ -516,9 +517,10 @@ class WebSocketApp:
             except (
                 WebSocketConnectionClosedException,
                 KeyboardInterrupt,
+                ssl.SSLEOFError,
             ) as e:
                 if custom_dispatcher:
-                    return handleDisconnect(e)
+                    return handleDisconnect(e, bool(reconnect))
                 else:
                     raise e
 
