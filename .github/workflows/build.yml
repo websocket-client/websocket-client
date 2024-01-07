@@ -36,7 +36,7 @@ jobs:
         env:
           TEST_WITH_INTERNET: 1
           LOCAL_WS_SERVER_PORT: 8765
-      - name: Run distutils and confirm build of websocket-client
+      - name: Build websocket-client and check with twine
         run: |
-          python3 setup.py sdist
+          python -m build
           twine check dist/*

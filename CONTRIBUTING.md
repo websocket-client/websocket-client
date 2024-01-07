@@ -14,10 +14,9 @@ question can be answered from the following 5 steps:
 - [ ] Search for your question in [old existing issues](https://github.com/websocket-client/websocket-client/issues)
 - [ ] If you encountered an error message, try googling the error message and see if you find an answer
 - [ ] Check if the same issue exists if you uninstall the websocket-client
-library on your system (using `pip uninstall websocket-client` or maybe
-`pip3 uninstall websocket-client`) and install the
+library on your system (using `pip uninstall websocket-client`) and install the
 [latest master branch](https://github.com/websocket-client/websocket-client)
-directly from GitHub by using `python setup.py install`
+directly from a clone of the repository by using `pip install -e .`
 (see [installation info](https://github.com/websocket-client/websocket-client#installation))
 
 If you did not get your question answered from these 5 steps, then please open a
@@ -48,8 +47,7 @@ problem with the current code and test your solution (if possible to recreate).
 Great! To edit the [project documentation](https://websocket-client.readthedocs.io),
 it is recommended that you install Sphinx and build the updated documentation
 locally before submitting your edits. The Sphinx dependencies can be
-installed by navigating to the `docs/source` directory and running
-`pip3 install -r requirements.txt`. To build a new version of the documentation,
+installed with `pip install websocket-client[docs]`. To build a new version of the documentation,
 change directories (or `cd`) to the `docs/` directory and run `make clean html`.
 Any build warnings or errors will be displayed in your terminal, and the new
 documentation will then be available in the `docs/build/html/` directory.

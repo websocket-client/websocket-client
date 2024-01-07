@@ -66,7 +66,7 @@ if a dispatcher parameter is provided to the ``run_forever()`` function.
 What's going on with the naming of this library?
 ==================================================
 
-To install this library, you use ``pip3 install websocket-client``, while ``import
+To install this library, you use ``pip install websocket-client``, while ``import
 websocket`` imports this library, and PyPi lists the package as
 ``websocket_client``. Why is it so confusing? To see the original issue about
 the choice of ``import websocket``, see

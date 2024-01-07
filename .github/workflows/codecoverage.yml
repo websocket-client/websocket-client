@@ -20,7 +20,7 @@ jobs:
         run: |
           pip3 install coverage pytest pytest-cov setuptools
           python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
-          python3 setup.py install
+          pip3 install -e .
           pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
           coverage report
       - name: Install wsaccel and python-socks, then run all test cases for coverage collection
