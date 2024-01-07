@@ -28,7 +28,7 @@ jobs:
           python3 websocket/tests/echo-server.py &
       - name: Install build tools and print setuptools version
         run: |
-          pip3 install -U pip setuptools wheel readme_renderer twine pytest python-socks
+          pip3 install -U pip setuptools wheel readme_renderer twine pytest python-socks build
           python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
       - name: Run tests
         run: |
