@@ -89,10 +89,10 @@ class HeaderSockMock(SockMock):
 
 
 class WebSocketTest(unittest.TestCase):
-    def setup(self):
+    def setUp(self):
         ws.enableTrace(TRACEABLE)
 
-    def teardown(self):
+    def tearDown(self):
         pass
 
     def test_default_timeout(self):
@@ -158,15 +158,11 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (False, None))
 
     def test_read_header(self):
-        status, header, _ = read_headers(
-            HeaderSockMock("data/header01.txt")
-        )
+        status, header, _ = read_headers(HeaderSockMock("data/header01.txt"))
         self.assertEqual(status, 101)
         self.assertEqual(header["connection"], "Upgrade")
 
-        status, header, _ = read_headers(
-            HeaderSockMock("data/header03.txt")
-        )
+        status, header, _ = read_headers(HeaderSockMock("data/header03.txt"))
         self.assertEqual(status, 101)
         self.assertEqual(header["connection"], "Upgrade, Keep-Alive")
 
@@ -379,9 +375,7 @@ class WebSocketTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_support_redirect(self):
         s = ws.WebSocket()
-        self.assertRaises(
-            WebSocketBadStatusException, s.connect, "ws://google.com/"
-        )
+        self.assertRaises(WebSocketBadStatusException, s.connect, "ws://google.com/")
         # Need to find a URL that has a redirect code leading to a websocket
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
@@ -495,9 +489,7 @@ class HandshakeTest(unittest.TestCase):
     def test_bad_urls(self):
         websock3 = ws.WebSocket()
         self.assertRaises(ValueError, websock3.connect, "ws//example.com")
-        self.assertRaises(
-            WebSocketAddressException, websock3.connect, "ws://example"
-        )
+        self.assertRaises(WebSocketAddressException, websock3.connect, "ws://example")
         self.assertRaises(ValueError, websock3.connect, "example.com")
 
 

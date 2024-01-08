@@ -95,9 +95,7 @@ class OptsList:
 
 class HttpTest(unittest.TestCase):
     def test_read_header(self):
-        status, header, _ = read_headers(
-            HeaderSockMock("data/header01.txt")
-        )
+        status, header, _ = read_headers(HeaderSockMock("data/header01.txt"))
         self.assertEqual(status, 101)
         self.assertEqual(header["connection"], "Upgrade")
         # header02.txt is intentionally malformed

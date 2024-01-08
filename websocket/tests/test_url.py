@@ -9,6 +9,7 @@ from websocket._url import (
     get_proxy_info,
     parse_url,
 )
+from websocket._exceptions import WebSocketProxyException
 
 """
 test_url.py
@@ -119,12 +120,12 @@ class UrlTest(unittest.TestCase):
 
 
 class IsNoProxyHostTest(unittest.TestCase):
-    def setup(self):
+    def setUp(self):
         self.no_proxy = os.environ.get("no_proxy", None)
         if "no_proxy" in os.environ:
             del os.environ["no_proxy"]
 
-    def teardown(self):
+    def tearDown(self):
         if self.no_proxy:
             os.environ["no_proxy"] = self.no_proxy
         elif "no_proxy" in os.environ:
@@ -133,6 +134,10 @@ class IsNoProxyHostTest(unittest.TestCase):
     def test_match_all(self):
         self.assertTrue(_is_no_proxy_host("any.websocket.org", ["*"]))
         self.assertTrue(_is_no_proxy_host("192.168.0.1", ["*"]))
+        self.assertFalse(_is_no_proxy_host("192.168.0.1", ["192.168.1.1"]))
+        self.assertFalse(
+            _is_no_proxy_host("any.websocket.org", ["other.websocket.org"])
+        )
         self.assertTrue(
             _is_no_proxy_host("any.websocket.org", ["other.websocket.org", "*"])
         )
@@ -200,7 +205,7 @@ class IsNoProxyHostTest(unittest.TestCase):
 
 
 class ProxyInfoTest(unittest.TestCase):
-    def setup(self):
+    def setUp(self):
         self.http_proxy = os.environ.get("http_proxy", None)
         self.https_proxy = os.environ.get("https_proxy", None)
         self.no_proxy = os.environ.get("no_proxy", None)
@@ -211,7 +216,7 @@ class ProxyInfoTest(unittest.TestCase):
         if "no_proxy" in os.environ:
             del os.environ["no_proxy"]
 
-    def teardown(self):
+    def tearDown(self):
         if self.http_proxy:
             os.environ["http_proxy"] = self.http_proxy
         elif "http_proxy" in os.environ:
@@ -228,19 +233,18 @@ class ProxyInfoTest(unittest.TestCase):
             del os.environ["no_proxy"]
 
     def test_proxy_from_args(self):
-        self.assertEqual(
-            get_proxy_info("echo.websocket.events", False, proxy_host="localhost"),
-            ("localhost", 0, None),
+        self.assertRaises(
+            WebSocketProxyException,
+            get_proxy_info,
+            "echo.websocket.events",
+            False,
+            proxy_host="localhost",
         )
         self.assertEqual(
             get_proxy_info(
                 "echo.websocket.events", False, proxy_host="localhost", proxy_port=3128
             ),
             ("localhost", 3128, None),
-        )
-        self.assertEqual(
-            get_proxy_info("echo.websocket.events", True, proxy_host="localhost"),
-            ("localhost", 0, None),
         )
         self.assertEqual(
             get_proxy_info(
@@ -254,9 +258,10 @@ class ProxyInfoTest(unittest.TestCase):
                 "echo.websocket.events",
                 False,
                 proxy_host="localhost",
+                proxy_port=9001,
                 proxy_auth=("a", "b"),
             ),
-            ("localhost", 0, ("a", "b")),
+            ("localhost", 9001, ("a", "b")),
         )
         self.assertEqual(
             get_proxy_info(
@@ -273,9 +278,10 @@ class ProxyInfoTest(unittest.TestCase):
                 "echo.websocket.events",
                 True,
                 proxy_host="localhost",
+                proxy_port=8765,
                 proxy_auth=("a", "b"),
             ),
-            ("localhost", 0, ("a", "b")),
+            ("localhost", 8765, ("a", "b")),
         )
         self.assertEqual(
             get_proxy_info(
@@ -307,6 +313,17 @@ class ProxyInfoTest(unittest.TestCase):
                 proxy_port=3128,
                 no_proxy=["echo.websocket.events"],
                 proxy_auth=("a", "b"),
+            ),
+            (None, 0, None),
+        )
+
+        self.assertEqual(
+            get_proxy_info(
+                "echo.websocket.events",
+                True,
+                proxy_host="localhost",
+                proxy_port=3128,
+                no_proxy=[".websocket.events"],
             ),
             (None, 0, None),
         )
