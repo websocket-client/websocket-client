@@ -3,6 +3,7 @@ import socket
 import struct
 from typing import Optional
 from urllib.parse import unquote, urlparse
+from ._exceptions import WebSocketProxyException
 
 """
 _url.py
@@ -167,6 +168,8 @@ def get_proxy_info(
         return None, 0, None
 
     if proxy_host:
+        if not proxy_port:
+            raise WebSocketProxyException("Cannot use port 0 when proxy_host specified")
         port = proxy_port
         auth = proxy_auth
         return proxy_host, port, auth
