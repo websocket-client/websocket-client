@@ -30,7 +30,7 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 project = "websocket-client"
-copyright = "2023"
+copyright = "2024"
 author = "liris"
 
 # The full version, including alpha/beta/rc tags

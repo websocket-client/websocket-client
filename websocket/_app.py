@@ -21,7 +21,7 @@ from ._url import parse_url
 _app.py
 websocket - WebSocket client library for Python
 
-Copyright 2023 engn33r
+Copyright 2024 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
