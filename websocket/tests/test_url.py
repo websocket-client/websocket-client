@@ -36,7 +36,7 @@ class UrlTest(unittest.TestCase):
         self.assertTrue(_is_address_in_network("127.1.0.1", "127.0.0.0/8"))
         self.assertFalse(_is_address_in_network("127.1.0.1", "127.0.0.0/24"))
 
-    def testParseUrl(self):
+    def test_parse_url(self):
         p = parse_url("ws://www.example.com/r")
         self.assertEqual(p[0], "www.example.com")
         self.assertEqual(p[1], 80)
@@ -119,18 +119,18 @@ class UrlTest(unittest.TestCase):
 
 
 class IsNoProxyHostTest(unittest.TestCase):
-    def setUp(self):
+    def setup(self):
         self.no_proxy = os.environ.get("no_proxy", None)
         if "no_proxy" in os.environ:
             del os.environ["no_proxy"]
 
-    def tearDown(self):
+    def teardown(self):
         if self.no_proxy:
             os.environ["no_proxy"] = self.no_proxy
         elif "no_proxy" in os.environ:
             del os.environ["no_proxy"]
 
-    def testMatchAll(self):
+    def test_match_all(self):
         self.assertTrue(_is_no_proxy_host("any.websocket.org", ["*"]))
         self.assertTrue(_is_no_proxy_host("192.168.0.1", ["*"]))
         self.assertTrue(
@@ -142,7 +142,7 @@ class IsNoProxyHostTest(unittest.TestCase):
         os.environ["no_proxy"] = "other.websocket.org, *"
         self.assertTrue(_is_no_proxy_host("any.websocket.org", None))
 
-    def testIpAddress(self):
+    def test_ip_address(self):
         self.assertTrue(_is_no_proxy_host("127.0.0.1", ["127.0.0.1"]))
         self.assertFalse(_is_no_proxy_host("127.0.0.2", ["127.0.0.1"]))
         self.assertTrue(
@@ -158,7 +158,7 @@ class IsNoProxyHostTest(unittest.TestCase):
         self.assertTrue(_is_no_proxy_host("127.0.0.1", None))
         self.assertFalse(_is_no_proxy_host("127.0.0.2", None))
 
-    def testIpAddressInRange(self):
+    def test_ip_address_in_range(self):
         self.assertTrue(_is_no_proxy_host("127.0.0.1", ["127.0.0.0/8"]))
         self.assertTrue(_is_no_proxy_host("127.0.0.2", ["127.0.0.0/8"]))
         self.assertFalse(_is_no_proxy_host("127.1.0.1", ["127.0.0.0/24"]))
@@ -168,7 +168,7 @@ class IsNoProxyHostTest(unittest.TestCase):
         os.environ["no_proxy"] = "127.0.0.0/24"
         self.assertFalse(_is_no_proxy_host("127.1.0.1", None))
 
-    def testHostnameMatch(self):
+    def test_hostname_match(self):
         self.assertTrue(_is_no_proxy_host("my.websocket.org", ["my.websocket.org"]))
         self.assertTrue(
             _is_no_proxy_host(
@@ -182,7 +182,7 @@ class IsNoProxyHostTest(unittest.TestCase):
         os.environ["no_proxy"] = "other.websocket.org, my.websocket.org"
         self.assertTrue(_is_no_proxy_host("my.websocket.org", None))
 
-    def testHostnameMatchDomain(self):
+    def test_hostname_match_domain(self):
         self.assertTrue(_is_no_proxy_host("any.websocket.org", [".websocket.org"]))
         self.assertTrue(_is_no_proxy_host("my.other.websocket.org", [".websocket.org"]))
         self.assertTrue(
@@ -200,7 +200,7 @@ class IsNoProxyHostTest(unittest.TestCase):
 
 
 class ProxyInfoTest(unittest.TestCase):
-    def setUp(self):
+    def setup(self):
         self.http_proxy = os.environ.get("http_proxy", None)
         self.https_proxy = os.environ.get("https_proxy", None)
         self.no_proxy = os.environ.get("no_proxy", None)
@@ -211,7 +211,7 @@ class ProxyInfoTest(unittest.TestCase):
         if "no_proxy" in os.environ:
             del os.environ["no_proxy"]
 
-    def tearDown(self):
+    def teardown(self):
         if self.http_proxy:
             os.environ["http_proxy"] = self.http_proxy
         elif "http_proxy" in os.environ:
@@ -227,7 +227,7 @@ class ProxyInfoTest(unittest.TestCase):
         elif "no_proxy" in os.environ:
             del os.environ["no_proxy"]
 
-    def testProxyFromArgs(self):
+    def test_proxy_from_args(self):
         self.assertEqual(
             get_proxy_info("echo.websocket.events", False, proxy_host="localhost"),
             ("localhost", 0, None),
@@ -311,7 +311,7 @@ class ProxyInfoTest(unittest.TestCase):
             (None, 0, None),
         )
 
-    def testProxyFromEnv(self):
+    def test_proxy_from_env(self):
         os.environ["http_proxy"] = "http://localhost/"
         self.assertEqual(
             get_proxy_info("echo.websocket.events", False), ("localhost", None, None)

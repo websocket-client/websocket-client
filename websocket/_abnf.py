@@ -5,7 +5,7 @@ import sys
 from threading import Lock
 from typing import Callable, Optional, Union
 
-from ._exceptions import *
+from ._exceptions import WebSocketPayloadException, WebSocketProtocolException
 from ._utils import validate_utf8
 
 """

@@ -23,7 +23,7 @@ limitations under the License.
 
 
 class CookieJarTest(unittest.TestCase):
-    def testAdd(self):
+    def test_add(self):
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("")
         self.assertFalse(
@@ -67,7 +67,7 @@ class CookieJarTest(unittest.TestCase):
         self.assertEqual(cookie_jar.get("xyz"), "e=f")
         self.assertEqual(cookie_jar.get("something"), "")
 
-    def testSet(self):
+    def test_set(self):
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b")
         self.assertFalse(
@@ -104,7 +104,7 @@ class CookieJarTest(unittest.TestCase):
         self.assertEqual(cookie_jar.get("xyz"), "e=f")
         self.assertEqual(cookie_jar.get("something"), "")
 
-    def testGet(self):
+    def test_get(self):
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; c=d; domain=abc.com")
         self.assertEqual(cookie_jar.get("abc.com"), "a=b; c=d")
