@@ -21,12 +21,12 @@ jobs:
           pip3 install coverage pytest pytest-cov setuptools
           python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
           pip3 install -e .
-          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc
+          pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc
           coverage report
       - name: Install wsaccel and python-socks, then run all test cases for coverage collection
         run: |
           pip3 install wsaccel python-socks
-          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append
+          pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append
           coverage report
         env:
           TEST_WITH_INTERNET: 1
@@ -35,7 +35,7 @@ jobs:
         run: |
           ls $WEBSOCKET_CLIENT_CA_BUNDLE
           python3 -c "import ssl; print(ssl.get_default_verify_paths().capath)"
-          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
+          pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
           coverage report -m
         env:
           TEST_WITH_INTERNET: 1
@@ -44,7 +44,7 @@ jobs:
       - name: Run SSL test with extra environment variable and create report
         run: |
           python3 -c "import ssl; print(ssl.get_default_verify_paths().capath)"
-          pytest -vrP --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
+          pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
           coverage xml
         env:
           TEST_WITH_INTERNET: 1
