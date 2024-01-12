@@ -8,7 +8,7 @@ jobs:
     name: black linting
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run black linting
         uses: psf/black@stable
         with:
