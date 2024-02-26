@@ -167,6 +167,7 @@ class WebSocketApp:
         url: str,
         header: Union[list, dict, Callable, None] = None,
         on_open: Optional[Callable[[WebSocket], None]] = None,
+        on_reconnect: Optional[Callable[[WebSocket], None]] = None,
         on_message: Optional[Callable[[WebSocket, Any], None]] = None,
         on_error: Optional[Callable[[WebSocket, Any], None]] = None,
         on_close: Optional[Callable[[WebSocket, Any, Any], None]] = None,
@@ -195,6 +196,10 @@ class WebSocketApp:
         on_open: function
             Callback object which is called at opening websocket.
             on_open has one argument.
+            The 1st argument is this class object.
+        on_reconnect: function
+            Callback object which is called at reconnecting websocket.
+            on_reconnect has one argument.
             The 1st argument is this class object.
         on_message: function
             Callback object which is called when received data.
@@ -246,6 +251,7 @@ class WebSocketApp:
         self.cookie = cookie
 
         self.on_open = on_open
+        self.on_reconnect = on_reconnect
         self.on_message = on_message
         self.on_data = on_data
         self.on_error = on_error
@@ -497,7 +503,10 @@ class WebSocketApp:
                 if self.ping_interval:
                     self._start_ping_thread()
 
-                self._callback(self.on_open)
+                if reconnecting:
+                    self._callback(self.on_reconnect)
+                else:
+                    self._callback(self.on_open)
 
                 dispatcher.read(self.sock.sock, read, check)
             except (
