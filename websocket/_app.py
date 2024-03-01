@@ -503,7 +503,7 @@ class WebSocketApp:
                 if self.ping_interval:
                     self._start_ping_thread()
 
-                if reconnecting:
+                if reconnecting and self.on_reconnect:
                     self._callback(self.on_reconnect)
                 else:
                     self._callback(self.on_open)
