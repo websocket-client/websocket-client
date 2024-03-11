@@ -432,6 +432,7 @@ class WebSocketApp:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
         self.ping_payload = ping_payload
+        self.has_done_teardown = False
         self.keep_running = True
 
         def teardown(close_frame: ABNF = None):
