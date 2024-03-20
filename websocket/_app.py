@@ -535,7 +535,7 @@ class WebSocketApp:
                 else:
                     raise e
 
-            if op_code == ABNF.OPCODE_CLOSE:
+            if op_code == ABNF.OPCODE_CLOSE and not reconnect:
                 return teardown(frame)
             elif op_code == ABNF.OPCODE_PING:
                 self._callback(self.on_ping, frame.data)
