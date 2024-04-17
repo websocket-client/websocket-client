@@ -481,7 +481,7 @@ class WebSocketApp:
                 fire_cont_frame=self.on_cont_message is not None,
                 skip_utf8_validation=skip_utf8_validation,
                 enable_multithread=True,
-                dispatcher: dispatcher,
+                dispatcher=dispatcher,
             )
 
             self.sock.settimeout(getdefaulttimeout())
