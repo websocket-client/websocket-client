@@ -13,7 +13,7 @@ from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
 from ._socket import getdefaulttimeout, recv, send, sock_opt
 from ._ssl_compat import ssl
 from ._utils import NoLock
-from ._app import DispatcherBase
+from ._dispatcher import DispatcherBase, WrappedDispatcher
 
 """
 _core.py
@@ -83,7 +83,7 @@ class WebSocket:
         fire_cont_frame: bool = False,
         enable_multithread: bool = True,
         skip_utf8_validation: bool = False,
-        dispatcher: DispatcherBase = None,
+        dispatcher: Union[DispatcherBase, WrappedDispatcher] = None,
         **_,
     ):
         """
