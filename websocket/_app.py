@@ -70,6 +70,9 @@ class DispatcherBase:
             _logging.info(f"User exited {e}")
             raise e
 
+    def write(self, sock: socket.socket, write_callback: Callable) -> None:
+        write_callback()
+
 
 class Dispatcher(DispatcherBase):
     """
@@ -92,7 +95,6 @@ class Dispatcher(DispatcherBase):
                 check_callback()
         finally:
             sel.close()
-
 
 class SSLDispatcher(DispatcherBase):
     """
@@ -149,6 +151,9 @@ class WrappedDispatcher:
     ) -> None:
         self.dispatcher.read(sock, read_callback)
         self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
+
+    def write(self, sock: socket.socket, write_callback: Callable) -> None:
+        self.dispatcher.write(sock, write_callback)
 
     def timeout(self, seconds: float, callback: Callable) -> None:
         self.dispatcher.timeout(seconds, callback)
@@ -476,6 +481,7 @@ class WebSocketApp:
                 fire_cont_frame=self.on_cont_message is not None,
                 skip_utf8_validation=skip_utf8_validation,
                 enable_multithread=True,
+                dispatcher: dispatcher,
             )
 
             self.sock.settimeout(getdefaulttimeout())
