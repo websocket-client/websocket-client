@@ -1,6 +1,7 @@
 import time, selectors, socket
 from typing import Any, Callable, Optional, Union
 from . import _logging
+from ._socket import send
 
 class DispatcherBase:
     """
@@ -26,8 +27,8 @@ class DispatcherBase:
             _logging.info(f"User exited {e}")
             raise e
 
-    def write(self, sock: socket.socket, write_callback: Callable) -> None:
-        write_callback()
+    def send(self, sock: socket.socket, data: Union[str, bytes]) -> None:
+        return send(sock, data)
 
 
 class Dispatcher(DispatcherBase):
@@ -108,8 +109,9 @@ class WrappedDispatcher:
         self.dispatcher.read(sock, read_callback)
         self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
 
-    def write(self, sock: socket.socket, write_callback: Callable) -> None:
-        self.dispatcher.write(sock, write_callback)
+    def send(self, sock: socket.socket, data: Union[str, bytes]) -> None:
+        self.dispatcher.buffwrite(sock, lambda : send(sock, data))
+        return len(data)
 
     def timeout(self, seconds: float, callback: Callable) -> None:
         self.dispatcher.timeout(seconds, callback)
