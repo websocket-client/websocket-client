@@ -10,7 +10,7 @@ from ._exceptions import WebSocketProtocolException, WebSocketConnectionClosedEx
 from ._handshake import SUPPORTED_REDIRECT_STATUSES, handshake
 from ._http import connect, proxy_info
 from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
-from ._socket import getdefaulttimeout, recv, send, sock_opt
+from ._socket import getdefaulttimeout, recv, sock_opt
 from ._ssl_compat import ssl
 from ._utils import NoLock
 from ._dispatcher import DispatcherBase, WrappedDispatcher
@@ -377,7 +377,7 @@ class WebSocket:
         """
         if isinstance(payload, str):
             payload = payload.encode("utf-8")
-        self.dispatcher.write(self.sock, lambda : self.send(payload, ABNF.OPCODE_PONG))
+        self.send(payload, ABNF.OPCODE_PONG)
 
     def recv(self) -> Union[str, bytes]:
         """
@@ -559,7 +559,7 @@ class WebSocket:
             self.connected = False
 
     def _send(self, data: Union[str, bytes]):
-        return send(self.sock, data)
+        return self.dispatcher.send(self.sock, data)
 
     def _recv(self, bufsize):
         try:
