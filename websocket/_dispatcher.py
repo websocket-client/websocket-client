@@ -110,7 +110,7 @@ class WrappedDispatcher:
         self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
 
     def send(self, sock: socket.socket, data: Union[str, bytes]) -> None:
-        self.dispatcher.buffwrite(sock, lambda : send(sock, data))
+        self.dispatcher.buffwrite(sock, data, send)
         return len(data)
 
     def timeout(self, seconds: float, callback: Callable) -> None:
