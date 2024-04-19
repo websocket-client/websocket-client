@@ -94,10 +94,11 @@ class WrappedDispatcher:
     WrappedDispatcher
     """
 
-    def __init__(self, app, ping_timeout: Union[float, int, None], dispatcher) -> None:
+    def __init__(self, app, ping_timeout: Union[float, int, None], dispatcher, handleDisconnect) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
+        self.handleDisconnect = handleDisconnect
         dispatcher.signal(2, dispatcher.abort)  # keyboard interrupt
 
     def read(
@@ -110,7 +111,7 @@ class WrappedDispatcher:
         self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
 
     def send(self, sock: socket.socket, data: Union[str, bytes]) -> None:
-        self.dispatcher.buffwrite(sock, data, send)
+        self.dispatcher.buffwrite(sock, data, send, self.handleDisconnect)
         return len(data)
 
     def timeout(self, seconds: float, callback: Callable) -> None:
