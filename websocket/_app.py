@@ -501,7 +501,8 @@ class WebSocketApp:
 
         custom_dispatcher = bool(dispatcher)
         dispatcher = self.create_dispatcher(
-            ping_timeout, dispatcher, parse_url(self.url)[3]
+            ping_timeout, dispatcher, parse_url(self.url)[3],
+            lambda : handleDisconnect(WebSocketConnectionClosedException, bool(reconnect))
         )
 
         try:
@@ -527,9 +528,10 @@ class WebSocketApp:
         ping_timeout: Union[float, int, None],
         dispatcher: Optional[DispatcherBase] = None,
         is_ssl: bool = False,
+        handleDisconnect: Callable = None,
     ) -> Union[Dispatcher, SSLDispatcher, WrappedDispatcher]:
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
-            return WrappedDispatcher(self, ping_timeout, dispatcher)
+            return WrappedDispatcher(self, ping_timeout, dispatcher, handleDisconnect)
         timeout = ping_timeout or 10
         if is_ssl:
             return SSLDispatcher(self, timeout)
