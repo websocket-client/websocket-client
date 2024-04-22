@@ -118,4 +118,4 @@ class WrappedDispatcher:
         self.dispatcher.timeout(seconds, callback)
 
     def reconnect(self, seconds: int, reconnector: Callable) -> None:
-        self.timeout(seconds, reconnector)
+        self.timeout(seconds, reconnector, True)
