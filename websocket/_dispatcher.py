@@ -114,8 +114,8 @@ class WrappedDispatcher:
         self.dispatcher.buffwrite(sock, data, send, self.handleDisconnect)
         return len(data)
 
-    def timeout(self, seconds: float, callback: Callable) -> None:
-        self.dispatcher.timeout(seconds, callback)
+    def timeout(self, seconds: float, callback: Callable, *args) -> None:
+        self.dispatcher.timeout(seconds, callback, *args)
 
     def reconnect(self, seconds: int, reconnector: Callable) -> None:
         self.timeout(seconds, reconnector, True)
