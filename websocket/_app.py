@@ -1,4 +1,3 @@
-import ssl
 import inspect
 import selectors
 import socket
