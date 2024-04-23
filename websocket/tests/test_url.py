@@ -427,12 +427,12 @@ class ProxyInfoTest(unittest.TestCase):
             ("localhost2", 3128, ("a", "b")),
         )
 
-        os.environ[
-            "http_proxy"
-        ] = "http://john%40example.com:P%40SSWORD@localhost:3128/"
-        os.environ[
-            "https_proxy"
-        ] = "http://john%40example.com:P%40SSWORD@localhost2:3128/"
+        os.environ["http_proxy"] = (
+            "http://john%40example.com:P%40SSWORD@localhost:3128/"
+        )
+        os.environ["https_proxy"] = (
+            "http://john%40example.com:P%40SSWORD@localhost2:3128/"
+        )
         self.assertEqual(
             get_proxy_info("echo.websocket.events", True),
             ("localhost2", 3128, ("john@example.com", "P@SSWORD")),
