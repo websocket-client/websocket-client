@@ -1,6 +1,11 @@
 ChangeLog
 ============
 
+- 1.8.0
+  - Added `on_reconnect` parameter to WebSocketApp to handle callback ambiguity (#972)
+  - Improve handling of SSLEOFError and use reconnect bool (#961)
+  - Minor linting and docs CI build upgrades (981c00e, 75ba91a, bec2608)
+
 - 1.7.0
   - Renamed `mask` variable in ABNF to prevent name collision with `mask()` function (9b51f73)
   - Fixed old http import of HTTPStatus in _handshake.py (9b51f73)
@@ -205,7 +210,7 @@ ChangeLog
 - 0.53.0
 
   - on_open() missing 1 required positional argument: 'ws' (#471)
-  
+
 - 0.52.0
 
   - fixed callback argument in _app.py (#468)
