@@ -501,7 +501,7 @@ class WebSocketApp:
         custom_dispatcher = bool(dispatcher)
         dispatcher = self.create_dispatcher(
             ping_timeout, dispatcher, parse_url(self.url)[3],
-            lambda : handleDisconnect(WebSocketConnectionClosedException, bool(reconnect))
+            lambda e : handleDisconnect(WebSocketConnectionClosedException(e), bool(reconnect))
         )
 
         try:
