@@ -7,7 +7,7 @@ from ._exceptions import (
     WebSocketConnectionClosedException,
     WebSocketTimeoutException,
 )
-from ._ssl_compat import SSLError, SSLWantReadError, SSLWantWriteError
+from ._ssl_compat import SSLError, SSLEOFError, SSLWantReadError, SSLWantWriteError
 from ._utils import extract_error_code, extract_err_message
 
 """
@@ -154,6 +154,8 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
     def _send():
         try:
             return sock.send(data)
+        except SSLEOFError:
+            raise WebSocketConnectionClosedException("socket is already closed.")
         except SSLWantWriteError:
             pass
         except socket.error as exc:
