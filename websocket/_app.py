@@ -229,6 +229,9 @@ class WebSocketApp:
                 except Exception as e:
                     _logging.debug(f"Failed to send ping: {e}")
 
+    def ready(self):
+        return self.sock and self.sock.connected
+
     def run_forever(
         self,
         sockopt: tuple = None,
