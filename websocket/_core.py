@@ -10,7 +10,7 @@ from ._exceptions import WebSocketProtocolException, WebSocketConnectionClosedEx
 from ._handshake import SUPPORTED_REDIRECT_STATUSES, handshake
 from ._http import connect, proxy_info
 from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
-from ._socket import getdefaulttimeout, recv, sock_opt
+from ._socket import getdefaulttimeout, recv, send, sock_opt
 from ._ssl_compat import ssl
 from ._utils import NoLock
 from ._dispatcher import DispatcherBase, WrappedDispatcher
@@ -559,7 +559,9 @@ class WebSocket:
             self.connected = False
 
     def _send(self, data: Union[str, bytes]):
-        return self.dispatcher.send(self.sock, data)
+        if self.dispatcher:
+            return self.dispatcher.send(self.sock, data)
+        return send(self.sock, data)
 
     def _recv(self, bufsize):
         try:
