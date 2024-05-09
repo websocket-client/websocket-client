@@ -429,7 +429,7 @@ class WebSocketApp:
                     raise e
 
             if op_code == ABNF.OPCODE_CLOSE:
-                return teardown(frame)
+                return closed(frame)
             elif op_code == ABNF.OPCODE_PING:
                 self._callback(self.on_ping, frame.data)
             elif op_code == ABNF.OPCODE_PONG:
