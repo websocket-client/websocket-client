@@ -468,7 +468,7 @@ class WebSocketApp:
                     )
                 ):
                     raise WebSocketTimeoutException("ping/pong timed out")
-            return TruehandleDisco
+            return True
 
         def closed(
             e: Union[
