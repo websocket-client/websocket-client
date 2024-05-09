@@ -468,7 +468,21 @@ class WebSocketApp:
                     )
                 ):
                     raise WebSocketTimeoutException("ping/pong timed out")
-            return True
+            return TruehandleDisco
+
+        def closed(
+            e: Union[
+                WebSocketConnectionClosedException,
+                ConnectionRefusedError,
+                KeyboardInterrupt,
+                SystemExit,
+                Exception,
+                str,
+            ] = "closed unexpectedly"
+        ) -> bool:
+            if type(e) == str:
+                e = WebSocketConnectionClosedException(e)
+            return handleDisconnect(e, bool(reconnect))
 
         def handleDisconnect(
             e: Union[
@@ -502,10 +516,8 @@ class WebSocketApp:
                 teardown()
 
         custom_dispatcher = bool(dispatcher)
-        dispatcher = self.create_dispatcher(
-            ping_timeout, dispatcher, parse_url(self.url)[3],
-            lambda e : handleDisconnect(WebSocketConnectionClosedException(e), bool(reconnect))
-        )
+        dispatcher = self.create_dispatcher(ping_timeout,
+            dispatcher, parse_url(self.url)[3], closed)
 
         try:
             setSock()
