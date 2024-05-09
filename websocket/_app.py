@@ -424,7 +424,7 @@ class WebSocketApp:
                 SSLEOFError,
             ) as e:
                 if custom_dispatcher:
-                    return handleDisconnect(e, bool(reconnect))
+                    return closed(e)
                 else:
                     raise e
 
