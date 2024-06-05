@@ -347,6 +347,25 @@ class WebSocketAppTest(unittest.TestCase):
         self.assertIsInstance(exc, ws.WebSocketTimeoutException)
         self.assertEqual(str(exc), "ping/pong timed out")
 
+    def test_reconnect_backoff(self):
+        app = ws.WebSocketApp("ws://127.0.0.1:5000")
+        self.assertEqual(0, app.get_reconnect_time(0, 0))
+        self.assertEqual(0, app.get_reconnect_time(0, 120))
+
+        self.assertEqual(5, app.get_reconnect_time(5, 120))
+        self.assertEqual(10, app.get_reconnect_time(5, 120))
+        self.assertEqual(20, app.get_reconnect_time(5, 120))
+        self.assertEqual(40, app.get_reconnect_time(5, 120))
+        self.assertEqual(80, app.get_reconnect_time(5, 120))
+        self.assertEqual(120, app.get_reconnect_time(5, 120))
+        self.assertEqual(120, app.get_reconnect_time(5, 120))
+
+        app.reconnect_backoff_counter = 0
+        self.assertEqual(5, app.get_reconnect_time(5, 120))
+
+        app.reconnect_backoff_counter = 0
+        self.assertEqual(20, app.get_reconnect_time(30, 20))
+
 
 if __name__ == "__main__":
     unittest.main()
