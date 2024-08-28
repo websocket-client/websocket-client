@@ -1,7 +1,7 @@
 import errno
 import selectors
 import socket
-from typing import Union
+from typing import Optional, Union
 
 from ._exceptions import (
     WebSocketConnectionClosedException,
@@ -53,14 +53,14 @@ __all__ = [
 
 
 class sock_opt:
-    def __init__(self, sockopt: list, sslopt: dict) -> None:
+    def __init__(self, sockopt: Optional[list], sslopt: Optional[dict]) -> None:
         if sockopt is None:
             sockopt = []
         if sslopt is None:
             sslopt = {}
         self.sockopt = sockopt
         self.sslopt = sslopt
-        self.timeout = None
+        self.timeout: Union[int, float, None] = None
 
 
 def setdefaulttimeout(timeout: Union[int, float, None]) -> None:
