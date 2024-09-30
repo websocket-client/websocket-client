@@ -454,13 +454,19 @@ class WebSocketApp:
 
             self._stop_ping_thread()
             self.keep_running = False
+
             if self.sock:
-                self.sock.close()
+                # in cases like handleDisconnect, the "on_error" callback is called first. If the WebSocketApp
+                # is being used in a multithreded application, we nee to make sure that "self.sock" is cleared
+                # before calling close, otherwise logic built around the sock being set can cause issues -
+                # specifically calling "run_forever" again, since is checks if "self.sock" is set.
+                current_sock = self.sock
+                self.sock = None
+                current_sock.close()
+
             close_status_code, close_reason = self._get_close_args(
                 close_frame if close_frame else None
             )
-            self.sock = None
-
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
