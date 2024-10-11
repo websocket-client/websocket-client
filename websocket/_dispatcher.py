@@ -99,7 +99,9 @@ class WrappedDispatcher:
     WrappedDispatcher
     """
 
-    def __init__(self, app, ping_timeout: Union[float, int, None], dispatcher, handleDisconnect) -> None:
+    def __init__(
+        self, app, ping_timeout: Union[float, int, None], dispatcher, handleDisconnect
+    ) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
