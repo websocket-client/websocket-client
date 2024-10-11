@@ -13,6 +13,7 @@ from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
 from ._socket import getdefaulttimeout, recv, send, sock_opt
 from ._ssl_compat import ssl
 from ._utils import NoLock
+from ._dispatcher import DispatcherBase, WrappedDispatcher
 
 """
 _core.py
@@ -82,6 +83,7 @@ class WebSocket:
         fire_cont_frame: bool = False,
         enable_multithread: bool = True,
         skip_utf8_validation: bool = False,
+        dispatcher: Union[DispatcherBase, WrappedDispatcher] = None,
         **_,
     ):
         """
@@ -101,6 +103,7 @@ class WebSocket:
         # These buffer over the build-up of a single frame.
         self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
         self.cont_frame = continuous_frame(fire_cont_frame, skip_utf8_validation)
+        self.dispatcher = dispatcher
 
         if enable_multithread:
             self.lock = threading.Lock()
@@ -556,6 +559,8 @@ class WebSocket:
             self.connected = False
 
     def _send(self, data: Union[str, bytes]):
+        if self.dispatcher:
+            return self.dispatcher.send(self.sock, data)
         return send(self.sock, data)
 
     def _recv(self, bufsize):
