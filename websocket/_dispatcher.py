@@ -1,7 +1,11 @@
-import time, selectors, socket
+import time
+import socket
+import inspect
+import selectors
 from typing import Any, Callable, Optional, Union
 from . import _logging
 from ._socket import send
+
 
 class DispatcherBase:
     """
@@ -52,6 +56,7 @@ class Dispatcher(DispatcherBase):
                 check_callback()
         finally:
             sel.close()
+
 
 class SSLDispatcher(DispatcherBase):
     """

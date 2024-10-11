@@ -480,7 +480,7 @@ class WebSocketApp:
                 str,
             ] = "closed unexpectedly"
         ) -> bool:
-            if type(e) == str:
+            if type(e) is str:
                 e = WebSocketConnectionClosedException(e)
             return handleDisconnect(e, bool(reconnect))
 
@@ -516,8 +516,9 @@ class WebSocketApp:
                 teardown()
 
         custom_dispatcher = bool(dispatcher)
-        dispatcher = self.create_dispatcher(ping_timeout,
-            dispatcher, parse_url(self.url)[3], closed)
+        dispatcher = self.create_dispatcher(
+            ping_timeout, dispatcher, parse_url(self.url)[3], closed
+        )
 
         try:
             setSock()
