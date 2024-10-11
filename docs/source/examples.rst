@@ -35,7 +35,7 @@ connection.
     >>> import websocket
     >>> def on_message(wsapp, message):
     ...     print(message)
-    >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
+    >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade", on_message=on_message)
     >>> wsapp.run_forever() # doctest: +SKIP
 
 Debug and Logging Options
@@ -103,7 +103,7 @@ Below is one example of this being done with a short-lived connection:
 
   >>> from contextlib import closing
   >>> from websocket import create_connection
-  >>> with closing(create_connection("wss://testnet-explorer.binance.org/ws/block")) as conn:
+  >>> with closing(create_connection("wss://testnet.binance.vision/ws/btcusdt@trade")) as conn:
   ...     print(conn.recv())  # doctest: +SKIP
 
   # Connection is now closed
@@ -160,7 +160,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
 
   >>> def on_message(wsapp, message):
   ...     print(message)
-  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade",
   ... cookie="chocolate", on_message=on_message)
   >>> wsapp.run_forever(origin="testing_websockets.com", host="127.0.0.1")  # doctest: +SKIP
 
@@ -214,7 +214,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
 
   >>> def on_message(wsapp, message):
   ...     print(message)
-  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade",
   ... on_message=on_message)
   >>> wsapp.run_forever(suppress_origin=True)  # doctest: +SKIP
 
@@ -247,7 +247,7 @@ defined in RFC 7692.
 
   >>> def on_message(wsapp, message):
   ...     print(message)
-  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade",
   ... header={"CustomHeader1":"123", "NewHeader2":"Test"}, on_message=on_message)
   >>> wsapp.run_forever()  # doctest: +SKIP
 
@@ -490,7 +490,7 @@ is notified via ``on_pong()``. If no pong is received within 10 seconds, then
   ...     print("Got a ping! A pong reply has already been automatically sent.")
   >>> def on_pong(wsapp, message):
   ...     print("Got a pong! No need to respond")
-  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block",
+  >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade",
   ... on_message=on_message, on_ping=on_ping, on_pong=on_pong)
   >>> wsapp.run_forever(ping_interval=60, ping_timeout=10, ping_payload="This is an optional ping payload")  # doctest: +SKIP
 
@@ -534,7 +534,7 @@ status code values between 3000-4999.
   >>> def on_message(wsapp, message):
   ...     print(message)
   ...     wsapp.close(status=websocket.STATUS_PROTOCOL_ERROR) # Alternatively, use wsapp.close(status=1002)
-  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade", on_message=on_message)
   >>> wsapp.run_forever(skip_utf8_validation=True)  # doctest: +SKIP
 
 Receiving Connection Close Status Codes
@@ -632,7 +632,7 @@ the demasking step in your custom project.
   ...     return "\x00\x00\x00\x00"
   >>> def on_message(wsapp, message):
   ...     print(message)
-  >>> wsapp = websocket.WebSocketApp("wss://testnet-explorer.binance.org/ws/block", on_message=on_message, get_mask_key=zero_mask_key)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade", on_message=on_message, get_mask_key=zero_mask_key)
   >>> wsapp.run_forever()  # doctest: +SKIP
 
 Customizing opcode
