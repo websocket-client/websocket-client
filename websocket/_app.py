@@ -225,7 +225,7 @@ class WebSocketApp:
                 self.last_ping_tm = time.time()
                 try:
                     _logging.debug("Sending ping")
-                    self.sock.ping(self.ping_payload)
+                    self.sock.ping(self.ping_payload() if inspect.isfunction(self.ping_payload) else self.ping_payload)
                 except Exception as e:
                     _logging.debug(f"Failed to send ping: {e}")
 
