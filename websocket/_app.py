@@ -163,6 +163,7 @@ class WebSocketApp:
         self.has_errored = False
         self.has_done_teardown = False
         self.has_done_teardown_lock = threading.Lock()
+        self.reconnect_backoff_counter = 0
 
     def send(self, data: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT) -> None:
         """
@@ -251,6 +252,7 @@ class WebSocketApp:
         suppress_origin: bool = False,
         proxy_type: str = None,
         reconnect: int = None,
+        reconnect_backoff_max: int = None,
     ) -> bool:
         """
         Run event loop for WebSocket framework.
@@ -297,6 +299,8 @@ class WebSocketApp:
             type of proxy from: http, socks4, socks4a, socks5, socks5h
         reconnect: int
             delay interval when reconnecting
+        reconnect_backoff_max: int
+            exponentially increase reconnect time until this value
 
         Returns
         -------
@@ -307,6 +311,13 @@ class WebSocketApp:
 
         if reconnect is None:
             reconnect = RECONNECT
+        if reconnect_backoff_max is None:
+            reconnect_backoff_max = RECONNECT
+        if reconnect_backoff_max and reconnect > reconnect_backoff_max:
+            _logging.warning(
+                "reconnect > reconnect_backoff_max. Use reconnect_backoff_max for reconnect"
+            )
+            reconnect = reconnect_backoff_max
 
         if ping_timeout is not None and ping_timeout <= 0:
             raise WebSocketException("Ensure ping_timeout > 0")
@@ -326,6 +337,7 @@ class WebSocketApp:
         self.ping_payload = ping_payload
         self.has_done_teardown = False
         self.keep_running = True
+        self.reconnect_backoff_counter = 0
 
         def teardown(close_frame: ABNF = None):
             """
@@ -401,6 +413,8 @@ class WebSocketApp:
                     self._callback(self.on_reconnect)
                 else:
                     self._callback(self.on_open)
+
+                self.reconnect_backoff_counter = 0
 
                 dispatcher.read(self.sock.sock, read, check)
             except (
@@ -510,7 +524,10 @@ class WebSocketApp:
                     _logging.debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
-                    dispatcher.reconnect(reconnect, setSock)
+                    dispatcher.reconnect(
+                        self.get_reconnect_time(reconnect, reconnect_backoff_max),
+                        setSock,
+                    )
             else:
                 _logging.error(f"{e} - goodbye")
                 teardown()
@@ -523,11 +540,15 @@ class WebSocketApp:
         try:
             setSock()
             if not custom_dispatcher and reconnect:
+
                 while self.keep_running:
                     _logging.debug(
                         f"Calling dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
-                    dispatcher.reconnect(reconnect, setSock)
+                    dispatcher.reconnect(
+                        self.get_reconnect_time(reconnect, reconnect_backoff_max),
+                        setSock,
+                    )
         except (KeyboardInterrupt, Exception) as e:
             _logging.info(f"tearing down on exception {e}")
             teardown()
@@ -551,6 +572,20 @@ class WebSocketApp:
         if is_ssl:
             return SSLDispatcher(self, timeout)
         return Dispatcher(self, timeout)
+
+    def get_reconnect_time(self, reconnect_base, reconnect_max):
+        """
+        This method calculates a reconnect time based on the number of retries using a binary
+        exponential backoff function. (See also RFC6455 section 7.2.3)
+        """
+        reconnect_time = reconnect_base
+        if reconnect_base and reconnect_max:
+            reconnect_time = min(
+                2**self.reconnect_backoff_counter * reconnect_base, reconnect_max
+            )
+            if reconnect_time < reconnect_max:
+                self.reconnect_backoff_counter += 1
+        return reconnect_time
 
     def _get_close_args(self, close_frame: ABNF) -> list:
         """

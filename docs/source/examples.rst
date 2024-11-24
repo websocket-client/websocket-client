@@ -686,6 +686,22 @@ by `issue #351 <https://github.com/websocket-client/websocket-client/issues/351>
   >>> wsapp = websocket.WebSocketApp("ws://echo.websocket.events", on_open=on_open, on_message=on_message, on_pong=on_pong)
   >>> wsapp.run_forever()  # doctest: +SKIP
 
+WebSocketApp reconnect options
+--------------------------------
+
+When using :code:`run_forever()` the method will terminate on errors or closed connection.
+In some cases it may be beneficial to automatically reconnect to the websocket server.
+
+The `reconnect` option provides a method to automatically reconnect a websocket
+connection. The `RFC6455 section 7.2.3 <https://www.rfc-editor.org/rfc/rfc6455.html#section-7.2.3>`_.
+suggests a random value between 0 and 5 seconds for a reconnect delay. Note that a
+:code:`reconnect=0` is currently not supported and disables the automatical reconnect.
+
+If the additional option :code:`reconnect_backoff_max` is set, the reconnect delay uses an
+exponential backoff which doubles the reconnect time on each retry until
+:code:`reconnect_backoff_max`. This can be used for example to weaken the effect of a
+reconnect storm, like suggested in `RFC6455 section 7.2.3 <https://www.rfc-editor.org/rfc/rfc6455.html#section-7.2.3>`_.
+
 Dispatching Multiple WebSocketApps
 ==================================
 
