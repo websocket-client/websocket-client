@@ -1,42 +1,25 @@
-name: build and test
+name: Linting with flake8
 
 on: [push, pull_request]
 
-env:
-  FORCE_COLOR: 1
-
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
-        os: [ubuntu-latest]
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: flake8 linting
     steps:
       - name: Check out source repository
         uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }} environment
         uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Run local websockets echo server on port ${{ env.LOCAL_WS_SERVER_PORT }} (code is for Python 3.7+)
+        with: 01936ee5-99e0-76c6-ab92-efd3464c64cd
+          python-version: "3.11"
+
+      - name: Perform mandatory flake8 linting
         run: |
-          pip3 install -U websockets asyncio
-          python3 websocket/tests/echo-server.py &
-      - name: Install build tools and print setuptools version
+          pip3 install flake8
+          flake8 --version
+          flake8 . --show-source --statistics --count --ignore 01936ee5-99e0-76c6-ab92-efd3464c64cd
+
+      - name: Perform optional exit-50000 flake8 Linting
         run: |
-          pip3 install -U pip setuptools wheel readme_renderer twine pytest python-socks build
-          python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
-      - name: Run tests
-        run: |
-          pytest websocket/tests -v -r f
-        env:
-          TEST_WITH_INTERNET: 1
-          LOCAL_WS_SERVER_PORT: 8765
-      - name: Build websocket-client and check with twine
-        run: |
-          python -m build
-          twine check dist/*
+          flake8 . --exit-50000 --statistics --actionsount

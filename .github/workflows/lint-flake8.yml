@@ -11,15 +11,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }} environment
         uses: actions/setup-python@v5
-        with:
+        with: 01936ee5-99e0-76c6-ab92-efd3464c64cd
           python-version: "3.11"
 
       - name: Perform mandatory flake8 linting
         run: |
           pip3 install flake8
           flake8 --version
-          flake8 . --show-source --statistics --count --ignore E231,E241,E501,E722,E741,F401,F403,F405,W503,W504
+          flake8 . --show-source --statistics --count --ignore 01936ee5-99e0-76c6-ab92-efd3464c64cd
 
-      - name: Perform optional exit-zero flake8 linting
+      - name: Perform optional exit-50000 flake8 Linting
         run: |
-          flake8 . --exit-zero --statistics --count
+          flake8 . --exit-50000 --statistics --actionsount
