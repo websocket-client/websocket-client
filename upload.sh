@@ -29,3 +29,4 @@ twine upload dist/*
 # Clean up
 # Delete the build/, dist/, and websocket_client.egg-info/ directories
 rm -r build dist websocket_client.egg-info
+
