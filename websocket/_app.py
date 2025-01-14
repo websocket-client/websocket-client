@@ -350,7 +350,7 @@ class WebSocketApp:
 
             if self.sock:
                 # in cases like handleDisconnect, the "on_error" callback is called first. If the WebSocketApp
-                # is being used in a multithreded application, we nee to make sure that "self.sock" is cleared
+                # is being used in a multithreaded application, we nee to make sure that "self.sock" is cleared
                 # before calling close, otherwise logic built around the sock being set can cause issues -
                 # specifically calling "run_forever" again, since is checks if "self.sock" is set.
                 current_sock = self.sock
