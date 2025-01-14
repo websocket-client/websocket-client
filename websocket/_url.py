@@ -73,9 +73,6 @@ def parse_url(url: str) -> tuple:
     return hostname, port, resource, is_secure
 
 
-DEFAULT_NO_PROXY_HOST = ["localhost", "127.0.0.1"]
-
-
 def _is_ip_address(addr: str) -> bool:
     try:
         socket.inet_aton(addr)
@@ -108,8 +105,9 @@ def _is_no_proxy_host(hostname: str, no_proxy: Optional[list]) -> bool:
             " ", ""
         ):
             no_proxy = v.split(",")
+
     if not no_proxy:
-        no_proxy = DEFAULT_NO_PROXY_HOST
+        no_proxy = []
 
     if "*" in no_proxy:
         return True
@@ -124,7 +122,8 @@ def _is_no_proxy_host(hostname: str, no_proxy: Optional[list]) -> bool:
             ]
         )
     for domain in [domain for domain in no_proxy if domain.startswith(".")]:
-        if hostname.endswith(domain):
+        endDomain = domain.lstrip('.')
+        if hostname.endswith(endDomain):
             return True
     return False
 

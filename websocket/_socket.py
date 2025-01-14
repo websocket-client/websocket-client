@@ -1,13 +1,13 @@
 import errno
 import selectors
 import socket
-from typing import Union
+from typing import Optional, Union
 
 from ._exceptions import (
     WebSocketConnectionClosedException,
     WebSocketTimeoutException,
 )
-from ._ssl_compat import SSLError, SSLWantReadError, SSLWantWriteError
+from ._ssl_compat import SSLError, SSLEOFError, SSLWantReadError, SSLWantWriteError
 from ._utils import extract_error_code, extract_err_message
 
 """
@@ -53,14 +53,14 @@ __all__ = [
 
 
 class sock_opt:
-    def __init__(self, sockopt: list, sslopt: dict) -> None:
+    def __init__(self, sockopt: Optional[list], sslopt: Optional[dict]) -> None:
         if sockopt is None:
             sockopt = []
         if sslopt is None:
             sslopt = {}
         self.sockopt = sockopt
         self.sslopt = sslopt
-        self.timeout = None
+        self.timeout: Union[int, float, None] = None
 
 
 def setdefaulttimeout(timeout: Union[int, float, None]) -> None:
@@ -154,6 +154,8 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
     def _send():
         try:
             return sock.send(data)
+        except SSLEOFError:
+            raise WebSocketConnectionClosedException("socket is already closed.")
         except SSLWantWriteError:
             pass
         except socket.error as exc:

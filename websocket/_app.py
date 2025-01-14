@@ -15,6 +15,7 @@ from ._exceptions import (
 )
 from ._ssl_compat import SSLEOFError
 from ._url import parse_url
+from ._dispatcher import *
 
 """
 _app.py
@@ -45,117 +46,6 @@ def setReconnect(reconnectInterval: int) -> None:
     RECONNECT = reconnectInterval
 
 
-class DispatcherBase:
-    """
-    DispatcherBase
-    """
-
-    def __init__(self, app: Any, ping_timeout: Union[float, int, None]) -> None:
-        self.app = app
-        self.ping_timeout = ping_timeout
-
-    def timeout(self, seconds: Union[float, int, None], callback: Callable) -> None:
-        time.sleep(seconds)
-        callback()
-
-    def reconnect(self, seconds: int, reconnector: Callable) -> None:
-        try:
-            _logging.info(
-                f"reconnect() - retrying in {seconds} seconds [{len(inspect.stack())} frames in stack]"
-            )
-            time.sleep(seconds)
-            reconnector(reconnecting=True)
-        except KeyboardInterrupt as e:
-            _logging.info(f"User exited {e}")
-            raise e
-
-
-class Dispatcher(DispatcherBase):
-    """
-    Dispatcher
-    """
-
-    def read(
-        self,
-        sock: socket.socket,
-        read_callback: Callable,
-        check_callback: Callable,
-    ) -> None:
-        sel = selectors.DefaultSelector()
-        sel.register(self.app.sock.sock, selectors.EVENT_READ)
-        try:
-            while self.app.keep_running:
-                if sel.select(self.ping_timeout):
-                    if not read_callback():
-                        break
-                check_callback()
-        finally:
-            sel.close()
-
-
-class SSLDispatcher(DispatcherBase):
-    """
-    SSLDispatcher
-    """
-
-    def read(
-        self,
-        sock: socket.socket,
-        read_callback: Callable,
-        check_callback: Callable,
-    ) -> None:
-        sock = self.app.sock.sock
-        sel = selectors.DefaultSelector()
-        sel.register(sock, selectors.EVENT_READ)
-        try:
-            while self.app.keep_running:
-                if self.select(sock, sel):
-                    if not read_callback():
-                        break
-                check_callback()
-        finally:
-            sel.close()
-
-    def select(self, sock, sel: selectors.DefaultSelector):
-        sock = self.app.sock.sock
-        if sock.pending():
-            return [
-                sock,
-            ]
-
-        r = sel.select(self.ping_timeout)
-
-        if len(r) > 0:
-            return r[0][0]
-
-
-class WrappedDispatcher:
-    """
-    WrappedDispatcher
-    """
-
-    def __init__(self, app, ping_timeout: Union[float, int, None], dispatcher) -> None:
-        self.app = app
-        self.ping_timeout = ping_timeout
-        self.dispatcher = dispatcher
-        dispatcher.signal(2, dispatcher.abort)  # keyboard interrupt
-
-    def read(
-        self,
-        sock: socket.socket,
-        read_callback: Callable,
-        check_callback: Callable,
-    ) -> None:
-        self.dispatcher.read(sock, read_callback)
-        self.ping_timeout and self.timeout(self.ping_timeout, check_callback)
-
-    def timeout(self, seconds: float, callback: Callable) -> None:
-        self.dispatcher.timeout(seconds, callback)
-
-    def reconnect(self, seconds: int, reconnector: Callable) -> None:
-        self.timeout(seconds, reconnector)
-
-
 class WebSocketApp:
     """
     Higher level of APIs are provided. The interface is like JavaScript WebSocket object.
@@ -165,11 +55,11 @@ class WebSocketApp:
         self,
         url: str,
         header: Union[list, dict, Callable, None] = None,
-        on_open: Optional[Callable[[WebSocket], None]] = None,
-        on_reconnect: Optional[Callable[[WebSocket], None]] = None,
-        on_message: Optional[Callable[[WebSocket, Any], None]] = None,
-        on_error: Optional[Callable[[WebSocket, Any], None]] = None,
-        on_close: Optional[Callable[[WebSocket, Any, Any], None]] = None,
+        on_open: Optional[Callable[["WebSocketApp"], None]] = None,
+        on_reconnect: Optional[Callable[["WebSocketApp"], None]] = None,
+        on_message: Optional[Callable[["WebSocketApp", Any], None]] = None,
+        on_error: Optional[Callable[["WebSocketApp", Any], None]] = None,
+        on_close: Optional[Callable[["WebSocketApp", Any, Any], None]] = None,
         on_ping: Optional[Callable] = None,
         on_pong: Optional[Callable] = None,
         on_cont_message: Optional[Callable] = None,
@@ -339,6 +229,9 @@ class WebSocketApp:
                 except Exception as e:
                     _logging.debug(f"Failed to send ping: {e}")
 
+    def ready(self):
+        return self.sock and self.sock.connected
+
     def run_forever(
         self,
         sockopt: tuple = None,
@@ -481,6 +374,7 @@ class WebSocketApp:
                 fire_cont_frame=self.on_cont_message is not None,
                 skip_utf8_validation=skip_utf8_validation,
                 enable_multithread=True,
+                dispatcher=dispatcher,
             )
 
             self.sock.settimeout(getdefaulttimeout())
@@ -536,12 +430,12 @@ class WebSocketApp:
                 SSLEOFError,
             ) as e:
                 if custom_dispatcher:
-                    return handleDisconnect(e, bool(reconnect))
+                    return closed(e)
                 else:
                     raise e
 
             if op_code == ABNF.OPCODE_CLOSE:
-                return teardown(frame)
+                return closed(frame)
             elif op_code == ABNF.OPCODE_PING:
                 self._callback(self.on_ping, frame.data)
             elif op_code == ABNF.OPCODE_PONG:
@@ -582,6 +476,20 @@ class WebSocketApp:
                     raise WebSocketTimeoutException("ping/pong timed out")
             return True
 
+        def closed(
+            e: Union[
+                WebSocketConnectionClosedException,
+                ConnectionRefusedError,
+                KeyboardInterrupt,
+                SystemExit,
+                Exception,
+                str,
+            ] = "closed unexpectedly"
+        ) -> bool:
+            if type(e) is str:
+                e = WebSocketConnectionClosedException(e)
+            return handleDisconnect(e, bool(reconnect))
+
         def handleDisconnect(
             e: Union[
                 WebSocketConnectionClosedException,
@@ -615,7 +523,7 @@ class WebSocketApp:
 
         custom_dispatcher = bool(dispatcher)
         dispatcher = self.create_dispatcher(
-            ping_timeout, dispatcher, parse_url(self.url)[3]
+            ping_timeout, dispatcher, parse_url(self.url)[3], closed
         )
 
         try:
@@ -641,9 +549,10 @@ class WebSocketApp:
         ping_timeout: Union[float, int, None],
         dispatcher: Optional[DispatcherBase] = None,
         is_ssl: bool = False,
+        handleDisconnect: Callable = None,
     ) -> Union[Dispatcher, SSLDispatcher, WrappedDispatcher]:
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
-            return WrappedDispatcher(self, ping_timeout, dispatcher)
+            return WrappedDispatcher(self, ping_timeout, dispatcher, handleDisconnect)
         timeout = ping_timeout or 10
         if is_ssl:
             return SSLDispatcher(self, timeout)
