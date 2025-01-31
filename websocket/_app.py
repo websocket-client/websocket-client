@@ -410,7 +410,7 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
             ) as e:
-                handleDisconnect(e, reconnecting)
+                handleDisconnect( e )
 
         def read() -> bool:
             if not self.keep_running:
@@ -482,7 +482,7 @@ class WebSocketApp:
         ) -> bool:
             if type(e) is str:
                 e = WebSocketConnectionClosedException(e)
-            return handleDisconnect(e, bool(reconnect))
+            return handleDisconnect(e)
 
         def handleDisconnect(
             e: Union[
@@ -492,12 +492,10 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
             ],
-            reconnecting: bool = False,
         ) -> bool:
             self.has_errored = True
             self._stop_ping_thread()
-            if not reconnecting:
-                self._callback(self.on_error, e)
+            self._callback(self.on_error, e)
 
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
                 teardown()
