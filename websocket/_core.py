@@ -10,6 +10,7 @@ from ._exceptions import WebSocketProtocolException, WebSocketConnectionClosedEx
 from ._handshake import SUPPORTED_REDIRECT_STATUSES, handshake
 from ._http import connect, proxy_info
 from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
+from ._permessage_deflate import CompressionOptions, CompressionExtension
 from ._socket import getdefaulttimeout, recv, send, sock_opt
 from ._ssl_compat import ssl
 from ._utils import NoLock
@@ -73,6 +74,9 @@ class WebSocket:
         If set to True, lock send method.
     skip_utf8_validation: bool
         Skip utf8 validation.
+    compression: bool or CompressionOptions
+        Compression options to use. Set to True or CompressionOptions to enable
+        permessage-deflate extension. Defaults to False (no compression).
     """
 
     def __init__(
@@ -84,6 +88,7 @@ class WebSocket:
         enable_multithread: bool = True,
         skip_utf8_validation: bool = False,
         dispatcher: Union[DispatcherBase, WrappedDispatcher] = None,
+        compression: Union[CompressionOptions, bool] = False,
         **_,
     ):
         """
@@ -97,6 +102,7 @@ class WebSocket:
         self.sock_opt = sock_opt(sockopt, sslopt)
         self.handshake_response = None
         self.sock: Optional[socket.socket] = None
+        self._set_compression(compression)
 
         self.connected = False
         self.get_mask_key = get_mask_key
@@ -104,6 +110,7 @@ class WebSocket:
         self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
         self.cont_frame = continuous_frame(fire_cont_frame, skip_utf8_validation)
         self.dispatcher = dispatcher
+        self.compression_extension: Optional[CompressionExtension] = None
 
         if enable_multithread:
             self.lock = threading.Lock()
@@ -255,6 +262,7 @@ class WebSocket:
         socket: socket
             Pre-initialized stream socket.
         """
+        options["compression"] = self._set_compression(options.get("compression", self.compression))
         self.sock_opt.timeout = options.get("timeout", self.sock_opt.timeout)
         self.sock, addrs = connect(
             url, self.sock_opt, proxy_info(**options), options.pop("socket", None)
@@ -275,6 +283,12 @@ class WebSocket:
                     self.handshake_response = handshake(
                         self.sock, url, *addrs, **options
                     )
+
+            if self.compression:
+                agreed_options = CompressionOptions.from_header(
+                    self.handshake_response.headers.get("sec-websocket-extensions", ""))
+                self.compression_extension = CompressionExtension(self.compression.negotiate(agreed_options))
+
             self.connected = True
         except:
             if self.sock:
@@ -330,6 +344,8 @@ class WebSocket:
         """
         if self.get_mask_key:
             frame.get_mask_key = self.get_mask_key
+        if self.compression_extension:
+            frame = self.compression_extension.compress(frame)
         data = frame.format()
         length = len(data)
         if isEnabledForTrace():
@@ -478,7 +494,10 @@ class WebSocket:
         -------
         self.frame_buffer.recv_frame(): ABNF frame object
         """
-        return self.frame_buffer.recv_frame()
+        frame = self.frame_buffer.recv_frame()
+        if self.compression_extension:
+            frame = self.compression_extension.decompress(frame)
+        return frame
 
     def send_close(self, status: int = STATUS_NORMAL, reason: bytes = b""):
         """
@@ -573,6 +592,17 @@ class WebSocket:
             self.connected = False
             raise
 
+    def _set_compression(self, compression: Union[CompressionOptions, bool]) -> CompressionOptions:
+        """
+        sets the compression options, uses the default options if compression is True
+        also returns the current compression options
+        """
+        if compression is True:
+            compression = CompressionOptions()
+
+        self.compression = compression
+        return self.compression
+
 
 def create_connection(url: str, timeout=None, class_=WebSocket, **options):
     """
@@ -633,6 +663,9 @@ def create_connection(url: str, timeout=None, class_=WebSocket, **options):
         Skip utf8 validation.
     socket: socket
         Pre-initialized stream socket.
+    compression: bool or CompressionOptions
+        Compression options to use. Set to True or CompressionOptions to enable
+        permessage-deflate extension. Defaults to False (no compression).
     """
     sockopt = options.pop("sockopt", [])
     sslopt = options.pop("sslopt", {})

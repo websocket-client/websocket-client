@@ -7,6 +7,7 @@ import unittest
 from base64 import decodebytes as base64decode
 
 import websocket as ws
+from websocket import WebSocket
 from websocket._exceptions import WebSocketBadStatusException, WebSocketAddressException
 from websocket._handshake import _create_sec_websocket_key
 from websocket._handshake import _validate as _validate_header
@@ -38,7 +39,6 @@ except ImportError:
     # dummy class of SSLError for ssl none-support environment.
     class SSLError(Exception):
         pass
-
 
 # Skip test to access the internet unless TEST_WITH_INTERNET == 1
 TEST_WITH_INTERNET = os.environ.get("TEST_WITH_INTERNET", "0") == "1"
@@ -491,6 +491,23 @@ class HandshakeTest(unittest.TestCase):
         self.assertRaises(ValueError, websock3.connect, "ws//example.com")
         self.assertRaises(WebSocketAddressException, websock3.connect, "ws://example")
         self.assertRaises(ValueError, websock3.connect, "example.com")
+
+    @unittest.skipUnless(
+        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
+    )
+    def test_websocket_with_compression(self):
+        s: WebSocket = ws.create_connection(
+            f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}",
+            compression=True
+        )
+
+        # Check if compression is enabled in server response
+        self.assertIn("permessage-deflate", s.getheaders()["sec-websocket-extensions"])
+        self.assertIn("server_max_window_bits=", s.getheaders()["sec-websocket-extensions"])
+
+        # check that we have setup our compression extension correctly
+        self.assertIsNotNone(s.compression_extension)
+        self.assertEqual(12, s.compression_extension.options.server_max_window_bits)
 
 
 if __name__ == "__main__":

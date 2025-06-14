@@ -123,6 +123,9 @@ def _get_handshake_headers(
     if subprotocols := options.get("subprotocols"):
         headers.append(f'Sec-WebSocket-Protocol: {",".join(subprotocols)}')
 
+    if compression := options.get("compression"):
+        headers.append(f"Sec-WebSocket-Extensions: {compression.to_header()}")
+
     if header := options.get("header"):
         if isinstance(header, dict):
             header = [": ".join([k, v]) for k, v in header.items() if v is not None]

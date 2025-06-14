@@ -1,21 +1,18 @@
-import inspect
-import selectors
 import socket
 import threading
-import time
-from typing import Any, Callable, Optional, Union
 
 from . import _logging
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
+from ._dispatcher import *
 from ._exceptions import (
     WebSocketConnectionClosedException,
     WebSocketException,
     WebSocketTimeoutException,
 )
+from ._permessage_deflate import CompressionOptions
 from ._ssl_compat import SSLEOFError
 from ._url import parse_url
-from ._dispatcher import *
 
 """
 _app.py
@@ -69,6 +66,7 @@ class WebSocketApp:
         subprotocols: Optional[list] = None,
         on_data: Optional[Callable] = None,
         socket: Optional[socket.socket] = None,
+        compression: Union[bool, CompressionOptions] = False,
     ) -> None:
         """
         WebSocketApp initialization
@@ -134,6 +132,9 @@ class WebSocketApp:
             List of available sub protocols. Default is None.
         socket: socket
             Pre-initialized stream socket.
+        compression: bool or CompressionOptions
+            Compression options to use. Set to True or CompressionOptions to enable
+            permessage-deflate extension. Defaults to False (no compression).
         """
         self.url = url
         self.header = header if header is not None else []
@@ -150,6 +151,7 @@ class WebSocketApp:
         self.on_cont_message = on_cont_message
         self.keep_running = False
         self.get_mask_key = get_mask_key
+        self.compression = compression
         self.sock: Optional[WebSocket] = None
         self.last_ping_tm = float(0)
         self.last_pong_tm = float(0)
@@ -369,6 +371,7 @@ class WebSocketApp:
                 skip_utf8_validation=skip_utf8_validation,
                 enable_multithread=True,
                 dispatcher=dispatcher,
+                compression=self.compression,
             )
 
             self.sock.settimeout(getdefaulttimeout())

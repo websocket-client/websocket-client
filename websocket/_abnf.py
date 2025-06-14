@@ -175,11 +175,14 @@ class ABNF:
         ----------
         skip_utf8_validation: skip utf8 validation.
         """
-        if self.rsv1 or self.rsv2 or self.rsv3:
-            raise WebSocketProtocolException("rsv is not implemented, yet")
+        if self.rsv2 or self.rsv3:
+            raise WebSocketProtocolException("rsv2/3 are not implemented, yet")
 
         if self.opcode not in ABNF.OPCODES:
             raise WebSocketProtocolException("Invalid opcode %r", self.opcode)
+
+        if self.rsv1 and self.opcode in (ABNF.OPCODE_PING, ABNF.OPCODE_PONG, ABNF.OPCODE_CLOSE):
+            raise WebSocketProtocolException("rsv1 is not allowed for control frames.")
 
         if self.opcode == ABNF.OPCODE_PING and not self.fin:
             raise WebSocketProtocolException("Invalid ping frame.")
