@@ -208,7 +208,7 @@ class ABNF:
         return f"fin={self.fin} opcode={self.opcode} data={self.data}"
 
     @staticmethod
-    def create_frame(data: Union[bytes, str], opcode: int, fin: int = 1) -> "ABNF":
+    def create_frame(data: Union[bytes, str], opcode: int, fin: int = 1, use_frame_mask: bool = True) -> "ABNF":
         """
         Create frame to send text, binary and other data.
 
@@ -222,11 +222,16 @@ class ABNF:
             operation code. please see OPCODE_MAP.
         fin: int
             fin flag. if set to 0, create continue fragmentation.
+        use_frame_mask: bool
+            Whether to mask the data in the websocket frame sent. Default is True.
         """
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, str):
             data = data.encode("utf-8")
-        # mask must be set if send data from client
-        return ABNF(fin, 0, 0, 0, opcode, 1, data)
+        # From the websocket rfc, a mask must be set if send data from client.
+        # However, computing the mask adds a measurable amount of overhead and is unnecessary if SSL is being used to secure the connection.
+        # Most modern web servers will accept unmasked data when sent over SSL, thus making this optional can help performance.
+        mask_value = 1 if use_frame_mask else 0
+        return ABNF(fin, 0, 0, 0, opcode, mask_value, data)
 
     def format(self) -> bytes:
         """
