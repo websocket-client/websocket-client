@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import socket
 import struct
@@ -75,8 +76,8 @@ def parse_url(url: str) -> tuple:
 
 def _is_ip_address(addr: str) -> bool:
     try:
-        socket.inet_aton(addr)
-    except socket.error:
+        ipaddress.ip_address(addr)
+    except ValueError:
         return False
     else:
         return True
@@ -84,19 +85,18 @@ def _is_ip_address(addr: str) -> bool:
 
 def _is_subnet_address(hostname: str) -> bool:
     try:
-        addr, netmask = hostname.split("/")
-        return _is_ip_address(addr) and 0 <= int(netmask) < 32
+        ipaddress.ip_network(hostname)
     except ValueError:
         return False
+    else:
+        return True
 
 
 def _is_address_in_network(ip: str, net: str) -> bool:
-    ipaddr: int = struct.unpack("!I", socket.inet_aton(ip))[0]
-    netaddr, netmask = net.split("/")
-    netaddr: int = struct.unpack("!I", socket.inet_aton(netaddr))[0]
-
-    netmask = (0xFFFFFFFF << (32 - int(netmask))) & 0xFFFFFFFF
-    return ipaddr & netmask == netaddr
+    try:
+        return ipaddress.ip_network(ip).subnet_of(ipaddress.ip_network(net))
+    except TypeError:
+        return False
 
 
 def _is_no_proxy_host(hostname: str, no_proxy: Optional[list]) -> bool:
