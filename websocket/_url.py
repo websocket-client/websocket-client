@@ -122,7 +122,7 @@ def _is_no_proxy_host(hostname: str, no_proxy: Optional[list]) -> bool:
             ]
         )
     for domain in [domain for domain in no_proxy if domain.startswith(".")]:
-        endDomain = domain.lstrip('.')
+        endDomain = domain.lstrip(".")
         if hostname.endswith(endDomain):
             return True
     return False

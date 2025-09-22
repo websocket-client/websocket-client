@@ -190,10 +190,14 @@ class ABNF:
                 return
             if data_length == 1 or data_length >= 126:
                 raise WebSocketProtocolException("Invalid close frame.")
-            if data_length > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
+            if (
+                data_length > 2
+                and not skip_utf8_validation
+                and not validate_utf8(self.data[2:])
+            ):
                 raise WebSocketProtocolException("Invalid close frame.")
 
-            code = struct.unpack('!H', self.data[:2])[0]
+            code = struct.unpack("!H", self.data[:2])[0]
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode %r", code)
 
