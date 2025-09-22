@@ -18,7 +18,7 @@ limitations under the License.
 """
 
 from ._abnf import *
-from ._app import WebSocketApp as WebSocketApp, setReconnect as setReconnect
+from ._app import WebSocketApp as WebSocketApp, set_reconnect as set_reconnect
 from ._core import *
 from ._exceptions import *
 from ._logging import *

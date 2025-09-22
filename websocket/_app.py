@@ -41,7 +41,7 @@ __all__ = ["WebSocketApp"]
 RECONNECT = 0
 
 
-def setReconnect(reconnectInterval: int) -> None:
+def set_reconnect(reconnectInterval: int) -> None:
     global RECONNECT
     RECONNECT = reconnectInterval
 
@@ -357,7 +357,7 @@ class WebSocketApp:
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
-        def setSock(reconnecting: bool = False) -> None:
+        def initialize_socket(reconnecting: bool = False) -> None:
             if reconnecting and self.sock:
                 self.sock.shutdown()
 
@@ -510,7 +510,7 @@ class WebSocketApp:
                     _logging.debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
-                    dispatcher.reconnect(reconnect, setSock)
+                    dispatcher.reconnect(reconnect, initialize_socket)
             else:
                 _logging.error(f"{e} - goodbye")
                 teardown()
@@ -521,13 +521,13 @@ class WebSocketApp:
         )
 
         try:
-            setSock()
+            initialize_socket()
             if not custom_dispatcher and reconnect:
                 while self.keep_running:
                     _logging.debug(
                         f"Calling dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
-                    dispatcher.reconnect(reconnect, setSock)
+                    dispatcher.reconnect(reconnect, initialize_socket)
         except (KeyboardInterrupt, Exception) as e:
             _logging.info(f"tearing down on exception {e}")
             teardown()

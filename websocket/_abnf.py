@@ -185,15 +185,15 @@ class ABNF:
             raise WebSocketProtocolException("Invalid ping frame.")
 
         if self.opcode == ABNF.OPCODE_CLOSE:
-            l = len(self.data)
-            if not l:
+            data_length = len(self.data)
+            if not data_length:
                 return
-            if l == 1 or l >= 126:
+            if data_length == 1 or data_length >= 126:
                 raise WebSocketProtocolException("Invalid close frame.")
-            if l > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
+            if data_length > 2 and not skip_utf8_validation and not validate_utf8(self.data[2:]):
                 raise WebSocketProtocolException("Invalid close frame.")
 
-            code = 256 * int(self.data[0]) + int(self.data[1])
+            code = struct.unpack('!H', self.data[:2])[0]
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode %r", code)
 
@@ -312,7 +312,7 @@ class frame_buffer:
         self.length: Optional[int] = None
         self.mask_value: Union[bytes, str, None] = None
 
-    def has_received_header(self) -> bool:
+    def needs_header(self) -> bool:
         return self.header is None
 
     def recv_header(self) -> None:
@@ -335,7 +335,7 @@ class frame_buffer:
         header_val: int = self.header[frame_buffer._HEADER_MASK_INDEX]
         return header_val
 
-    def has_received_length(self) -> bool:
+    def needs_length(self) -> bool:
         return self.length is None
 
     def recv_length(self) -> None:
@@ -350,7 +350,7 @@ class frame_buffer:
         else:
             self.length = length_bits
 
-    def has_received_mask(self) -> bool:
+    def needs_mask(self) -> bool:
         return self.mask_value is None
 
     def recv_mask(self) -> None:
@@ -359,17 +359,17 @@ class frame_buffer:
     def recv_frame(self) -> ABNF:
         with self.lock:
             # Header
-            if self.has_received_header():
+            if self.needs_header():
                 self.recv_header()
             (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = self.header
 
             # Frame length
-            if self.has_received_length():
+            if self.needs_length():
                 self.recv_length()
             length = self.length
 
             # Mask
-            if self.has_received_mask():
+            if self.needs_mask():
                 self.recv_mask()
             mask_value = self.mask_value
 
