@@ -1,7 +1,7 @@
 import errno
 import selectors
 import socket
-from typing import Optional, Union
+from typing import Optional, Union, Any
 
 from ._exceptions import (
     WebSocketConnectionClosedException,
@@ -53,17 +53,17 @@ __all__ = [
 
 
 class sock_opt:
-    def __init__(self, sockopt: Optional[list], sslopt: Optional[dict]) -> None:
+    def __init__(self, sockopt: Optional[list[tuple]], sslopt: Optional[dict[str, Any]]) -> None:
         if sockopt is None:
             sockopt = []
         if sslopt is None:
             sslopt = {}
         self.sockopt = sockopt
         self.sslopt = sslopt
-        self.timeout: Union[int, float, None] = None
+        self.timeout: Optional[Union[int, float]] = None
 
 
-def setdefaulttimeout(timeout: Union[int, float, None]) -> None:
+def setdefaulttimeout(timeout: Optional[Union[int, float]]) -> None:
     """
     Set the global timeout setting to connect.
 
@@ -76,7 +76,7 @@ def setdefaulttimeout(timeout: Union[int, float, None]) -> None:
     _default_timeout = timeout
 
 
-def getdefaulttimeout() -> Union[int, float, None]:
+def getdefaulttimeout() -> Optional[Union[int, float]]:
     """
     Get default timeout
 
@@ -151,7 +151,7 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
     if not sock:
         raise WebSocketConnectionClosedException("socket is already closed.")
 
-    def _send():
+    def _send() -> int:
         try:
             return sock.send(data)
         except SSLEOFError:
@@ -173,6 +173,7 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
 
         if w:
             return sock.send(data)
+        return 0
 
     try:
         if sock.gettimeout() == 0:

@@ -99,7 +99,7 @@ def _is_address_in_network(ip: str, net: str) -> bool:
     return ipaddr & netmask == netaddr
 
 
-def _is_no_proxy_host(hostname: str, no_proxy: Optional[list]) -> bool:
+def _is_no_proxy_host(hostname: str, no_proxy: Optional[list[str]]) -> bool:
     if not no_proxy:
         if v := os.environ.get("no_proxy", os.environ.get("NO_PROXY", "")).replace(
             " ", ""
@@ -134,7 +134,7 @@ def get_proxy_info(
     proxy_host: Optional[str] = None,
     proxy_port: int = 0,
     proxy_auth: Optional[tuple] = None,
-    no_proxy: Optional[list] = None,
+    no_proxy: Optional[list[str]] = None,
     proxy_type: str = "http",
 ) -> tuple:
     """
@@ -180,7 +180,7 @@ def get_proxy_info(
     if value:
         proxy = urlparse(value)
         auth = (
-            (unquote(proxy.username), unquote(proxy.password))
+            (unquote(proxy.username or ""), unquote(proxy.password or ""))
             if proxy.username
             else None
         )
