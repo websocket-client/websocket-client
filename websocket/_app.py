@@ -54,7 +54,13 @@ class WebSocketApp:
     def __init__(
         self,
         url: str,
-        header: Optional[Union[list[str], dict[str, str], Callable[[], Union[list[str], dict[str, str]]]]] = None,
+        header: Optional[
+            Union[
+                list[str],
+                dict[str, str],
+                Callable[[], Union[list[str], dict[str, str]]],
+            ]
+        ] = None,
         on_open: Optional[Callable[["WebSocketApp"], None]] = None,
         on_reconnect: Optional[Callable[["WebSocketApp"], None]] = None,
         on_message: Optional[Callable[["WebSocketApp", Any], None]] = None,
@@ -351,9 +357,9 @@ class WebSocketApp:
             self.keep_running = False
             if self.sock:
                 self.sock.close()
-            close_status_code, close_reason = self._get_close_args(
-                close_frame
-            ) if close_frame else [None, None]
+            close_status_code, close_reason = (
+                self._get_close_args(close_frame) if close_frame else [None, None]
+            )
             self.sock = None
 
             # Finally call the callback AFTER all teardown is complete
@@ -421,7 +427,7 @@ class WebSocketApp:
 
             if self.sock is None:
                 return False
-                
+
             try:
                 op_code, frame = self.sock.recv_data_frame(True)
             except (

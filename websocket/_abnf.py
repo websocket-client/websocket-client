@@ -197,7 +197,11 @@ class ABNF:
             ):
                 raise WebSocketProtocolException("Invalid close frame.")
 
-            data_bytes = self.data[:2] if isinstance(self.data, bytes) else self.data[:2].encode('utf-8')
+            data_bytes = (
+                self.data[:2]
+                if isinstance(self.data, bytes)
+                else self.data[:2].encode("utf-8")
+            )
             code = struct.unpack("!H", data_bytes)[0]
             if not self._is_valid_close_status(code):
                 raise WebSocketProtocolException("Invalid close opcode %r", code)

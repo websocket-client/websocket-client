@@ -15,7 +15,9 @@ class DispatcherBase:
     DispatcherBase
     """
 
-    def __init__(self, app: "WebSocketApp", ping_timeout: Optional[Union[float, int]]) -> None:
+    def __init__(
+        self, app: "WebSocketApp", ping_timeout: Optional[Union[float, int]]
+    ) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
 
@@ -110,7 +112,11 @@ class WrappedDispatcher:
     """
 
     def __init__(
-        self, app: "WebSocketApp", ping_timeout: Optional[Union[float, int]], dispatcher, handleDisconnect
+        self,
+        app: "WebSocketApp",
+        ping_timeout: Optional[Union[float, int]],
+        dispatcher,
+        handleDisconnect,
     ) -> None:
         self.app = app
         self.ping_timeout = ping_timeout

@@ -53,7 +53,9 @@ __all__ = [
 
 
 class sock_opt:
-    def __init__(self, sockopt: Optional[list[tuple]], sslopt: Optional[dict[str, Any]]) -> None:
+    def __init__(
+        self, sockopt: Optional[list[tuple]], sslopt: Optional[dict[str, Any]]
+    ) -> None:
         if sockopt is None:
             sockopt = []
         if sslopt is None:

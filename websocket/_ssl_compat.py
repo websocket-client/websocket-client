@@ -21,7 +21,12 @@ from typing import TYPE_CHECKING, Any, Type
 
 if TYPE_CHECKING:
     import ssl as _ssl_module
-    from ssl import SSLError as _SSLErrorType, SSLEOFError as _SSLEOFErrorType, SSLWantReadError as _SSLWantReadErrorType, SSLWantWriteError as _SSLWantWriteErrorType
+    from ssl import (
+        SSLError as _SSLErrorType,
+        SSLEOFError as _SSLEOFErrorType,
+        SSLWantReadError as _SSLWantReadErrorType,
+        SSLWantWriteError as _SSLWantWriteErrorType,
+    )
 else:
     _ssl_module = None
     _SSLErrorType = None
