@@ -478,7 +478,7 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
                 str,
-            ] = "closed unexpectedly"
+            ] = "closed unexpectedly",
         ) -> bool:
             if type(e) is str:
                 e = WebSocketConnectionClosedException(e)
