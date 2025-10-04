@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = websocket-client
+source = websocket
 omit = websocket/tests/*,websocket/_wsdump.py
 
 [report]
