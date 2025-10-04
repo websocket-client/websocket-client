@@ -32,7 +32,7 @@ from urllib.parse import urlparse
 import websocket
 
 try:
-    import readline
+    import readline  # noqa: F401
 except ImportError:
     pass
 

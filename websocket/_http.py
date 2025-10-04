@@ -35,7 +35,7 @@ from ._url import get_proxy_info, parse_url
 __all__ = ["proxy_info", "connect", "read_headers"]
 
 try:
-    from python_socks._errors import *
+    from python_socks._errors import ProxyConnectionError, ProxyError, ProxyTimeoutError
     from python_socks._types import ProxyType
     from python_socks.sync import Proxy
 

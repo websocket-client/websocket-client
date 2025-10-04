@@ -1,5 +1,4 @@
 import inspect
-import selectors
 import socket
 import threading
 import time
@@ -15,7 +14,7 @@ from ._exceptions import (
 )
 from ._ssl_compat import SSLEOFError
 from ._url import parse_url
-from ._dispatcher import *
+from ._dispatcher import Dispatcher, DispatcherBase, SSLDispatcher, WrappedDispatcher
 
 """
 _app.py
