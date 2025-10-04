@@ -112,6 +112,7 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
 
         if r:
             return sock.recv(bufsize)
+        return None
 
     try:
         if sock.gettimeout() == 0:
@@ -130,6 +131,8 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
         else:
             raise
 
+    if bytes_ is None:
+        raise WebSocketConnectionClosedException("Connection to remote host was lost.")
     if not bytes_:
         raise WebSocketConnectionClosedException("Connection to remote host was lost.")
 
