@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import ssl as _ssl_module
