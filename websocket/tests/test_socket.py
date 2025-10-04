@@ -61,9 +61,15 @@ class SocketTest(unittest.TestCase):
         with self.assertRaises(WebSocketTimeoutException) as cm:
             recv(mock_sock, 9)
 
-        # In modern Python, socket.timeout is a subclass of TimeoutError
+        # In Python 3.10+, socket.timeout is a subclass of TimeoutError
         # so it's caught by the TimeoutError handler with hardcoded message
-        self.assertEqual(str(cm.exception), "Connection timed out")
+        # In Python 3.9, socket.timeout is caught by socket.timeout handler
+        # which preserves the original message
+        import sys
+        if sys.version_info >= (3, 10):
+            self.assertEqual(str(cm.exception), "Connection timed out")
+        else:
+            self.assertEqual(str(cm.exception), "Socket timed out")
 
     def test_recv_ssl_timeout(self):
         """Test recv with SSL timeout error"""
