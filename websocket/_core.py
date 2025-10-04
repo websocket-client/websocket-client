@@ -6,7 +6,7 @@ from typing import Optional, Union
 
 # websocket modules
 from ._abnf import ABNF, STATUS_NORMAL, continuous_frame, frame_buffer
-from ._exceptions import WebSocketProtocolException, WebSocketConnectionClosedException
+from ._exceptions import WebSocketProtocolException, WebSocketConnectionClosedException, WebSocketTimeoutException
 from ._handshake import SUPPORTED_REDIRECT_STATUSES, handshake
 from ._http import connect, proxy_info
 from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
@@ -203,7 +203,7 @@ class WebSocket:
     def is_ssl(self):
         try:
             return isinstance(self.sock, ssl.SSLSocket)
-        except:
+        except (AttributeError, NameError):
             return False
 
     headers = property(getheaders)
@@ -535,7 +535,7 @@ class WebSocket:
                         elif recv_status != STATUS_NORMAL:
                             error(f"close status: {repr(recv_status)}")
                     break
-                except:
+                except (WebSocketConnectionClosedException, WebSocketTimeoutException, struct.error):
                     break
             if self.sock is not None:
                 self.sock.settimeout(sock_timeout)

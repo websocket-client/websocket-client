@@ -335,7 +335,7 @@ def _tunnel(sock: socket.socket, host, port: int, auth) -> socket.socket:
 
     try:
         status, _, _ = read_headers(sock)
-    except Exception as e:
+    except (socket.error, WebSocketException) as e:
         raise WebSocketProxyException(str(e))
 
     if status != 200:

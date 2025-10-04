@@ -188,7 +188,7 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
-    except Exception as e:
+    except (OSError, SSLError) as e:
         message = extract_err_message(e)
         if isinstance(message, str) and "timed out" in message:
             raise WebSocketTimeoutException(message)
