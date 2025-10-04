@@ -7,16 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }} environment
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Run local websockets echo server on port ${{ env.LOCAL_WS_SERVER_PORT }}
         run: |
           pip3 install -U websockets asyncio
           python3 websocket/tests/echo-server.py &
-      - name: Run test cases without internet or option dependencies to verify no offline test failures and verify optional dependencies are optional
+      - name: Run test cases without internet or optional dependencies to verify no offline test failures and verify optional dependencies are optional
         run: |
           pip3 install coverage pytest pytest-cov setuptools
           python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
@@ -31,24 +31,11 @@ jobs:
         env:
           TEST_WITH_INTERNET: 1
           LOCAL_WS_SERVER_PORT: 8765
-      - name: Run SSL test with extra environment variable and create report
+      - name: Run SSL-specific tests with cert path and cert file, then generate final report
         run: |
-          ls $WEBSOCKET_CLIENT_CA_BUNDLE
-          python3 -c "import ssl; print(ssl.get_default_verify_paths().capath)"
-          pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
-          coverage report -m
-        env:
-          TEST_WITH_INTERNET: 1
-          LOCAL_WS_SERVER_PORT: 8765
-          WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs"
-      - name: Run SSL test with extra environment variable and create report
-        run: |
-          python3 -c "import ssl; print(ssl.get_default_verify_paths().capath)"
-          pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "testSSLopt"
+          for ca_bundle in "/usr/lib/ssl/certs" "/etc/ssl/certs/ca-certificates.crt"; do
+            WEBSOCKET_CLIENT_CA_BUNDLE="$ca_bundle" pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "sslopt"
+          done
           coverage xml
-        env:
-          TEST_WITH_INTERNET: 1
-          LOCAL_WS_SERVER_PORT: 8765
-          WEBSOCKET_CLIENT_CA_BUNDLE: "/usr/lib/ssl/certs/Baltimore_CyberTrust_Root.pem"
       - name: Submit code coverage report to Codecov.io
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
