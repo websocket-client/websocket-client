@@ -1,15 +1,21 @@
 [run]
 branch = True
 source = websocket
-omit = websocket/tests/*,websocket/_wsdump.py
+omit = 
+    websocket/tests/*
+    websocket/_wsdump.py
 
 [report]
 exclude_lines =
-    if self.debug:
     pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
     raise NotImplementedError
+    if 0:
     if __name__ == .__main__.:
-ignore_errors = True
-include = websocket/*
-omit =
-  websocket/tests/*
+precision = 2
+
+[xml]
+output = coverage.xml

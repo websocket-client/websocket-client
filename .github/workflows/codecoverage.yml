@@ -44,6 +44,11 @@ jobs:
           for ca_bundle in "/usr/lib/ssl/certs" "/etc/ssl/certs/ca-certificates.crt"; do
             WEBSOCKET_CLIENT_CA_BUNDLE="$ca_bundle" pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append -k "sslopt"
           done
+          # Generate final coverage report and XML for Codecov.io
+          coverage report
           coverage xml
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
