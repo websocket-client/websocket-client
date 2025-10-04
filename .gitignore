@@ -28,3 +28,5 @@ docs/build/
 .coverage
 coverage.xml
 
+# AI tools
+CLAUDE.md

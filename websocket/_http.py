@@ -35,7 +35,7 @@ from ._url import get_proxy_info, parse_url
 __all__ = ["proxy_info", "connect", "read_headers"]
 
 try:
-    from python_socks._errors import *
+    from python_socks._errors import ProxyConnectionError, ProxyError, ProxyTimeoutError
     from python_socks._types import ProxyType
     from python_socks.sync import Proxy
 
@@ -243,7 +243,9 @@ def _wrap_sni_socket(sock: socket.socket, sslopt: dict, hostname, check_hostname
         # For more details see also:
         # * https://docs.python.org/3.8/library/ssl.html?highlight=sslkeylogfile#context-creation
         # * https://docs.python.org/3.8/library/ssl.html?highlight=sslkeylogfile#ssl.SSLContext.keylog_filename
-        context.keylog_filename = os.environ.get("SSLKEYLOGFILE", None)
+        keylog_file = os.environ.get("SSLKEYLOGFILE")
+        if keylog_file is not None:
+            context.keylog_filename = keylog_file
 
         if sslopt.get("cert_reqs", ssl.CERT_NONE) != ssl.CERT_NONE:
             cafile = sslopt.get("ca_certs", None)
@@ -365,7 +367,11 @@ def read_headers(sock: socket.socket) -> tuple:
                 raise WebSocketException("Invalid header")
             key, value = kv
             if key.lower() == "set-cookie" and headers.get("set-cookie"):
-                headers["set-cookie"] = headers.get("set-cookie") + "; " + value.strip()
+                existing_cookie = headers.get("set-cookie")
+                if existing_cookie is not None:
+                    headers["set-cookie"] = existing_cookie + "; " + value.strip()
+                else:
+                    headers["set-cookie"] = value.strip()
             else:
                 headers[key.lower()] = value.strip()
 

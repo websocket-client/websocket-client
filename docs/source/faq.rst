@@ -42,7 +42,7 @@ discussed this topic previously.
   ...     print(message)
   >>> def on_error(wsapp, err):
   ...     print("Got a an error: ", err)
-  >>> wsapp = websocket.WebSocketApp("ws://echo.websocket.events/",
+  >>> wsapp = websocket.WebSocketApp("ws://websockets.chilkat.io/wsChilkatEcho.ashx",
   ... on_message = on_message,
   ... on_error=on_error)
   >>> wsapp.run_forever()  # doctest: +SKIP
@@ -139,7 +139,7 @@ provided for all examples seen below.
 .. doctest:: disable-ssl-verification
 
   >>> import websocket, ssl
-  >>> ws = websocket.WebSocketApp("wss://echo.websocket.events")
+  >>> ws = websocket.WebSocketApp("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   >>> ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})  # doctest: +SKIP
 
 
@@ -148,7 +148,7 @@ provided for all examples seen below.
 .. doctest:: disable-ssl-verification
 
   >>> import websocket, ssl
-  >>> ws = websocket.create_connection("wss://echo.websocket.events",
+  >>> ws = websocket.create_connection("ws://websockets.chilkat.io/wsChilkatEcho.ashx",
   ... sslopt={"cert_reqs": ssl.CERT_NONE})
 
 **WebSocket example**
@@ -157,7 +157,7 @@ provided for all examples seen below.
 
   >>> import websocket, ssl
   >>> ws = websocket.WebSocket(sslopt={"cert_reqs": ssl.CERT_NONE})
-  >>> ws.connect("wss://echo.websocket.events")
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
 
 
 How to disable hostname verification?
@@ -170,7 +170,7 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 .. doctest:: disable-hostname-verification
 
   >>> import websocket
-  >>> ws = websocket.WebSocketApp("wss://echo.websocket.events")
+  >>> ws = websocket.WebSocketApp("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   >>> ws.run_forever(sslopt={"check_hostname": False})  # doctest: +SKIP
 
 **create_connection example**
@@ -178,7 +178,7 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 .. doctest:: disable-hostname-verification
 
   >>> import websocket
-  >>> ws = websocket.create_connection("wss://echo.websocket.events",
+  >>> ws = websocket.create_connection("ws://websockets.chilkat.io/wsChilkatEcho.ashx",
   ... sslopt={"check_hostname": False})
 
 **WebSocket example**
@@ -187,7 +187,7 @@ Please set sslopt to ``{"check_hostname": False}``. (since v0.18.0)
 
   >>> import websocket
   >>> ws = websocket.WebSocket(sslopt={"check_hostname": False})
-  >>> ws.connect("wss://echo.websocket.events")
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
 
 
 What else can I do with sslopts?
@@ -241,4 +241,4 @@ The subprotocol can be specified as in the example below:
 .. doctest:: subprotocols
 
   >>> import websocket
-  >>> ws = websocket.create_connection("ws://echo.websocket.events", subprotocols=["binary", "base64"])  # doctest: +SKIP
+  >>> ws = websocket.create_connection("ws://websockets.chilkat.io/wsChilkatEcho.ashx", subprotocols=["binary", "base64"])  # doctest: +SKIP

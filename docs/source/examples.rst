@@ -21,11 +21,11 @@ connection.
 
     >>> import websocket
     >>> ws = websocket.WebSocket()
-    >>> ws.connect("ws://echo.websocket.events")
+    >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
     >>> ws.send("Hello, Server")
     19
     >>> print(ws.recv())
-    echo.websocket.events sponsored by Lob.com
+    Hello, Server
     >>> ws.close()
 
 **WebSocketApp example**
@@ -53,7 +53,7 @@ following example shows how you can verify that the proper Origin header is set.
 
   websocket.enableTrace(True)
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events/", origin="testing_websockets.com")
+  ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx", origin="testing_websockets.com")
   ws.send("Hello, Server")
   print(ws.recv())
   ws.close()
@@ -63,11 +63,11 @@ The output you will see will look something like this:
 ::
 
   --- request header ---
-  GET / HTTP/1.1
+  GET /wsChilkatEcho.ashx HTTP/1.1
   Upgrade: websocket
-  Host: echo.websocket.events
+  Host: websockets.chilkat.io
   Origin: testing_websockets.com
-  Sec-WebSocket-Key: GnuCGEiF3OuyRESXiVnsAQ==
+  Sec-WebSocket-Key: mdR2+2z1PGzQ187I/5SNsg==
   Sec-WebSocket-Version: 13
   Connection: Upgrade
 
@@ -75,18 +75,23 @@ The output you will see will look something like this:
   -----------------------
   --- response header ---
   HTTP/1.1 101 Switching Protocols
-  Connection: Upgrade
+  Cache-Control: private
   Upgrade: websocket
-  Sec-Websocket-Accept: wvhwrjThsVAyr/V4Hzn5tWMSomI=
-  Via: 1.1 vegur
+  Server: Microsoft-IIS/10.0
+  X-AspNet-Version: 4.0.30319
+  Sec-WebSocket-Accept: BQDv03yZzfCoxrsmMFi2MnH3YCI=
+  Connection: Upgrade
+  X-Powered-By: ASP.NET
+  Date: Tue, 23 Sep 2025 07:09:35 GMT
+
   -----------------------
   ++Sent raw: b'\x81\x8d\xd4\xda9\xee\x9c\xbfU\x82\xbb\xf6\x19\xbd\xb1\xa8O\x8b\xa6'
   ++Sent decoded: fin=1 opcode=1 data=b'Hello, Server'
   19
-  ++Rcv raw: b'\x81*echo.websocket.events sponsored by Lob.com'
-  ++Rcv decoded: fin=1 opcode=1 data=b'echo.websocket.events sponsored by Lob.com'
-  echo.websocket.events sponsored by Lob.com
-  ++Sent raw: b'\x88\x82\xc9\x8c\x14\x99\xcad'
+  ++Rcv raw: b'\x81\rHello, Server'
+  ++Rcv decoded: fin=1 opcode=1 data=b'Hello, Server'
+  Hello, Server
+  ++Sent raw: b'\x88\x82:\x84\x0b\x039l'
   ++Sent decoded: fin=1 opcode=8 data=b'\x03\xe8'
 
 
@@ -149,8 +154,8 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   >>> import websocket
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://echo.websocket.events", cookie="chocolate",
-  ... origin="testing_websockets-client.com", host="echo.websocket.events")
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx", cookie="chocolate",
+  ... origin="websockets.chilkat.io", host="websockets.chilkat.io")
 
 **WebSocketApp common headers example**
 
@@ -204,7 +209,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   >>> import websocket
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://echo.websocket.events", suppress_origin=True)
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx", suppress_origin=True)
 
 **WebSocketApp suppress origin example**
 
@@ -236,7 +241,7 @@ defined in RFC 7692.
   >>> import websocket
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://echo.websocket.events",
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx",
   ... header={"CustomHeader1":"123", "NewHeader2":"Test"})
 
 **WebSocketApp custom headers example**
@@ -272,7 +277,7 @@ the nitty-gritty connection details yourself.
   ...         frame = super().recv_frame()
   ...         print('yay! I got this frame: ', frame)
   ...         return frame
-  >>> ws = create_connection("ws://echo.websocket.events/",
+  >>> ws = create_connection("ws://websockets.chilkat.io/wsChilkatEcho.ashx",
   ... sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), class_=MyWebSocket)
 
 
@@ -302,7 +307,7 @@ no response is received from the server after 5 seconds.
   >>> import websocket
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://echo.websocket.events", timeout=5)
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx", timeout=5)
   >>> # ws.send("Hello, Server") # Commented out to trigger WebSocketTimeoutException
   >>> print(ws.recv())   # doctest: +SKIP
   # Program should end with a WebSocketTimeoutException
@@ -353,7 +358,7 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events",
+  ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx",
     http_proxy_host="127.0.0.1", http_proxy_port="8080",
     proxy_type="http", http_proxy_auth=("username", "password123"))
   ws.send("Hello, Server")
@@ -367,7 +372,7 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
   import websocket
 
   ws = websocket.WebSocket()
-  ws.connect("ws://echo.websocket.events",
+  ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx",
     http_proxy_host="192.168.1.18", http_proxy_port="4444", proxy_type="socks4")
   ws.send("Hello, Server")
   print(ws.recv())
@@ -380,14 +385,14 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
 
   import websocket
 
-  ws = websocket.WebSocketApp("ws://echo.websocket.events")
+  ws = websocket.WebSocketApp("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   wsapp.run_forever(proxy_type="socks5", http_proxy_host=proxy_ip, http_proxy_auth=(proxy_username, proxy_password))
 
 
 Connecting with Custom Sockets
 --------------------------------
 
-You can also connect to a WebSocket server hosted on a 
+You can also connect to a WebSocket server hosted on a
 specific socket using the ``socket`` option when
 creating your connection. Below is an example of using
 a unix domain socket.
@@ -464,7 +469,7 @@ ping, or where situations where you want to customize when the ping is sent.
   >>> websocket.enableTrace(True)
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   >>> ws.ping()
   >>> ws.ping("This is an optional ping payload")
   >>> ws.close()
@@ -515,11 +520,11 @@ status code values between 3000-4999.
   >>> websocket.enableTrace(True)
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   >>> ws.send("Hello, Server")
   19
   >>> print(ws.recv())
-  echo.websocket.events sponsored by Lob.com
+  Hello, Server
   >>> ws.close(websocket.STATUS_PROTOCOL_ERROR)  # doctest: +SKIP
   # Alternatively, use ws.close(status=1002)
 
@@ -615,7 +620,7 @@ the demasking step in your custom project.
   ...     return "\x00\x00\x00\x00"
   >>> ws = websocket.WebSocket()
   >>> ws.set_mask_key(zero_mask_key)
-  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   >>> ws.send("Hello, Server")  # doctest: +SKIP
   >>> print(ws.recv())  # doctest: +SKIP
   >>> ws.close()
@@ -654,7 +659,7 @@ websocket-client library makes it possible to customize which opcode is used.
   >>> websocket.enableTrace(True)
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://echo.websocket.events")
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   >>> ws.send("Hello, Server", websocket.ABNF.OPCODE_TEXT)  # doctest: +SKIP
   >>> print(ws.recv())  # doctest: +SKIP
   >>> ws.send("This is a ping", websocket.ABNF.OPCODE_PING)  # doctest: +SKIP
@@ -683,7 +688,7 @@ by `issue #351 <https://github.com/websocket-client/websocket-client/issues/351>
   >>> def on_pong(wsapp, message):
   ...     print("Got a pong! No need to respond")
 
-  >>> wsapp = websocket.WebSocketApp("ws://echo.websocket.events", on_open=on_open, on_message=on_message, on_pong=on_pong)
+  >>> wsapp = websocket.WebSocketApp("ws://websockets.chilkat.io/wsChilkatEcho.ashx", on_open=on_open, on_message=on_message, on_pong=on_pong)
   >>> wsapp.run_forever()  # doctest: +SKIP
 
 Dispatching Multiple WebSocketApps
@@ -750,9 +755,7 @@ The examples are found in the README and are copied here for sphinx doctests to 
 
   >>> from websocket import create_connection
 
-  >>> ws = create_connection("ws://echo.websocket.events/")
-  >>> print(ws.recv())
-  echo.websocket.events sponsored by Lob.com
+  >>> ws = create_connection("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
   >>> print("Sending 'Hello, World'...")
   Sending 'Hello, World'...
   >>> ws.send("Hello, World")

@@ -21,8 +21,8 @@ limitations under the License.
 
 VERSION = "1.8.0"
 
-install_requires = []
-tests_require = []
+install_requires: list[str] = []
+tests_require: list[str] = []
 
 setup(
     name="websocket-client",

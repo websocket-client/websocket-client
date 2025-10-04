@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 """
 _url.py
@@ -446,7 +446,7 @@ def validate_utf8(utfbytes: Union[str, bytes]) -> bool:
     return _validate_utf8(utfbytes)
 
 
-def extract_err_message(exception: Exception) -> Union[str, None]:
+def extract_err_message(exception: Exception) -> Optional[str]:
     if exception.args:
         exception_message: str = exception.args[0]
         return exception_message
@@ -454,6 +454,7 @@ def extract_err_message(exception: Exception) -> Union[str, None]:
         return None
 
 
-def extract_error_code(exception: Exception) -> Union[int, None]:
+def extract_error_code(exception: Exception) -> Optional[int]:
     if exception.args and len(exception.args) > 1:
         return exception.args[0] if isinstance(exception.args[0], int) else None
+    return None
