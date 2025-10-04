@@ -594,5 +594,7 @@ class WebSocketApp:
 
             except Exception as e:
                 _logging.error(f"error from callback {callback}: {e}")
-                if self.on_error:
+                # Critical fix: Prevent infinite recursion by not calling on_error
+                # when the failing callback IS on_error itself
+                if self.on_error and callback is not self.on_error:
                     self.on_error(self, e)
