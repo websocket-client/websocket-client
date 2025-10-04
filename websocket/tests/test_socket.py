@@ -6,8 +6,16 @@ from unittest.mock import Mock, patch, MagicMock
 import time
 
 from websocket._socket import recv, recv_line, send, DEFAULT_SOCKET_OPTION
-from websocket._ssl_compat import SSLError, SSLEOFError, SSLWantWriteError, SSLWantReadError
-from websocket._exceptions import WebSocketTimeoutException, WebSocketConnectionClosedException
+from websocket._ssl_compat import (
+    SSLError,
+    SSLEOFError,
+    SSLWantWriteError,
+    SSLWantReadError,
+)
+from websocket._exceptions import (
+    WebSocketTimeoutException,
+    WebSocketConnectionClosedException,
+)
 
 
 class SocketTest(unittest.TestCase):
@@ -97,7 +105,7 @@ class SocketTest(unittest.TestCase):
         # First call raises SSLWantReadError, second call succeeds
         mock_sock.recv.side_effect = [SSLWantReadError(), b"data after retry"]
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = [True]  # Ready to read
@@ -114,7 +122,7 @@ class SocketTest(unittest.TestCase):
         mock_sock.recv.side_effect = SSLWantReadError()
         mock_sock.gettimeout.return_value = 1.0
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = []  # Timeout
@@ -130,7 +138,7 @@ class SocketTest(unittest.TestCase):
         # Mock recv to return one character at a time
         recv_calls = [b"H", b"e", b"l", b"l", b"o", b"\n"]
 
-        with patch('websocket._socket.recv', side_effect=recv_calls) as mock_recv:
+        with patch("websocket._socket.recv", side_effect=recv_calls) as mock_recv:
             result = recv_line(mock_sock)
 
             self.assertEqual(result, b"Hello\n")
@@ -177,7 +185,7 @@ class SocketTest(unittest.TestCase):
         # First call raises SSLWantWriteError, second call succeeds
         mock_sock.send.side_effect = [SSLWantWriteError(), 9]
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = [True]  # Ready to write
@@ -201,7 +209,7 @@ class SocketTest(unittest.TestCase):
         # First call raises EAGAIN, second call succeeds
         mock_sock.send.side_effect = [eagain_error, 9]
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = [True]  # Ready to write
@@ -223,7 +231,7 @@ class SocketTest(unittest.TestCase):
         # First call raises EWOULDBLOCK, second call succeeds
         mock_sock.send.side_effect = [ewouldblock_error, 9]
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = [True]  # Ready to write
@@ -273,7 +281,7 @@ class SocketTest(unittest.TestCase):
 
         mock_sock.send.side_effect = eagain_error
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = []  # Timeout - nothing ready
@@ -307,7 +315,7 @@ class SocketTest(unittest.TestCase):
         # Mock the internal _send function behavior
         mock_sock.send.side_effect = [eagain_error, 9]
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = [True]  # Socket ready for writing

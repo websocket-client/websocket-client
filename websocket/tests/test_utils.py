@@ -25,10 +25,10 @@ class UtilsTest(unittest.TestCase):
         from websocket._utils import validate_utf8
 
         # Test valid UTF-8 strings (convert to bytes for wsaccel)
-        self.assertTrue(validate_utf8("Hello, World!".encode('utf-8')))
-        self.assertTrue(validate_utf8("🌟 Unicode test".encode('utf-8')))
+        self.assertTrue(validate_utf8("Hello, World!".encode("utf-8")))
+        self.assertTrue(validate_utf8("🌟 Unicode test".encode("utf-8")))
         self.assertTrue(validate_utf8(b"Hello, bytes"))
-        self.assertTrue(validate_utf8("Héllo with accénts".encode('utf-8')))
+        self.assertTrue(validate_utf8("Héllo with accénts".encode("utf-8")))
 
         # Test invalid UTF-8 sequences
         self.assertFalse(validate_utf8(b"\xff\xfe"))  # Invalid UTF-8
@@ -37,32 +37,33 @@ class UtilsTest(unittest.TestCase):
     def test_utf8_validation_fallback(self):
         """Test UTF-8 validation fallback when wsaccel is not available"""
         # Remove _utils from modules to force reimport
-        if 'websocket._utils' in sys.modules:
-            del sys.modules['websocket._utils']
+        if "websocket._utils" in sys.modules:
+            del sys.modules["websocket._utils"]
 
         # Mock wsaccel import to raise ImportError
         import builtins
+
         original_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
-            if 'wsaccel' in name:
+            if "wsaccel" in name:
                 raise ImportError(f"No module named '{name}'")
             return original_import(name, *args, **kwargs)
 
-        with patch('builtins.__import__', side_effect=mock_import):
+        with patch("builtins.__import__", side_effect=mock_import):
             import websocket._utils as utils
 
             # Test valid UTF-8 strings with fallback implementation (convert strings to bytes)
-            self.assertTrue(utils.validate_utf8("Hello, World!".encode('utf-8')))
+            self.assertTrue(utils.validate_utf8("Hello, World!".encode("utf-8")))
             self.assertTrue(utils.validate_utf8(b"Hello, bytes"))
-            self.assertTrue(utils.validate_utf8("ASCII text".encode('utf-8')))
+            self.assertTrue(utils.validate_utf8("ASCII text".encode("utf-8")))
 
             # Test Unicode strings (convert to bytes)
-            self.assertTrue(utils.validate_utf8("🌟 Unicode test".encode('utf-8')))
-            self.assertTrue(utils.validate_utf8("Héllo with accénts".encode('utf-8')))
+            self.assertTrue(utils.validate_utf8("🌟 Unicode test".encode("utf-8")))
+            self.assertTrue(utils.validate_utf8("Héllo with accénts".encode("utf-8")))
 
             # Test empty string/bytes
-            self.assertTrue(utils.validate_utf8("".encode('utf-8')))
+            self.assertTrue(utils.validate_utf8("".encode("utf-8")))
             self.assertTrue(utils.validate_utf8(b""))
 
             # Test invalid UTF-8 sequences (should return False)
@@ -111,8 +112,8 @@ class UtilsTest(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests"""
         # Ensure _utils is reimported fresh for next test
-        if 'websocket._utils' in sys.modules:
-            del sys.modules['websocket._utils']
+        if "websocket._utils" in sys.modules:
+            del sys.modules["websocket._utils"]
 
 
 if __name__ == "__main__":

@@ -6,11 +6,17 @@ import threading
 import time
 
 import websocket
-from websocket._dispatcher import Dispatcher, DispatcherBase, SSLDispatcher, WrappedDispatcher
+from websocket._dispatcher import (
+    Dispatcher,
+    DispatcherBase,
+    SSLDispatcher,
+    WrappedDispatcher,
+)
 
 
 class MockApp:
     """Mock WebSocketApp for testing"""
+
     def __init__(self):
         self.keep_running = True
         self.sock = Mock()
@@ -19,6 +25,7 @@ class MockApp:
 
 class MockSocket:
     """Mock socket for testing"""
+
     def __init__(self):
         self.pending_return = False
 
@@ -28,6 +35,7 @@ class MockSocket:
 
 class MockDispatcher:
     """Mock external dispatcher for WrappedDispatcher testing"""
+
     def __init__(self):
         self.signal_calls = []
         self.abort_calls = []
@@ -102,7 +110,7 @@ class DispatcherTest(unittest.TestCase):
         mock_sock = Mock()
         test_data = b"test data"
 
-        with patch('websocket._dispatcher.send') as mock_send:
+        with patch("websocket._dispatcher.send") as mock_send:
             mock_send.return_value = len(test_data)
             result = dispatcher.send(mock_sock, test_data)
 
@@ -117,7 +125,7 @@ class DispatcherTest(unittest.TestCase):
         mock_sock = Mock()
 
         # Mock the selector to control the loop
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
 
@@ -128,6 +136,7 @@ class DispatcherTest(unittest.TestCase):
             def side_effect(*args):
                 self.app.keep_running = False
                 return []
+
             mock_selector.select.side_effect = side_effect
 
             dispatcher.read(mock_sock, read_callback, check_callback)
@@ -145,12 +154,13 @@ class DispatcherTest(unittest.TestCase):
         check_callback = Mock()
         mock_sock = Mock()
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
 
             # First call returns data, second call stops the loop
             call_count = 0
+
             def select_side_effect(*args):
                 nonlocal call_count
                 call_count += 1
@@ -177,7 +187,7 @@ class DispatcherTest(unittest.TestCase):
         mock_ssl_sock = MockSocket()
         self.app.sock.sock = mock_ssl_sock
 
-        with patch('selectors.DefaultSelector') as mock_selector_class:
+        with patch("selectors.DefaultSelector") as mock_selector_class:
             mock_selector = Mock()
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = []
@@ -186,6 +196,7 @@ class DispatcherTest(unittest.TestCase):
             def side_effect(*args):
                 self.app.keep_running = False
                 return []
+
             mock_selector.select.side_effect = side_effect
 
             dispatcher.read(None, read_callback, check_callback)
@@ -302,7 +313,7 @@ class DispatcherTest(unittest.TestCase):
         mock_sock = Mock()
         test_data = b"test data"
 
-        with patch('websocket._dispatcher.send') as mock_send:
+        with patch("websocket._dispatcher.send") as mock_send:
             result = wrapped.send(mock_sock, test_data)
 
             # Should delegate to dispatcher.buffwrite

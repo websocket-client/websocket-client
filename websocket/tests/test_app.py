@@ -375,7 +375,7 @@ class WebSocketAppTest(unittest.TestCase):
         dispatcher = app.create_dispatcher(
             ping_timeout=10,
             dispatcher=custom_dispatcher,
-            handleDisconnect=handle_disconnect
+            handleDisconnect=handle_disconnect,
         )
         self.assertIsInstance(dispatcher, ws._dispatcher.WrappedDispatcher)
         self.assertEqual(dispatcher.dispatcher, custom_dispatcher)

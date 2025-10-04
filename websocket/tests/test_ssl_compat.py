@@ -14,27 +14,28 @@ class SSLCompatTest(unittest.TestCase):
         self.assertIsNotNone(ssl_compat.ssl)
 
         # SSL exception classes should be available
-        self.assertTrue(hasattr(ssl_compat, 'SSLError'))
-        self.assertTrue(hasattr(ssl_compat, 'SSLEOFError'))
-        self.assertTrue(hasattr(ssl_compat, 'SSLWantReadError'))
-        self.assertTrue(hasattr(ssl_compat, 'SSLWantWriteError'))
+        self.assertTrue(hasattr(ssl_compat, "SSLError"))
+        self.assertTrue(hasattr(ssl_compat, "SSLEOFError"))
+        self.assertTrue(hasattr(ssl_compat, "SSLWantReadError"))
+        self.assertTrue(hasattr(ssl_compat, "SSLWantWriteError"))
 
     def test_ssl_not_available(self):
         """Test fallback behavior when SSL is not available"""
         # Remove ssl_compat from modules to force reimport
-        if 'websocket._ssl_compat' in sys.modules:
-            del sys.modules['websocket._ssl_compat']
+        if "websocket._ssl_compat" in sys.modules:
+            del sys.modules["websocket._ssl_compat"]
 
         # Mock the ssl module to not be available
         import builtins
+
         original_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
-            if name == 'ssl':
+            if name == "ssl":
                 raise ImportError("No module named 'ssl'")
             return original_import(name, *args, **kwargs)
 
-        with patch('builtins.__import__', side_effect=mock_import):
+        with patch("builtins.__import__", side_effect=mock_import):
             import websocket._ssl_compat as ssl_compat
 
             # SSL should not be available
@@ -64,8 +65,8 @@ class SSLCompatTest(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests"""
         # Ensure ssl_compat is reimported fresh for next test
-        if 'websocket._ssl_compat' in sys.modules:
-            del sys.modules['websocket._ssl_compat']
+        if "websocket._ssl_compat" in sys.modules:
+            del sys.modules["websocket._ssl_compat"]
 
 
 if __name__ == "__main__":
