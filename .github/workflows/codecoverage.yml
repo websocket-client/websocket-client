@@ -50,5 +50,5 @@ jobs:
       - name: Submit code coverage report to Codecov.io
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.xml
+          files: ./coverage.xml
           fail_ci_if_error: true
