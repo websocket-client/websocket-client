@@ -66,6 +66,7 @@ class SocketTest(unittest.TestCase):
         # In Python 3.9, socket.timeout is caught by socket.timeout handler
         # which preserves the original message
         import sys
+
         if sys.version_info >= (3, 10):
             self.assertEqual(str(cm.exception), "Connection timed out")
         else:
