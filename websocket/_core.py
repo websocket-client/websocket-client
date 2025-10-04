@@ -337,8 +337,8 @@ class WebSocket:
             trace(f"++Sent decoded: {frame.__str__()}")
         with self.lock:
             while data:
-                l = self._send(data)
-                data = data[l:]
+                bytes_sent = self._send(data)
+                data = data[bytes_sent:]
 
         return length
 
