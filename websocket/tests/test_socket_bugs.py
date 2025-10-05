@@ -105,8 +105,16 @@ class SocketBugsTest(unittest.TestCase):
         with self.assertRaises(WebSocketTimeoutException) as cm:
             recv(mock_sock, 100)
 
-        # The code wraps socket.timeout with "Connection timed out" message
-        self.assertIn("Connection timed out", str(cm.exception))
+        # In Python 3.10+, socket.timeout is a subclass of TimeoutError
+        # so it's caught by the TimeoutError handler with hardcoded message
+        # In Python 3.9, socket.timeout is caught by socket.timeout handler
+        # which preserves the original message
+        import sys
+
+        if sys.version_info >= (3, 10):
+            self.assertIn("Connection timed out", str(cm.exception))
+        else:
+            self.assertIn("Operation timed out", str(cm.exception))
 
     def test_correct_ssl_want_read_retry_behavior(self):
         """Test the correct behavior when SSLWantReadError is properly handled"""
