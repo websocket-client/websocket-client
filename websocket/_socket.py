@@ -98,12 +98,15 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
         try:
             return sock.recv(bufsize)
         except SSLWantReadError:
+            # Don't return None implicitly - fall through to retry logic
             pass
         except socket.error as exc:
             error_code = extract_error_code(exc)
             if error_code not in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 raise
+            # Don't return None implicitly - fall through to retry logic
 
+        # Retry logic using selector for both SSLWantReadError and EAGAIN/EWOULDBLOCK
         sel = selectors.DefaultSelector()
         sel.register(sock, selectors.EVENT_READ)
 
@@ -112,7 +115,10 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
 
         if r:
             return sock.recv(bufsize)
-        return None
+        else:
+            # Selector timeout should raise WebSocketTimeoutException
+            # not return None which gets misclassified as connection closed
+            raise WebSocketTimeoutException("Connection timed out waiting for data")
 
     try:
         if sock.gettimeout() == 0:
