@@ -259,7 +259,9 @@ def _wrap_sni_socket(sock: socket.socket, sslopt: dict, hostname, check_hostname
                 try:
                     context.load_default_certs(ssl.Purpose.SERVER_AUTH)
                 except ssl.SSLError as e:
-                    raise WebSocketException(f"SSL default certificate loading failed: {e}")
+                    raise WebSocketException(
+                        f"SSL default certificate loading failed: {e}"
+                    )
         if sslopt.get("certfile", None):
             try:
                 context.load_cert_chain(
@@ -293,13 +295,17 @@ def _wrap_sni_socket(sock: socket.socket, sslopt: dict, hostname, check_hostname
             try:
                 cert_chain = sslopt["cert_chain"]
                 if not isinstance(cert_chain, (tuple, list)) or len(cert_chain) != 3:
-                    raise ValueError("cert_chain must be a tuple/list of (certfile, keyfile, password)")
+                    raise ValueError(
+                        "cert_chain must be a tuple/list of (certfile, keyfile, password)"
+                    )
                 certfile, keyfile, password = cert_chain
                 context.load_cert_chain(certfile, keyfile, password)
             except ValueError:
                 raise
             except (FileNotFoundError, ssl.SSLError) as e:
-                raise WebSocketException(f"SSL client certificate configuration failed: {e}")
+                raise WebSocketException(
+                    f"SSL client certificate configuration failed: {e}"
+                )
         if "ecdh_curve" in sslopt:
             try:
                 context.set_ecdh_curve(sslopt["ecdh_curve"])
