@@ -239,7 +239,7 @@ class WebSocketApp:
     def _send_ping(self) -> None:
         if self.stop_ping is None:
             return
-        if self.stop_ping.wait(self.ping_interval) or self.keep_running is False:
+        if self.keep_running is False:
             return
         while not self.stop_ping.wait(self.ping_interval) and self.keep_running is True:
             if self.sock:
