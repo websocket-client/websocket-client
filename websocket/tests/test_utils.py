@@ -22,6 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 class UtilsTest(unittest.TestCase):
     def test_nolock(self):
         """Test NoLock context manager"""

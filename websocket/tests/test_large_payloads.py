@@ -27,6 +27,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 class LargePayloadTest(unittest.TestCase):
     def test_frame_length_encoding_boundaries(self):
         """Test WebSocket frame length encoding at various boundaries"""
