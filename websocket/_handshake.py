@@ -143,9 +143,16 @@ def _get_resp_headers(sock, success_statuses: tuple = SUCCESS_STATUSES) -> tuple
     if status not in success_statuses:
         content_len = resp_headers.get("content-length")
         if content_len:
-            response_body = sock.recv(
-                int(content_len)
-            )  # read the body of the HTTP error message response and include it in the exception
+            # Use chunked reading to avoid SSL BAD_LENGTH error on large responses
+            from ._socket import recv
+
+            response_body = b""
+            remaining = int(content_len)
+            while remaining > 0:
+                chunk_size = min(remaining, 16384)  # Read in 16KB chunks
+                chunk = recv(sock, chunk_size)
+                response_body += chunk
+                remaining -= len(chunk)
         else:
             response_body = None
         raise WebSocketBadStatusException(

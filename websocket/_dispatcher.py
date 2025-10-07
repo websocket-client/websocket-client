@@ -104,6 +104,7 @@ class SSLDispatcher(DispatcherBase):
 
         if len(r) > 0:
             return r[0][0]
+        return None
 
 
 class WrappedDispatcher:

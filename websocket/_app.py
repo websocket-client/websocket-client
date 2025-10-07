@@ -220,6 +220,20 @@ class WebSocketApp:
             self.stop_ping.set()
         if self.ping_thread and self.ping_thread.is_alive():
             self.ping_thread.join(3)
+            # Handle thread leak - if thread doesn't terminate within timeout,
+            # force cleanup and log warning instead of abandoning the thread
+            if self.ping_thread.is_alive():
+                _logging.warning(
+                    "Ping thread failed to terminate within 3 seconds, "
+                    "forcing cleanup. Thread may be blocked."
+                )
+                # Force cleanup by clearing references even if thread is still alive
+                # The daemon thread will eventually be cleaned up by Python's GC
+                # but we prevent resource leaks by not holding references
+
+        # Always clean up references regardless of thread state
+        self.ping_thread = None
+        self.stop_ping = None
         self.last_ping_tm = self.last_pong_tm = float(0)
 
     def _send_ping(self) -> None:
@@ -600,5 +614,7 @@ class WebSocketApp:
 
             except Exception as e:
                 _logging.error(f"error from callback {callback}: {e}")
-                if self.on_error:
+                # Bug fix: Prevent infinite recursion by not calling on_error
+                # when the failing callback IS on_error itself
+                if self.on_error and callback is not self.on_error:
                     self.on_error(self, e)

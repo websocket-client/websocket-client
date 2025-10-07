@@ -98,12 +98,15 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
         try:
             return sock.recv(bufsize)
         except SSLWantReadError:
+            # Don't return None implicitly - fall through to retry logic
             pass
         except socket.error as exc:
             error_code = extract_error_code(exc)
             if error_code not in [errno.EAGAIN, errno.EWOULDBLOCK]:
                 raise
+            # Don't return None implicitly - fall through to retry logic
 
+        # Retry logic using selector for both SSLWantReadError and EAGAIN/EWOULDBLOCK
         sel = selectors.DefaultSelector()
         sel.register(sock, selectors.EVENT_READ)
 
@@ -112,6 +115,10 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
 
         if r:
             return sock.recv(bufsize)
+        else:
+            # Selector timeout should raise WebSocketTimeoutException
+            # not return None which gets misclassified as connection closed
+            raise WebSocketTimeoutException("Connection timed out waiting for data")
 
     try:
         if sock.gettimeout() == 0:
@@ -130,6 +137,8 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
         else:
             raise
 
+    if bytes_ is None:
+        raise WebSocketConnectionClosedException("Connection to remote host was lost.")
     if not bytes_:
         raise WebSocketConnectionClosedException("Connection to remote host was lost.")
 
@@ -185,7 +194,7 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
-    except Exception as e:
+    except (OSError, SSLError) as e:
         message = extract_err_message(e)
         if isinstance(message, str) and "timed out" in message:
             raise WebSocketTimeoutException(message)

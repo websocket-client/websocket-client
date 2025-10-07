@@ -134,8 +134,7 @@ class SocketTest(unittest.TestCase):
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = []  # Timeout
 
-            # When _recv() returns None (timeout), it should raise connection closed exception
-            with self.assertRaises(WebSocketConnectionClosedException):
+            with self.assertRaises(WebSocketTimeoutException):
                 recv(mock_sock, 100)
 
     def test_recv_line(self):

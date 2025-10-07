@@ -251,15 +251,28 @@ def _wrap_sni_socket(sock: socket.socket, sslopt: dict, hostname, check_hostname
             cafile = sslopt.get("ca_certs", None)
             capath = sslopt.get("ca_cert_path", None)
             if cafile or capath:
-                context.load_verify_locations(cafile=cafile, capath=capath)
+                try:
+                    context.load_verify_locations(cafile=cafile, capath=capath)
+                except (FileNotFoundError, ssl.SSLError, ValueError) as e:
+                    raise WebSocketException(f"SSL CA certificate loading failed: {e}")
             elif hasattr(context, "load_default_certs"):
-                context.load_default_certs(ssl.Purpose.SERVER_AUTH)
+                try:
+                    context.load_default_certs(ssl.Purpose.SERVER_AUTH)
+                except ssl.SSLError as e:
+                    raise WebSocketException(
+                        f"SSL default certificate loading failed: {e}"
+                    )
         if sslopt.get("certfile", None):
-            context.load_cert_chain(
-                sslopt["certfile"],
-                sslopt.get("keyfile", None),
-                sslopt.get("password", None),
-            )
+            try:
+                context.load_cert_chain(
+                    sslopt["certfile"],
+                    sslopt.get("keyfile", None),
+                    sslopt.get("password", None),
+                )
+            except (FileNotFoundError, ValueError) as e:
+                raise WebSocketException(f"SSL client certificate loading failed: {e}")
+            except ssl.SSLError as e:
+                raise WebSocketException(f"SSL client certificate loading failed: {e}")
 
         # Python 3.10 switch to PROTOCOL_TLS_CLIENT defaults to "cert_reqs = ssl.CERT_REQUIRED" and "check_hostname = True"
         # If both disabled, set check_hostname before verify_mode
@@ -274,12 +287,30 @@ def _wrap_sni_socket(sock: socket.socket, sslopt: dict, hostname, check_hostname
             context.verify_mode = sslopt.get("cert_reqs", ssl.CERT_REQUIRED)
 
         if "ciphers" in sslopt:
-            context.set_ciphers(sslopt["ciphers"])
+            try:
+                context.set_ciphers(sslopt["ciphers"])
+            except ssl.SSLError as e:
+                raise WebSocketException(f"SSL cipher configuration failed: {e}")
         if "cert_chain" in sslopt:
-            certfile, keyfile, password = sslopt["cert_chain"]
-            context.load_cert_chain(certfile, keyfile, password)
+            try:
+                cert_chain = sslopt["cert_chain"]
+                if not isinstance(cert_chain, (tuple, list)) or len(cert_chain) != 3:
+                    raise ValueError(
+                        "cert_chain must be a tuple/list of (certfile, keyfile, password)"
+                    )
+                certfile, keyfile, password = cert_chain
+                context.load_cert_chain(certfile, keyfile, password)
+            except ValueError:
+                raise
+            except (FileNotFoundError, ssl.SSLError) as e:
+                raise WebSocketException(
+                    f"SSL client certificate configuration failed: {e}"
+                )
         if "ecdh_curve" in sslopt:
-            context.set_ecdh_curve(sslopt["ecdh_curve"])
+            try:
+                context.set_ecdh_curve(sslopt["ecdh_curve"])
+            except ValueError as e:
+                raise WebSocketException(f"SSL ECDH curve configuration failed: {e}")
 
     return context.wrap_socket(
         sock,
@@ -335,7 +366,7 @@ def _tunnel(sock: socket.socket, host, port: int, auth) -> socket.socket:
 
     try:
         status, _, _ = read_headers(sock)
-    except Exception as e:
+    except (socket.error, WebSocketException) as e:
         raise WebSocketProxyException(str(e))
 
     if status != 200:
