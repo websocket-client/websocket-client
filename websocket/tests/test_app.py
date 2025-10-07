@@ -2,6 +2,7 @@
 #
 import os
 import os.path
+import socket
 import ssl
 import threading
 import unittest
@@ -389,6 +390,25 @@ class WebSocketAppTest(unittest.TestCase):
         dispatcher = app.create_dispatcher(ping_timeout=None, is_ssl=False)
         self.assertIsInstance(dispatcher, ws._dispatcher.Dispatcher)
         self.assertEqual(dispatcher.ping_timeout, 10)
+
+    def test_suppress_host_parameter(self):
+        """Test that suppress_host parameter is accepted by WebSocketApp.run_forever()"""
+        app = ws.WebSocketApp("ws://nonexistent.example.com")
+
+        # Test that suppress_host parameter is accepted without error
+        # (Connection will fail but parameter should be accepted)
+        try:
+            app.run_forever(suppress_host=True, sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),))
+        except (ws.WebSocketAddressException, OSError, ConnectionRefusedError):
+            # Expected - connection should fail, but parameter was accepted
+            pass
+
+        # Test that suppress_host=False also works
+        try:
+            app.run_forever(suppress_host=False, sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),))
+        except (ws.WebSocketAddressException, OSError, ConnectionRefusedError):
+            # Expected - connection should fail, but parameter was accepted
+            pass
 
 
 if __name__ == "__main__":

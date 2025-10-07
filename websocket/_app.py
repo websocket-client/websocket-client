@@ -270,6 +270,7 @@ class WebSocketApp:
         origin: str = None,
         dispatcher=None,
         suppress_origin: bool = False,
+        suppress_host: bool = False,
         proxy_type: str = None,
         reconnect: int = None,
     ) -> bool:
@@ -314,6 +315,8 @@ class WebSocketApp:
             customize reading data from socket.
         suppress_origin: bool
             suppress outputting origin header.
+        suppress_host: bool
+            suppress outputting host header.
         proxy_type: str
             type of proxy from: http, socks4, socks4a, socks5, socks5h
         reconnect: int
@@ -415,6 +418,7 @@ class WebSocketApp:
                     host=host,
                     origin=origin,
                     suppress_origin=suppress_origin,
+                    suppress_host=suppress_host,
                     proxy_type=proxy_type,
                     socket=self.prepared_socket,
                 )

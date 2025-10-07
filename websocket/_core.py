@@ -237,6 +237,8 @@ class WebSocket:
             Default value "Upgrade" set in _handshake.py
         suppress_origin: bool
             Suppress outputting origin header.
+        suppress_host: bool
+            Suppress outputting host header.
         host: str
             Custom host header string.
         timeout: int or float

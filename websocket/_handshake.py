@@ -88,10 +88,11 @@ def _get_handshake_headers(
         hostport = _pack_hostname(host)
     else:
         hostport = f"{_pack_hostname(host)}:{port}"
-    if options.get("host"):
-        headers.append(f'Host: {options["host"]}')
-    else:
-        headers.append(f"Host: {hostport}")
+    if not options.get("suppress_host"):
+        if options.get("host"):
+            headers.append(f'Host: {options["host"]}')
+        else:
+            headers.append(f"Host: {hostport}")
 
     # scheme indicates whether http or https is used in Origin
     # The same approach is used in parse_url of _url.py to set default port

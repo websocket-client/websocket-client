@@ -223,6 +223,36 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   ... on_message=on_message)
   >>> wsapp.run_forever(suppress_origin=True)  # doctest: +SKIP
 
+Suppress Host Header
+-------------------------
+
+There is a special ``suppress_host`` option that can be used to remove the
+``Host`` header from connection handshake requests. This can be useful when
+dealing with Web Application Firewalls (WAF) that may intercept connections
+based on the Host header. The below examples illustrate how this can be used.
+For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
+
+**WebSocket suppress host example**
+
+.. doctest:: suppress-host
+
+  >>> import websocket
+
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx", suppress_host=True)
+
+**WebSocketApp suppress host example**
+
+.. doctest:: suppress-host
+
+  >>> import websocket
+
+  >>> def on_message(wsapp, message):
+  ...     print(message)
+  >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade",
+  ... on_message=on_message)
+  >>> wsapp.run_forever(suppress_host=True)  # doctest: +SKIP
+
 Setting Custom Header Values
 --------------------------------
 
