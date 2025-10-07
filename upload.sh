@@ -6,7 +6,7 @@ python3 -m venv /tmp/ws-venv/
 source /tmp/ws-venv/bin/activate
 
 # Install dependencies
-pip3 install -U twine
+pip3 install -U build twine
 
 # build the package
 python -m build

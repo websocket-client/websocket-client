@@ -15,6 +15,24 @@ from websocket._http import _ssl_socket, _wrap_sni_socket
 from websocket._exceptions import WebSocketException
 from websocket._socket import recv, send
 
+"""
+test_ssl_edge_cases.py
+websocket - WebSocket client library for Python
+
+Copyright 2025 engn33r
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 class SSLEdgeCasesTest(unittest.TestCase):
 
