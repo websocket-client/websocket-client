@@ -590,7 +590,9 @@ class WebSocketApp:
             return SSLDispatcher(self, timeout)
         return Dispatcher(self, timeout)
 
-    def _get_close_args(self, close_frame: Optional[ABNF]) -> List[Optional[Union[int, str]]]:
+    def _get_close_args(
+        self, close_frame: Optional[ABNF]
+    ) -> List[Optional[Union[int, str]]]:
         """
         _get_close_args extracts the close code and reason from the close body
         if it exists (RFC6455 says WebSocket Connection Close Code is optional)

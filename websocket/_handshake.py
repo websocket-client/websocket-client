@@ -57,7 +57,12 @@ class handshake_response:
 
 
 def handshake(
-    sock: socket.socket, url: str, hostname: str, port: int, resource: str, **options: Any
+    sock: socket.socket,
+    url: str,
+    hostname: str,
+    port: int,
+    resource: str,
+    **options: Any,
 ) -> handshake_response:
     headers, key = _get_handshake_headers(resource, url, hostname, port, options)
 
@@ -141,7 +146,9 @@ def _get_handshake_headers(
     return headers, key
 
 
-def _get_resp_headers(sock: socket.socket, success_statuses: tuple = SUCCESS_STATUSES) -> tuple:
+def _get_resp_headers(
+    sock: socket.socket, success_statuses: tuple = SUCCESS_STATUSES
+) -> tuple:
     status, resp_headers, status_message = read_headers(sock)
     if status not in success_statuses:
         content_len = resp_headers.get("content-length")

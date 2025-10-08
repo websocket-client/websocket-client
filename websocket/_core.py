@@ -272,7 +272,10 @@ class WebSocket:
         try:
             self.handshake_response = handshake(self.sock, url, *addrs, **options)
             for _ in range(options.pop("redirect_limit", 3)):
-                if self.handshake_response is not None and self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES:
+                if (
+                    self.handshake_response is not None
+                    and self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES
+                ):
                     url = self.handshake_response.headers["location"]
                     self.sock.close()
                     self.sock, addrs = connect(
@@ -505,7 +508,9 @@ class WebSocket:
         self.connected = False
         self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status: int = STATUS_NORMAL, reason: bytes = b"", timeout: int = 3) -> None:
+    def close(
+        self, status: int = STATUS_NORMAL, reason: bytes = b"", timeout: int = 3
+    ) -> None:
         """
         Close Websocket object
 
@@ -598,7 +603,7 @@ def create_connection(
     url: str,
     timeout: Optional[Union[float, int]] = None,
     class_: Type[WebSocket] = WebSocket,
-    **options: Any
+    **options: Any,
 ) -> WebSocket:
     """
     Connect to url and return websocket object.

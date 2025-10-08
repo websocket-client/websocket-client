@@ -509,7 +509,11 @@ class HandshakeTest(unittest.TestCase):
 
         # Test suppress_host=False (explicit, should still include Host header)
         headers, key = _get_handshake_headers(
-            "/path", "ws://example.com:8080", "example.com", 8080, {"suppress_host": False}
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"suppress_host": False},
         )
         host_headers = [h for h in headers if h.startswith("Host:")]
         self.assertEqual(len(host_headers), 1)
@@ -517,15 +521,22 @@ class HandshakeTest(unittest.TestCase):
 
         # Test suppress_host=True (Host header should be suppressed)
         headers, key = _get_handshake_headers(
-            "/path", "ws://example.com:8080", "example.com", 8080, {"suppress_host": True}
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"suppress_host": True},
         )
         host_headers = [h for h in headers if h.startswith("Host:")]
         self.assertEqual(len(host_headers), 0)
 
         # Test with custom host header and suppress_host=False
         headers, key = _get_handshake_headers(
-            "/path", "ws://example.com:8080", "example.com", 8080,
-            {"host": "custom-host.example.com", "suppress_host": False}
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"host": "custom-host.example.com", "suppress_host": False},
         )
         host_headers = [h for h in headers if h.startswith("Host:")]
         self.assertEqual(len(host_headers), 1)
@@ -533,8 +544,11 @@ class HandshakeTest(unittest.TestCase):
 
         # Test with custom host header and suppress_host=True (should suppress even custom host)
         headers, key = _get_handshake_headers(
-            "/path", "ws://example.com:8080", "example.com", 8080,
-            {"host": "custom-host.example.com", "suppress_host": True}
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"host": "custom-host.example.com", "suppress_host": True},
         )
         host_headers = [h for h in headers if h.startswith("Host:")]
         self.assertEqual(len(host_headers), 0)
@@ -561,14 +575,18 @@ class HandshakeTest(unittest.TestCase):
         # Test that suppress_host parameter is accepted without error
         # (Connection will fail but parameter should be accepted)
         try:
-            websock.connect("ws://nonexistent.example.com", suppress_host=True, timeout=0.1)
+            websock.connect(
+                "ws://nonexistent.example.com", suppress_host=True, timeout=0.1
+            )
         except (WebSocketAddressException, OSError, socket.timeout):
             # Expected - connection should fail, but parameter was accepted
             pass
 
         # Test that suppress_host=False also works
         try:
-            websock.connect("ws://nonexistent.example.com", suppress_host=False, timeout=0.1)
+            websock.connect(
+                "ws://nonexistent.example.com", suppress_host=False, timeout=0.1
+            )
         except (WebSocketAddressException, OSError, socket.timeout):
             # Expected - connection should fail, but parameter was accepted
             pass

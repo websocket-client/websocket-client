@@ -40,10 +40,11 @@ try:
     from python_socks._errors import ProxyConnectionError, ProxyError, ProxyTimeoutError
     from python_socks._types import ProxyType
     from python_socks.sync import Proxy
+
     HAVE_PYTHON_SOCKS = True
 except ImportError:
     HAVE_PYTHON_SOCKS = False
-    
+
     class ProxyError(Exception):  # type: ignore[no-redef]
         pass
 
@@ -84,7 +85,9 @@ class proxy_info:
             self.proxy_protocol = "http"
 
 
-def _start_proxied_socket(url: str, options: Any, proxy: Any) -> Tuple[socket.socket, Tuple[str, int, str]]:
+def _start_proxied_socket(
+    url: str, options: Any, proxy: Any
+) -> Tuple[socket.socket, Tuple[str, int, str]]:
     if not HAVE_PYTHON_SOCKS:
         raise WebSocketException(
             "Python Socks is needed for SOCKS proxying but is not available"
@@ -127,7 +130,9 @@ def _start_proxied_socket(url: str, options: Any, proxy: Any) -> Tuple[socket.so
     return sock, (hostname, port, resource)
 
 
-def connect(url: str, options: Any, proxy: Any, socket: Any) -> Tuple[socket.socket, Tuple[str, int, str]]:
+def connect(
+    url: str, options: Any, proxy: Any, socket: Any
+) -> Tuple[socket.socket, Tuple[str, int, str]]:
     # Use _start_proxied_socket() only for socks4 or socks5 proxy
     # Use _tunnel() for http proxy
     # TODO: Use python-socks for http protocol also, to standardize flow
@@ -164,7 +169,9 @@ def connect(url: str, options: Any, proxy: Any, socket: Any) -> Tuple[socket.soc
         raise
 
 
-def _get_addrinfo_list(hostname: str, port: int, is_secure: bool, proxy: Any) -> Tuple[list, bool, Any]:
+def _get_addrinfo_list(
+    hostname: str, port: int, is_secure: bool, proxy: Any
+) -> Tuple[list, bool, Any]:
     phost, pport, pauth = get_proxy_info(
         hostname,
         is_secure,
@@ -217,7 +224,7 @@ def _open_socket(addrinfo_list, sockopt, timeout):
                 error.remote_ip = str(address[0])  # type: ignore[attr-defined]
                 eConnRefused = (
                     errno.ECONNREFUSED,
-                    getattr(errno, 'WSAECONNREFUSED', errno.ECONNREFUSED),
+                    getattr(errno, "WSAECONNREFUSED", errno.ECONNREFUSED),
                     errno.ENETUNREACH,
                 )
                 if error.errno not in eConnRefused:
@@ -236,7 +243,9 @@ def _open_socket(addrinfo_list, sockopt, timeout):
     return sock
 
 
-def _wrap_sni_socket(sock: socket.socket, sslopt: dict, hostname: str, check_hostname: bool) -> Any:
+def _wrap_sni_socket(
+    sock: socket.socket, sslopt: dict, hostname: str, check_hostname: bool
+) -> Any:
     context = sslopt.get("context", None)
     if not context:
         context = ssl.SSLContext(sslopt.get("ssl_version", ssl.PROTOCOL_TLS_CLIENT))

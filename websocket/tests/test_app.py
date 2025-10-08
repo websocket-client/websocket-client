@@ -398,14 +398,20 @@ class WebSocketAppTest(unittest.TestCase):
         # Test that suppress_host parameter is accepted without error
         # (Connection will fail but parameter should be accepted)
         try:
-            app.run_forever(suppress_host=True, sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),))
+            app.run_forever(
+                suppress_host=True,
+                sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),),
+            )
         except (ws.WebSocketAddressException, OSError, ConnectionRefusedError):
             # Expected - connection should fail, but parameter was accepted
             pass
 
         # Test that suppress_host=False also works
         try:
-            app.run_forever(suppress_host=False, sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),))
+            app.run_forever(
+                suppress_host=False,
+                sockopt=((socket.SOL_SOCKET, socket.SO_REUSEADDR, 1),),
+            )
         except (ws.WebSocketAddressException, OSError, ConnectionRefusedError):
             # Expected - connection should fail, but parameter was accepted
             pass
