@@ -2,7 +2,7 @@ import time
 import socket
 import inspect
 import selectors
-from typing import TYPE_CHECKING, Callable, Optional, Union
+from typing import Any, TYPE_CHECKING, Callable, Optional, Union
 
 if TYPE_CHECKING:
     from ._app import WebSocketApp
@@ -110,7 +110,7 @@ class SSLDispatcher(DispatcherBase):
         finally:
             sel.close()
 
-    def select(self, sock, sel: selectors.DefaultSelector):
+    def select(self, sock: Any, sel: selectors.DefaultSelector) -> Any:
         if self.app.sock is None:
             return None
         sock = self.app.sock.sock
@@ -135,8 +135,8 @@ class WrappedDispatcher:
         self,
         app: "WebSocketApp",
         ping_timeout: Optional[Union[float, int]],
-        dispatcher,
-        handleDisconnect,
+        dispatcher: Any,
+        handleDisconnect: Any,
     ) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
@@ -158,7 +158,7 @@ class WrappedDispatcher:
         self.dispatcher.buffwrite(sock, data, send, self.handleDisconnect)
         return len(data)
 
-    def timeout(self, seconds: float, callback: Callable, *args) -> None:
+    def timeout(self, seconds: float, callback: Callable, *args: Any) -> None:
         self.dispatcher.timeout(seconds, callback, *args)
 
     def reconnect(self, seconds: int, reconnector: Callable) -> None:

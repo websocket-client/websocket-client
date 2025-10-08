@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 """
 _logging.py
@@ -25,7 +26,7 @@ try:
 except ImportError:
 
     class NullHandler(logging.Handler):  # type: ignore[no-redef]
-        def emit(self, record) -> None:
+        def emit(self, record: Any) -> None:
             pass
 
 

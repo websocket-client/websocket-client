@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Any, Optional, Union
 
 """
 _utils.py
@@ -25,7 +25,7 @@ class NoLock:
     def __enter__(self) -> None:
         pass
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         pass
 
 

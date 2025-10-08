@@ -1,6 +1,6 @@
 import ipaddress
 import os
-from typing import Optional
+from typing import Optional, Union
 from urllib.parse import unquote, urlparse
 from ._exceptions import WebSocketProxyException
 
@@ -94,8 +94,10 @@ def _is_subnet_address(hostname: str) -> bool:
 
 def _is_address_in_network(ip: str, net: str) -> bool:
     try:
-        return ipaddress.ip_network(ip).subnet_of(ipaddress.ip_network(net))
-    except TypeError:
+        ip_net: Union[ipaddress.IPv4Network, ipaddress.IPv6Network] = ipaddress.ip_network(ip)
+        target_net: Union[ipaddress.IPv4Network, ipaddress.IPv6Network] = ipaddress.ip_network(net)
+        return ip_net.subnet_of(target_net)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
         return False
 
 

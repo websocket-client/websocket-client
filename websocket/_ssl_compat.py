@@ -45,7 +45,7 @@ __all__ = [
 
 try:
     import ssl
-    from ssl import SSLError, SSLEOFError, SSLWantReadError, SSLWantWriteError  # type: ignore[attr-defined]
+    from ssl import SSLError, SSLEOFError, SSLWantReadError, SSLWantWriteError
 
     HAVE_SSL = True
 except ImportError:
@@ -62,5 +62,5 @@ except ImportError:
     class SSLWantWriteError(Exception):  # type: ignore[no-redef]
         pass
 
-    ssl = None  # type: ignore[assignment,no-redef]
+    ssl = None  # type: ignore[assignment]
     HAVE_SSL = False

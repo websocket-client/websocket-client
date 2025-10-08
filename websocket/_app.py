@@ -2,7 +2,7 @@ import inspect
 import socket
 import threading
 import time
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 from . import _logging
 from ._abnf import ABNF
@@ -199,7 +199,7 @@ class WebSocketApp:
         if not self.sock or self.sock.send(data, ABNF.OPCODE_BINARY) == 0:
             raise WebSocketConnectionClosedException("Connection is already closed.")
 
-    def close(self, **kwargs) -> None:
+    def close(self, **kwargs: Any) -> None:
         """
         Close websocket connection.
         """
@@ -255,24 +255,24 @@ class WebSocketApp:
 
     def run_forever(
         self,
-        sockopt: tuple = None,
-        sslopt: dict = None,
+        sockopt: Optional[list] = None,
+        sslopt: Optional[dict] = None,
         ping_interval: Union[float, int] = 0,
         ping_timeout: Optional[Union[float, int]] = None,
         ping_payload: str = "",
-        http_proxy_host: str = None,
-        http_proxy_port: Union[int, str] = None,
-        http_no_proxy: list = None,
-        http_proxy_auth: tuple = None,
+        http_proxy_host: Optional[str] = None,
+        http_proxy_port: Optional[Union[int, str]] = None,
+        http_no_proxy: Optional[list] = None,
+        http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[float] = None,
         skip_utf8_validation: bool = False,
-        host: str = None,
-        origin: str = None,
-        dispatcher=None,
+        host: Optional[str] = None,
+        origin: Optional[str] = None,
+        dispatcher: Any = None,
         suppress_origin: bool = False,
         suppress_host: bool = False,
-        proxy_type: str = None,
-        reconnect: int = None,
+        proxy_type: Optional[str] = None,
+        reconnect: Optional[int] = None,
     ) -> bool:
         """
         Run event loop for WebSocket framework.
@@ -339,7 +339,7 @@ class WebSocketApp:
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
         if not sockopt:
-            sockopt = ()
+            sockopt = []
         if not sslopt:
             sslopt = {}
         if self.sock:
@@ -351,7 +351,7 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.keep_running = True
 
-        def teardown(close_frame: ABNF = None):
+        def teardown(close_frame: Optional[ABNF] = None) -> None:
             """
             Tears down the connection.
 
@@ -433,6 +433,7 @@ class WebSocketApp:
                 else:
                     self._callback(self.on_open)
 
+                assert dispatcher is not None
                 dispatcher.read(self.sock.sock, read, check)
             except (
                 WebSocketConnectionClosedException,
@@ -545,6 +546,7 @@ class WebSocketApp:
                     _logging.debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
+                    assert dispatcher is not None
                     dispatcher.reconnect(reconnect, initialize_socket)
             else:
                 _logging.error(f"{e} - goodbye")
@@ -588,7 +590,7 @@ class WebSocketApp:
             return SSLDispatcher(self, timeout)
         return Dispatcher(self, timeout)
 
-    def _get_close_args(self, close_frame: ABNF) -> list:
+    def _get_close_args(self, close_frame: Optional[ABNF]) -> List[Optional[Union[int, str]]]:
         """
         _get_close_args extracts the close code and reason from the close body
         if it exists (RFC6455 says WebSocket Connection Close Code is optional)
@@ -611,7 +613,7 @@ class WebSocketApp:
             # Most likely reached this because len(close_frame_data.data) < 2
             return [None, None]
 
-    def _callback(self, callback, *args) -> None:
+    def _callback(self, callback: Optional[Callable], *args: Any) -> None:
         if callback:
             try:
                 callback(self, *args)
