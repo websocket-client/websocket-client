@@ -4,7 +4,7 @@ import threading
 import time
 from typing import Any, Callable, List, Optional, Union
 
-from . import _logging
+from ._logging import debug, error, info, warning
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import (
@@ -223,7 +223,7 @@ class WebSocketApp:
             # Handle thread leak - if thread doesn't terminate within timeout,
             # force cleanup and log warning instead of abandoning the thread
             if self.ping_thread.is_alive():
-                _logging.warning(
+                warning(
                     "Ping thread failed to terminate within 3 seconds, "
                     "forcing cleanup. Thread may be blocked."
                 )
@@ -245,10 +245,10 @@ class WebSocketApp:
             if self.sock:
                 self.last_ping_tm = time.time()
                 try:
-                    _logging.debug("Sending ping")
+                    debug("Sending ping")
                     self.sock.ping(self.ping_payload)
                 except Exception as e:
-                    _logging.debug(f"Failed to send ping: {e}")
+                    debug(f"Failed to send ping: {e}")
 
     def ready(self):
         return self.sock and self.sock.connected
@@ -423,7 +423,7 @@ class WebSocketApp:
                     socket=self.prepared_socket,
                 )
 
-                _logging.info("Websocket connected")
+                info("Websocket connected")
 
                 if self.ping_interval:
                     self._start_ping_thread()
@@ -541,15 +541,15 @@ class WebSocketApp:
                 raise
 
             if reconnect:
-                _logging.info(f"{e} - reconnect")
+                info(f"{e} - reconnect")
                 if custom_dispatcher:
-                    _logging.debug(
+                    debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
                     assert dispatcher is not None
                     dispatcher.reconnect(reconnect, initialize_socket)
             else:
-                _logging.error(f"{e} - goodbye")
+                error(f"{e} - goodbye")
                 teardown()
             return self.has_errored
 
@@ -562,12 +562,12 @@ class WebSocketApp:
             initialize_socket()
             if not custom_dispatcher and reconnect:
                 while self.keep_running:
-                    _logging.debug(
+                    debug(
                         f"Calling dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
                     dispatcher.reconnect(reconnect, initialize_socket)
         except (KeyboardInterrupt, Exception) as e:
-            _logging.info(f"tearing down on exception {e}")
+            info(f"tearing down on exception {e}")
             teardown()
         finally:
             if not custom_dispatcher:
@@ -621,7 +621,7 @@ class WebSocketApp:
                 callback(self, *args)
 
             except Exception as e:
-                _logging.error(f"error from callback {callback}: {e}")
+                error(f"error from callback {callback}: {e}")
                 # Bug fix: Prevent infinite recursion by not calling on_error
                 # when the failing callback IS on_error itself
                 if self.on_error and callback is not self.on_error:

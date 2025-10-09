@@ -6,7 +6,7 @@ from typing import Any, TYPE_CHECKING, Callable, Optional, Union
 
 if TYPE_CHECKING:
     from ._app import WebSocketApp
-from . import _logging
+from ._logging import info
 from ._socket import send
 
 """
@@ -47,13 +47,13 @@ class DispatcherBase:
 
     def reconnect(self, seconds: int, reconnector: Callable) -> None:
         try:
-            _logging.info(
+            info(
                 f"reconnect() - retrying in {seconds} seconds [{len(inspect.stack())} frames in stack]"
             )
             time.sleep(seconds)
             reconnector(reconnecting=True)
         except KeyboardInterrupt as e:
-            _logging.info(f"User exited {e}")
+            info(f"User exited {e}")
             raise e
 
     def send(self, sock: socket.socket, data: Union[str, bytes]) -> int:
