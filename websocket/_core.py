@@ -575,9 +575,18 @@ class WebSocket:
         close socket, immediately.
         """
         if self.sock:
-            self.sock.close()
-            self.sock = None
-            self.connected = False
+            try:
+                # Check if socket is still open before closing
+                if not self.sock._closed:
+                    self.sock.close()
+            except (OSError, AttributeError):
+                # Socket already closed or invalid file descriptor - this can happen
+                # during reconnection scenarios when network failures occur
+                debug("Socket already closed during shutdown")
+                pass
+            finally:
+                self.sock = None
+                self.connected = False
 
     def _send(self, data: Union[str, bytes]) -> int:
         if self.sock is None:
