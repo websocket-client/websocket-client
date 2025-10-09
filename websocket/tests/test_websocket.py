@@ -14,6 +14,7 @@ from websocket._exceptions import (
 )
 from websocket._handshake import _create_sec_websocket_key
 from websocket._handshake import _validate as _validate_header
+from websocket._handshake import _get_handshake_headers
 from websocket._http import read_headers
 from websocket._utils import validate_utf8
 
@@ -495,6 +496,100 @@ class HandshakeTest(unittest.TestCase):
         self.assertRaises(ValueError, websock3.connect, "ws//example.com")
         self.assertRaises(WebSocketAddressException, websock3.connect, "ws://example")
         self.assertRaises(ValueError, websock3.connect, "example.com")
+
+    def test_suppress_host_header(self):
+        """Test suppress_host parameter in _get_handshake_headers function"""
+        # Test normal behavior (Host header included)
+        headers, key = _get_handshake_headers(
+            "/path", "ws://example.com:8080", "example.com", 8080, {}
+        )
+        host_headers = [h for h in headers if h.startswith("Host:")]
+        self.assertEqual(len(host_headers), 1)
+        self.assertEqual(host_headers[0], "Host: example.com:8080")
+
+        # Test suppress_host=False (explicit, should still include Host header)
+        headers, key = _get_handshake_headers(
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"suppress_host": False},
+        )
+        host_headers = [h for h in headers if h.startswith("Host:")]
+        self.assertEqual(len(host_headers), 1)
+        self.assertEqual(host_headers[0], "Host: example.com:8080")
+
+        # Test suppress_host=True (Host header should be suppressed)
+        headers, key = _get_handshake_headers(
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"suppress_host": True},
+        )
+        host_headers = [h for h in headers if h.startswith("Host:")]
+        self.assertEqual(len(host_headers), 0)
+
+        # Test with custom host header and suppress_host=False
+        headers, key = _get_handshake_headers(
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"host": "custom-host.example.com", "suppress_host": False},
+        )
+        host_headers = [h for h in headers if h.startswith("Host:")]
+        self.assertEqual(len(host_headers), 1)
+        self.assertEqual(host_headers[0], "Host: custom-host.example.com")
+
+        # Test with custom host header and suppress_host=True (should suppress even custom host)
+        headers, key = _get_handshake_headers(
+            "/path",
+            "ws://example.com:8080",
+            "example.com",
+            8080,
+            {"host": "custom-host.example.com", "suppress_host": True},
+        )
+        host_headers = [h for h in headers if h.startswith("Host:")]
+        self.assertEqual(len(host_headers), 0)
+
+        # Test with standard ports (80, 443) - should not include port in host
+        headers, key = _get_handshake_headers(
+            "/path", "ws://example.com", "example.com", 80, {}
+        )
+        host_headers = [h for h in headers if h.startswith("Host:")]
+        self.assertEqual(len(host_headers), 1)
+        self.assertEqual(host_headers[0], "Host: example.com")
+
+        # Test suppress_host=True with standard port
+        headers, key = _get_handshake_headers(
+            "/path", "ws://example.com", "example.com", 80, {"suppress_host": True}
+        )
+        host_headers = [h for h in headers if h.startswith("Host:")]
+        self.assertEqual(len(host_headers), 0)
+
+    def test_suppress_host_websocket_connect(self):
+        """Test suppress_host parameter with WebSocket.connect()"""
+        websock = ws.WebSocket()
+
+        # Test that suppress_host parameter is accepted without error
+        # (Connection will fail but parameter should be accepted)
+        try:
+            websock.connect(
+                "ws://nonexistent.example.com", suppress_host=True, timeout=0.1
+            )
+        except (WebSocketAddressException, OSError, socket.timeout):
+            # Expected - connection should fail, but parameter was accepted
+            pass
+
+        # Test that suppress_host=False also works
+        try:
+            websock.connect(
+                "ws://nonexistent.example.com", suppress_host=False, timeout=0.1
+            )
+        except (WebSocketAddressException, OSError, socket.timeout):
+            # Expected - connection should fail, but parameter was accepted
+            pass
 
 
 if __name__ == "__main__":

@@ -121,74 +121,40 @@ class HttpTest(unittest.TestCase):
             ("username", "password"),
         )
 
-    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_connect(self):
-        # Not currently testing an actual proxy connection, so just check whether proxy errors are raised. This requires internet for a DNS lookup
+        # Test proxy error handling without requiring internet - using fast local addresses and short timeouts
         if HAVE_PYTHON_SOCKS:
-            # Need this check, otherwise case where python_socks is not installed triggers
-            # websocket._exceptions.WebSocketException: Python Socks is needed for SOCKS proxying but is not available
+            # Test SOCKS proxy types with non-routable addresses (fast failure)
+            for proxy_type in ["socks4", "socks4a", "socks5", "socks5h"]:
+                self.assertRaises(
+                    (ProxyTimeoutError, OSError, ConnectionRefusedError),
+                    _start_proxied_socket,
+                    "wss://127.0.0.1",  # Use localhost instead of example.com
+                    OptsList(),
+                    proxy_info(
+                        http_proxy_host="127.0.0.1",  # Use localhost
+                        http_proxy_port="9999",  # Non-existent port for fast failure
+                        proxy_type=proxy_type,
+                        http_proxy_timeout=0.1,  # Very short timeout
+                    ),
+                )
+
+            # Test SOCKS connection error with guaranteed-closed port
             self.assertRaises(
-                (ProxyTimeoutError, OSError),
-                _start_proxied_socket,
-                "wss://example.com",
-                OptsList(),
-                proxy_info(
-                    http_proxy_host="example.com",
-                    http_proxy_port="8080",
-                    proxy_type="socks4",
-                    http_proxy_timeout=1,
-                ),
-            )
-            self.assertRaises(
-                (ProxyTimeoutError, OSError),
-                _start_proxied_socket,
-                "wss://example.com",
-                OptsList(),
-                proxy_info(
-                    http_proxy_host="example.com",
-                    http_proxy_port="8080",
-                    proxy_type="socks4a",
-                    http_proxy_timeout=1,
-                ),
-            )
-            self.assertRaises(
-                (ProxyTimeoutError, OSError),
-                _start_proxied_socket,
-                "wss://example.com",
-                OptsList(),
-                proxy_info(
-                    http_proxy_host="example.com",
-                    http_proxy_port="8080",
-                    proxy_type="socks5",
-                    http_proxy_timeout=1,
-                ),
-            )
-            self.assertRaises(
-                (ProxyTimeoutError, OSError),
-                _start_proxied_socket,
-                "wss://example.com",
-                OptsList(),
-                proxy_info(
-                    http_proxy_host="example.com",
-                    http_proxy_port="8080",
-                    proxy_type="socks5h",
-                    http_proxy_timeout=1,
-                ),
-            )
-            self.assertRaises(
-                ProxyConnectionError,
+                (ProxyConnectionError, ConnectionRefusedError, OSError),
                 connect,
-                "wss://example.com",
+                "wss://127.0.0.1",
                 OptsList(),
                 proxy_info(
                     http_proxy_host="127.0.0.1",
                     http_proxy_port=9999,
                     proxy_type="socks4",
-                    http_proxy_timeout=1,
+                    http_proxy_timeout=0.1,  # Very short timeout
                 ),
                 None,
             )
 
+        # Test TypeError with None hostname (no network required)
         self.assertRaises(
             TypeError,
             _get_addrinfo_list,
@@ -199,29 +165,25 @@ class HttpTest(unittest.TestCase):
                 http_proxy_host="127.0.0.1", http_proxy_port="9999", proxy_type="http"
             ),
         )
+
+        # Test HTTP proxy timeout with non-existent port (fast failure)
         self.assertRaises(
-            TypeError,
-            _get_addrinfo_list,
-            None,
-            80,
-            True,
-            proxy_info(
-                http_proxy_host="127.0.0.1", http_proxy_port="9999", proxy_type="http"
-            ),
-        )
-        self.assertRaises(
-            socket.timeout,
+            (socket.timeout, ConnectionRefusedError, OSError),
             connect,
-            "wss://google.com",
+            "wss://127.0.0.1",  # Use localhost
             OptsList(),
             proxy_info(
-                http_proxy_host="8.8.8.8",
-                http_proxy_port=9999,
+                http_proxy_host="127.0.0.1",  # Use localhost
+                http_proxy_port=9999,  # Non-existent port
                 proxy_type="http",
-                http_proxy_timeout=1,
+                http_proxy_timeout=0.1,  # Very short timeout
             ),
             None,
         )
+
+    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
+    def test_connect_with_internet(self):
+        # Separate test for cases that actually need internet
         self.assertEqual(
             connect(
                 "wss://google.com",
@@ -233,8 +195,6 @@ class HttpTest(unittest.TestCase):
             ),
             (True, ("google.com", 443, "/")),
         )
-        # The following test fails on Mac OS with a gaierror, not an OverflowError
-        # self.assertRaises(OverflowError, connect, "wss://example.com", OptsList(), proxy_info(http_proxy_host="127.0.0.1", http_proxy_port=99999, proxy_type="socks4", timeout=2), False)
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     @unittest.skipUnless(

@@ -22,6 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 class SSLCompatTest(unittest.TestCase):
     def test_ssl_available(self):
         """Test that SSL is available in normal conditions"""

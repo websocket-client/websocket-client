@@ -17,6 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from typing import Any, Optional
+
 
 class WebSocketException(Exception):
     """
@@ -76,10 +78,10 @@ class WebSocketBadStatusException(WebSocketException):
         self,
         message: str,
         status_code: int,
-        status_message=None,
-        resp_headers=None,
-        resp_body=None,
-    ):
+        status_message: Optional[str] = None,
+        resp_headers: Optional[dict] = None,
+        resp_body: Optional[bytes] = None,
+    ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.resp_headers = resp_headers

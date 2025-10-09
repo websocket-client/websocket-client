@@ -307,7 +307,7 @@ class frame_buffer:
     _HEADER_LENGTH_INDEX = 6
 
     def __init__(
-        self, recv_fn: Callable[[int], int], skip_utf8_validation: bool
+        self, recv_fn: Callable[[int], bytes], skip_utf8_validation: bool
     ) -> None:
         self.recv = recv_fn
         self.skip_utf8_validation = skip_utf8_validation

@@ -36,6 +36,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 class SocketTest(unittest.TestCase):
     def test_default_socket_option(self):
         """Test DEFAULT_SOCKET_OPTION contains expected options"""

@@ -20,8 +20,10 @@ limitations under the License.
 import hashlib
 import hmac
 import os
+import socket
 from base64 import encodebytes as base64encode
 from http import HTTPStatus
+from typing import Any, List, Optional
 
 from ._cookiejar import SimpleCookieJar
 from ._exceptions import WebSocketException, WebSocketBadStatusException
@@ -47,7 +49,7 @@ CookieJar = SimpleCookieJar()
 
 
 class handshake_response:
-    def __init__(self, status: int, headers: dict, subprotocol):
+    def __init__(self, status: int, headers: dict, subprotocol: Optional[str]) -> None:
         self.status = status
         self.headers = headers
         self.subprotocol = subprotocol
@@ -55,7 +57,12 @@ class handshake_response:
 
 
 def handshake(
-    sock, url: str, hostname: str, port: int, resource: str, **options
+    sock: socket.socket,
+    url: str,
+    hostname: str,
+    port: int,
+    resource: str,
+    **options: Any,
 ) -> handshake_response:
     headers, key = _get_handshake_headers(resource, url, hostname, port, options)
 
@@ -88,10 +95,11 @@ def _get_handshake_headers(
         hostport = _pack_hostname(host)
     else:
         hostport = f"{_pack_hostname(host)}:{port}"
-    if options.get("host"):
-        headers.append(f'Host: {options["host"]}')
-    else:
-        headers.append(f"Host: {hostport}")
+    if not options.get("suppress_host"):
+        if options.get("host"):
+            headers.append(f'Host: {options["host"]}')
+        else:
+            headers.append(f"Host: {hostport}")
 
     # scheme indicates whether http or https is used in Origin
     # The same approach is used in parse_url of _url.py to set default port
@@ -138,7 +146,9 @@ def _get_handshake_headers(
     return headers, key
 
 
-def _get_resp_headers(sock, success_statuses: tuple = SUCCESS_STATUSES) -> tuple:
+def _get_resp_headers(
+    sock: socket.socket, success_statuses: tuple = SUCCESS_STATUSES
+) -> tuple:
     status, resp_headers, status_message = read_headers(sock)
     if status not in success_statuses:
         content_len = resp_headers.get("content-length")
@@ -156,7 +166,7 @@ def _get_resp_headers(sock, success_statuses: tuple = SUCCESS_STATUSES) -> tuple
         else:
             response_body = None
         raise WebSocketBadStatusException(
-            f"Handshake status {status} {status_message} -+-+- {resp_headers} -+-+- {response_body}",
+            f"Handshake status {status} {status_message} -+-+- {resp_headers} -+-+- {response_body.decode('utf-8', errors='replace') if response_body else None}",
             status,
             status_message,
             resp_headers,
@@ -171,7 +181,7 @@ _HEADERS_TO_CHECK = {
 }
 
 
-def _validate(headers, key: str, subprotocols) -> tuple:
+def _validate(headers: dict, key: str, subprotocols: Optional[List[str]]) -> tuple:
     subproto = None
     for k, v in _HEADERS_TO_CHECK.items():
         r = headers.get(k, None)

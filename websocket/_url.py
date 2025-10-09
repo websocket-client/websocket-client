@@ -1,6 +1,6 @@
 import ipaddress
 import os
-from typing import Optional
+from typing import Optional, Union
 from urllib.parse import unquote, urlparse
 from ._exceptions import WebSocketProxyException
 
@@ -94,8 +94,14 @@ def _is_subnet_address(hostname: str) -> bool:
 
 def _is_address_in_network(ip: str, net: str) -> bool:
     try:
-        return ipaddress.ip_network(ip).subnet_of(ipaddress.ip_network(net))
-    except TypeError:
+        ip_net: Union[ipaddress.IPv4Network, ipaddress.IPv6Network] = (
+            ipaddress.ip_network(ip)
+        )
+        target_net: Union[ipaddress.IPv4Network, ipaddress.IPv6Network] = (
+            ipaddress.ip_network(net)
+        )
+        return ip_net.subnet_of(target_net)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
         return False
 
 
@@ -121,10 +127,19 @@ def _is_no_proxy_host(hostname: str, no_proxy: Optional[list[str]]) -> bool:
                 if _is_subnet_address(subnet)
             ]
         )
-    for domain in [domain for domain in no_proxy if domain.startswith(".")]:
-        endDomain = domain.lstrip(".")
-        if hostname.endswith(endDomain):
-            return True
+    # Check domain suffix matching - handle both .domain.com and domain.com formats
+    # This makes behavior consistent with urllib and other Python libraries
+    for domain in no_proxy:
+        if domain.startswith("."):
+            # Handle .domain.com format
+            stripped_domain = domain.lstrip(".")
+            if hostname.endswith(stripped_domain):
+                return True
+        else:
+            # Handle domain.com format (should match subdomains too)
+            # E.g., "example.com" should match "sub.example.com"
+            if hostname == domain or hostname.endswith("." + domain):
+                return True
     return False
 
 

@@ -2,9 +2,9 @@ import inspect
 import socket
 import threading
 import time
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
-from . import _logging
+from ._logging import debug, error, info, warning
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import (
@@ -199,7 +199,7 @@ class WebSocketApp:
         if not self.sock or self.sock.send(data, ABNF.OPCODE_BINARY) == 0:
             raise WebSocketConnectionClosedException("Connection is already closed.")
 
-    def close(self, **kwargs) -> None:
+    def close(self, **kwargs: Any) -> None:
         """
         Close websocket connection.
         """
@@ -223,7 +223,7 @@ class WebSocketApp:
             # Handle thread leak - if thread doesn't terminate within timeout,
             # force cleanup and log warning instead of abandoning the thread
             if self.ping_thread.is_alive():
-                _logging.warning(
+                warning(
                     "Ping thread failed to terminate within 3 seconds, "
                     "forcing cleanup. Thread may be blocked."
                 )
@@ -239,39 +239,40 @@ class WebSocketApp:
     def _send_ping(self) -> None:
         if self.stop_ping is None:
             return
-        if self.stop_ping.wait(self.ping_interval) or self.keep_running is False:
+        if self.keep_running is False:
             return
         while not self.stop_ping.wait(self.ping_interval) and self.keep_running is True:
             if self.sock:
                 self.last_ping_tm = time.time()
                 try:
-                    _logging.debug("Sending ping")
+                    debug("Sending ping")
                     self.sock.ping(self.ping_payload)
                 except Exception as e:
-                    _logging.debug(f"Failed to send ping: {e}")
+                    debug(f"Failed to send ping: {e}")
 
     def ready(self):
         return self.sock and self.sock.connected
 
     def run_forever(
         self,
-        sockopt: tuple = None,
-        sslopt: dict = None,
+        sockopt: Optional[list] = None,
+        sslopt: Optional[dict] = None,
         ping_interval: Union[float, int] = 0,
         ping_timeout: Optional[Union[float, int]] = None,
         ping_payload: str = "",
-        http_proxy_host: str = None,
-        http_proxy_port: Union[int, str] = None,
-        http_no_proxy: list = None,
-        http_proxy_auth: tuple = None,
+        http_proxy_host: Optional[str] = None,
+        http_proxy_port: Optional[Union[int, str]] = None,
+        http_no_proxy: Optional[list] = None,
+        http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[float] = None,
         skip_utf8_validation: bool = False,
-        host: str = None,
-        origin: str = None,
-        dispatcher=None,
+        host: Optional[str] = None,
+        origin: Optional[str] = None,
+        dispatcher: Any = None,
         suppress_origin: bool = False,
-        proxy_type: str = None,
-        reconnect: int = None,
+        suppress_host: bool = False,
+        proxy_type: Optional[str] = None,
+        reconnect: Optional[int] = None,
     ) -> bool:
         """
         Run event loop for WebSocket framework.
@@ -314,6 +315,8 @@ class WebSocketApp:
             customize reading data from socket.
         suppress_origin: bool
             suppress outputting origin header.
+        suppress_host: bool
+            suppress outputting host header.
         proxy_type: str
             type of proxy from: http, socks4, socks4a, socks5, socks5h
         reconnect: int
@@ -336,7 +339,7 @@ class WebSocketApp:
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
         if not sockopt:
-            sockopt = ()
+            sockopt = []
         if not sslopt:
             sslopt = {}
         if self.sock:
@@ -348,7 +351,7 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.keep_running = True
 
-        def teardown(close_frame: ABNF = None):
+        def teardown(close_frame: Optional[ABNF] = None) -> None:
             """
             Tears down the connection.
 
@@ -415,11 +418,12 @@ class WebSocketApp:
                     host=host,
                     origin=origin,
                     suppress_origin=suppress_origin,
+                    suppress_host=suppress_host,
                     proxy_type=proxy_type,
                     socket=self.prepared_socket,
                 )
 
-                _logging.info("Websocket connected")
+                info("Websocket connected")
 
                 if self.ping_interval:
                     self._start_ping_thread()
@@ -429,6 +433,7 @@ class WebSocketApp:
                 else:
                     self._callback(self.on_open)
 
+                assert dispatcher is not None
                 dispatcher.read(self.sock.sock, read, check)
             except (
                 WebSocketConnectionClosedException,
@@ -536,14 +541,15 @@ class WebSocketApp:
                 raise
 
             if reconnect:
-                _logging.info(f"{e} - reconnect")
+                info(f"{e} - reconnect")
                 if custom_dispatcher:
-                    _logging.debug(
+                    debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
+                    assert dispatcher is not None
                     dispatcher.reconnect(reconnect, initialize_socket)
             else:
-                _logging.error(f"{e} - goodbye")
+                error(f"{e} - goodbye")
                 teardown()
             return self.has_errored
 
@@ -556,12 +562,12 @@ class WebSocketApp:
             initialize_socket()
             if not custom_dispatcher and reconnect:
                 while self.keep_running:
-                    _logging.debug(
+                    debug(
                         f"Calling dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
                     dispatcher.reconnect(reconnect, initialize_socket)
         except (KeyboardInterrupt, Exception) as e:
-            _logging.info(f"tearing down on exception {e}")
+            info(f"tearing down on exception {e}")
             teardown()
         finally:
             if not custom_dispatcher:
@@ -584,7 +590,9 @@ class WebSocketApp:
             return SSLDispatcher(self, timeout)
         return Dispatcher(self, timeout)
 
-    def _get_close_args(self, close_frame: ABNF) -> list:
+    def _get_close_args(
+        self, close_frame: Optional[ABNF]
+    ) -> List[Optional[Union[int, str]]]:
         """
         _get_close_args extracts the close code and reason from the close body
         if it exists (RFC6455 says WebSocket Connection Close Code is optional)
@@ -607,13 +615,13 @@ class WebSocketApp:
             # Most likely reached this because len(close_frame_data.data) < 2
             return [None, None]
 
-    def _callback(self, callback, *args) -> None:
+    def _callback(self, callback: Optional[Callable], *args: Any) -> None:
         if callback:
             try:
                 callback(self, *args)
 
             except Exception as e:
-                _logging.error(f"error from callback {callback}: {e}")
+                error(f"error from callback {callback}: {e}")
                 # Bug fix: Prevent infinite recursion by not calling on_error
                 # when the failing callback IS on_error itself
                 if self.on_error and callback is not self.on_error:
