@@ -127,10 +127,19 @@ def _is_no_proxy_host(hostname: str, no_proxy: Optional[list[str]]) -> bool:
                 if _is_subnet_address(subnet)
             ]
         )
-    for domain in [domain for domain in no_proxy if domain.startswith(".")]:
-        endDomain = domain.lstrip(".")
-        if hostname.endswith(endDomain):
-            return True
+    # Check domain suffix matching - handle both .domain.com and domain.com formats
+    # This makes behavior consistent with urllib and other Python libraries
+    for domain in no_proxy:
+        if domain.startswith("."):
+            # Handle .domain.com format
+            stripped_domain = domain.lstrip(".")
+            if hostname.endswith(stripped_domain):
+                return True
+        else:
+            # Handle domain.com format (should match subdomains too)
+            # E.g., "example.com" should match "sub.example.com"
+            if hostname == domain or hostname.endswith("." + domain):
+                return True
     return False
 
 
