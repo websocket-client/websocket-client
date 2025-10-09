@@ -215,9 +215,13 @@ class IsNoProxyHostTest(unittest.TestCase):
         # Test domain matching without leading dots - should match subdomains
         self.assertTrue(_is_no_proxy_host("any.websocket.org", ["websocket.org"]))
         self.assertTrue(_is_no_proxy_host("my.other.websocket.org", ["websocket.org"]))
-        self.assertTrue(_is_no_proxy_host("websocket.org", ["websocket.org"]))  # Exact match
+        self.assertTrue(
+            _is_no_proxy_host("websocket.org", ["websocket.org"])
+        )  # Exact match
         self.assertFalse(_is_no_proxy_host("websocket.com", ["websocket.org"]))
-        self.assertFalse(_is_no_proxy_host("notwebsocket.org", ["websocket.org"]))  # Should not match partial
+        self.assertFalse(
+            _is_no_proxy_host("notwebsocket.org", ["websocket.org"])
+        )  # Should not match partial
 
         # Test mixed formats work together
         self.assertTrue(
