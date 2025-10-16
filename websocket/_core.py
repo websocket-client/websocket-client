@@ -286,7 +286,7 @@ class WebSocket:
                 self.sock = None
             raise
 
-    def send(self, payload: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT) -> int:
+    def send(self, payload: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT, use_frame_mask: bool = True) -> int:
         """
         Send the data as string.
 
@@ -298,9 +298,11 @@ class WebSocket:
             Otherwise, it must be string(byte array).
         opcode: int
             Operation code (opcode) to send.
+        use_frame_mask: bool
+            Whether to mask the data in the websocket frame sent. Default is True.
         """
 
-        frame = ABNF.create_frame(payload, opcode)
+        frame = ABNF.create_frame(payload, opcode, use_frame_mask=use_frame_mask)
         return self.send_frame(frame)
 
     def send_text(self, text_data: str) -> int:
