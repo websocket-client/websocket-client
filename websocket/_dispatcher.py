@@ -74,12 +74,11 @@ class Dispatcher(DispatcherBase):
             return
         with selectors.DefaultSelector() as sel:
             sel.register(self.app.sock.sock, selectors.EVENT_READ)
-            try:
-                while self.app.keep_running:
-                    if sel.select(self.ping_timeout):
-                        if not read_callback():
-                            break
-                    check_callback()
+            while self.app.keep_running:
+                if sel.select(self.ping_timeout):
+                    if not read_callback():
+                        break
+                check_callback()
 
 
 class SSLDispatcher(DispatcherBase):
@@ -98,12 +97,11 @@ class SSLDispatcher(DispatcherBase):
         sock = self.app.sock.sock
         with selectors.DefaultSelector() as sel:
             sel.register(sock, selectors.EVENT_READ)
-            try:
-                while self.app.keep_running:
-                    if self.select(sock, sel):
-                        if not read_callback():
-                            break
-                    check_callback()
+            while self.app.keep_running:
+                if self.select(sock, sel):
+                    if not read_callback():
+                        break
+                check_callback()
 
     def select(self, sock, sel: selectors.DefaultSelector):
         if self.app.sock is None:
