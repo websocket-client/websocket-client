@@ -342,6 +342,8 @@ class WebSocket:
         with self.lock:
             while data:
                 bytes_sent = self._send(data)
+                if bytes_sent == length:
+                        break
                 data = data[bytes_sent:]
 
         return length
@@ -454,6 +456,14 @@ class WebSocket:
                 ABNF.OPCODE_BINARY,
                 ABNF.OPCODE_CONT,
             ):
+                # If we aren't building a cont frame and this is a final frame,
+                # we have the whole frame so we can return it.
+                if not self.cont_frame.is_building() and frame.fin:
+                    if frame.opcode == ABNF.OPCODE_CONT:
+                        raise WebSocketProtocolException("Illegal frame")
+                    return frame.opcode, frame
+
+                # Otherwise, we need to validate and add the frame to the cont_frame.
                 self.cont_frame.validate(frame)
                 self.cont_frame.add(frame)
 

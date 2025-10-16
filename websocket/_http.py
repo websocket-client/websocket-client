@@ -88,6 +88,8 @@ def _start_proxied_socket(url: str, options, proxy) -> tuple:
 
     hostname, port, resource, is_secure = parse_url(url)
 
+    proxy_type = None
+    rdns = False
     if proxy.proxy_protocol == "socks4":
         rdns = False
         proxy_type = ProxyType.SOCKS4

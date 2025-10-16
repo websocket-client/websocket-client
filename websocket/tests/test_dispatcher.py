@@ -60,6 +60,8 @@ class MockDispatcher:
         self.read_calls = []
         self.buffwrite_calls = []
         self.timeout_calls = []
+        self.enter_calls = []
+        self.exit_calls = []
 
     def signal(self, sig, handler):
         self.signal_calls.append((sig, handler))
@@ -75,6 +77,13 @@ class MockDispatcher:
 
     def timeout(self, seconds, callback, *args):
         self.timeout_calls.append((seconds, callback, args))
+
+    def __enter__(self):
+        self.enter_calls.append(True)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.exit_calls.append(True)
 
 
 class DispatcherTest(unittest.TestCase):
