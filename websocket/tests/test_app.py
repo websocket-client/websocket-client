@@ -495,13 +495,17 @@ class WebSocketAppTest(unittest.TestCase):
             def reconnect(self, seconds, reconnector):
                 pass
 
-        def fake_create_dispatcher(self, ping_timeout, dispatcher, is_ssl, handleDisconnect):
+        def fake_create_dispatcher(
+            self, ping_timeout, dispatcher, is_ssl, handleDisconnect
+        ):
             return ClosedCallingDispatcher(self, handleDisconnect)
 
         app = ws.WebSocketApp("ws://example.com", on_close=on_close, on_error=on_error)
 
         with mock.patch("websocket._app.WebSocket", FakeWebSocket):
-            with mock.patch.object(ws.WebSocketApp, "create_dispatcher", fake_create_dispatcher):
+            with mock.patch.object(
+                ws.WebSocketApp, "create_dispatcher", fake_create_dispatcher
+            ):
                 app.run_forever()
 
         self.assertEqual(close_results, [(None, None)])
