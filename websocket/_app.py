@@ -2,7 +2,7 @@ import inspect
 import socket
 import threading
 import time
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 from ._logging import debug, error, info, warning
 from ._abnf import ABNF
@@ -514,11 +514,32 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
                 str,
+                "ABNF",  # Now explicitly handle ABNF frame objects
             ] = "closed unexpectedly",
         ) -> bool:
+            close_frame: Optional[ABNF] = None
             if type(e) is str:
                 e = WebSocketConnectionClosedException(e)
-            return handleDisconnect(e, bool(reconnect))  # type: ignore[arg-type]
+            elif isinstance(e, ABNF) and e.opcode == ABNF.OPCODE_CLOSE:
+                close_frame = e
+                # Convert close frames to a descriptive exception for on_error callback
+                close_status_code, close_reason = self._parse_close_frame(e)
+                reason_parts: List[str] = []
+                if close_status_code is None:
+                    message = "Connection closed"
+                elif close_status_code == 1000:
+                    message = "Connection closed normally (code 1000)"
+                else:
+                    message = f"Connection closed (code {close_status_code})"
+                if close_reason:
+                    reason_parts.append(close_reason)
+                if reason_parts:
+                    message = f"{message}: {'; '.join(reason_parts)}"
+                converted = WebSocketConnectionClosedException(message)
+                setattr(converted, "status_code", close_status_code)
+                setattr(converted, "reason", close_reason)
+                e = converted
+            return handleDisconnect(e, bool(reconnect), close_frame=close_frame)  # type: ignore[arg-type]
 
         def handleDisconnect(
             e: Union[
@@ -529,6 +550,7 @@ class WebSocketApp:
                 Exception,
             ],
             reconnecting: bool = False,
+            close_frame: Optional[ABNF] = None,
         ) -> bool:
             self.has_errored = True
             self._stop_ping_thread()
@@ -536,7 +558,7 @@ class WebSocketApp:
                 self._callback(self.on_error, e)
 
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
-                teardown()
+                teardown(close_frame)
                 # Propagate further
                 raise
 
@@ -550,7 +572,7 @@ class WebSocketApp:
                     dispatcher.reconnect(reconnect, initialize_socket)
             else:
                 error(f"{e} - goodbye")
-                teardown()
+                teardown(close_frame)
             return self.has_errored
 
         custom_dispatcher = bool(dispatcher)
@@ -599,21 +621,46 @@ class WebSocketApp:
         """
         # Need to catch the case where close_frame is None
         # Otherwise the following if statement causes an error
-        if not self.on_close or not close_frame:
+        if not close_frame:
             return [None, None]
+        close_status_code, reason = self._parse_close_frame(close_frame)
+        if not self.on_close:
+            return [None, None]
+        return [close_status_code, reason]
 
-        # Extract close frame status code
-        if close_frame.data and len(close_frame.data) >= 2:
-            close_status_code = 256 * int(close_frame.data[0]) + int(
-                close_frame.data[1]
-            )
-            reason = close_frame.data[2:]
-            if isinstance(reason, bytes):
-                reason = reason.decode("utf-8")
-            return [close_status_code, reason]
+    def _parse_close_frame(
+        self, close_frame: Optional[ABNF]
+    ) -> Tuple[Optional[int], Optional[str]]:
+        """
+        Parse a close frame into status code and UTF-8 reason text.
+        """
+        if not close_frame or not getattr(close_frame, "data", None):
+            return (None, None)
+
+        data = close_frame.data
+        if isinstance(data, bytes):
+            data_bytes = data
+        elif isinstance(data, str):
+            data_bytes = data.encode("utf-8")
         else:
-            # Most likely reached this because len(close_frame_data.data) < 2
-            return [None, None]
+            data_bytes = bytes(data)
+
+        if len(data_bytes) < 2:
+            return (None, None)
+
+        close_status_code = 256 * int(data_bytes[0]) + int(data_bytes[1])
+        reason_bytes = data_bytes[2:]
+
+        reason: Optional[str]
+        if not reason_bytes:
+            reason = None
+        else:
+            try:
+                reason = reason_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                reason = reason_bytes.decode("utf-8", errors="replace")
+
+        return (close_status_code, reason)
 
     def _callback(self, callback: Optional[Callable], *args: Any) -> None:
         if callback:

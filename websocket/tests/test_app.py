@@ -6,6 +6,7 @@ import socket
 import ssl
 import threading
 import unittest
+from unittest import mock
 
 import websocket as ws
 
@@ -249,6 +250,265 @@ class WebSocketAppTest(unittest.TestCase):
             app.send,
             data="test if connection is closed",
         )
+
+    def test_parse_close_frame_variants(self):
+        """_parse_close_frame decodes bytes, str, and invalid UTF-8 payloads."""
+
+        app = ws.WebSocketApp("ws://example.com")
+
+        binary_frame = ws.ABNF(
+            opcode=ws.ABNF.OPCODE_CLOSE, data=b"\x03\xe8normal-closure"
+        )
+        code, reason = app._parse_close_frame(binary_frame)
+        self.assertEqual(code, 1000)
+        self.assertEqual(reason, "normal-closure")
+
+        invalid_utf8 = ws.ABNF(
+            opcode=ws.ABNF.OPCODE_CLOSE, data=b"\x03\xe8\xff\xfe\xff"
+        )
+        code, reason = app._parse_close_frame(invalid_utf8)
+        self.assertEqual(code, 1000)
+        self.assertEqual(reason, "\ufffd\ufffd\ufffd")
+
+        text_data = ws.ABNF(opcode=ws.ABNF.OPCODE_CLOSE, data="ABtext-reason")
+        code, reason = app._parse_close_frame(text_data)
+        self.assertEqual(code, 0x4142)
+        self.assertEqual(reason, "text-reason")
+
+    def test_close_frame_triggers_closed_logic(self):
+        """Ensure close frames propagate through closed() to on_error/on_close."""
+
+        close_payload = b"\x03\xe8close-reason"
+        close_frame = ws.ABNF(opcode=ws.ABNF.OPCODE_CLOSE, data=close_payload)
+        close_results = []
+        error_results = []
+
+        def on_close(app, code, reason):
+            close_results.append((code, reason))
+
+        def on_error(app, err):
+            error_results.append(err)
+
+        class FakeWebSocket:
+            def __init__(self, *args, **kwargs):
+                self.sock = object()
+                self._delivered = False
+
+            def settimeout(self, timeout):
+                pass
+
+            def connect(self, *args, **kwargs):
+                pass
+
+            def recv_data_frame(self, *args, **kwargs):
+                if self._delivered:
+                    raise ws.WebSocketConnectionClosedException("closed")
+                self._delivered = True
+                return (ws.ABNF.OPCODE_CLOSE, close_frame)
+
+            def close(self):
+                pass
+
+            def shutdown(self):
+                pass
+
+        class FakeDispatcher:
+            def __init__(self, app):
+                self.app = app
+
+            def read(self, sock, read_callback, check_callback):
+                read_callback()
+
+            def reconnect(self, seconds, reconnector):
+                pass
+
+        app = ws.WebSocketApp("ws://example.com", on_close=on_close, on_error=on_error)
+        fake_dispatcher = FakeDispatcher(app)
+
+        with mock.patch("websocket._app.WebSocket", FakeWebSocket):
+            with mock.patch.object(
+                ws.WebSocketApp, "create_dispatcher", return_value=fake_dispatcher
+            ):
+                app.run_forever()
+
+        self.assertEqual(close_results, [(1000, "close-reason")])
+        self.assertEqual(len(error_results), 1)
+        self.assertIsInstance(error_results[0], ws.WebSocketConnectionClosedException)
+        self.assertEqual(getattr(error_results[0], "status_code", None), 1000)
+        self.assertEqual(getattr(error_results[0], "reason", None), "close-reason")
+
+    def test_close_exception_legacy_path_has_no_frame(self):
+        """Ensure exception path through closed() does not pass a close frame."""
+
+        close_results = []
+        error_results = []
+
+        def on_close(app, code, reason):
+            close_results.append((code, reason))
+
+        def on_error(app, err):
+            error_results.append(err)
+
+        class FakeWebSocket:
+            def __init__(self, *args, **kwargs):
+                self.sock = mock.Mock()
+
+            def settimeout(self, timeout):
+                pass
+
+            def connect(self, *args, **kwargs):
+                pass
+
+            def recv_data_frame(self, *args, **kwargs):
+                raise ws.WebSocketConnectionClosedException("socket closed")
+
+            def close(self):
+                pass
+
+            def shutdown(self):
+                pass
+
+        class FakeDispatcher:
+            def __init__(self, app):
+                self.app = app
+
+            def read(self, sock, read_callback, check_callback):
+                read_callback()
+
+            def reconnect(self, seconds, reconnector):
+                pass
+
+        app = ws.WebSocketApp("ws://example.com", on_close=on_close, on_error=on_error)
+        fake_dispatcher = FakeDispatcher(app)
+
+        with mock.patch("websocket._app.WebSocket", FakeWebSocket):
+            with mock.patch.object(
+                ws.WebSocketApp, "create_dispatcher", return_value=fake_dispatcher
+            ):
+                app.run_forever()
+
+        self.assertEqual(close_results, [(None, None)])
+        self.assertEqual(len(error_results), 1)
+        self.assertIsInstance(error_results[0], ws.WebSocketConnectionClosedException)
+        self.assertEqual(str(error_results[0]), "socket closed")
+        self.assertFalse(hasattr(error_results[0], "status_code"))
+
+    def test_custom_dispatcher_close_exception(self):
+        """Custom dispatchers should route exceptions through closed()."""
+
+        close_results = []
+        error_results = []
+
+        def on_close(app, code, reason):
+            close_results.append((code, reason))
+
+        def on_error(app, err):
+            error_results.append(err)
+
+        class FakeWebSocket:
+            def __init__(self, *args, **kwargs):
+                self.sock = mock.Mock()
+
+            def settimeout(self, timeout):
+                pass
+
+            def connect(self, *args, **kwargs):
+                pass
+
+            def recv_data_frame(self, *args, **kwargs):
+                raise ws.WebSocketConnectionClosedException("dispatcher closed")
+
+            def close(self):
+                pass
+
+            def shutdown(self):
+                pass
+
+        class CustomDispatcher:
+            def __init__(self):
+                self.read_called = False
+                self.last_result = None
+
+            def read(self, sock, read_callback, check_callback):
+                self.read_called = True
+                self.last_result = read_callback()
+
+            def reconnect(self, seconds, reconnector):
+                pass
+
+        dispatcher_wrapper = CustomDispatcher()
+
+        app = ws.WebSocketApp("ws://example.com", on_close=on_close, on_error=on_error)
+
+        with mock.patch("websocket._app.WebSocket", FakeWebSocket):
+            with mock.patch.object(
+                ws.WebSocketApp, "create_dispatcher", return_value=dispatcher_wrapper
+            ):
+                app.run_forever(dispatcher=object())
+
+        self.assertTrue(dispatcher_wrapper.read_called)
+        self.assertTrue(dispatcher_wrapper.last_result)
+        self.assertEqual(close_results, [(None, None)])
+        self.assertEqual(len(error_results), 1)
+        self.assertIsInstance(error_results[0], ws.WebSocketConnectionClosedException)
+        self.assertEqual(str(error_results[0]), "dispatcher closed")
+
+    def test_closed_string_argument_converted_to_exception(self):
+        """Calling closed() with a string should still reach on_error/on_close."""
+
+        close_results = []
+        error_results = []
+
+        def on_close(app, code, reason):
+            close_results.append((code, reason))
+
+        def on_error(app, err):
+            error_results.append(err)
+
+        class FakeWebSocket:
+            def __init__(self, *args, **kwargs):
+                self.sock = mock.Mock()
+
+            def settimeout(self, timeout):
+                pass
+
+            def connect(self, *args, **kwargs):
+                pass
+
+            def shutdown(self):
+                pass
+
+            def close(self):
+                pass
+
+        class ClosedCallingDispatcher:
+            def __init__(self, app, closed_fn):
+                self.app = app
+                self.closed_fn = closed_fn
+                self.read_called = False
+
+            def read(self, sock, read_callback, check_callback):
+                self.read_called = True
+                self.closed_fn("manual string close")
+                self.app.keep_running = False
+
+            def reconnect(self, seconds, reconnector):
+                pass
+
+        def fake_create_dispatcher(self, ping_timeout, dispatcher, is_ssl, handleDisconnect):
+            return ClosedCallingDispatcher(self, handleDisconnect)
+
+        app = ws.WebSocketApp("ws://example.com", on_close=on_close, on_error=on_error)
+
+        with mock.patch("websocket._app.WebSocket", FakeWebSocket):
+            with mock.patch.object(ws.WebSocketApp, "create_dispatcher", fake_create_dispatcher):
+                app.run_forever()
+
+        self.assertEqual(close_results, [(None, None)])
+        self.assertEqual(len(error_results), 1)
+        self.assertIsInstance(error_results[0], ws.WebSocketConnectionClosedException)
+        self.assertEqual(str(error_results[0]), "manual string close")
+        self.assertFalse(hasattr(error_results[0], "status_code"))
 
     @unittest.skipUnless(
         TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
