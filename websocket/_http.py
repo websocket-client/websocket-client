@@ -172,14 +172,17 @@ def connect(
 def _get_addrinfo_list(
     hostname: str, port: int, is_secure: bool, proxy: Any
 ) -> Tuple[list, bool, Any]:
-    phost, pport, pauth = get_proxy_info(
-        hostname,
-        is_secure,
-        proxy.proxy_host,
-        proxy.proxy_port,
-        proxy.auth,
-        proxy.no_proxy,
-    )
+    try:
+        phost, pport, pauth = get_proxy_info(
+            hostname,
+            is_secure,
+            proxy.proxy_host,
+            proxy.proxy_port,
+            proxy.auth,
+            proxy.no_proxy,
+        )
+    except TypeError as e:
+        raise WebSocketAddressException(e)
     try:
         # when running on windows 10, getaddrinfo without socktype returns a socktype 0.
         # This generates an error exception: `_on_error: exception Socket type must be stream or datagram, not 0`
@@ -199,7 +202,7 @@ def _get_addrinfo_list(
                 phost, pport, 0, socket.SOCK_STREAM, socket.SOL_TCP
             )
             return addrinfo_list, True, pauth
-    except socket.gaierror as e:
+    except (socket.gaierror, TypeError) as e:
         raise WebSocketAddressException(e)
 
 
