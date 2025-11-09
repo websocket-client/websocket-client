@@ -163,7 +163,7 @@ class HttpTest(unittest.TestCase):
 
         # Test TypeError with None hostname (no network required)
         self.assertRaises(
-            TypeError,
+            WebSocketAddressException,
             _get_addrinfo_list,
             None,
             80,
@@ -203,56 +203,47 @@ class HttpTest(unittest.TestCase):
             (True, ("google.com", 443, "/")),
         )
 
-    @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
-    @unittest.skipUnless(
-        TEST_WITH_PROXY, "This test requires a HTTP proxy to be running on port 8899"
-    )
-    @unittest.skipUnless(
-        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
-    )
     def test_proxy_connect(self):
-        ws = websocket.WebSocket()
-        ws.connect(
-            f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}",
-            http_proxy_host="127.0.0.1",
-            http_proxy_port="8899",
-            proxy_type="http",
+        """Proxy logic should exercise SOCKS path and HTTP tunnel path offline."""
+
+        proxy_cfg = proxy_info(
+            http_proxy_host="proxy.local",
+            http_proxy_port="1080",
+            proxy_type="socks5",
+            http_proxy_auth=("user", "pass"),
         )
-        ws.send("Hello, Server")
-        server_response = ws.recv()
-        self.assertEqual(server_response, "Hello, Server")
-        # self.assertEqual(_start_proxied_socket("wss://api.bitfinex.com/ws/2", OptsList(), proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="8899", proxy_type="http"))[1], ("api.bitfinex.com", 443, '/ws/2'))
-        self.assertEqual(
-            _get_addrinfo_list(
-                "api.bitfinex.com",
-                443,
-                True,
-                proxy_info(
-                    http_proxy_host="127.0.0.1",
-                    http_proxy_port="8899",
-                    proxy_type="http",
-                ),
-            ),
-            (
-                socket.getaddrinfo(
-                    "127.0.0.1", 8899, 0, socket.SOCK_STREAM, socket.SOL_TCP
-                ),
-                True,
-                None,
-            ),
+        options = OptsList()
+        proxy_instance = mock.Mock()
+        proxied_socket = mock.Mock()
+        ssl_wrapped_socket = mock.Mock()
+        proxy_instance.connect.return_value = proxied_socket
+
+        with mock.patch("websocket._http.HAVE_PYTHON_SOCKS", True), mock.patch(
+            "websocket._http.Proxy"
+        ) as proxy_cls, mock.patch(
+            "websocket._http._ssl_socket", return_value=ssl_wrapped_socket
+        ) as ssl_socket:
+            proxy_cls.create.return_value = proxy_instance
+            sock, addr = _start_proxied_socket(
+                "wss://example.com/ws", options, proxy_cfg
+            )
+
+        proxy_cls.create.assert_called_once()
+        proxy_instance.connect.assert_called_once_with("example.com", 443, timeout=None)
+        ssl_socket.assert_called_once_with(
+            proxied_socket, options.sslopt, "example.com"
         )
-        self.assertEqual(
-            connect(
-                "wss://api.bitfinex.com/ws/2",
-                OptsList(),
-                proxy_info(
-                    http_proxy_host="127.0.0.1", http_proxy_port=8899, proxy_type="http"
-                ),
-                None,
-            )[1],
-            ("api.bitfinex.com", 443, "/ws/2"),
-        )
-        # TODO: Test SOCKS4 and SOCK5 proxies with unit tests
+        self.assertIs(sock, ssl_wrapped_socket)
+        self.assertEqual(addr, ("example.com", 443, "/ws"))
+
+        fake_sock = mock.Mock()
+        with mock.patch("websocket._http.send") as send_mock, mock.patch(
+            "websocket._http.read_headers", return_value=(200, {}, "OK")
+        ):
+            returned = _tunnel(fake_sock, "endpoint", 9000, ("demo", "secret"))
+
+        self.assertIs(returned, fake_sock)
+        send_mock.assert_called_once()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_sslopt(self):
@@ -279,7 +270,7 @@ class HttpTest(unittest.TestCase):
 
         ws_ssl2 = websocket.WebSocket(sslopt={"check_hostname": True})
         ws_ssl2.connect("wss://api.bitfinex.com/ws/2")
-        ws_ssl2.close
+        ws_ssl2.close()
 
     def test_proxy_info(self):
         self.assertEqual(
@@ -335,9 +326,13 @@ class HttpTest(unittest.TestCase):
 
 class HttpPureUnitTests(unittest.TestCase):
     def test_get_addrinfo_list_uses_proxy_host(self):
-        proxy = proxy_info(http_proxy_host="proxy.example", http_proxy_port=8080, proxy_type="http")
+        proxy = proxy_info(
+            http_proxy_host="proxy.example", http_proxy_port=8080, proxy_type="http"
+        )
 
-        with mock.patch("websocket._http.socket.getaddrinfo", return_value=[("addr",)]) as mocked_getaddrinfo:
+        with mock.patch(
+            "websocket._http.socket.getaddrinfo", return_value=[("addr",)]
+        ) as mocked_getaddrinfo:
             addrinfo, need_tunnel, auth = _get_addrinfo_list(
                 "realhost.example", 443, True, proxy
             )

@@ -198,6 +198,24 @@ class WebSocketTest(unittest.TestCase):
 
         self.assertEqual(sock.send_binary(b"1111111111101"), 19)
 
+    def test_send_close_accepts_text_reason(self):
+        sock = ws.WebSocket()
+        captured = {}
+
+        def fake_send(payload, opcode):
+            captured["payload"] = payload
+            captured["opcode"] = opcode
+            return len(payload)
+
+        sock.send = fake_send  # type: ignore[assignment]
+        sock.connected = True
+
+        sock.send_close(reason="normal close")
+
+        self.assertEqual(captured["opcode"], ws.ABNF.OPCODE_CLOSE)
+        self.assertIsInstance(captured["payload"], (bytes, bytearray))
+        self.assertTrue(captured["payload"].endswith(b"normal close"))
+
     def test_recv(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
@@ -217,16 +235,25 @@ class WebSocketTest(unittest.TestCase):
     def test_iter(self):
         count = 2
         s = ws.create_connection("wss://api.bitfinex.com/ws/2")
-        s.send('{"event": "subscribe", "channel": "ticker"}')
-        for _ in s:
-            count -= 1
-            if count == 0:
-                break
+        try:
+            s.send('{"event": "subscribe", "channel": "ticker"}')
+            for _ in s:
+                count -= 1
+                if count == 0:
+                    break
+            self.assertEqual(
+                count, 0, "WebSocket iterator failed to yield the expected frames"
+            )
+        finally:
+            s.close()
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_next(self):
         sock = ws.create_connection("wss://api.bitfinex.com/ws/2")
-        self.assertEqual(str, type(next(sock)))
+        try:
+            self.assertEqual(str, type(next(sock)))
+        finally:
+            sock.close()
 
     def test_internal_recv_strict(self):
         sock = ws.WebSocket()
@@ -404,7 +431,7 @@ class WebSocketTest(unittest.TestCase):
     def test_websocket_with_custom_header(self):
         s = ws.create_connection(
             f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}",
-            headers={"User-Agent": "PythonWebsocketClient"},
+            header={"User-Agent": "PythonWebsocketClient"},
         )
         self.assertNotEqual(s, None)
         self.assertEqual(s.getsubprotocol(), None)
@@ -649,9 +676,9 @@ class WebSocketCoreUnitTests(unittest.TestCase):
 
         frame = ABNF.create_frame("hi", ABNF.OPCODE_TEXT)
 
-        with mock.patch("websocket._core.isEnabledForTrace", return_value=True), mock.patch(
-            "websocket._core.trace"
-        ) as trace_mock:
+        with mock.patch(
+            "websocket._core.isEnabledForTrace", return_value=True
+        ), mock.patch("websocket._core.trace") as trace_mock:
             length = sock.send_frame(frame)
 
         self.assertGreater(length, 0)

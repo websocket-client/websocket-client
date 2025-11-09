@@ -76,9 +76,9 @@ class WebSocketAppTest(unittest.TestCase):
             WebSocketAppTest.keep_running_open = self.keep_running
             self.keep_running = False
 
-        def on_message(_, message):
+        def on_message(app, message):
             print(message)
-            self.close()
+            app.close()
 
         def on_close(self, *args, **kwargs):
             """Set the keep_running flag for the test to use."""
@@ -102,12 +102,13 @@ class WebSocketAppTest(unittest.TestCase):
         def on_open(self, *args, **kwargs):
             """Send a message, receive, and send one more"""
             self.send("hello!")
-            self.recv()
+            if self.sock:
+                self.sock.recv()
             self.send("goodbye!")
 
-        def on_message(_, message):
+        def on_message(app, message):
             print(message)
-            self.close()
+            app.close()
 
         app = ws.WebSocketApp(
             f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}",

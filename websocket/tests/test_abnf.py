@@ -117,11 +117,73 @@ class ABNFTest(unittest.TestCase):
         fb = frame_buffer(0, True)
         self.assertEqual(fb.recv, 0)
         self.assertEqual(fb.skip_utf8_validation, True)
-        fb.clear
-        self.assertEqual(fb.header, None)
-        self.assertEqual(fb.length, None)
-        self.assertEqual(fb.mask_value, None)
-        self.assertEqual(fb.has_mask(), False)
+        fb.header = (1, 0, 0, 0, ABNF.OPCODE_TEXT, 1, 10)
+        fb.length = 10
+        fb.mask_value = b"abcd"
+        fb.clear()
+        self.assertIsNone(fb.header)
+        self.assertIsNone(fb.length)
+        self.assertIsNone(fb.mask_value)
+        self.assertFalse(fb.has_mask())
+
+    def test_frame_buffer_recv_frame_handles_chunked_reads(self):
+        payload = b"Hello"
+        frame_bytes = b"\x81" + bytes([len(payload)]) + payload  # Unmasked text frame
+        chunks = [frame_bytes[:1], frame_bytes[1:2], frame_bytes[2:4], frame_bytes[4:]]
+
+        def chunked_recv(_):
+            if not chunks:
+                raise AssertionError("recv called after buffer drained")
+            return chunks.pop(0)
+
+        fb = frame_buffer(chunked_recv, skip_utf8_validation=False)
+        frame = fb.recv_frame()
+
+        self.assertEqual(frame.fin, 1)
+        self.assertEqual(frame.opcode, ABNF.OPCODE_TEXT)
+        self.assertEqual(frame.data, payload)
+        self.assertEqual(chunks, [])
+
+    def test_recv_strict_preserves_unconsumed_bytes(self):
+        remaining = bytearray(b"abcdef")
+
+        def greedy_recv(_):
+            if not remaining:
+                raise AssertionError("recv called with empty buffer")
+            chunk = bytes(remaining)
+            remaining.clear()
+            return chunk
+
+        fb = frame_buffer(greedy_recv, skip_utf8_validation=True)
+        first = fb.recv_strict(4)
+        self.assertEqual(first, b"abcd")
+        # The extra bytes should stay buffered for the next strict read
+        self.assertEqual(fb.recv_buffer, [b"ef"])
+
+        second = fb.recv_strict(2)
+        self.assertEqual(second, b"ef")
+        self.assertEqual(fb.recv_buffer, [])
+
+    def test_recv_strict_handles_none_and_non_bytes(self):
+        calls_none = [b"ab", None, b"cd"]
+
+        def recv_none(_):
+            return calls_none.pop(0)
+
+        fb_none = frame_buffer(recv_none, skip_utf8_validation=True)
+        self.assertEqual(fb_none.recv_strict(4), b"ab")
+        self.assertEqual(fb_none.recv_strict(2), b"cd")
+        self.assertEqual(calls_none, [])
+
+        calls_str = [b"xy", "zz", b"pq"]
+
+        def recv_str(_):
+            return calls_str.pop(0)
+
+        fb_str = frame_buffer(recv_str, skip_utf8_validation=True)
+        self.assertEqual(fb_str.recv_strict(4), b"xy")
+        self.assertEqual(fb_str.recv_strict(2), b"pq")
+        self.assertEqual(calls_str, [])
 
 
 class AbnfPureUnitTests(unittest.TestCase):
