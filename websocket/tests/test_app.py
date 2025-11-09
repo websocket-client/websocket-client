@@ -4,11 +4,13 @@ import os
 import os.path
 import socket
 import ssl
+import struct
 import threading
 import unittest
 from unittest import mock
 
 import websocket as ws
+from websocket._abnf import ABNF
 
 """
 test_app.py
@@ -679,6 +681,84 @@ class WebSocketAppTest(unittest.TestCase):
         except (ws.WebSocketAddressException, OSError, ConnectionRefusedError):
             # Expected - connection should fail, but parameter was accepted
             pass
+
+
+class WebSocketAppUnitTests(unittest.TestCase):
+    def _build_app(self):
+        return ws.WebSocketApp("ws://example.com")
+
+    def test_send_helpers_raise_when_socket_inactive(self):
+        class DummySock:
+            def __init__(self, return_value=0):
+                self.return_value = return_value
+                self.calls = []
+
+            def send(self, data, opcode):
+                self.calls.append((data, opcode))
+                return self.return_value
+
+        app = self._build_app()
+        app.sock = DummySock(return_value=0)
+
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            app.send("payload")
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            app.send_text("payload")
+        with self.assertRaises(ws.WebSocketConnectionClosedException):
+            app.send_bytes(b"payload")
+
+    def test_run_forever_validates_ping_configuration(self):
+        app = self._build_app()
+
+        with self.assertRaises(ws.WebSocketException):
+            app.run_forever(ping_timeout=0)
+
+        with self.assertRaises(ws.WebSocketException):
+            app.run_forever(ping_interval=-1)
+
+        with self.assertRaises(ws.WebSocketException):
+            app.run_forever(ping_interval=1, ping_timeout=1)
+
+    def test_run_forever_rejects_when_socket_already_open(self):
+        app = self._build_app()
+        app.sock = object()
+
+        with self.assertRaises(ws.WebSocketException):
+            app.run_forever()
+
+    def test_close_frame_parsing(self):
+        app = self._build_app()
+        app.on_close = lambda *_: None
+        close_payload = struct.pack("!H", 4000) + "bye".encode("utf-8")
+        close_frame = ABNF.create_frame(close_payload, ABNF.OPCODE_CLOSE)
+
+        status, reason = app._get_close_args(close_frame)
+        self.assertEqual(status, 4000)
+        self.assertEqual(reason, "bye")
+
+        empty_frame = ABNF.create_frame(b"", ABNF.OPCODE_CLOSE)
+        self.assertEqual(app._get_close_args(empty_frame), [None, None])
+
+    def test_callback_errors_propagate_to_on_error_once(self):
+        capture = []
+
+        def on_error(app, err):
+            capture.append(err)
+
+        def failing_callback(app, *_):
+            raise RuntimeError("boom")
+
+        app = self._build_app()
+        app.on_error = on_error
+        app._callback(failing_callback)
+        self.assertEqual(len(capture), 1)
+        self.assertIsInstance(capture[0], RuntimeError)
+
+        # When the failing callback is on_error itself, ensure no recursion occurs.
+        capture.clear()
+        app.on_error = failing_callback
+        app._callback(app.on_error)
+        self.assertEqual(capture, [])
 
 
 if __name__ == "__main__":

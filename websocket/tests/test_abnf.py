@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 #
+import importlib
+import sys
 import unittest
+from unittest import mock
 
-from websocket._abnf import ABNF, frame_buffer
-from websocket._exceptions import WebSocketProtocolException
+from websocket._abnf import ABNF, continuous_frame, frame_buffer
+from websocket._exceptions import WebSocketPayloadException, WebSocketProtocolException
 
 """
 test_abnf.py
@@ -119,6 +122,60 @@ class ABNFTest(unittest.TestCase):
         self.assertEqual(fb.length, None)
         self.assertEqual(fb.mask_value, None)
         self.assertEqual(fb.has_mask(), False)
+
+
+class AbnfPureUnitTests(unittest.TestCase):
+    def test_mask_without_wsaccel(self):
+        import websocket._abnf as abnf_module
+
+        mask_key = b"\x01\x02\x03\x04"
+        data = b"\x05\x06\x07\x08\t"
+        expected = bytes(mask_key[i % 4] ^ data[i] for i in range(len(data)))
+
+        with mock.patch.dict(sys.modules, {"wsaccel": None, "wsaccel.xormask": None}):
+            reloaded = importlib.reload(abnf_module)
+            self.assertEqual(reloaded.ABNF.mask(mask_key, data), expected)
+
+        importlib.reload(reloaded)
+
+    def test_format_encodes_large_lengths(self):
+        frame_126 = ABNF(
+            1, 0, 0, 0, opcode=ABNF.OPCODE_TEXT, mask_value=0, data=b"x" * 126
+        )
+        formatted = frame_126.format()
+        self.assertEqual(formatted[1], 0x7E)
+        self.assertEqual(formatted[2:4], (126).to_bytes(2, "big"))
+
+        frame_65536 = ABNF(
+            1, 0, 0, 0, opcode=ABNF.OPCODE_BINARY, mask_value=0, data=b"y" * 66000
+        )
+        formatted_long = frame_65536.format()
+        self.assertEqual(formatted_long[1], 0x7F)
+        self.assertEqual(len(formatted_long[2:10]), 8)
+        self.assertEqual(int.from_bytes(formatted_long[2:10], "big"), 66000)
+
+    def test_continuous_frame_invalid_utf8_raises(self):
+        cont = continuous_frame(fire_cont_frame=False, skip_utf8_validation=False)
+        start = ABNF(
+            fin=0,
+            opcode=ABNF.OPCODE_TEXT,
+            data=b"\xf0\x28",
+            mask_value=0,
+        )
+        cont.validate(start)
+        cont.add(start)
+
+        end = ABNF(
+            fin=1,
+            opcode=ABNF.OPCODE_CONT,
+            data=b"\x8c\x28",
+            mask_value=0,
+        )
+        cont.validate(end)
+        cont.add(end)
+        self.assertTrue(cont.is_fire(end))
+        with self.assertRaises(WebSocketPayloadException):
+            cont.extract(end)
 
 
 if __name__ == "__main__":

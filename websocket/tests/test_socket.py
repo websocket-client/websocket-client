@@ -353,6 +353,37 @@ class SocketTest(unittest.TestCase):
             mock_selector.select.assert_called()
             mock_selector.close.assert_called()
 
+    def test_recv_selector_timeout_on_would_block(self):
+        mock_sock = Mock()
+        mock_sock.recv.side_effect = OSError(errno.EWOULDBLOCK, "would block")
+        mock_sock.gettimeout.return_value = 1.0
+
+        class FakeSelector:
+            def register(self, *args, **kwargs):
+                pass
+
+            def select(self, timeout):
+                return []
+
+            def close(self):
+                pass
+
+        with patch("selectors.DefaultSelector", return_value=FakeSelector()):
+            with self.assertRaises(WebSocketTimeoutException):
+                recv(mock_sock, 10)
+
+    def test_send_socket_timeout_error(self):
+        mock_sock = Mock()
+        timeout_exc = socket.timeout("timed out")
+        timeout_exc.args = ("timed out",)
+        mock_sock.send.side_effect = timeout_exc
+        mock_sock.gettimeout.return_value = 5.0
+
+        with self.assertRaises(WebSocketTimeoutException) as cm:
+            send(mock_sock, b"payload")
+
+        self.assertIn("timed out", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

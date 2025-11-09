@@ -5,13 +5,20 @@ import os.path
 import socket
 import ssl
 import unittest
+from types import SimpleNamespace
+from unittest import mock
 
 import websocket
-from websocket._exceptions import WebSocketProxyException, WebSocketException
+from websocket._exceptions import (
+    WebSocketAddressException,
+    WebSocketProxyException,
+    WebSocketException,
+)
 from websocket._http import (
     _get_addrinfo_list,
     _start_proxied_socket,
     _tunnel,
+    _wrap_sni_socket,
     connect,
     proxy_info,
     read_headers,
@@ -324,6 +331,66 @@ class HttpTest(unittest.TestCase):
             ).auth[1],
             "my_pass321",
         )
+
+
+class HttpPureUnitTests(unittest.TestCase):
+    def test_get_addrinfo_list_uses_proxy_host(self):
+        proxy = proxy_info(http_proxy_host="proxy.example", http_proxy_port=8080, proxy_type="http")
+
+        with mock.patch("websocket._http.socket.getaddrinfo", return_value=[("addr",)]) as mocked_getaddrinfo:
+            addrinfo, need_tunnel, auth = _get_addrinfo_list(
+                "realhost.example", 443, True, proxy
+            )
+
+        self.assertTrue(need_tunnel)
+        self.assertIsNone(auth)
+        mocked_getaddrinfo.assert_called_once_with(
+            "proxy.example", 8080, 0, socket.SOCK_STREAM, socket.SOL_TCP
+        )
+        self.assertEqual(addrinfo, [("addr",)])
+
+    def test_get_addrinfo_list_wraps_gaierror(self):
+        proxy = proxy_info()
+
+        with mock.patch(
+            "websocket._http.socket.getaddrinfo", side_effect=socket.gaierror("boom")
+        ):
+            with self.assertRaises(WebSocketAddressException):
+                _get_addrinfo_list("example.com", 80, False, proxy)
+
+    def test_wrap_sni_socket_raises_for_missing_ca_file(self):
+        dummy_sock = mock.Mock()
+        sslopt = {"cert_reqs": ssl.CERT_REQUIRED, "ca_certs": "/does/not/exist"}
+
+        with mock.patch(
+            "websocket._http.ssl.SSLContext.load_verify_locations",
+            side_effect=FileNotFoundError("missing"),
+        ):
+            with self.assertRaises(WebSocketException) as ctx:
+                _wrap_sni_socket(dummy_sock, sslopt, "example.com", True)
+
+        self.assertIn("SSL CA certificate loading failed", str(ctx.exception))
+
+    def test_start_proxied_socket_requires_python_socks(self):
+        proxy = proxy_info(
+            http_proxy_host="127.0.0.1", http_proxy_port=1080, proxy_type="socks5"
+        )
+        options = SimpleNamespace(sslopt={})
+
+        with mock.patch("websocket._http.HAVE_PYTHON_SOCKS", False):
+            with self.assertRaises(WebSocketException):
+                _start_proxied_socket("wss://example.com", options, proxy)
+
+    def test_tunnel_raises_for_non_200(self):
+        fake_socket = object()
+
+        with mock.patch("websocket._http.send") as send_mock, mock.patch(
+            "websocket._http.read_headers", return_value=(403, {}, "Forbidden")
+        ):
+            with self.assertRaises(WebSocketProxyException):
+                _tunnel(fake_socket, "example.com", 443, ("user", "pass"))
+
+        send_mock.assert_called()
 
 
 if __name__ == "__main__":
