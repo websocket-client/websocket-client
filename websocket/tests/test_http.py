@@ -219,7 +219,7 @@ class HttpTest(unittest.TestCase):
         proxy_instance.connect.return_value = proxied_socket
 
         with mock.patch("websocket._http.HAVE_PYTHON_SOCKS", True), mock.patch(
-            "websocket._http.Proxy"
+            "websocket._http.Proxy", create=True
         ) as proxy_cls, mock.patch(
             "websocket._http._ssl_socket", return_value=ssl_wrapped_socket
         ) as ssl_socket:
