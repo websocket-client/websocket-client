@@ -2,12 +2,17 @@ import socket
 import struct
 import threading
 import time
-from typing import Optional, Union
+from typing import Any, Callable, Optional, Type, Union
 
 # websocket modules
 from ._abnf import ABNF, STATUS_NORMAL, continuous_frame, frame_buffer
-from ._exceptions import WebSocketProtocolException, WebSocketConnectionClosedException
-from ._handshake import SUPPORTED_REDIRECT_STATUSES, handshake
+from ._exceptions import (
+    WebSocketProtocolException,
+    WebSocketConnectionClosedException,
+    WebSocketTimeoutException,
+    WebSocketException,
+)
+from ._handshake import SUPPORTED_REDIRECT_STATUSES, handshake, handshake_response
 from ._http import connect, proxy_info
 from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
 from ._socket import getdefaulttimeout, recv, send, sock_opt
@@ -19,7 +24,7 @@ from ._dispatcher import DispatcherBase, WrappedDispatcher
 _core.py
 websocket - WebSocket client library for Python
 
-Copyright 2024 engn33r
+Copyright 2025 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,15 +82,15 @@ class WebSocket:
 
     def __init__(
         self,
-        get_mask_key=None,
-        sockopt=None,
-        sslopt=None,
+        get_mask_key: Optional[Callable] = None,
+        sockopt: Optional[list] = None,
+        sslopt: Optional[dict] = None,
         fire_cont_frame: bool = False,
         enable_multithread: bool = True,
         skip_utf8_validation: bool = False,
-        dispatcher: Union[DispatcherBase, WrappedDispatcher] = None,
-        **_,
-    ):
+        dispatcher: Optional[Union[DispatcherBase, WrappedDispatcher]] = None,
+        **_: Any,
+    ) -> None:
         """
         Initialize WebSocket object.
 
@@ -95,7 +100,7 @@ class WebSocket:
             Optional dict object for ssl socket options. See FAQ for details.
         """
         self.sock_opt = sock_opt(sockopt, sslopt)
-        self.handshake_response = None
+        self.handshake_response: Optional[handshake_response] = None
         self.sock: Optional[socket.socket] = None
 
         self.connected = False
@@ -109,8 +114,8 @@ class WebSocket:
             self.lock = threading.Lock()
             self.readlock = threading.Lock()
         else:
-            self.lock = NoLock()
-            self.readlock = NoLock()
+            self.lock = NoLock()  # type: ignore[assignment]
+            self.readlock = NoLock()  # type: ignore[assignment]
 
     def __iter__(self):
         """
@@ -126,6 +131,8 @@ class WebSocket:
         return self.__next__()
 
     def fileno(self):
+        if self.sock is None:
+            raise WebSocketException("Connection not established")
         return self.sock.fileno()
 
     def set_mask_key(self, func):
@@ -143,7 +150,7 @@ class WebSocket:
         """
         self.get_mask_key = func
 
-    def gettimeout(self) -> Union[float, int, None]:
+    def gettimeout(self) -> Optional[Union[float, int]]:
         """
         Get the websocket timeout (in seconds) as an int or float
 
@@ -154,7 +161,7 @@ class WebSocket:
         """
         return self.sock_opt.timeout
 
-    def settimeout(self, timeout: Union[float, int, None]):
+    def settimeout(self, timeout: Optional[Union[float, int]]) -> None:
         """
         Set the timeout to the websocket.
 
@@ -169,7 +176,7 @@ class WebSocket:
 
     timeout = property(gettimeout, settimeout)
 
-    def getsubprotocol(self):
+    def getsubprotocol(self) -> Optional[str]:
         """
         Get subprotocol
         """
@@ -180,7 +187,7 @@ class WebSocket:
 
     subprotocol = property(getsubprotocol)
 
-    def getstatus(self):
+    def getstatus(self) -> Optional[int]:
         """
         Get handshake status
         """
@@ -191,7 +198,7 @@ class WebSocket:
 
     status = property(getstatus)
 
-    def getheaders(self):
+    def getheaders(self) -> Optional[dict]:
         """
         Get handshake response header
         """
@@ -203,7 +210,7 @@ class WebSocket:
     def is_ssl(self):
         try:
             return isinstance(self.sock, ssl.SSLSocket)
-        except:
+        except (AttributeError, NameError):
             return False
 
     headers = property(getheaders)
@@ -233,6 +240,8 @@ class WebSocket:
             Default value "Upgrade" set in _handshake.py
         suppress_origin: bool
             Suppress outputting origin header.
+        suppress_host: bool
+            Suppress outputting host header.
         host: str
             Custom host header string.
         timeout: int or float
@@ -263,7 +272,10 @@ class WebSocket:
         try:
             self.handshake_response = handshake(self.sock, url, *addrs, **options)
             for _ in range(options.pop("redirect_limit", 3)):
-                if self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES:
+                if (
+                    self.handshake_response is not None
+                    and self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES
+                ):
                     url = self.handshake_response.headers["location"]
                     self.sock.close()
                     self.sock, addrs = connect(
@@ -311,7 +323,7 @@ class WebSocket:
         """
         return self.send(data, ABNF.OPCODE_BINARY)
 
-    def send_frame(self, frame) -> int:
+    def send_frame(self, frame: ABNF) -> int:
         """
         Send the data frame.
 
@@ -337,8 +349,8 @@ class WebSocket:
             trace(f"++Sent decoded: {frame.__str__()}")
         with self.lock:
             while data:
-                l = self._send(data)
-                data = data[l:]
+                bytes_sent = self._send(data)
+                data = data[bytes_sent:]
 
         return length
 
@@ -353,7 +365,7 @@ class WebSocket:
         """
         return self.send(payload, ABNF.OPCODE_BINARY)
 
-    def ping(self, payload: Union[str, bytes] = ""):
+    def ping(self, payload: Union[str, bytes] = "") -> None:
         """
         Send ping data.
 
@@ -366,7 +378,7 @@ class WebSocket:
             payload = payload.encode("utf-8")
         self.send(payload, ABNF.OPCODE_PING)
 
-    def pong(self, payload: Union[str, bytes] = ""):
+    def pong(self, payload: Union[str, bytes] = "") -> None:
         """
         Send pong data.
 
@@ -480,7 +492,9 @@ class WebSocket:
         """
         return self.frame_buffer.recv_frame()
 
-    def send_close(self, status: int = STATUS_NORMAL, reason: bytes = b""):
+    def send_close(
+        self, status: int = STATUS_NORMAL, reason: Union[str, bytes] = b""
+    ) -> None:
         """
         Send close data to the server.
 
@@ -493,10 +507,25 @@ class WebSocket:
         """
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
-        self.connected = False
-        self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
 
-    def close(self, status: int = STATUS_NORMAL, reason: bytes = b"", timeout: int = 3):
+        if reason is None:
+            reason_bytes = b""
+        elif isinstance(reason, str):
+            reason_bytes = reason.encode("utf-8")
+        elif isinstance(reason, bytes):
+            reason_bytes = reason
+        else:
+            reason_bytes = bytes(reason)
+
+        self.connected = False
+        self.send(struct.pack("!H", status) + reason_bytes, ABNF.OPCODE_CLOSE)
+
+    def close(
+        self,
+        status: int = STATUS_NORMAL,
+        reason: Union[str, bytes] = b"",
+        timeout: int = 3,
+    ) -> None:
         """
         Close Websocket object
 
@@ -518,6 +547,8 @@ class WebSocket:
         try:
             self.connected = False
             self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
+            if self.sock is None:
+                return
             sock_timeout = self.sock.gettimeout()
             self.sock.settimeout(timeout)
             start_time = time.time()
@@ -533,10 +564,15 @@ class WebSocket:
                         elif recv_status != STATUS_NORMAL:
                             error(f"close status: {repr(recv_status)}")
                     break
-                except:
+                except (
+                    WebSocketConnectionClosedException,
+                    WebSocketTimeoutException,
+                    struct.error,
+                ):
                     break
-            self.sock.settimeout(sock_timeout)
-            self.sock.shutdown(socket.SHUT_RDWR)
+            if self.sock is not None:
+                self.sock.settimeout(sock_timeout)
+                self.sock.shutdown(socket.SHUT_RDWR)
         except:
             pass
 
@@ -546,7 +582,7 @@ class WebSocket:
         """
         Low-level asynchronous abort, wakes up other threads that are waiting in recv_*
         """
-        if self.connected:
+        if self.connected and self.sock is not None:
             self.sock.shutdown(socket.SHUT_RDWR)
 
     def shutdown(self):
@@ -554,16 +590,29 @@ class WebSocket:
         close socket, immediately.
         """
         if self.sock:
-            self.sock.close()
-            self.sock = None
-            self.connected = False
+            try:
+                # Check if socket is still open before closing
+                if not self.sock._closed:
+                    self.sock.close()
+            except (OSError, AttributeError):
+                # Socket already closed or invalid file descriptor - this can happen
+                # during reconnection scenarios when network failures occur
+                debug("Socket already closed during shutdown")
+                pass
+            finally:
+                self.sock = None
+                self.connected = False
 
-    def _send(self, data: Union[str, bytes]):
+    def _send(self, data: Union[str, bytes]) -> int:
+        if self.sock is None:
+            raise WebSocketConnectionClosedException("socket is already closed.")
         if self.dispatcher:
             return self.dispatcher.send(self.sock, data)
         return send(self.sock, data)
 
     def _recv(self, bufsize):
+        if self.sock is None:
+            raise WebSocketConnectionClosedException("Connection is closed")
         try:
             return recv(self.sock, bufsize)
         except WebSocketConnectionClosedException:
@@ -574,7 +623,12 @@ class WebSocket:
             raise
 
 
-def create_connection(url: str, timeout=None, class_=WebSocket, **options):
+def create_connection(
+    url: str,
+    timeout: Optional[Union[float, int]] = None,
+    class_: Type[WebSocket] = WebSocket,
+    **options: Any,
+) -> WebSocket:
     """
     Connect to url and return websocket object.
 

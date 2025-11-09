@@ -30,11 +30,11 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 project = "websocket-client"
-copyright = "2024"
+copyright = "2025"
 author = "liris"
 
 # The full version, including alpha/beta/rc tags
-release = "1.8.0"
+release = "1.9.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -62,7 +62,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 
 # -- Options for HTML output -------------------------------------------------

@@ -1,11 +1,10 @@
 import inspect
-import selectors
 import socket
 import threading
 import time
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
-from . import _logging
+from ._logging import debug, error, info, warning
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import (
@@ -15,13 +14,13 @@ from ._exceptions import (
 )
 from ._ssl_compat import SSLEOFError
 from ._url import parse_url
-from ._dispatcher import *
+from ._dispatcher import Dispatcher, DispatcherBase, SSLDispatcher, WrappedDispatcher
 
 """
 _app.py
 websocket - WebSocket client library for Python
 
-Copyright 2024 engn33r
+Copyright 2025 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,7 +40,7 @@ __all__ = ["WebSocketApp"]
 RECONNECT = 0
 
 
-def setReconnect(reconnectInterval: int) -> None:
+def set_reconnect(reconnectInterval: int) -> None:
     global RECONNECT
     RECONNECT = reconnectInterval
 
@@ -54,7 +53,13 @@ class WebSocketApp:
     def __init__(
         self,
         url: str,
-        header: Union[list, dict, Callable, None] = None,
+        header: Optional[
+            Union[
+                list[str],
+                dict[str, str],
+                Callable[[], Union[list[str], dict[str, str]]],
+            ]
+        ] = None,
         on_open: Optional[Callable[["WebSocketApp"], None]] = None,
         on_reconnect: Optional[Callable[["WebSocketApp"], None]] = None,
         on_message: Optional[Callable[["WebSocketApp", Any], None]] = None,
@@ -66,7 +71,7 @@ class WebSocketApp:
         keep_running: bool = True,
         get_mask_key: Optional[Callable] = None,
         cookie: Optional[str] = None,
-        subprotocols: Optional[list] = None,
+        subprotocols: Optional[list[str]] = None,
         on_data: Optional[Callable] = None,
         socket: Optional[socket.socket] = None,
     ) -> None:
@@ -156,7 +161,7 @@ class WebSocketApp:
         self.ping_thread: Optional[threading.Thread] = None
         self.stop_ping: Optional[threading.Event] = None
         self.ping_interval = float(0)
-        self.ping_timeout: Union[float, int, None] = None
+        self.ping_timeout: Optional[Union[float, int]] = None
         self.ping_payload = ""
         self.subprotocols = subprotocols
         self.prepared_socket = socket
@@ -194,7 +199,7 @@ class WebSocketApp:
         if not self.sock or self.sock.send(data, ABNF.OPCODE_BINARY) == 0:
             raise WebSocketConnectionClosedException("Connection is already closed.")
 
-    def close(self, **kwargs) -> None:
+    def close(self, **kwargs: Any) -> None:
         """
         Close websocket connection.
         """
@@ -215,42 +220,59 @@ class WebSocketApp:
             self.stop_ping.set()
         if self.ping_thread and self.ping_thread.is_alive():
             self.ping_thread.join(3)
+            # Handle thread leak - if thread doesn't terminate within timeout,
+            # force cleanup and log warning instead of abandoning the thread
+            if self.ping_thread.is_alive():
+                warning(
+                    "Ping thread failed to terminate within 3 seconds, "
+                    "forcing cleanup. Thread may be blocked."
+                )
+                # Force cleanup by clearing references even if thread is still alive
+                # The daemon thread will eventually be cleaned up by Python's GC
+                # but we prevent resource leaks by not holding references
+
+        # Always clean up references regardless of thread state
+        self.ping_thread = None
+        self.stop_ping = None
         self.last_ping_tm = self.last_pong_tm = float(0)
 
     def _send_ping(self) -> None:
-        if self.stop_ping.wait(self.ping_interval) or self.keep_running is False:
+        if self.stop_ping is None:
+            return
+        if self.keep_running is False:
             return
         while not self.stop_ping.wait(self.ping_interval) and self.keep_running is True:
             if self.sock:
                 self.last_ping_tm = time.time()
                 try:
-                    _logging.debug("Sending ping")
+                    debug("Sending ping")
                     self.sock.ping(self.ping_payload)
                 except Exception as e:
-                    _logging.debug(f"Failed to send ping: {e}")
+                    debug(f"Failed to send ping: {e}")
 
     def ready(self):
         return self.sock and self.sock.connected
 
     def run_forever(
         self,
-        sockopt: tuple = None,
-        sslopt: dict = None,
+        sockopt: Optional[list] = None,
+        sslopt: Optional[dict] = None,
         ping_interval: Union[float, int] = 0,
-        ping_timeout: Union[float, int, None] = None,
+        ping_timeout: Optional[Union[float, int]] = None,
         ping_payload: str = "",
-        http_proxy_host: str = None,
-        http_proxy_port: Union[int, str] = None,
-        http_no_proxy: list = None,
-        http_proxy_auth: tuple = None,
+        http_proxy_host: Optional[str] = None,
+        http_proxy_port: Optional[Union[int, str]] = None,
+        http_no_proxy: Optional[list] = None,
+        http_proxy_auth: Optional[tuple] = None,
         http_proxy_timeout: Optional[float] = None,
         skip_utf8_validation: bool = False,
-        host: str = None,
-        origin: str = None,
-        dispatcher=None,
+        host: Optional[str] = None,
+        origin: Optional[str] = None,
+        dispatcher: Any = None,
         suppress_origin: bool = False,
-        proxy_type: str = None,
-        reconnect: int = None,
+        suppress_host: bool = False,
+        proxy_type: Optional[str] = None,
+        reconnect: Optional[int] = None,
     ) -> bool:
         """
         Run event loop for WebSocket framework.
@@ -293,6 +315,8 @@ class WebSocketApp:
             customize reading data from socket.
         suppress_origin: bool
             suppress outputting origin header.
+        suppress_host: bool
+            suppress outputting host header.
         proxy_type: str
             type of proxy from: http, socks4, socks4a, socks5, socks5h
         reconnect: int
@@ -315,7 +339,7 @@ class WebSocketApp:
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
         if not sockopt:
-            sockopt = ()
+            sockopt = []
         if not sslopt:
             sslopt = {}
         if self.sock:
@@ -327,7 +351,7 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.keep_running = True
 
-        def teardown(close_frame: ABNF = None):
+        def teardown(close_frame: Optional[ABNF] = None) -> None:
             """
             Tears down the connection.
 
@@ -347,17 +371,23 @@ class WebSocketApp:
 
             self._stop_ping_thread()
             self.keep_running = False
+
             if self.sock:
-                self.sock.close()
+                # in cases like handleDisconnect, the "on_error" callback is called first. If the WebSocketApp
+                # is being used in a multithreaded application, we nee to make sure that "self.sock" is cleared
+                # before calling close, otherwise logic built around the sock being set can cause issues -
+                # specifically calling "run_forever" again, since is checks if "self.sock" is set.
+                current_sock = self.sock
+                self.sock = None
+                current_sock.close()
+
             close_status_code, close_reason = self._get_close_args(
                 close_frame if close_frame else None
             )
-            self.sock = None
-
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
-        def setSock(reconnecting: bool = False) -> None:
+        def initialize_socket(reconnecting: bool = False) -> None:
             if reconnecting and self.sock:
                 self.sock.shutdown()
 
@@ -388,11 +418,12 @@ class WebSocketApp:
                     host=host,
                     origin=origin,
                     suppress_origin=suppress_origin,
+                    suppress_host=suppress_host,
                     proxy_type=proxy_type,
                     socket=self.prepared_socket,
                 )
 
-                _logging.info("Websocket connected")
+                info("Websocket connected")
 
                 if self.ping_interval:
                     self._start_ping_thread()
@@ -402,6 +433,7 @@ class WebSocketApp:
                 else:
                     self._callback(self.on_open)
 
+                assert dispatcher is not None
                 dispatcher.read(self.sock.sock, read, check)
             except (
                 WebSocketConnectionClosedException,
@@ -414,7 +446,11 @@ class WebSocketApp:
 
         def read() -> bool:
             if not self.keep_running:
-                return teardown()
+                teardown()
+                return False
+
+            if self.sock is None:
+                return False
 
             try:
                 op_code, frame = self.sock.recv_data_frame(True)
@@ -478,11 +514,32 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
                 str,
-            ] = "closed unexpectedly"
+                "ABNF",  # Now explicitly handle ABNF frame objects
+            ] = "closed unexpectedly",
         ) -> bool:
+            close_frame: Optional[ABNF] = None
             if type(e) is str:
                 e = WebSocketConnectionClosedException(e)
-            return handleDisconnect(e)
+            elif isinstance(e, ABNF) and e.opcode == ABNF.OPCODE_CLOSE:
+                close_frame = e
+                # Convert close frames to a descriptive exception for on_error callback
+                close_status_code, close_reason = self._parse_close_frame(e)
+                reason_parts: List[str] = []
+                if close_status_code is None:
+                    message = "Connection closed"
+                elif close_status_code == 1000:
+                    message = "Connection closed normally (code 1000)"
+                else:
+                    message = f"Connection closed (code {close_status_code})"
+                if close_reason:
+                    reason_parts.append(close_reason)
+                if reason_parts:
+                    message = f"{message}: {'; '.join(reason_parts)}"
+                converted = WebSocketConnectionClosedException(message)
+                setattr(converted, "status_code", close_status_code)
+                setattr(converted, "reason", close_reason)
+                e = converted
+            return handleDisconnect(e, bool(reconnect), close_frame=close_frame)  # type: ignore[arg-type]
 
         def handleDisconnect(
             e: Union[
@@ -492,26 +549,30 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
             ],
+            reconnecting: bool = False,
+            close_frame: Optional[ABNF] = None,
         ) -> bool:
             self.has_errored = True
             self._stop_ping_thread()
             self._callback(self.on_error, e)
 
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
-                teardown()
+                teardown(close_frame)
                 # Propagate further
                 raise
 
             if reconnect:
-                _logging.info(f"{e} - reconnect")
+                info(f"{e} - reconnect")
                 if custom_dispatcher:
-                    _logging.debug(
+                    debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
-                    dispatcher.reconnect(reconnect, setSock)
+                    assert dispatcher is not None
+                    dispatcher.reconnect(reconnect, initialize_socket)
             else:
-                _logging.error(f"{e} - goodbye")
-                teardown()
+                error(f"{e} - goodbye")
+                teardown(close_frame)
+            return self.has_errored
 
         custom_dispatcher = bool(dispatcher)
         dispatcher = self.create_dispatcher(
@@ -519,15 +580,15 @@ class WebSocketApp:
         )
 
         try:
-            setSock()
+            initialize_socket()
             if not custom_dispatcher and reconnect:
                 while self.keep_running:
-                    _logging.debug(
+                    debug(
                         f"Calling dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
-                    dispatcher.reconnect(reconnect, setSock)
+                    dispatcher.reconnect(reconnect, initialize_socket)
         except (KeyboardInterrupt, Exception) as e:
-            _logging.info(f"tearing down on exception {e}")
+            info(f"tearing down on exception {e}")
             teardown()
         finally:
             if not custom_dispatcher:
@@ -538,7 +599,7 @@ class WebSocketApp:
 
     def create_dispatcher(
         self,
-        ping_timeout: Union[float, int, None],
+        ping_timeout: Optional[Union[float, int]],
         dispatcher: Optional[DispatcherBase] = None,
         is_ssl: bool = False,
         handleDisconnect: Callable = None,
@@ -550,35 +611,64 @@ class WebSocketApp:
             return SSLDispatcher(self, timeout)
         return Dispatcher(self, timeout)
 
-    def _get_close_args(self, close_frame: ABNF) -> list:
+    def _get_close_args(
+        self, close_frame: Optional[ABNF]
+    ) -> List[Optional[Union[int, str]]]:
         """
         _get_close_args extracts the close code and reason from the close body
         if it exists (RFC6455 says WebSocket Connection Close Code is optional)
         """
         # Need to catch the case where close_frame is None
         # Otherwise the following if statement causes an error
-        if not self.on_close or not close_frame:
+        if not close_frame:
             return [None, None]
+        close_status_code, reason = self._parse_close_frame(close_frame)
+        if not self.on_close:
+            return [None, None]
+        return [close_status_code, reason]
 
-        # Extract close frame status code
-        if close_frame.data and len(close_frame.data) >= 2:
-            close_status_code = 256 * int(close_frame.data[0]) + int(
-                close_frame.data[1]
-            )
-            reason = close_frame.data[2:]
-            if isinstance(reason, bytes):
-                reason = reason.decode("utf-8")
-            return [close_status_code, reason]
+    def _parse_close_frame(
+        self, close_frame: Optional[ABNF]
+    ) -> Tuple[Optional[int], Optional[str]]:
+        """
+        Parse a close frame into status code and UTF-8 reason text.
+        """
+        if not close_frame or not getattr(close_frame, "data", None):
+            return (None, None)
+
+        data = close_frame.data
+        if isinstance(data, bytes):
+            data_bytes = data
+        elif isinstance(data, str):
+            data_bytes = data.encode("utf-8")
         else:
-            # Most likely reached this because len(close_frame_data.data) < 2
-            return [None, None]
+            data_bytes = bytes(data)
 
-    def _callback(self, callback, *args) -> None:
+        if len(data_bytes) < 2:
+            return (None, None)
+
+        close_status_code = 256 * int(data_bytes[0]) + int(data_bytes[1])
+        reason_bytes = data_bytes[2:]
+
+        reason: Optional[str]
+        if not reason_bytes:
+            reason = None
+        else:
+            try:
+                reason = reason_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                reason = reason_bytes.decode("utf-8", errors="replace")
+
+        return (close_status_code, reason)
+
+    def _callback(self, callback: Optional[Callable], *args: Any) -> None:
         if callback:
             try:
                 callback(self, *args)
 
             except Exception as e:
-                _logging.error(f"error from callback {callback}: {e}")
-                if self.on_error:
+                error(f"error from callback {callback}: {e}")
+                # Bug fix: Prevent infinite recursion by not calling on_error
+                # when the failing callback IS on_error itself
+                if self.on_error and callback is not self.on_error:
                     self.on_error(self, e)

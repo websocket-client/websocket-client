@@ -1,6 +1,18 @@
 ChangeLog
 ============
 
+- 1.9.0
+  - Remove Python 3.8 support (EOL), add Python 3.13 (5f25030)
+  - Remove localhost and 127.0.0.1 from default NO_PROXY list (#994)
+  - Support IPv6 CIDRs in the no_proxy option (#1033)
+  - Fix thread safety condition in `teardown()` to improve `run_forever()` (#1015)
+  - Fix #1024 by chunking data, recursion in on_error callback, thread leak in `_stop_ping_thread()`, avoid implicit None in `recv()` (#1036)
+  - Avoid bare except clauses for better error handling (#1036)
+  - Fix async (#983)
+  - Resolve mypy type errors (#996, #1006, 813d570)
+  - Test coverage improvements (#1035, #1036)
+  - flake8 linting improvements (#1034)
+
 - 1.8.0
   - Added `on_reconnect` parameter to WebSocketApp to handle callback ambiguity (#972)
   - Improve handling of SSLEOFError and use reconnect bool (#961)

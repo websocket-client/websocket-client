@@ -1,0 +1,17 @@
+name: Formatting with black
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Run black
+        uses: psf/black@stable
+        with:
+          options: "--check"
+          src: "."

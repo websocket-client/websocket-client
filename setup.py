@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 setup.py
 websocket - WebSocket client library for Python
 
-Copyright 2024 engn33r
+Copyright 2025 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = "1.8.0"
+VERSION = "1.9.0"
 
-install_requires = []
-tests_require = []
+install_requires: list[str] = []
+tests_require: list[str] = []
 
 setup(
     name="websocket-client",
@@ -37,7 +37,7 @@ setup(
     license="Apache-2.0",
     url="https://github.com/websocket-client/websocket-client.git",
     download_url="https://github.com/websocket-client/websocket-client/releases",
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     extras_require={
         "test": ["pytest", "websockets"],
         "optional": ["python-socks", "wsaccel"],
@@ -47,7 +47,6 @@ setup(
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
