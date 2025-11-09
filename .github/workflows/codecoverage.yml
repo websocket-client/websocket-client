@@ -30,12 +30,10 @@ jobs:
           python3 -c "import setuptools; print('Setup tools version'); print(setuptools.__version__)"
           pip3 install -e .
           pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc
-          coverage report
       - name: Install wsaccel and python-socks, then run all test cases for coverage collection
         run: |
           pip3 install wsaccel python-socks
           pytest -v -r f --cov=websocket websocket/tests --cov-config=.coveragerc --cov-append
-          coverage report
         env:
           TEST_WITH_INTERNET: 1
           LOCAL_WS_SERVER_PORT: 8765
