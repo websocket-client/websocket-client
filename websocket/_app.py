@@ -554,8 +554,13 @@ class WebSocketApp:
         ) -> bool:
             self.has_errored = True
             self._stop_ping_thread()
-            if not reconnecting:
-                self._callback(self.on_error, e)
+
+            # Add reconnecting context to exception for user visibility (fixes issue #970)
+            # This allows users to distinguish between initial failures and reconnect attempts
+            if not isinstance(e, (KeyboardInterrupt, SystemExit)):
+                setattr(e, "is_reconnect_attempt", reconnecting)
+
+            self._callback(self.on_error, e)
 
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
                 teardown(close_frame)
@@ -563,7 +568,9 @@ class WebSocketApp:
                 raise
 
             if reconnect:
-                info(f"{e} - reconnect")
+                info(
+                    f"{e} - {'reconnect attempt' if reconnecting else 'initial reconnect'}"
+                )
                 if custom_dispatcher:
                     debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
