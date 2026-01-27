@@ -168,6 +168,7 @@ class WebSocketApp:
         self.has_errored = False
         self.has_done_teardown = False
         self.has_done_teardown_lock = threading.Lock()
+        self.last_close_frame: Optional[ABNF] = None
 
     def send(self, data: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT) -> None:
         """
@@ -206,6 +207,9 @@ class WebSocketApp:
         self.keep_running = False
         if self.sock:
             self.sock.close(**kwargs)
+            # Capture the peer's close frame before clearing socket reference
+            if self.sock.close_frame is not None:
+                self.last_close_frame = self.sock.close_frame
             self.sock = None
 
     def _start_ping_thread(self) -> None:
@@ -381,15 +385,18 @@ class WebSocketApp:
                 self.sock = None
                 current_sock.close()
 
-            close_status_code, close_reason = self._get_close_args(
-                close_frame if close_frame else None
-            )
+            # Use stored close frame as fallback if none provided (e.g., client-initiated close)
+            effective_close_frame = close_frame if close_frame else self.last_close_frame
+            close_status_code, close_reason = self._get_close_args(effective_close_frame)
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
         def initialize_socket(reconnecting: bool = False) -> None:
             if reconnecting and self.sock:
                 self.sock.shutdown()
+
+            # Reset close frame to avoid stale data from previous connections
+            self.last_close_frame = None
 
             self.sock = WebSocket(
                 self.get_mask_key,

@@ -104,6 +104,7 @@ class WebSocket:
         self.sock: Optional[socket.socket] = None
 
         self.connected = False
+        self.close_frame: Optional[ABNF] = None
         self.get_mask_key = get_mask_key
         # These buffer over the build-up of a single frame.
         self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
@@ -544,6 +545,9 @@ class WebSocket:
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
 
+        # Reset close_frame to avoid stale data from previous connections
+        self.close_frame = None
+
         try:
             self.connected = False
             self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
@@ -557,6 +561,8 @@ class WebSocket:
                     frame = self.recv_frame()
                     if frame.opcode != ABNF.OPCODE_CLOSE:
                         continue
+                    # Store the peer's close frame for access by higher-level APIs
+                    self.close_frame = frame
                     if isEnabledForError():
                         recv_status = struct.unpack("!H", frame.data[0:2])[0]
                         if recv_status >= 3000 and recv_status <= 4999:
