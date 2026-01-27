@@ -375,7 +375,7 @@ class frame_buffer:
                 self.recv_header()
             if self.header is None:
                 raise WebSocketProtocolException("Header not received")
-            (fin, rsv1, rsv2, rsv3, opcode, has_mask, _) = self.header
+            fin, rsv1, rsv2, rsv3, opcode, has_mask, _ = self.header
 
             # Frame length
             if self.needs_length():

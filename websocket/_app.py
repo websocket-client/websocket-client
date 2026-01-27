@@ -386,8 +386,12 @@ class WebSocketApp:
                 current_sock.close()
 
             # Use stored close frame as fallback if none provided (e.g., client-initiated close)
-            effective_close_frame = close_frame if close_frame else self.last_close_frame
-            close_status_code, close_reason = self._get_close_args(effective_close_frame)
+            effective_close_frame = (
+                close_frame if close_frame else self.last_close_frame
+            )
+            close_status_code, close_reason = self._get_close_args(
+                effective_close_frame
+            )
             # Finally call the callback AFTER all teardown is complete
             self._callback(self.on_close, close_status_code, close_reason)
 
