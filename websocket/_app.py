@@ -169,6 +169,8 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.has_done_teardown_lock = threading.Lock()
         self.last_close_frame: Optional[ABNF] = None
+        # Lock for thread safety
+        self._lock = threading.Lock()
 
     def send(self, data: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT) -> None:
         """
@@ -183,34 +185,57 @@ class WebSocketApp:
             Operation code of data. Default is OPCODE_TEXT.
         """
 
-        if not self.sock or self.sock.send(data, opcode) == 0:
+        # Local copy of socket for thread safety
+        sock = None
+        with self._lock:
+            if self.sock:
+                sock = self.sock
+
+        if not sock or sock.send(data, opcode) == 0:
             raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def send_text(self, text_data: str) -> None:
         """
         Sends UTF-8 encoded text.
         """
-        if not self.sock or self.sock.send(text_data, ABNF.OPCODE_TEXT) == 0:
+
+        # Local copy of socket for thread safety
+        sock = None
+        with self._lock:
+            if self.sock:
+                sock = self.sock
+
+        if not sock or sock.send(text_data, ABNF.OPCODE_TEXT) == 0:
             raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def send_bytes(self, data: Union[bytes, bytearray]) -> None:
         """
         Sends a sequence of bytes.
         """
-        if not self.sock or self.sock.send(data, ABNF.OPCODE_BINARY) == 0:
+
+        # Local copy of socket for thread safety
+        sock = None
+        with self._lock:
+            if self.sock:
+                sock = self.sock
+
+        if not sock or sock.send(data, ABNF.OPCODE_BINARY) == 0:
             raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def close(self, **kwargs: Any) -> None:
         """
         Close websocket connection.
         """
-        self.keep_running = False
-        if self.sock:
-            self.sock.close(**kwargs)
-            # Capture the peer's close frame before clearing socket reference
-            if self.sock.close_frame is not None:
-                self.last_close_frame = self.sock.close_frame
-            self.sock = None
+
+        # Lock all close operations for thread safety
+        with self._lock:
+            self.keep_running = False
+            if self.sock:
+                self.sock.close(**kwargs)
+                # Capture the peer's close frame before clearing socket reference
+                if self.sock.close_frame is not None:
+                    self.last_close_frame = self.sock.close_frame
+                self.sock = None
 
     def _start_ping_thread(self) -> None:
         self.last_ping_tm = self.last_pong_tm = float(0)
@@ -246,16 +271,18 @@ class WebSocketApp:
         if self.keep_running is False:
             return
         while not self.stop_ping.wait(self.ping_interval) and self.keep_running is True:
-            if self.sock:
-                self.last_ping_tm = time.time()
-                try:
-                    debug("Sending ping")
-                    self.sock.ping(self.ping_payload)
-                except Exception as e:
-                    debug(f"Failed to send ping: {e}")
+            with self._lock:
+                if self.sock:
+                    self.last_ping_tm = time.time()
+                    try:
+                        debug("Sending ping")
+                        self.sock.ping(self.ping_payload)
+                    except Exception as e:
+                        debug(f"Failed to send ping: {e}")
 
     def ready(self):
-        return self.sock and self.sock.connected
+        with self._lock:
+            return self.sock and self.sock.connected
 
     def run_forever(
         self,
@@ -376,14 +403,16 @@ class WebSocketApp:
             self._stop_ping_thread()
             self.keep_running = False
 
-            if self.sock:
-                # in cases like handleDisconnect, the "on_error" callback is called first. If the WebSocketApp
-                # is being used in a multithreaded application, we nee to make sure that "self.sock" is cleared
-                # before calling close, otherwise logic built around the sock being set can cause issues -
-                # specifically calling "run_forever" again, since is checks if "self.sock" is set.
-                current_sock = self.sock
-                self.sock = None
-                current_sock.close()
+            # Lock all close operations for thread safety
+            with self._lock:
+                if self.sock:
+                    # in cases like handleDisconnect, the "on_error" callback is called first. If the WebSocketApp
+                    # is being used in a multithreaded application, we nee to make sure that "self.sock" is cleared
+                    # before calling close, otherwise logic built around the sock being set can cause issues -
+                    # specifically calling "run_forever" again, since is checks if "self.sock" is set.
+                    current_sock = self.sock
+                    self.sock = None
+                    current_sock.close()
 
             # Use stored close frame as fallback if none provided (e.g., client-initiated close)
             effective_close_frame = (
@@ -396,21 +425,19 @@ class WebSocketApp:
             self._callback(self.on_close, close_status_code, close_reason)
 
         def initialize_socket(reconnecting: bool = False) -> None:
-            if reconnecting and self.sock:
-                self.sock.shutdown()
+            with self._lock:
+                if reconnecting and self.sock:
+                    self.sock.shutdown()
 
-            # Reset close frame to avoid stale data from previous connections
-            self.last_close_frame = None
-
-            self.sock = WebSocket(
-                self.get_mask_key,
-                sockopt=sockopt,
-                sslopt=sslopt,
-                fire_cont_frame=self.on_cont_message is not None,
-                skip_utf8_validation=skip_utf8_validation,
-                enable_multithread=True,
-                dispatcher=dispatcher,
-            )
+                self.sock = WebSocket(
+                    self.get_mask_key,
+                    sockopt=sockopt,
+                    sslopt=sslopt,
+                    fire_cont_frame=self.on_cont_message is not None,
+                    skip_utf8_validation=skip_utf8_validation,
+                    enable_multithread=True,
+                    dispatcher=dispatcher,
+                )
 
             self.sock.settimeout(getdefaulttimeout())
             try:
@@ -456,15 +483,19 @@ class WebSocketApp:
                 handleDisconnect(e, reconnecting)
 
         def read() -> bool:
-            if not self.keep_running:
-                teardown()
-                return False
+            # Local copy of socket for thread safety
+            with self._lock:
+                if not self.keep_running:
+                    teardown()
+                    return False
 
-            if self.sock is None:
-                return False
+                if self.sock is None:
+                    return False
+                    
+                sock = self.sock
 
             try:
-                op_code, frame = self.sock.recv_data_frame(True)
+                op_code, frame = sock.recv_data_frame(True)
             except (
                 WebSocketConnectionClosedException,
                 KeyboardInterrupt,
@@ -480,7 +511,8 @@ class WebSocketApp:
             elif op_code == ABNF.OPCODE_PING:
                 self._callback(self.on_ping, frame.data)
             elif op_code == ABNF.OPCODE_PONG:
-                self.last_pong_tm = time.time()
+                with self._lock:
+                    self.last_pong_tm = time.time()
                 self._callback(self.on_pong, frame.data)
             elif op_code == ABNF.OPCODE_CONT and self.on_cont_message:
                 self._callback(self.on_data, frame.data, frame.opcode, frame.fin)
@@ -496,18 +528,23 @@ class WebSocketApp:
 
         def check() -> bool:
             if self.ping_timeout:
+                # Copy timestamps for thread safety
+                with self._lock:
+                    last_ping_tm = self.last_ping_tm
+                    last_pong_tm = self.last_pong_tm
+                    
                 has_timeout_expired = (
-                    time.time() - self.last_ping_tm > self.ping_timeout
+                    time.time() - last_ping_tm > self.ping_timeout
                 )
                 has_pong_not_arrived_after_last_ping = (
-                    self.last_pong_tm - self.last_ping_tm < 0
+                    last_pong_tm - last_ping_tm < 0
                 )
                 has_pong_arrived_too_late = (
-                    self.last_pong_tm - self.last_ping_tm > self.ping_timeout
+                    last_pong_tm - last_ping_tm > self.ping_timeout
                 )
 
                 if (
-                    self.last_ping_tm
+                    last_ping_tm
                     and has_timeout_expired
                     and (
                         has_pong_not_arrived_after_last_ping
