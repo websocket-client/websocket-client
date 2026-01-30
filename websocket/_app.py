@@ -170,7 +170,7 @@ class WebSocketApp:
         self.has_done_teardown_lock = threading.Lock()
         self.last_close_frame: Optional[ABNF] = None
 
-    def send(self, data: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT) -> None:
+    def send(self, data: Union[bytes, str], opcode: int = ABNF.OPCODE_TEXT, use_frame_mask: bool = True) -> None:
         """
         send message
 
@@ -181,9 +181,11 @@ class WebSocketApp:
             data must be utf-8 string or unicode.
         opcode: int
             Operation code of data. Default is OPCODE_TEXT.
+        use_frame_mask: bool
+            Whether to mask the data in the websocket frame sent. Default is True.
         """
 
-        if not self.sock or self.sock.send(data, opcode) == 0:
+        if not self.sock or self.sock.send(data, opcode, use_frame_mask) == 0:
             raise WebSocketConnectionClosedException("Connection is already closed.")
 
     def send_text(self, text_data: str) -> None:
