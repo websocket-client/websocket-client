@@ -469,6 +469,7 @@ class WebSocketApp:
                 WebSocketConnectionClosedException,
                 KeyboardInterrupt,
                 SSLEOFError,
+                ConnectionResetError,
             ) as e:
                 if custom_dispatcher:
                     return closed(e)
