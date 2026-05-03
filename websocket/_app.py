@@ -12,7 +12,7 @@ from ._exceptions import (
     WebSocketException,
     WebSocketTimeoutException,
 )
-from ._ssl_compat import SSLEOFError
+from ._ssl_compat import SSLError
 from ._url import parse_url
 from ._dispatcher import Dispatcher, DispatcherBase, SSLDispatcher, WrappedDispatcher
 
@@ -468,8 +468,9 @@ class WebSocketApp:
             except (
                 WebSocketConnectionClosedException,
                 KeyboardInterrupt,
-                SSLEOFError,
+                SSLError,
                 ConnectionResetError,
+                WebSocketTimeoutException,
             ) as e:
                 if custom_dispatcher:
                     return closed(e)
