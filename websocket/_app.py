@@ -353,6 +353,7 @@ class WebSocketApp:
         self.ping_timeout = ping_timeout
         self.ping_payload = ping_payload
         self.has_done_teardown = False
+        self.has_errored = False
         self.keep_running = True
 
         def teardown(close_frame: Optional[ABNF] = None) -> None:
@@ -565,7 +566,8 @@ class WebSocketApp:
             reconnecting: bool = False,
             close_frame: Optional[ABNF] = None,
         ) -> bool:
-            self.has_errored = True
+            if close_frame is None:
+                self.has_errored = True
             self._stop_ping_thread()
             if not reconnecting:
                 self._callback(self.on_error, e)
