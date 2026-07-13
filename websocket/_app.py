@@ -355,6 +355,7 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.has_errored = False
         self.keep_running = True
+        self.reconnect_pending = False
 
         def teardown(close_frame: Optional[ABNF] = None) -> None:
             """
@@ -399,6 +400,9 @@ class WebSocketApp:
         def initialize_socket(reconnecting: bool = False) -> None:
             if reconnecting and self.sock:
                 self.sock.shutdown()
+
+            if reconnecting:
+                self.reconnect_pending = False
 
             # Reset close frame to avoid stale data from previous connections
             self.last_close_frame = None
@@ -579,7 +583,8 @@ class WebSocketApp:
 
             if reconnect:
                 info(f"{e} - reconnect")
-                if custom_dispatcher:
+                if custom_dispatcher and not self.reconnect_pending:
+                    self.reconnect_pending = True
                     debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
                     )
