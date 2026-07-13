@@ -176,3 +176,5 @@ class WrappedDispatcher:
         # Remove READ event and timer
         for ev in self.sock_events.pop(sock, []):
             ev.delete()
+        # Remove the WRITE and ERROR events
+        self.dispatcher.release_buff(sock)
