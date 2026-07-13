@@ -478,12 +478,16 @@ class WebSocketApp:
                 WebSocketTimeoutException,
             ) as e:
                 if custom_dispatcher:
-                    return closed(e)
+                    closed(e)
+                    # Stop reading from this connection
+                    return False
                 else:
                     raise e
 
             if op_code == ABNF.OPCODE_CLOSE:
-                return closed(frame)
+                closed(frame)
+                # Stop reading from this connection
+                return False
             elif op_code == ABNF.OPCODE_PING:
                 self._callback(self.on_ping, frame.data)
             elif op_code == ABNF.OPCODE_PONG:
