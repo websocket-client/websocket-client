@@ -3,6 +3,7 @@ import socket
 import inspect
 import selectors
 from typing import Any, TYPE_CHECKING, Callable, Optional, Union
+from collections import defaultdict
 
 if TYPE_CHECKING:
     from ._app import WebSocketApp
@@ -58,6 +59,9 @@ class DispatcherBase:
 
     def send(self, sock: socket.socket, data: Union[str, bytes]) -> int:
         return send(sock, data)
+
+    def release_sock(self, sock: socket.socket) -> None:
+        pass
 
 
 class Dispatcher(DispatcherBase):
@@ -142,6 +146,7 @@ class WrappedDispatcher:
         self.ping_timeout = ping_timeout
         self.dispatcher = dispatcher
         self.handleDisconnect = handleDisconnect
+        self.sock_events = defaultdict(list)
         dispatcher.signal(2, dispatcher.abort)  # keyboard interrupt
 
     def read(
@@ -150,9 +155,12 @@ class WrappedDispatcher:
         read_callback: Callable,
         check_callback: Callable,
     ) -> None:
-        self.dispatcher.read(sock, read_callback)
+        events = self.sock_events[sock]
+        read_ev = self.dispatcher.read(sock, read_callback)
+        events.append(read_ev)
         if self.ping_timeout:
-            self.timeout(self.ping_timeout, check_callback)
+            ping_ev = self.dispatcher.timeout(self.ping_timeout, check_callback)
+            events.append(ping_ev)
 
     def send(self, sock: socket.socket, data: Union[str, bytes]) -> int:
         self.dispatcher.buffwrite(sock, data, send, self.handleDisconnect)
@@ -163,3 +171,8 @@ class WrappedDispatcher:
 
     def reconnect(self, seconds: int, reconnector: Callable) -> None:
         self.timeout(seconds, reconnector, True)
+
+    def release_sock(self, sock: socket.socket) -> None:
+        # Remove READ event and timer
+        for ev in self.sock_events.pop(sock, []):
+            ev.delete()
