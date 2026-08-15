@@ -41,6 +41,16 @@ limitations under the License.
 
 __all__ = ["WebSocket", "create_connection"]
 
+def _normalize_close_reason(reason: Union[str, bytes, None]) -> bytes:
+    """Convert a close reason into the UTF-8 bytes for a close-frame payload."""
+    if reason is None:
+        return b""
+    if isinstance(reason, str):
+        return reason.encode("utf-8")
+    if isinstance(reason, bytes):
+        return reason
+    return bytes(reason)
+
 
 class WebSocket:
     """
@@ -509,14 +519,7 @@ class WebSocket:
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
 
-        if reason is None:
-            reason_bytes = b""
-        elif isinstance(reason, str):
-            reason_bytes = reason.encode("utf-8")
-        elif isinstance(reason, bytes):
-            reason_bytes = reason
-        else:
-            reason_bytes = bytes(reason)
+        reason_bytes = _normalize_close_reason(reason)
 
         self.connected = False
         self.send(struct.pack("!H", status) + reason_bytes, ABNF.OPCODE_CLOSE)
@@ -550,7 +553,10 @@ class WebSocket:
 
         try:
             self.connected = False
-            self.send(struct.pack("!H", status) + reason, ABNF.OPCODE_CLOSE)
+            self.send(
+                struct.pack("!H", status) + _normalize_close_reason(reason),
+                ABNF.OPCODE_CLOSE,
+            )
             if self.sock is None:
                 return
             sock_timeout = self.sock.gettimeout()

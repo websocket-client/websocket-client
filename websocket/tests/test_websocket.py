@@ -216,6 +216,24 @@ class WebSocketTest(unittest.TestCase):
         self.assertIsInstance(captured["payload"], (bytes, bytearray))
         self.assertTrue(captured["payload"].endswith(b"normal close"))
 
+    def test_close_accepts_text_reason(self):
+        sock = ws.WebSocket()
+        captured = {}
+
+        def fake_send(payload, opcode):
+            captured["payload"] = payload
+            captured["opcode"] = opcode
+            return len(payload)
+
+        sock.send = fake_send  # type: ignore[assignment]
+        sock.connected = True
+
+        sock.close(reason="normal close")
+
+        self.assertEqual(captured["opcode"], ws.ABNF.OPCODE_CLOSE)
+        self.assertIsInstance(captured["payload"], (bytes, bytearray))
+        self.assertTrue(captured["payload"].endswith(b"normal close"))
+
     def test_recv(self):
         # TODO: add longer frame data
         sock = ws.WebSocket()
