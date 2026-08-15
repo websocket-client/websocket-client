@@ -595,7 +595,12 @@ class WebSocket:
         Low-level asynchronous abort, wakes up other threads that are waiting in recv_*
         """
         if self.connected and self.sock is not None:
-            self.sock.shutdown(socket.SHUT_RDWR)
+            try:
+                self.sock.shutdown(socket.SHUT_RDWR)
+            except (OSError, AttributeError):
+                # Socket already closed or never connected
+                # abort() is best-effort, like shutdown()
+                debug("Socket already closed during abort")
 
     def shutdown(self):
         """

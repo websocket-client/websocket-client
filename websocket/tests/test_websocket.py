@@ -751,6 +751,17 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         sock.abort()
         socket_mock.shutdown.assert_called_once_with(socket.SHUT_RDWR)
 
+    def test_abort_tolerates_dead_socket(self):
+        sock = ws.WebSocket()
+        # never-connected socket: shutdown() raises ENOTCONN
+        # which abort() must not leak to the caller
+        real = socket.socket()
+        sock.sock = real
+        sock.connected = True
+
+        sock.abort()  # must not raise
+        real.close()
+
     def test_create_connection_uses_custom_class(self):
         class DummySocket:
             def __init__(self, **kwargs):
