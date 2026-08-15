@@ -528,7 +528,7 @@ class WebSocket:
         self,
         status: int = STATUS_NORMAL,
         reason: Union[str, bytes] = b"",
-        timeout: int = 3,
+        timeout: Optional[Union[int, float]] = 3,
     ) -> None:
         """
         Close Websocket object
@@ -537,7 +537,7 @@ class WebSocket:
         ----------
         status: int
             Status code to send. See VALID_CLOSE_STATUS in ABNF.
-        reason: bytes
+        reason: str or bytes
             The reason to close in UTF-8.
         timeout: int or float
             Timeout until receive a close frame.
