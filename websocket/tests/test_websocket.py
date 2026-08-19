@@ -733,6 +733,22 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         )
         self.assertEqual(handshake_mock.call_count, 2)
 
+    def test_connect_redirect_without_location_raises(self):
+        sock = ws.WebSocket()
+        redirect_resp = handshake_response(302, {}, None)  # no location header
+
+        def fake_connect(url, *args, **kwargs):
+            return mock.Mock(), ("origin", 80, "/")
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
+            with self.assertRaisesRegex(ws.WebSocketException, "Location"):
+                sock.connect("ws://origin", redirect_limit=2)
+
+        self.assertFalse(sock.connected)
+        self.assertIsNone(sock.sock)
+
     def test_shutdown_and_abort(self):
         sock = ws.WebSocket()
         socket_mock = mock.Mock()

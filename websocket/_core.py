@@ -287,7 +287,12 @@ class WebSocket:
                     self.handshake_response is not None
                     and self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES
                 ):
-                    url = self.handshake_response.headers["location"]
+                    url = self.handshake_response.headers.get("location")
+                    if url is None:
+                        raise WebSocketException(
+                            "Redirect response without Location header, "
+                            f"status {self.handshake_response.status}"
+                        )
                     self.sock.close()
                     self.sock, addrs = connect(
                         url,
