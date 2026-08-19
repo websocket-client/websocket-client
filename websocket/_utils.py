@@ -443,6 +443,8 @@ def validate_utf8(utfbytes: Union[str, bytes]) -> bool:
     utfbytes: utf byte string to check.
     return value: if valid utf8 string, return true. Otherwise, return false.
     """
+    if isinstance(utfbytes, str):
+        utfbytes = utfbytes.encode("utf-8", "surrogatepass")
     return _validate_utf8(utfbytes)
 
 

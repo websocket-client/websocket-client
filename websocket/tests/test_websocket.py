@@ -495,6 +495,12 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(state, False)
         state = validate_utf8(b"")
         self.assertEqual(state, True)
+        state = validate_utf8("κόσμε")
+        self.assertEqual(state, True)
+        state = validate_utf8("a\ud800b")
+        self.assertEqual(state, False)
+        state = validate_utf8("")
+        self.assertEqual(state, True)
 
 
 class HandshakeTest(unittest.TestCase):
