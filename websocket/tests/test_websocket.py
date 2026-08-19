@@ -504,6 +504,15 @@ class UtilsTest(unittest.TestCase):
 
 
 class HandshakeTest(unittest.TestCase):
+    def test_bad_status_exception_carries_status_message(self):
+        exc = WebSocketBadStatusException(
+            "Handshake status 404 Not Found", 404, "Not Found"
+        )
+        self.assertEqual(exc.status_code, 404)
+        self.assertEqual(exc.status_message, "Not Found")
+        self.assertIsNone(exc.resp_headers)
+        self.assertIsNone(exc.resp_body)
+
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_http_ssl(self):
         websock1 = ws.WebSocket(

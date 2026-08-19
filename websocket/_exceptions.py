@@ -84,6 +84,7 @@ class WebSocketBadStatusException(WebSocketException):
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
+        self.status_message = status_message
         self.resp_headers = resp_headers
         self.resp_body = resp_body
 
