@@ -303,6 +303,11 @@ class WebSocket:
                     self.handshake_response = handshake(
                         self.sock, url, *addrs, **options
                     )
+            if (
+                self.handshake_response is not None
+                and self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES
+            ):
+                raise WebSocketException("Redirect limit exhausted")
             self.connected = True
         except:
             if self.sock:

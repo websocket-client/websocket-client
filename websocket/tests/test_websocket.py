@@ -733,6 +733,30 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         )
         self.assertEqual(handshake_mock.call_count, 2)
 
+    def test_connect_redirect_limit_exhausted_raises(self):
+        sock = ws.WebSocket()
+        sockets = []
+        redirect_resp = handshake_response(302, {"location": "ws://redirect"}, None)
+
+        def fake_connect(url, *args, **kwargs):
+            socket_mock = mock.Mock()
+            sockets.append(socket_mock)
+            return socket_mock, ("redirect", 80, "/")
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ) as connect_mock, mock.patch(
+            "websocket._core.handshake", return_value=redirect_resp
+        ):
+            with self.assertRaisesRegex(ws.WebSocketException, "Redirect limit exhausted"):
+                sock.connect("ws://origin", redirect_limit=2)
+
+        self.assertEqual(connect_mock.call_count, 3)
+        self.assertFalse(sock.connected)
+        self.assertIsNone(sock.sock)
+        for socket_mock in sockets:
+            socket_mock.close.assert_called_once()
+
     def test_connect_redirect_without_location_raises(self):
         sock = ws.WebSocket()
         redirect_resp = handshake_response(302, {}, None)  # no location header
