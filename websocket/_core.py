@@ -294,12 +294,17 @@ class WebSocket:
                             f"status {self.handshake_response.status}"
                         )
                     self.sock.close()
-                    self.sock, addrs = connect(
-                        url,
-                        self.sock_opt,
-                        proxy_info(**options),
-                        options.pop("socket", None),
-                    )
+                    try:
+                        self.sock, addrs = connect(
+                            url,
+                            self.sock_opt,
+                            proxy_info(**options),
+                            options.pop("socket", None),
+                        )
+                    except ValueError as e:
+                        raise WebSocketException(
+                            f"Invalid redirect target {url!r}: {e}"
+                        ) from e
                     self.handshake_response = handshake(
                         self.sock, url, *addrs, **options
                     )
