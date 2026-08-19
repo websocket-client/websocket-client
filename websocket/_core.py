@@ -41,6 +41,7 @@ limitations under the License.
 
 __all__ = ["WebSocket", "create_connection"]
 
+
 def _normalize_close_reason(reason: Union[str, bytes, None]) -> bytes:
     """Convert a close reason into the UTF-8 bytes for a close-frame payload."""
     if reason is None:

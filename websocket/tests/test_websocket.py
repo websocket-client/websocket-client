@@ -748,7 +748,9 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         ) as connect_mock, mock.patch(
             "websocket._core.handshake", return_value=redirect_resp
         ):
-            with self.assertRaisesRegex(ws.WebSocketException, "Redirect limit exhausted"):
+            with self.assertRaisesRegex(
+                ws.WebSocketException, "Redirect limit exhausted"
+            ):
                 sock.connect("ws://origin", redirect_limit=2)
 
         self.assertEqual(connect_mock.call_count, 3)
@@ -768,9 +770,7 @@ class WebSocketCoreUnitTests(unittest.TestCase):
 
         with mock.patch(
             "websocket._core.connect", side_effect=fake_connect
-        ), mock.patch(
-            "websocket._core.handshake", return_value=redirect_resp
-        ):
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
             with self.assertRaisesRegex(
                 ws.WebSocketException, "Invalid redirect target 'https://redirect'"
             ):
