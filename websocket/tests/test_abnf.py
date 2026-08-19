@@ -83,6 +83,19 @@ class ABNFTest(unittest.TestCase):
             skip_utf8_validation=True,
         )
 
+    def test_validate_exception_messages_are_formatted(self):
+        invalid_opcode = ABNF(0, 0, 0, 0, opcode=5)
+        with self.assertRaisesRegex(WebSocketProtocolException, r"^Invalid opcode 5$"):
+            invalid_opcode.validate()
+
+        invalid_close_status = ABNF(
+            1, 0, 0, 0, opcode=ABNF.OPCODE_CLOSE, mask_value=0, data=b"\x03\xe7"
+        )
+        with self.assertRaisesRegex(
+            WebSocketProtocolException, r"^Invalid close opcode 999$"
+        ):
+            invalid_close_status.validate()
+
     def test_mask(self):
         abnf_none_data = ABNF(
             0, 0, 0, 0, opcode=ABNF.OPCODE_PING, mask_value=1, data=None

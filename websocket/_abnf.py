@@ -179,7 +179,7 @@ class ABNF:
             raise WebSocketProtocolException("rsv is not implemented, yet")
 
         if self.opcode not in ABNF.OPCODES:
-            raise WebSocketProtocolException("Invalid opcode %r", self.opcode)
+            raise WebSocketProtocolException(f"Invalid opcode {self.opcode!r}")
 
         if self.opcode == ABNF.OPCODE_PING and not self.fin:
             raise WebSocketProtocolException("Invalid ping frame.")
@@ -204,7 +204,7 @@ class ABNF:
             )
             code = struct.unpack("!H", data_bytes)[0]
             if not self._is_valid_close_status(code):
-                raise WebSocketProtocolException("Invalid close opcode %r", code)
+                raise WebSocketProtocolException(f"Invalid close opcode {code!r}")
 
     @staticmethod
     def _is_valid_close_status(code: int) -> bool:
