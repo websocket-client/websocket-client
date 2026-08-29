@@ -14,6 +14,7 @@ from websocket._ssl_compat import (
 )
 from websocket._exceptions import (
     WebSocketTimeoutException,
+    WebSocketException,
     WebSocketConnectionClosedException,
 )
 
@@ -168,6 +169,26 @@ class SocketTest(unittest.TestCase):
 
             self.assertEqual(result, b"Hello\n")
             self.assertEqual(mock_recv.call_count, 6)
+
+    def test_recv_line_too_long(self):
+        """An unterminated line beyond MAX_LINE_BYTES raises instead of
+        buffering indefinitely (N33)."""
+        mock_sock = Mock()
+        with patch("websocket._socket.MAX_LINE_BYTES", 16):
+            with patch("websocket._socket.recv", side_effect=[b"A"] * 100):
+                with self.assertRaises(WebSocketException) as cm:
+                    recv_line(mock_sock)
+        self.assertIn("exceeds 16 bytes", str(cm.exception))
+
+    def test_recv_line_exactly_at_limit_ok(self):
+        """A line of exactly MAX_LINE_BYTES plus newline is accepted."""
+        mock_sock = Mock()
+        feed = [bytes([ord("a") + (i % 26)]) for i in range(16)] + [b"\n"]
+        with patch("websocket._socket.MAX_LINE_BYTES", 16):
+            with patch("websocket._socket.recv", side_effect=feed):
+                result = recv_line(mock_sock)
+        self.assertEqual(len(result), 17)
+        self.assertTrue(result.endswith(b"\n"))
 
     def test_send_normal(self):
         """Test normal send operation"""

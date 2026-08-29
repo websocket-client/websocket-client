@@ -146,6 +146,9 @@ def _get_handshake_headers(
     return headers, key
 
 
+MAX_ERROR_BODY_BYTES = 65536
+
+
 def _get_resp_headers(
     sock: socket.socket, success_statuses: tuple = SUCCESS_STATUSES
 ) -> tuple:
@@ -163,11 +166,16 @@ def _get_resp_headers(
                 raise WebSocketException(
                     f"Invalid content-length header: {content_len!r}"
                 )
+            truncated = remaining > MAX_ERROR_BODY_BYTES
+            if truncated:
+                remaining = MAX_ERROR_BODY_BYTES
             while remaining > 0:
                 chunk_size = min(remaining, 16384)  # Read in 16KB chunks
                 chunk = recv(sock, chunk_size)
                 response_body += chunk
                 remaining -= len(chunk)
+            if truncated:
+                response_body += b"\n... (body truncated)"
         else:
             response_body = None
         raise WebSocketBadStatusException(

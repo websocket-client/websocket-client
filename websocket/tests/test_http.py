@@ -11,6 +11,7 @@ from unittest import mock
 import websocket
 from websocket._exceptions import (
     WebSocketAddressException,
+    WebSocketBadStatusException,
     WebSocketProxyException,
     WebSocketException,
 )
@@ -171,6 +172,45 @@ class HttpTest(unittest.TestCase):
         with self.assertRaises(WebSocketException) as cm:
             _get_resp_headers(sock)
         self.assertIn("Invalid content-length", str(cm.exception))
+
+    def test_read_header_too_large(self):
+        """Headers past MAX_HEADER_BYTES raise instead of buffering
+        indefinitely (N33)."""
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\nX-Long: " + b"a" * 200 + b"\r\n\r\n"
+        )
+
+        with mock.patch("websocket._http.MAX_HEADER_BYTES", 64):
+            with self.assertRaises(WebSocketException) as cm:
+                read_headers(sock)
+        self.assertEqual(str(cm.exception), "Response headers too large")
+
+    def test_read_header_blank_first_line(self):
+        """A blank first line raises instead of returning status=None,
+        which surfaced as a confusing 'Handshake status None' error."""
+        sock = SockMock()
+        sock.add_packet(b"\r\n\r\n")
+        with self.assertRaises(WebSocketException) as cm:
+            read_headers(sock)
+        self.assertIn("Invalid status line", str(cm.exception))
+
+    def test_get_resp_headers_error_body_truncated(self):
+        """An oversized declared error body is capped, not fully buffered
+        (N13 cap; N33 defect class)."""
+        from websocket._handshake import _get_resp_headers
+
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 500 Internal Server Error\r\n"
+            b"Content-Length: 200\r\n"
+            b"\r\n" + b"B" * 200
+        )
+        with mock.patch("websocket._handshake.MAX_ERROR_BODY_BYTES", 64):
+            with self.assertRaises(WebSocketBadStatusException) as cm:
+                _get_resp_headers(sock, success_statuses=(101,))
+        self.assertIn("(body truncated)", str(cm.exception))
+        self.assertIn("B" * 64, str(cm.exception))
 
     def test_tunnel(self):
         self.assertRaises(

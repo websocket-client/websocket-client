@@ -5,6 +5,7 @@ from typing import Optional, Union, Any
 
 from ._exceptions import (
     WebSocketConnectionClosedException,
+    WebSocketException,
     WebSocketTimeoutException,
 )
 from ._ssl_compat import SSLError, SSLEOFError, SSLWantReadError, SSLWantWriteError
@@ -38,6 +39,7 @@ if hasattr(socket, "TCP_KEEPINTVL"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPINTVL, 10))
 if hasattr(socket, "TCP_KEEPCNT"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPCNT, 3))
+MAX_LINE_BYTES = 65536
 
 _default_timeout = None
 
@@ -150,6 +152,8 @@ def recv_line(sock: socket.socket) -> bytes:
         line.append(c)
         if c == b"\n":
             break
+        if len(line) > MAX_LINE_BYTES:
+            raise WebSocketException(f"Header line exceeds {MAX_LINE_BYTES} bytes")
     return b"".join(line)
 
 

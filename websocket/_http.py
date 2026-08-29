@@ -398,14 +398,21 @@ def _tunnel(sock: socket.socket, host: str, port: int, auth: Any) -> socket.sock
     return sock
 
 
+MAX_HEADER_BYTES = 65536
+
+
 def read_headers(sock: socket.socket) -> tuple:
     status = None
     status_message = None
     headers: dict = {}
     trace("--- response header ---")
 
+    total = 0
     while True:
         line = recv_line(sock)
+        total += len(line)
+        if total > MAX_HEADER_BYTES:
+            raise WebSocketException("Response headers too large")
         try:
             line = line.decode("utf-8").strip()
         except UnicodeDecodeError as e:
@@ -413,6 +420,8 @@ def read_headers(sock: socket.socket) -> tuple:
                 f"Invalid header line, not valid UTF-8 at byte {e.start}: {line!r}"
             )
         if not line:
+            if not status:
+                raise WebSocketException(f"Invalid status line: {line!r}")
             break
         trace(line)
         if not status:
