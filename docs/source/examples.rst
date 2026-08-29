@@ -239,7 +239,7 @@ For debugging, remember that it is helpful to enable :ref:`Debug and Logging Opt
   >>> import websocket
 
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx", suppress_host=True)
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx", suppress_host=True)  # doctest: +SKIP
 
 **WebSocketApp suppress host example**
 
@@ -416,7 +416,8 @@ by default. You may encounter problems if using SSL/TLS with your proxy.
   import websocket
 
   ws = websocket.WebSocketApp("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
-  wsapp.run_forever(proxy_type="socks5", http_proxy_host=proxy_ip, http_proxy_auth=(proxy_username, proxy_password))
+  ws.run_forever(proxy_type="socks5", http_proxy_host=proxy_ip,
+    http_proxy_port=proxy_port, http_proxy_auth=(proxy_username, proxy_password))
 
 
 Connecting with Custom Sockets
@@ -588,22 +589,23 @@ in your program, examples are shown below for how to do this.
 **WebSocket receiving close status code example**
 
 .. doctest:: close-status
-
   >>> import websocket
   >>> import struct
+  >>> from websocket._abnf import ABNF
 
   >>> websocket.enableTrace(True)
   >>> ws = websocket.WebSocket()
-  >>> ws.connect("wss://tsock.us1.twilio.com/v3/wsconnect")
-  >>> ws.send("Hello")
-  11
+  >>> ws.connect("ws://websockets.chilkat.io/wsChilkatEcho.ashx")
+  >>> ws.send_frame(ABNF.create_frame(struct.pack("!H", 4242) + b"Twin Prime", ABNF.OPCODE_CLOSE))
+  18
   >>> resp_opcode, msg = ws.recv_data()
-  >>> print("Response opcode: " + str(resp_opcode))  # doctest: +SKIP
+  >>> print("Response opcode: " + str(resp_opcode))
+  Response opcode: 8
   >>> if resp_opcode == 8 and len(msg) >= 2:
-  ...     print("Response close code: " + str(struct.unpack("!H", msg[0:2])[0]))  # doctest: +SKIP
-  ...     print("Response message: " + str(msg[2:]))  # doctest: +SKIP
-  ... else:
-  ...     print("Response message: " + str(msg))  # doctest: +SKIP
+  ...     print("Response close code: " + str(struct.unpack("!H", msg[0:2])[0]))
+  ...     print("Response message: " + str(msg[2:]))
+  Response close code: 4242
+  Response message: b'Twin Prime'
 
 
 **WebSocketApp receiving close status code example**
@@ -621,7 +623,7 @@ in your program, examples are shown below for how to do this.
   ...         print("close message: " + str(close_msg))
   >>> def on_open(wsapp):
   ...     wsapp.send("Hello")
-  >>> wsapp = websocket.WebSocketApp("wss://tsock.us1.twilio.com/v3/wsconnect", on_close=on_close, on_open=on_open)
+  >>> wsapp = websocket.WebSocketApp("ws://websockets.chilkat.io/wsChilkatEcho.ashx", on_close=on_close, on_open=on_open)
   >>> wsapp.run_forever()  # doctest: +SKIP
 
 Customizing frame mask

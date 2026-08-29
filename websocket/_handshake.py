@@ -2,7 +2,7 @@
 _handshake.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -157,7 +157,12 @@ def _get_resp_headers(
             from ._socket import recv
 
             response_body = b""
-            remaining = int(content_len)
+            try:
+                remaining = int(content_len)
+            except ValueError:
+                raise WebSocketException(
+                    f"Invalid content-length header: {content_len!r}"
+                )
             while remaining > 0:
                 chunk_size = min(remaining, 16384)  # Read in 16KB chunks
                 chunk = recv(sock, chunk_size)

@@ -2,7 +2,7 @@
 _http.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,11 +83,14 @@ class proxy_info:
             self.auth = None
             self.no_proxy = None
             self.proxy_protocol = "http"
+            self.proxy_timeout = None
 
 
 def _start_proxied_socket(
     url: str, options: Any, proxy: Any
 ) -> Tuple[socket.socket, Tuple[str, int, str]]:
+    if proxy.proxy_host and not proxy.proxy_port:
+        raise WebSocketProxyException("Cannot use port 0 when proxy_host specified")
     if not HAVE_PYTHON_SOCKS:
         raise WebSocketException(
             "Python Socks is needed for SOCKS proxying but is not available"
@@ -296,8 +299,15 @@ def _wrap_sni_socket(
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
         else:
-            context.check_hostname = sslopt.get("check_hostname", True)
-            context.verify_mode = sslopt.get("cert_reqs", ssl.CERT_REQUIRED)
+            check_hostname = sslopt.get("check_hostname", True)
+            cert_reqs = sslopt.get("cert_reqs", ssl.CERT_REQUIRED)
+            if check_hostname and cert_reqs == ssl.CERT_NONE:
+                raise WebSocketException(
+                    "SSL certificate verification configuration failed: "
+                    "check_hostname cannot be enabled when cert_reqs is CERT_NONE"
+                )
+            context.check_hostname = check_hostname
+            context.verify_mode = cert_reqs
 
         if "ciphers" in sslopt:
             try:
@@ -396,13 +406,21 @@ def read_headers(sock: socket.socket) -> tuple:
 
     while True:
         line = recv_line(sock)
-        line = line.decode("utf-8").strip()
+        try:
+            line = line.decode("utf-8").strip()
+        except UnicodeDecodeError as e:
+            raise WebSocketException(
+                f"Invalid header line, not valid UTF-8 at byte {e.start}: {line!r}"
+            )
         if not line:
             break
         trace(line)
         if not status:
             status_info = line.split(" ", 2)
-            status = int(status_info[1])
+            try:
+                status = int(status_info[1])
+            except (IndexError, ValueError):
+                raise WebSocketException(f"Invalid status line: {line!r}")
             if len(status_info) > 2:
                 status_message = status_info[2]
         else:

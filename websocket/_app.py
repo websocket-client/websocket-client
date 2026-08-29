@@ -20,7 +20,7 @@ from ._dispatcher import Dispatcher, DispatcherBase, SSLDispatcher, WrappedDispa
 _app.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -302,7 +302,8 @@ class WebSocketApp:
         http_proxy_host: str
             HTTP proxy host name.
         http_proxy_port: int or str
-            HTTP proxy port. If not set, set to 80.
+            HTTP proxy port. Required when http_proxy_host is set. Proxies
+            from environment variables default to port 80.
         http_no_proxy: list
             Whitelisted host names that don't use the proxy.
         http_proxy_timeout: int or float
@@ -618,7 +619,7 @@ class WebSocketApp:
         ping_timeout: Optional[Union[float, int]],
         dispatcher: Optional[DispatcherBase] = None,
         is_ssl: bool = False,
-        handleDisconnect: Callable = None,
+        handleDisconnect: Optional[Callable] = None,
     ) -> Union[Dispatcher, SSLDispatcher, WrappedDispatcher]:
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
             return WrappedDispatcher(self, ping_timeout, dispatcher, handleDisconnect)

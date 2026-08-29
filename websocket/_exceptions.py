@@ -2,7 +2,7 @@
 _exceptions.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ class WebSocketBadStatusException(WebSocketException):
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
+        self.status_message = status_message
         self.resp_headers = resp_headers
         self.resp_body = resp_body
 

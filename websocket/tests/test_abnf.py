@@ -12,7 +12,7 @@ from websocket._exceptions import WebSocketPayloadException, WebSocketProtocolEx
 test_abnf.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,6 +40,17 @@ class ABNFTest(unittest.TestCase):
         a_bad = ABNF(0, 1, 0, 0, opcode=77)
         self.assertEqual(a_bad.rsv1, 1)
         self.assertEqual(a_bad.opcode, 77)
+
+    def test_status_constants_exported(self):
+        """Every STATUS_ constant in _abnf must be exported via __all__."""
+        import websocket
+        import websocket._abnf as abnf_mod
+
+        defined = {n for n in dir(abnf_mod) if n.startswith("STATUS_")}
+        exported = {n for n in abnf_mod.__all__ if n.startswith("STATUS_")}
+        self.assertSetEqual(exported, defined)
+        self.assertEqual(websocket.STATUS_SERVICE_RESTART, 1012)
+        self.assertEqual(websocket.STATUS_TRY_AGAIN_LATER, 1013)
 
     def test_validate(self):
         a_invalid_ping = ABNF(0, 0, 0, 0, opcode=ABNF.OPCODE_PING)
@@ -82,6 +93,19 @@ class ABNFTest(unittest.TestCase):
             a_bad_close_frame_3.validate,
             skip_utf8_validation=True,
         )
+
+    def test_validate_exception_messages_are_formatted(self):
+        invalid_opcode = ABNF(0, 0, 0, 0, opcode=5)
+        with self.assertRaisesRegex(WebSocketProtocolException, r"^Invalid opcode 5$"):
+            invalid_opcode.validate()
+
+        invalid_close_status = ABNF(
+            1, 0, 0, 0, opcode=ABNF.OPCODE_CLOSE, mask_value=0, data=b"\x03\xe7"
+        )
+        with self.assertRaisesRegex(
+            WebSocketProtocolException, r"^Invalid close opcode 999$"
+        ):
+            invalid_close_status.validate()
 
     def test_mask(self):
         abnf_none_data = ABNF(

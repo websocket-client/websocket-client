@@ -8,7 +8,7 @@ from ._exceptions import WebSocketProxyException
 _url.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ def get_proxy_info(
     proxy_host: str
         http proxy host name.
     proxy_port: str or int
-        http proxy port.
+        http proxy port. Required when proxy_host is set.
     no_proxy: list
         Whitelisted host names that don't use the proxy.
     proxy_auth: tuple

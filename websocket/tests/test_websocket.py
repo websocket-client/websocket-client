@@ -25,7 +25,7 @@ from websocket._utils import validate_utf8
 test_websocket.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -211,6 +211,24 @@ class WebSocketTest(unittest.TestCase):
         sock.connected = True
 
         sock.send_close(reason="normal close")
+
+        self.assertEqual(captured["opcode"], ws.ABNF.OPCODE_CLOSE)
+        self.assertIsInstance(captured["payload"], (bytes, bytearray))
+        self.assertTrue(captured["payload"].endswith(b"normal close"))
+
+    def test_close_accepts_text_reason(self):
+        sock = ws.WebSocket()
+        captured = {}
+
+        def fake_send(payload, opcode):
+            captured["payload"] = payload
+            captured["opcode"] = opcode
+            return len(payload)
+
+        sock.send = fake_send  # type: ignore[assignment]
+        sock.connected = True
+
+        sock.close(reason="normal close")
 
         self.assertEqual(captured["opcode"], ws.ABNF.OPCODE_CLOSE)
         self.assertIsInstance(captured["payload"], (bytes, bytearray))
@@ -477,9 +495,24 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(state, False)
         state = validate_utf8(b"")
         self.assertEqual(state, True)
+        state = validate_utf8("κόσμε")
+        self.assertEqual(state, True)
+        state = validate_utf8("a\ud800b")
+        self.assertEqual(state, False)
+        state = validate_utf8("")
+        self.assertEqual(state, True)
 
 
 class HandshakeTest(unittest.TestCase):
+    def test_bad_status_exception_carries_status_message(self):
+        exc = WebSocketBadStatusException(
+            "Handshake status 404 Not Found", 404, "Not Found"
+        )
+        self.assertEqual(exc.status_code, 404)
+        self.assertEqual(exc.status_message, "Not Found")
+        self.assertIsNone(exc.resp_headers)
+        self.assertIsNone(exc.resp_body)
+
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_http_ssl(self):
         websock1 = ws.WebSocket(
@@ -715,6 +748,68 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         )
         self.assertEqual(handshake_mock.call_count, 2)
 
+    def test_connect_redirect_limit_exhausted_raises(self):
+        sock = ws.WebSocket()
+        sockets = []
+        redirect_resp = handshake_response(302, {"location": "ws://redirect"}, None)
+
+        def fake_connect(url, *args, **kwargs):
+            socket_mock = mock.Mock()
+            sockets.append(socket_mock)
+            return socket_mock, ("redirect", 80, "/")
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ) as connect_mock, mock.patch(
+            "websocket._core.handshake", return_value=redirect_resp
+        ):
+            with self.assertRaisesRegex(
+                ws.WebSocketException, "Redirect limit exhausted"
+            ):
+                sock.connect("ws://origin", redirect_limit=2)
+
+        self.assertEqual(connect_mock.call_count, 3)
+        self.assertFalse(sock.connected)
+        self.assertIsNone(sock.sock)
+        for socket_mock in sockets:
+            socket_mock.close.assert_called_once()
+
+    def test_connect_redirect_invalid_target_raises(self):
+        sock = ws.WebSocket()
+        redirect_resp = handshake_response(302, {"location": "https://redirect"}, None)
+
+        def fake_connect(url, *args, **kwargs):
+            if url == "https://redirect":
+                raise ValueError("scheme https is invalid")
+            return mock.Mock(), ("origin", 80, "/")
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
+            with self.assertRaisesRegex(
+                ws.WebSocketException, "Invalid redirect target 'https://redirect'"
+            ):
+                sock.connect("ws://origin", redirect_limit=2)
+
+        self.assertFalse(sock.connected)
+        self.assertIsNone(sock.sock)
+
+    def test_connect_redirect_without_location_raises(self):
+        sock = ws.WebSocket()
+        redirect_resp = handshake_response(302, {}, None)  # no location header
+
+        def fake_connect(url, *args, **kwargs):
+            return mock.Mock(), ("origin", 80, "/")
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
+            with self.assertRaisesRegex(ws.WebSocketException, "Location"):
+                sock.connect("ws://origin", redirect_limit=2)
+
+        self.assertFalse(sock.connected)
+        self.assertIsNone(sock.sock)
+
     def test_shutdown_and_abort(self):
         sock = ws.WebSocket()
         socket_mock = mock.Mock()
@@ -732,6 +827,17 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         sock.connected = True
         sock.abort()
         socket_mock.shutdown.assert_called_once_with(socket.SHUT_RDWR)
+
+    def test_abort_tolerates_dead_socket(self):
+        sock = ws.WebSocket()
+        # never-connected socket: shutdown() raises ENOTCONN
+        # which abort() must not leak to the caller
+        real = socket.socket()
+        sock.sock = real
+        sock.connected = True
+
+        sock.abort()  # must not raise
+        real.close()
 
     def test_create_connection_uses_custom_class(self):
         class DummySocket:

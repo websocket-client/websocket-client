@@ -29,7 +29,7 @@ from websocket._http import (
 test_http.py
 websocket - WebSocket client library for Python
 
-Copyright 2025 engn33r
+Copyright 2026 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -109,6 +109,39 @@ class HttpTest(unittest.TestCase):
         self.assertRaises(
             WebSocketException, read_headers, HeaderSockMock("data/header02.txt")
         )
+
+    def test_read_header_malformed_status_line(self):
+        """Malformed responses surface as WebSocketException, not raw
+        IndexError, ValueError, or UnicodeDecodeError."""
+        one_token = SockMock()
+        one_token.add_packet(b"GARBAGE\r\n\r\n")
+        with self.assertRaises(WebSocketException) as cm:
+            read_headers(one_token)
+        self.assertIn("Invalid status line", str(cm.exception))
+
+        bad_status = SockMock()
+        bad_status.add_packet(b"HTTP/1.1 XX Switching Protocols\r\n\r\n")
+        with self.assertRaises(WebSocketException) as cm:
+            read_headers(bad_status)
+        self.assertIn("Invalid status line", str(cm.exception))
+
+        bad_utf8 = SockMock()
+        bad_utf8.add_packet(b"HTTP/1.1\xff 101 Switching Protocols\r\n\r\n")
+        with self.assertRaises(WebSocketException) as cm:
+            read_headers(bad_utf8)
+        self.assertIn("UTF-8", str(cm.exception))
+        self.assertIn("at byte 8", str(cm.exception))
+
+    def test_get_resp_headers_invalid_content_length(self):
+        """A non-numeric Content-Length on an error response surfaces as
+        WebSocketException, not raw ValueError."""
+        from websocket._handshake import _get_resp_headers
+
+        sock = SockMock()
+        sock.add_packet(b"HTTP/1.1 400 Bad Request\r\nContent-Length: abc\r\n\r\n")
+        with self.assertRaises(WebSocketException) as cm:
+            _get_resp_headers(sock)
+        self.assertIn("Invalid content-length", str(cm.exception))
 
     def test_tunnel(self):
         self.assertRaises(
@@ -247,6 +280,21 @@ class HttpTest(unittest.TestCase):
         self.assertIs(returned, fake_sock)
         send_mock.assert_called_once()
 
+    def test_proxy_connect_no_port_raises(self):
+        """A SOCKS proxy with an explicit host but no port raises the same
+        WebSocketProxyException as the http-proxy path, instead of passing
+        port 0 (or None) to python-socks."""
+        for proxy_cfg in (
+            proxy_info(http_proxy_host="proxy.local", proxy_type="socks5"),
+            proxy_info(
+                http_proxy_host="proxy.local",
+                http_proxy_port=None,
+                proxy_type="socks5",
+            ),
+        ):
+            with self.assertRaises(WebSocketProxyException):
+                _start_proxied_socket("ws://example.com/ws", OptsList(), proxy_cfg)
+
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_sslopt(self):
         ssloptions = {
@@ -324,6 +372,7 @@ class HttpTest(unittest.TestCase):
             ).auth[1],
             "my_pass321",
         )
+        self.assertIsNone(proxy_info().proxy_timeout)
 
 
 class HttpPureUnitTests(unittest.TestCase):
