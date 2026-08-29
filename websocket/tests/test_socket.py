@@ -191,6 +191,62 @@ class SocketTest(unittest.TestCase):
         self.assertEqual(result, 9)
         mock_sock.send.assert_called_once_with(b"test data")
 
+    def test_recv_nonblocking_no_data_raises_timeout(self):
+        """Non-blocking recv with no data raises WebSocketTimeoutException, not BlockingIOError"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 0
+        mock_sock.recv.side_effect = BlockingIOError(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        class FakeSelector:
+            polled_timeout = None
+
+            def register(self, *args, **kwargs):
+                pass
+
+            def select(self, timeout):
+                self.polled_timeout = timeout
+                return []
+
+            def close(self):
+                pass
+
+        fake = FakeSelector()
+        with patch("selectors.DefaultSelector", return_value=fake):
+            with self.assertRaises(WebSocketTimeoutException):
+                recv(mock_sock, 1024)
+
+        self.assertEqual(fake.polled_timeout, 0)
+
+    def test_send_nonblocking_not_writable_raises_timeout(self):
+        """Non-blocking send when unwritable raises WebSocketTimeoutException, not BlockingIOError"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 0
+        mock_sock.send.side_effect = BlockingIOError(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        class FakeSelector:
+            polled_timeout = None
+
+            def register(self, *args, **kwargs):
+                pass
+
+            def select(self, timeout):
+                self.polled_timeout = timeout
+                return []
+
+            def close(self):
+                pass
+
+        fake = FakeSelector()
+        with patch("selectors.DefaultSelector", return_value=fake):
+            with self.assertRaises(WebSocketTimeoutException):
+                send(mock_sock, b"test data")
+
+        self.assertEqual(fake.polled_timeout, 0)
+
     def test_send_ssl_eof_error(self):
         """Test send with SSLEOFError"""
         mock_sock = Mock()

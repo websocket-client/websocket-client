@@ -122,10 +122,7 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
             raise WebSocketTimeoutException("Connection timed out waiting for data")
 
     try:
-        if sock.gettimeout() == 0:
-            bytes_ = sock.recv(bufsize)
-        else:
-            bytes_ = _recv()
+        bytes_ = _recv()
     except TimeoutError:
         raise WebSocketTimeoutException("Connection timed out")
     except socket.timeout as e:
@@ -189,10 +186,7 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
         raise WebSocketTimeoutException("Connection timed out waiting to send data")
 
     try:
-        if sock.gettimeout() == 0:
-            return sock.send(data)
-        else:
-            return _send()
+        return _send()
     except socket.timeout as e:
         message = extract_err_message(e)
         raise WebSocketTimeoutException(message)
