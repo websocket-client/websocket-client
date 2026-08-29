@@ -1,6 +1,30 @@
 ChangeLog
 ============
 
+- 1.9.1
+  - Add Python 3.14 support to setup config and CI (f2bc97a)
+  - Fix `close()` dropping close frame when reason is str (2f22e2e)
+  - Fix `close()` type annotation and docstring for timeout and reason (d69f730)
+  - Make `abort()` robust for sockets that cannot shutdown, same logic as `shutdown()` (1904e3d)
+  - Raise `WebSocketException` for redirects missing a `Location` header (97e34db)
+  - Raise when WebSocket connect redirect limit is exhausted (be0d38d)
+  - Raise `WebSocketException` for redirects to invalid targets (62ef6af)
+  - Fix unformatted ABNF validation error messages (0145b7b)
+  - Fix `validate_utf8()` crash on str input (4a8e6ed)
+  - Store `status_message` on `WebSocketBadStatusException` (368aeda)
+  - Raise `WebSocketException` for `check_hostname` with `CERT_NONE` (0232aca)
+  - Fix `handleDisconnect` type annotation: None default requires Optional (20f3712)
+  - Remove unreachable `not frame` check in `recv_data_frame()` (b684242)
+  - Set `proxy_timeout` on `proxy_info` without a proxy host (68f0aed)
+  - Fix `_wsdump.py` bytes annotations and remove dead code (5ecc6e4)
+  - Export `STATUS_SERVICE_RESTART` and `STATUS_TRY_AGAIN_LATER` close codes (22279c4)
+  - Fix `extract_err_message()` to always return str (e2091bd)
+  - Raise `WebSocketProxyException` for SOCKS proxy without a port, correct proxy port docs (3c62bdf)
+  - Raise `WebSocketException` for malformed HTTP responses (04f4d94)
+  - Fix docs examples using dead or unreachable endpoints (2fc92c0)
+  - Add pyproject.toml, drop deprecated setup.py metadata (8b34f50)
+  - Apply linting (3b4ffab)
+
 - 1.9.0
   - Remove Python 3.8 support (EOL), add Python 3.13 (5f25030)
   - Remove localhost and 127.0.0.1 from default NO_PROXY list (#994)

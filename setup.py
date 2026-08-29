@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = "1.9.0"
+VERSION = "1.9.1"
 
 install_requires: list[str] = []
 setup(
