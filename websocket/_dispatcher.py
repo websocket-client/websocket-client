@@ -136,7 +136,7 @@ class WrappedDispatcher:
         app: "WebSocketApp",
         ping_timeout: Optional[Union[float, int]],
         dispatcher: Any,
-        handleDisconnect: Any,
+        handleDisconnect: Optional[Callable],
     ) -> None:
         self.app = app
         self.ping_timeout = ping_timeout

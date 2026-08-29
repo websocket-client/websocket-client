@@ -618,7 +618,7 @@ class WebSocketApp:
         ping_timeout: Optional[Union[float, int]],
         dispatcher: Optional[DispatcherBase] = None,
         is_ssl: bool = False,
-        handleDisconnect: Callable = None,
+        handleDisconnect: Optional[Callable] = None,
     ) -> Union[Dispatcher, SSLDispatcher, WrappedDispatcher]:
         if dispatcher:  # If custom dispatcher is set, use WrappedDispatcher
             return WrappedDispatcher(self, ping_timeout, dispatcher, handleDisconnect)
