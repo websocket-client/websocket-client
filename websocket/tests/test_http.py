@@ -324,6 +324,7 @@ class HttpTest(unittest.TestCase):
             ).auth[1],
             "my_pass321",
         )
+        self.assertIsNone(proxy_info().proxy_timeout)
 
 
 class HttpPureUnitTests(unittest.TestCase):

@@ -83,6 +83,7 @@ class proxy_info:
             self.auth = None
             self.no_proxy = None
             self.proxy_protocol = "http"
+            self.proxy_timeout = None
 
 
 def _start_proxied_socket(
