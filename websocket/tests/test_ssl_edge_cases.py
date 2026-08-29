@@ -75,6 +75,21 @@ class SSLEdgeCasesTest(unittest.TestCase):
             with self.assertRaises(ssl.SSLCertVerificationError):
                 _ssl_socket(mock_sock, sslopt, "badssl.example")
 
+    def test_check_hostname_with_cert_none_raises_websocket_exception(self):
+        """check_hostname=True with cert_reqs=CERT_NONE must raise
+        WebSocketException, not leak ssl's raw ValueError."""
+        sock = socket.socket()
+        try:
+            with self.assertRaises(WebSocketException) as cm:
+                _ssl_socket(
+                    sock,
+                    {"cert_reqs": ssl.CERT_NONE, "check_hostname": True},
+                    "example.com",
+                )
+            self.assertIn("check_hostname", str(cm.exception))
+        finally:
+            sock.close()
+
     def test_ssl_context_configuration_edge_cases(self):
         """Test SSL context configuration with various edge cases"""
         mock_sock = Mock()

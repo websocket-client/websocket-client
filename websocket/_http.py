@@ -296,8 +296,15 @@ def _wrap_sni_socket(
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
         else:
-            context.check_hostname = sslopt.get("check_hostname", True)
-            context.verify_mode = sslopt.get("cert_reqs", ssl.CERT_REQUIRED)
+            check_hostname = sslopt.get("check_hostname", True)
+            cert_reqs = sslopt.get("cert_reqs", ssl.CERT_REQUIRED)
+            if check_hostname and cert_reqs == ssl.CERT_NONE:
+                raise WebSocketException(
+                    "SSL certificate verification configuration failed: "
+                    "check_hostname cannot be enabled when cert_reqs is CERT_NONE"
+                )
+            context.check_hostname = check_hostname
+            context.verify_mode = cert_reqs
 
         if "ciphers" in sslopt:
             try:
