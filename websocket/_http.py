@@ -89,6 +89,8 @@ class proxy_info:
 def _start_proxied_socket(
     url: str, options: Any, proxy: Any
 ) -> Tuple[socket.socket, Tuple[str, int, str]]:
+    if proxy.proxy_host and not proxy.proxy_port:
+        raise WebSocketProxyException("Cannot use port 0 when proxy_host specified")
     if not HAVE_PYTHON_SOCKS:
         raise WebSocketException(
             "Python Socks is needed for SOCKS proxying but is not available"

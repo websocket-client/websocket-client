@@ -169,7 +169,7 @@ def get_proxy_info(
     proxy_host: str
         http proxy host name.
     proxy_port: str or int
-        http proxy port.
+        http proxy port. Required when proxy_host is set.
     no_proxy: list
         Whitelisted host names that don't use the proxy.
     proxy_auth: tuple

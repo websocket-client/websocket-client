@@ -247,6 +247,21 @@ class HttpTest(unittest.TestCase):
         self.assertIs(returned, fake_sock)
         send_mock.assert_called_once()
 
+    def test_proxy_connect_no_port_raises(self):
+        """A SOCKS proxy with an explicit host but no port raises the same
+        WebSocketProxyException as the http-proxy path, instead of passing
+        port 0 (or None) to python-socks."""
+        for proxy_cfg in (
+            proxy_info(http_proxy_host="proxy.local", proxy_type="socks5"),
+            proxy_info(
+                http_proxy_host="proxy.local",
+                http_proxy_port=None,
+                proxy_type="socks5",
+            ),
+        ):
+            with self.assertRaises(WebSocketProxyException):
+                _start_proxied_socket("ws://example.com/ws", OptsList(), proxy_cfg)
+
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_sslopt(self):
         ssloptions = {

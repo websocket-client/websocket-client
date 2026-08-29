@@ -262,7 +262,8 @@ class WebSocket:
         http_proxy_host: str
             HTTP proxy host name.
         http_proxy_port: str or int
-            HTTP proxy port. Default is 80.
+            HTTP proxy port. Required when http_proxy_host is set. Proxies
+            from environment variables default to port 80.
         http_no_proxy: list
             Whitelisted host names that don't use the proxy.
         http_proxy_auth: tuple
@@ -694,7 +695,8 @@ def create_connection(
     http_proxy_host: str
         HTTP proxy host name.
     http_proxy_port: str or int
-        HTTP proxy port. If not set, set to 80.
+        HTTP proxy port. Required when http_proxy_host is set. Proxies
+        from environment variables default to port 80.
     http_no_proxy: list
         Whitelisted host names that don't use the proxy.
     http_proxy_auth: tuple

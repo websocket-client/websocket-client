@@ -302,7 +302,8 @@ class WebSocketApp:
         http_proxy_host: str
             HTTP proxy host name.
         http_proxy_port: int or str
-            HTTP proxy port. If not set, set to 80.
+            HTTP proxy port. Required when http_proxy_host is set. Proxies
+            from environment variables default to port 80.
         http_no_proxy: list
             Whitelisted host names that don't use the proxy.
         http_proxy_timeout: int or float
