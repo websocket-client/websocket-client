@@ -373,6 +373,42 @@ class SocketTest(unittest.TestCase):
             with self.assertRaises(WebSocketTimeoutException):
                 recv(mock_sock, 10)
 
+    def test_recv_selector_closed_on_select_error(self):
+        """Selector must be closed even when select() raises (leak fix)"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 30.0
+        mock_sock.recv.side_effect = socket.error(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        with patch("selectors.DefaultSelector") as mock_selector_class:
+            mock_selector = Mock()
+            mock_selector_class.return_value = mock_selector
+            mock_selector.select.side_effect = socket.error(errno.EBADF, "Bad fd")
+
+            with self.assertRaises(socket.error):
+                recv(mock_sock, 1024)
+
+            mock_selector.close.assert_called_once()
+
+    def test_send_selector_closed_on_select_error(self):
+        """Selector must be closed even when select() raises (leak fix)"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 30.0
+        mock_sock.send.side_effect = socket.error(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        with patch("selectors.DefaultSelector") as mock_selector_class:
+            mock_selector = Mock()
+            mock_selector_class.return_value = mock_selector
+            mock_selector.select.side_effect = socket.error(errno.EBADF, "Bad fd")
+
+            with self.assertRaises(socket.error):
+                send(mock_sock, b"test data")
+
+            mock_selector.close.assert_called_once()
+
     def test_send_socket_timeout_error(self):
         mock_sock = Mock()
         timeout_exc = socket.timeout("timed out")
