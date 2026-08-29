@@ -450,8 +450,7 @@ def validate_utf8(utfbytes: Union[str, bytes]) -> bool:
 
 def extract_err_message(exception: Exception) -> Optional[str]:
     if exception.args:
-        exception_message: str = exception.args[0]
-        return exception_message
+        return str(exception.args[0])
     else:
         return None
 

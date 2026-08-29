@@ -108,6 +108,9 @@ class UtilsTest(unittest.TestCase):
         exc_no_args = Exception()
         self.assertIsNone(extract_err_message(exc_no_args))
 
+        # Test with exception whose first arg is not a str (e.g. OSError errno)
+        self.assertEqual(extract_err_message(OSError(32, "Broken pipe")), "32")
+
     def test_extract_error_code(self):
         """Test extract_error_code function"""
         from websocket._utils import extract_error_code
