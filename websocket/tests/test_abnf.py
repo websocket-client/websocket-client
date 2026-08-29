@@ -41,6 +41,17 @@ class ABNFTest(unittest.TestCase):
         self.assertEqual(a_bad.rsv1, 1)
         self.assertEqual(a_bad.opcode, 77)
 
+    def test_status_constants_exported(self):
+        """Every STATUS_ constant in _abnf must be exported via __all__."""
+        import websocket
+        import websocket._abnf as abnf_mod
+
+        defined = {n for n in dir(abnf_mod) if n.startswith("STATUS_")}
+        exported = {n for n in abnf_mod.__all__ if n.startswith("STATUS_")}
+        self.assertSetEqual(exported, defined)
+        self.assertEqual(websocket.STATUS_SERVICE_RESTART, 1012)
+        self.assertEqual(websocket.STATUS_TRY_AGAIN_LATER, 1013)
+
     def test_validate(self):
         a_invalid_ping = ABNF(0, 0, 0, 0, opcode=ABNF.OPCODE_PING)
         self.assertRaises(
