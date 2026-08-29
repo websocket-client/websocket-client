@@ -311,10 +311,11 @@ class SocketTest(unittest.TestCase):
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = []  # Timeout - nothing ready
 
-            result = send(mock_sock, b"test data")
-
-            # Should return 0 when write times out
-            self.assertEqual(result, 0)
+            # Should raise WebSocketTimeoutException when write times out,
+            # matching recv()'s behavior (busy-loop fix: send() no longer
+            # returns 0, which spun send_frame()'s while-data loop forever)
+            with self.assertRaises(WebSocketTimeoutException):
+                send(mock_sock, b"test data")
 
     def test_send_string_data(self):
         """Test send with string data (should be encoded)"""

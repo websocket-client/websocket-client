@@ -184,7 +184,7 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
 
         if w:
             return sock.send(data)
-        return 0
+        raise WebSocketTimeoutException("Connection timed out waiting to send data")
 
     try:
         if sock.gettimeout() == 0:
