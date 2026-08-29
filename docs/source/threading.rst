@@ -59,8 +59,8 @@ not trigger the ``on_close()`` function, but the second code example does
 trigger the ``on_close()`` function. The highlighted rows show the lines added
 exclusively in the second example. This threading approach is identical to the
 `echoapp_client.py example <https://github.com/websocket-client/websocket-client/blob/master/examples/echoapp_client.py>`_.
-However, further testing found that some WebSocket servers, such as
-ws://echo.websocket.events, do not trigger the ``on_close()`` function.
+However, further testing found that some WebSocket servers
+do not trigger the ``on_close()`` function.
 
 
 **NOT working on_close() example, without threading**
@@ -136,7 +136,7 @@ Another example of code that does not trigger `on_close` is below. The fix is to
   if __name__ == "__main__":
       websocket.enableTrace(True)
       if len(sys.argv) < 2:
-          host = "ws://echo.websocket.events/"
+          host = "ws://websockets.chilkat.io/wsChilkatEcho.ashx"
       else:
           host = sys.argv[1]
       ws = websocket.WebSocketApp(host,
@@ -168,7 +168,7 @@ Another example of code that does not trigger `on_close` is below. The fix is to
   if __name__ == "__main__":
       websocket.enableTrace(True)
       if len(sys.argv) < 2:
-          host = "ws://echo.websocket.events/"
+          host = "ws://websockets.chilkat.io/wsChilkatEcho.ashx"
       else:
           host = sys.argv[1]
       ws = websocket.WebSocketApp(host,
