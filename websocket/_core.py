@@ -480,11 +480,7 @@ class WebSocket:
             if isEnabledForTrace():
                 trace(f"++Rcv raw: {repr(frame.format())}")
                 trace(f"++Rcv decoded: {frame.__str__()}")
-            if not frame:
-                # handle error:
-                # 'NoneType' object has no attribute 'opcode'
-                raise WebSocketProtocolException(f"Not a valid frame {frame}")
-            elif frame.opcode in (
+            if frame.opcode in (
                 ABNF.OPCODE_TEXT,
                 ABNF.OPCODE_BINARY,
                 ABNF.OPCODE_CONT,
