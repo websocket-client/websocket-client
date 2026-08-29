@@ -1,5 +1,5 @@
 import http.cookies
-from typing import Optional
+from typing import Optional, Union
 
 """
 _cookiejar.py
@@ -25,29 +25,40 @@ class SimpleCookieJar:
     def __init__(self) -> None:
         self.jar: dict = {}
 
-    def add(self, set_cookie: Optional[str]) -> None:
-        if set_cookie:
-            simple_cookie = http.cookies.SimpleCookie(set_cookie)
+    def add(self, set_cookie: Optional[Union[str, list]]) -> None:
+        if not set_cookie:
+            return
+        cookie_headers = set_cookie if isinstance(set_cookie, list) else [set_cookie]
+        for cookie_header in cookie_headers:
+            simple_cookie = http.cookies.SimpleCookie(cookie_header)
 
+            # Store each morsel only under its own domain: morsels that
+            # carry a domain attribute never leak into a sibling's domain
+            # entry, and morsels without a domain are dropped (consistent
+            # with the no-domain rule above).
             for v in simple_cookie.values():
                 if domain := v.get("domain"):
                     if not domain.startswith("."):
                         domain = f".{domain}"
+                    domain = domain.lower()
                     cookie = self.jar.get(domain)
                     if cookie is None:
                         cookie = http.cookies.SimpleCookie()
-                    cookie.update(simple_cookie)
-                    self.jar[domain.lower()] = cookie
+                    cookie[v.key] = v
+                    self.jar[domain] = cookie
 
     def set(self, set_cookie: str) -> None:
+        """Replace-style counterpart to add(): clears the existing entry
+        for each cookie's domain before storing (last write wins), with
+        the same per-morsel storage rule as add()."""
         if set_cookie:
             simple_cookie = http.cookies.SimpleCookie(set_cookie)
-
             for v in simple_cookie.values():
                 if domain := v.get("domain"):
                     if not domain.startswith("."):
                         domain = f".{domain}"
-                    self.jar[domain.lower()] = simple_cookie
+                    self.jar.pop(domain.lower(), None)
+            self.add(set_cookie)
 
     def get(self, host: str) -> str:
         if not host:

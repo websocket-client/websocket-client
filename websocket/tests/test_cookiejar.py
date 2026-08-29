@@ -47,25 +47,69 @@ class CookieJarTest(unittest.TestCase):
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; c=d; domain=abc")
-        self.assertEqual(cookie_jar.get("abc"), "a=b; c=d")
+        # only the domain-bearing morsel is stored; the domainless
+        # "a=b" is dropped per the no-domain rule
+        self.assertEqual(cookie_jar.get("abc"), "c=d")
         self.assertEqual(cookie_jar.get(None), "")
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; c=d; domain=abc")
         cookie_jar.add("e=f; domain=abc")
-        self.assertEqual(cookie_jar.get("abc"), "a=b; c=d; e=f")
+        self.assertEqual(cookie_jar.get("abc"), "c=d; e=f")
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; c=d; domain=abc")
         cookie_jar.add("e=f; domain=.abc")
-        self.assertEqual(cookie_jar.get("abc"), "a=b; c=d; e=f")
+        self.assertEqual(cookie_jar.get("abc"), "c=d; e=f")
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; c=d; domain=abc")
         cookie_jar.add("e=f; domain=xyz")
-        self.assertEqual(cookie_jar.get("abc"), "a=b; c=d")
+        self.assertEqual(cookie_jar.get("abc"), "c=d")
         self.assertEqual(cookie_jar.get("xyz"), "e=f")
         self.assertEqual(cookie_jar.get("something"), "")
+
+    def test_add_multiple_set_cookie_headers_no_cross_domain(self):
+        """Multiple Set-Cookie headers must not leak cookies across domains"""
+        # Present in v1.9.1 and earlier: repeated Set-Cookie headers were
+        # joined with "; " and the whole group stored under every domain.
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add(
+            [
+                "session=x; Domain=.example.com",
+                "tracking=y; Domain=.ads.example.com",
+            ]
+        )
+        self.assertEqual(sorted(cookie_jar.jar), [".ads.example.com", ".example.com"])
+        self.assertEqual(set(cookie_jar.jar[".example.com"].keys()), {"session"})
+        self.assertEqual(set(cookie_jar.jar[".ads.example.com"].keys()), {"tracking"})
+        # Subdomain cookie must not leak up; parent-domain cookie
+        # legitimately matches the subdomain host (RFC 6265 domain match).
+        self.assertEqual(cookie_jar.get("example.com"), "session=x")
+        self.assertEqual(cookie_jar.get("ads.example.com"), "session=x; tracking=y")
+
+    def test_add_joined_multi_domain_string_no_contamination(self):
+        """A single str carrying two differently-scoped cookies must not
+        cross-contaminate domains, regardless of input shape."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add(
+            "session=x; Domain=.example.com; tracking=y; Domain=.ads.example.com"
+        )
+        self.assertEqual(set(cookie_jar.jar[".example.com"].keys()), {"session"})
+        self.assertEqual(set(cookie_jar.jar[".ads.example.com"].keys()), {"tracking"})
+
+    def test_add_uppercase_domain_and_same_name_overwrite(self):
+        """Domain attributes are lowered for jar keys, and a repeated
+        cookie name on the same domain overwrites (RFC 6265 last-wins)."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("a=b; Domain=ABC.com")
+        self.assertEqual(sorted(cookie_jar.jar), [".abc.com"])
+        self.assertEqual(cookie_jar.get("abc.com"), "a=b")
+        self.assertEqual(cookie_jar.get("ABC.com"), "a=b")
+
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add(["tok=1; domain=abc", "tok=2; domain=abc"])
+        self.assertEqual(cookie_jar.get("abc"), "tok=2")
 
     def test_set(self):
         cookie_jar = SimpleCookieJar()
@@ -85,7 +129,8 @@ class CookieJarTest(unittest.TestCase):
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; c=d; domain=abc")
-        self.assertEqual(cookie_jar.get("abc"), "a=b; c=d")
+        # same per-morsel rule as add(): domainless "a=b" is dropped
+        self.assertEqual(cookie_jar.get("abc"), "c=d")
 
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; c=d; domain=abc")
@@ -100,21 +145,29 @@ class CookieJarTest(unittest.TestCase):
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; c=d; domain=abc")
         cookie_jar.set("e=f; domain=xyz")
-        self.assertEqual(cookie_jar.get("abc"), "a=b; c=d")
+        self.assertEqual(cookie_jar.get("abc"), "c=d")
         self.assertEqual(cookie_jar.get("xyz"), "e=f")
         self.assertEqual(cookie_jar.get("something"), "")
+
+    def test_set_multi_domain_string_no_cross_domain(self):
+        """set() must not leak cookies across domains: each jar
+        entry holds only its own morsel after clear-then-add."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.set("a=b; Domain=.example.com; c=d; Domain=.ads.example.com")
+        self.assertEqual(set(cookie_jar.jar[".example.com"].keys()), {"a"})
+        self.assertEqual(set(cookie_jar.jar[".ads.example.com"].keys()), {"c"})
 
     def test_get(self):
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b; c=d; domain=abc.com")
-        self.assertEqual(cookie_jar.get("abc.com"), "a=b; c=d")
-        self.assertEqual(cookie_jar.get("x.abc.com"), "a=b; c=d")
+        self.assertEqual(cookie_jar.get("abc.com"), "c=d")
+        self.assertEqual(cookie_jar.get("x.abc.com"), "c=d")
         self.assertEqual(cookie_jar.get("abc.com.es"), "")
         self.assertEqual(cookie_jar.get("xabc.com"), "")
 
         cookie_jar.set("a=b; c=d; domain=.abc.com")
-        self.assertEqual(cookie_jar.get("abc.com"), "a=b; c=d")
-        self.assertEqual(cookie_jar.get("x.abc.com"), "a=b; c=d")
+        self.assertEqual(cookie_jar.get("abc.com"), "c=d")
+        self.assertEqual(cookie_jar.get("x.abc.com"), "c=d")
         self.assertEqual(cookie_jar.get("abc.com.es"), "")
         self.assertEqual(cookie_jar.get("xabc.com"), "")
 

@@ -14,6 +14,7 @@ from websocket._exceptions import (
     WebSocketAddressException,
     WebSocketException,
 )
+from websocket._handshake import CookieJar
 from websocket._handshake import _create_sec_websocket_key
 from websocket._handshake import _validate as _validate_header
 from websocket._handshake import _get_handshake_headers
@@ -630,6 +631,28 @@ class HandshakeTest(unittest.TestCase):
         )
         host_headers = [h for h in headers if h.startswith("Host:")]
         self.assertEqual(len(host_headers), 0)
+
+    def test_handshake_cookie_from_multiple_set_cookie(self):
+        """Cookies received as two Set-Cookie headers must reach the next
+        handshake's Cookie header uncontaminated (one per domain)."""
+        with mock.patch.dict(CookieJar.jar, clear=True):
+            sock = SockMock()
+            sock.add_packet(
+                b"HTTP/1.1 101 Switching Protocols\r\n"
+                b"Set-Cookie: session=x; Domain=.example.com\r\n"
+                b"Set-Cookie: tracking=y; Domain=.ads.example.com\r\n"
+                b"\r\n"
+            )
+            _, header, _ = read_headers(sock)
+            handshake_response(101, header, None)
+
+            headers, _ = _get_handshake_headers(
+                "/", "ws://example.com", "example.com", 80, {}
+            )
+            self.assertEqual(
+                [h for h in headers if h.startswith("Cookie:")],
+                ["Cookie: session=x"],
+            )
 
     def test_suppress_host_websocket_connect(self):
         """Test suppress_host parameter with WebSocket.connect()"""

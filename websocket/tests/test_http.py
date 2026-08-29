@@ -110,6 +110,35 @@ class HttpTest(unittest.TestCase):
             WebSocketException, read_headers, HeaderSockMock("data/header02.txt")
         )
 
+    def test_read_header_multiple_set_cookie(self):
+        """Multiple Set-Cookie headers are collected into a list, not joined"""
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Set-Cookie: session=x; Domain=.example.com\r\n"
+            b"Set-Cookie: tracking=y; Domain=.ads.example.com\r\n"
+            b"Set-Cookie: prefs=z; Domain=example.com\r\n"
+            b"\r\n"
+        )
+        status, header, _ = read_headers(sock)
+        self.assertEqual(status, 101)
+        self.assertEqual(
+            header["set-cookie"],
+            [
+                "session=x; Domain=.example.com",
+                "tracking=y; Domain=.ads.example.com",
+                "prefs=z; Domain=example.com",
+            ],
+        )
+
+        # single Set-Cookie stays a plain string (no list wrapping)
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n" b"Set-Cookie: session=x\r\n" b"\r\n"
+        )
+        _, header, _ = read_headers(sock)
+        self.assertEqual(header["set-cookie"], "session=x")
+
     def test_read_header_malformed_status_line(self):
         """Malformed responses surface as WebSocketException, not raw
         IndexError, ValueError, or UnicodeDecodeError."""

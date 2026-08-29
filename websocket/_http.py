@@ -428,10 +428,13 @@ def read_headers(sock: socket.socket) -> tuple:
             if len(kv) != 2:
                 raise WebSocketException("Invalid header")
             key, value = kv
-            if key.lower() == "set-cookie" and headers.get("set-cookie"):
-                existing_cookie = headers.get("set-cookie")
-                if existing_cookie is not None:
-                    headers["set-cookie"] = existing_cookie + "; " + value.strip()
+            if key.lower() == "set-cookie":
+                if "set-cookie" in headers:
+                    existing = headers["set-cookie"]
+                    if isinstance(existing, list):
+                        existing.append(value.strip())
+                    else:
+                        headers["set-cookie"] = [existing, value.strip()]
                 else:
                     headers["set-cookie"] = value.strip()
             else:
