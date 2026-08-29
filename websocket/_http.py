@@ -406,13 +406,21 @@ def read_headers(sock: socket.socket) -> tuple:
 
     while True:
         line = recv_line(sock)
-        line = line.decode("utf-8").strip()
+        try:
+            line = line.decode("utf-8").strip()
+        except UnicodeDecodeError as e:
+            raise WebSocketException(
+                f"Invalid header line, not valid UTF-8 at byte {e.start}: {line!r}"
+            )
         if not line:
             break
         trace(line)
         if not status:
             status_info = line.split(" ", 2)
-            status = int(status_info[1])
+            try:
+                status = int(status_info[1])
+            except (IndexError, ValueError):
+                raise WebSocketException(f"Invalid status line: {line!r}")
             if len(status_info) > 2:
                 status_message = status_info[2]
         else:
