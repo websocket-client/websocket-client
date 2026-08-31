@@ -456,7 +456,7 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
             ) as e:
-                handleDisconnect(e, reconnecting)
+                handleDisconnect( e )
 
         def read() -> bool:
             if not self.keep_running:
@@ -571,8 +571,7 @@ class WebSocketApp:
             if close_frame is None:
                 self.has_errored = True
             self._stop_ping_thread()
-            if not reconnecting:
-                self._callback(self.on_error, e)
+            self._callback(self.on_error, e)
 
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
                 teardown(close_frame)
