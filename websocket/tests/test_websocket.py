@@ -162,8 +162,9 @@ class WebSocketTest(unittest.TestCase):
         )
 
         header = required_header.copy()
-        # This case will print out a logging error using the error() function, but that is expected
-        self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (False, None))
+        # Server omitting the header entirely is a valid response per RFC 6455;
+        # it means no subprotocol was selected, not that the handshake is invalid.
+        self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (True, None))
 
     def test_read_header(self):
         status, header, _ = read_headers(HeaderSockMock("data/header01.txt"))
