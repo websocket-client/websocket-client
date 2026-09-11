@@ -105,6 +105,10 @@ class WebSocketApp:
             on_error has 2 arguments.
             The 1st argument is this class object.
             The 2nd argument is exception object.
+            Called for every error, including errors during reconnect
+            attempts (since 1.10.0). To distinguish reconnect-phase
+            errors from the initial failure, track state with the
+            on_reconnect and on_open callbacks.
         on_close: function
             Callback object which is called when connection is closed.
             on_close has 3 arguments.
@@ -456,7 +460,7 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
             ) as e:
-                handleDisconnect(e, reconnecting)
+                handleDisconnect(e)
 
         def read() -> bool:
             if not self.keep_running:
@@ -555,7 +559,7 @@ class WebSocketApp:
                 setattr(converted, "status_code", close_status_code)
                 setattr(converted, "reason", close_reason)
                 e = converted
-            return handleDisconnect(e, bool(reconnect), close_frame=close_frame)  # type: ignore[arg-type]
+            return handleDisconnect(e, close_frame=close_frame)  # type: ignore[arg-type]
 
         def handleDisconnect(
             e: Union[
@@ -565,14 +569,12 @@ class WebSocketApp:
                 SystemExit,
                 Exception,
             ],
-            reconnecting: bool = False,
             close_frame: Optional[ABNF] = None,
         ) -> bool:
             if close_frame is None:
                 self.has_errored = True
             self._stop_ping_thread()
-            if not reconnecting:
-                self._callback(self.on_error, e)
+            self._callback(self.on_error, e)
 
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
                 teardown(close_frame)
