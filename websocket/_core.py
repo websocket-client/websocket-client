@@ -1,3 +1,4 @@
+import math
 import socket
 import struct
 import threading
@@ -179,7 +180,16 @@ class WebSocket:
         ----------
         timeout: int or float
             timeout time (in seconds). This value could be either float/integer.
+            None disables the timeout (blocking mode).
         """
+        if timeout is not None:
+            # bool subclasses int; True would become 1.0s on the socket
+            if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
+                raise TypeError(
+                    "timeout must be an int or float, not %r" % (type(timeout).__name__,)
+                )
+            if not math.isfinite(timeout):
+                raise ValueError("timeout must be a finite number, got %r" % (timeout,))
         self.sock_opt.timeout = timeout
         if self.sock:
             self.sock.settimeout(timeout)

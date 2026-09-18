@@ -1,5 +1,6 @@
 import errno
 import selectors
+import math
 import socket
 from typing import Optional, Union, Any
 
@@ -72,9 +73,18 @@ def setdefaulttimeout(timeout: Optional[Union[int, float]]) -> None:
     Parameters
     ----------
     timeout: int or float
-        default socket timeout time (in seconds)
+        default socket timeout time (in seconds).
+        None clears the default timeout.
     """
     global _default_timeout
+    if timeout is not None:
+        # bool subclasses int; True would become a 1.0s default timeout
+        if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
+            raise TypeError(
+                "timeout must be an int or float, not %r" % (type(timeout).__name__,)
+            )
+        if not math.isfinite(timeout):
+            raise ValueError("timeout must be a finite number, got %r" % (timeout,))
     _default_timeout = timeout
 
 
