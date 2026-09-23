@@ -685,7 +685,7 @@ class WebSocketApp:
                 callback(self, *args)
 
             except Exception as e:
-                error(f"error from callback {callback}: {e}")
+                error(f"error from callback {callback}: {e}", exc_info=True)
                 # Bug fix: Prevent infinite recursion by not calling on_error
                 # when the failing callback IS on_error itself
                 if self.on_error and callback is not self.on_error:

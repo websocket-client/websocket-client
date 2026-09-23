@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- Unreleased
+
+  - Include traceback details when logging exceptions from WebSocketApp callbacks (#1004)
+
 - 1.9.2
   - Fix race in `WebSocketApp.close()` when `run_forever()` thread clears the socket during the close handshake (#1057, fixes #1055 and #1056)
 
