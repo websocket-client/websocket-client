@@ -9,6 +9,7 @@ from unittest import mock
 
 import websocket as ws
 from websocket._abnf import ABNF
+from websocket._cookiejar import SimpleCookieJar
 from websocket._exceptions import (
     WebSocketBadStatusException,
     WebSocketAddressException,
@@ -504,6 +505,41 @@ class UtilsTest(unittest.TestCase):
 
 
 class HandshakeTest(unittest.TestCase):
+    def test_connect_ignores_invalid_cookie(self):
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Connection: Upgrade\r\n"
+            b"Upgrade: websocket\r\n"
+            b"Sec-WebSocket-Accept: Kxep+hNu9n51529fGidYu7a3wO0=\r\n"
+            b"Set-Cookie: bad@name=secret-value; domain=example.com\r\n\r\n"
+        )
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("existing=preserved; domain=example.com")
+        with mock.patch("websocket._handshake.CookieJar", cookie_jar), mock.patch(
+            "websocket._handshake._create_sec_websocket_key",
+            return_value="c6b8hTg4EeGb2gQMztV1/g==",
+        ), self.assertLogs("websocket", level="WARNING") as logs:
+            websock = ws.create_connection("ws://example.com/", socket=sock)
+        try:
+            self.assertTrue(websock.connected)
+            self.assertEqual(websock.getstatus(), 101)
+            self.assertEqual(cookie_jar.get("example.com"), "existing=preserved")
+            self.assertEqual(
+                logs.output, ["WARNING:websocket:Ignoring invalid Set-Cookie header"]
+            )
+        finally:
+            websock.shutdown()
+
+    def test_redirect_ignores_invalid_cookie(self):
+        headers = {"location": "ws://example.com/", "set-cookie": "bad@name=value"}
+        with mock.patch(
+            "websocket._handshake.CookieJar", SimpleCookieJar()
+        ), self.assertLogs("websocket", level="WARNING"):
+            response = handshake_response(302, headers, None)
+        self.assertEqual(response.status, 302)
+        self.assertEqual(response.headers, headers)
+
     def test_bad_status_exception_carries_status_message(self):
         exc = WebSocketBadStatusException(
             "Handshake status 404 Not Found", 404, "Not Found"
