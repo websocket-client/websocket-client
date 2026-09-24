@@ -852,6 +852,100 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         )
         self.assertEqual(handshake_mock.call_count, 2)
 
+    def test_connect_cross_authority_redirect_strips_credentials(self):
+        sock = ws.WebSocket()
+        connect_results = [
+            (mock.Mock(), ("origin", 80, "/")),
+            (mock.Mock(), ("redirect", 80, "/")),
+        ]
+
+        def fake_connect(url, *_):
+            return connect_results.pop(0)
+
+        redirect_resp = handshake_response(302, {"location": "ws://redirect"}, None)
+        success_resp = handshake_response(101, {}, None)
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch(
+            "websocket._core.handshake", side_effect=[redirect_resp, success_resp]
+        ) as handshake_mock:
+            sock.connect(
+                "ws://origin",
+                header=[
+                    "Authorization: Bearer t",
+                    "Cookie: session=abc",
+                    "X-Custom: v",
+                ],
+                cookie="session=abc",
+                redirect_limit=1,
+            )
+
+        redirected = handshake_mock.call_args_list[1]
+        self.assertNotIn("cookie", redirected.kwargs)
+        self.assertEqual(redirected.kwargs["header"], ["X-Custom: v"])
+
+    def test_connect_cross_authority_redirect_strips_dict_credentials(self):
+        sock = ws.WebSocket()
+        connect_results = [
+            (mock.Mock(), ("origin", 80, "/")),
+            (mock.Mock(), ("redirect", 80, "/")),
+        ]
+
+        def fake_connect(url, *_):
+            return connect_results.pop(0)
+
+        redirect_resp = handshake_response(301, {"location": "ws://redirect"}, None)
+        success_resp = handshake_response(101, {}, None)
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch(
+            "websocket._core.handshake", side_effect=[redirect_resp, success_resp]
+        ) as handshake_mock:
+            sock.connect(
+                "ws://origin",
+                header={
+                    "Authorization ": "Bearer t",
+                    "Cookie": "session=abc",
+                    "X-Custom": "v",
+                },
+                cookie="session=abc",
+                redirect_limit=1,
+            )
+
+        redirected = handshake_mock.call_args_list[1]
+        self.assertEqual(redirected.kwargs["header"], {"X-Custom": "v"})
+
+    def test_connect_same_authority_redirect_keeps_credentials(self):
+        sock = ws.WebSocket()
+        connect_results = [
+            (mock.Mock(), ("origin", 80, "/")),
+            (mock.Mock(), ("origin", 80, "/new")),
+        ]
+
+        def fake_connect(url, *_):
+            return connect_results.pop(0)
+
+        redirect_resp = handshake_response(302, {"location": "ws://origin/new"}, None)
+        success_resp = handshake_response(101, {}, None)
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch(
+            "websocket._core.handshake", side_effect=[redirect_resp, success_resp]
+        ) as handshake_mock:
+            sock.connect(
+                "ws://origin",
+                header=["Authorization: Bearer t"],
+                cookie="session=abc",
+                redirect_limit=1,
+            )
+
+        redirected = handshake_mock.call_args_list[1]
+        self.assertEqual(redirected.kwargs["header"], ["Authorization: Bearer t"])
+        self.assertEqual(redirected.kwargs["cookie"], "session=abc")
+
     def test_connect_redirect_limit_exhausted_raises(self):
         sock = ws.WebSocket()
         sockets = []

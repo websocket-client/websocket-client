@@ -53,6 +53,36 @@ def _normalize_close_reason(reason: Union[str, bytes, None]) -> bytes:
     return bytes(reason)
 
 
+def _handshake_authority(url: str, addrs: tuple) -> tuple:
+    """(scheme, lowercase host, effective port) identifying a handshake target."""
+    scheme = url.split(":", 1)[0].lower()
+    hostname, port, _ = addrs
+    return (scheme, hostname.lower() if hostname else None, port)
+
+
+def _without_credentials(options: dict) -> dict:
+    """Copy of options without Authorization/Cookie credentials, for a
+    redirect whose target authority differs from the previous one."""
+    options = dict(options)
+    header = options.get("header")
+    if header:
+        if isinstance(header, dict):
+            header = {
+                k: v
+                for k, v in header.items()
+                if k.strip().lower() not in ("authorization", "cookie")
+            }
+        else:
+            header = [
+                h
+                for h in header
+                if h.split(":", 1)[0].strip().lower() not in ("authorization", "cookie")
+            ]
+        options["header"] = header
+    options.pop("cookie", None)
+    return options
+
+
 class WebSocket:
     """
     Low level WebSocket interface.
@@ -282,6 +312,7 @@ class WebSocket:
 
         try:
             self.handshake_response = handshake(self.sock, url, *addrs, **options)
+            authority = _handshake_authority(url, addrs)
             for _ in range(options.pop("redirect_limit", 3)):
                 if (
                     self.handshake_response is not None
@@ -305,6 +336,12 @@ class WebSocket:
                         raise WebSocketException(
                             f"Invalid redirect target {url!r}: {e}"
                         ) from e
+                    new_authority = _handshake_authority(url, addrs)
+                    if new_authority != authority:
+                        # Credentials supplied for the original authority must
+                        # not be replayed to a different scheme/host/port.
+                        options = _without_credentials(options)
+                    authority = new_authority
                     self.handshake_response = handshake(
                         self.sock, url, *addrs, **options
                     )
