@@ -618,6 +618,8 @@ class WebSocket:
         close socket, immediately.
         """
         if self.sock:
+            if self.dispatcher:
+                self.dispatcher.release_sock(self.sock)
             try:
                 # Check if socket is still open before closing
                 if not self.sock._closed:
@@ -645,6 +647,8 @@ class WebSocket:
             return recv(self.sock, bufsize)
         except WebSocketConnectionClosedException:
             if self.sock:
+                if self.dispatcher:
+                    self.dispatcher.release_sock(self.sock)
                 self.sock.close()
             self.sock = None
             self.connected = False

@@ -39,7 +39,7 @@ setup(
     python_requires=">=3.10",
     extras_require={
         "test": ["pytest", "websockets"],
-        "optional": ["python-socks", "wsaccel"],
+        "optional": ["python-socks", "wsaccel", "rel >= 0.4.9.27"],
         "docs": ["Sphinx >= 6.0", "sphinx_rtd_theme >= 1.1.0", "myst-parser >= 2.0.0"],
     },
     classifiers=[
