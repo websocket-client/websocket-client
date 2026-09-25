@@ -861,6 +861,19 @@ class WebSocketAppUnitTests(unittest.TestCase):
         app._callback(app.on_error)
         self.assertEqual(capture, [])
 
+    def test_callback_error_log_includes_traceback(self):
+        def failing_callback(app):
+            raise KeyError("missing callback key")
+
+        app = self._build_app()
+        with self.assertLogs("websocket", level="ERROR") as captured:
+            app._callback(failing_callback)
+
+        self.assertEqual(len(captured.records), 1)
+        record = captured.records[0]
+        self.assertIs(record.exc_info[0], KeyError)
+        self.assertEqual(record.exc_info[1].args, ("missing callback key",))
+
 
 if __name__ == "__main__":
     unittest.main()
