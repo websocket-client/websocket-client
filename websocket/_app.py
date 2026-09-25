@@ -2,6 +2,8 @@ import inspect
 import socket
 import threading
 import time
+import gc
+import types
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 from ._logging import debug, error, info, warning
@@ -520,7 +522,29 @@ class WebSocketApp:
                     )
                 ):
                     raise WebSocketTimeoutException("ping/pong timed out")
+            refs=gc.get_referrers(self)
+            _l=[is_my_runtime_object(x) for x in refs ]
+            
+            if  all(_l):
+                info(r''' only cycle ref exit''')
+                raise SystemExit("lifecycle ended")
             return True
+        def is_my_runtime_object(obj):
+            '''            
+            '''
+            
+            if isinstance(obj , types.CellType):
+
+                return obj.cell_contents is self
+            if isinstance(obj,types.MethodType):
+
+                return obj.__self__ is self and obj.__func__ is self.__class__.run_forever
+            if  isinstance(obj,dispatcher.__class__):
+
+                    
+                return obj is dispatcher
+  
+            return False
 
         def closed(
             e: Union[
@@ -612,7 +636,16 @@ class WebSocketApp:
             if not custom_dispatcher:
                 # Ensure teardown was called before returning from run_forever
                 teardown()
+            del closed
+            del initialize_socket
+            del handleDisconnect
+            del check
+            del read
+            del teardown
+            del dispatcher
 
+ 
+            gc.collect()  #  gc
         return self.has_errored
 
     def create_dispatcher(
@@ -690,3 +723,7 @@ class WebSocketApp:
                 # when the failing callback IS on_error itself
                 if self.on_error and callback is not self.on_error:
                     self.on_error(self, e)
+
+
+    # def __del__(self):
+    #     print('app_del called id:',id(self))
