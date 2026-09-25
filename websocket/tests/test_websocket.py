@@ -110,6 +110,16 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(ws.getdefaulttimeout(), 10)
         ws.setdefaulttimeout(None)
 
+    def test_default_timeout_rejects_bool_and_nonfinite(self):
+        """bool subclasses int; True must not become a 1s default timeout."""
+        for value in (True, False):
+            with self.assertRaises(TypeError):
+                ws.setdefaulttimeout(value)
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.assertRaises(ValueError):
+                ws.setdefaulttimeout(value)
+        ws.setdefaulttimeout(None)
+
     def test_ws_key(self):
         key = _create_sec_websocket_key()
         self.assertTrue(key != 24)
@@ -726,6 +736,20 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         sock.settimeout(5)
         self.assertEqual(sock.gettimeout(), 5)
         fake_socket.settimeout.assert_called_once_with(5)
+
+    def test_settimeout_rejects_bool_and_nonfinite(self):
+        """bool subclasses int; True must not become a 1s socket timeout."""
+        sock = ws.WebSocket()
+        for value in (True, False):
+            with self.assertRaises(TypeError):
+                sock.settimeout(value)
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.assertRaises(ValueError):
+                sock.settimeout(value)
+        sock.settimeout(None)
+        self.assertIsNone(sock.gettimeout())
+        sock.settimeout(2.5)
+        self.assertEqual(sock.gettimeout(), 2.5)
 
     def test_is_ssl_detection(self):
         sock = ws.WebSocket()
