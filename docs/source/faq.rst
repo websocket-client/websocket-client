@@ -236,6 +236,13 @@ Using Subprotocols
 
 The WebSocket RFC
 `outlines the usage of subprotocols <https://tools.ietf.org/html/rfc6455#section-1.9>`_.
+The server may choose not to select a subprotocol by omitting the
+``Sec-WebSocket-Protocol`` response header, as described in
+`RFC 6455 section 4.2.2 <https://www.rfc-editor.org/rfc/rfc6455.html#section-4.2.2>`_.
+If the handshake is otherwise valid, the connection succeeds and
+``getsubprotocol()`` returns ``None``.
+Applications that require a subprotocol should check the negotiated value.
+
 The subprotocol can be specified as in the example below:
 
 .. doctest:: subprotocols
