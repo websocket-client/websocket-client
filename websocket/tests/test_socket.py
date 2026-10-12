@@ -156,6 +156,27 @@ class SocketTest(unittest.TestCase):
             with self.assertRaises(WebSocketTimeoutException):
                 recv(mock_sock, 100)
 
+    def test_recv_closes_selector_on_error(self):
+        for method, error in (
+            ("register", ValueError("Invalid file descriptor")),
+            ("select", OSError(errno.EBADF, "Bad file descriptor")),
+            ("select", KeyboardInterrupt()),
+        ):
+            with self.subTest(method=method, error=type(error)):
+                mock_sock = Mock()
+                mock_sock.gettimeout.return_value = 1.0
+                mock_sock.recv.side_effect = SSLWantReadError()
+                mock_selector = Mock()
+                getattr(mock_selector, method).side_effect = error
+
+                with patch("selectors.DefaultSelector", return_value=mock_selector):
+                    with self.assertRaises(type(error)) as cm:
+                        recv(mock_sock, 100)
+
+                self.assertIs(cm.exception, error)
+                mock_selector.close.assert_called_once_with()
+                mock_sock.recv.assert_called_once_with(100)
+
     def test_recv_line(self):
         """Test recv_line functionality"""
         mock_sock = Mock()
@@ -220,6 +241,27 @@ class SocketTest(unittest.TestCase):
             self.assertEqual(result, 9)
             mock_selector.register.assert_called()
             mock_selector.close.assert_called()
+
+    def test_send_closes_selector_on_error(self):
+        for method, error in (
+            ("register", ValueError("Invalid file descriptor")),
+            ("select", OSError(errno.EBADF, "Bad file descriptor")),
+            ("select", KeyboardInterrupt()),
+        ):
+            with self.subTest(method=method, error=type(error)):
+                mock_sock = Mock()
+                mock_sock.gettimeout.return_value = 1.0
+                mock_sock.send.side_effect = SSLWantWriteError()
+                mock_selector = Mock()
+                getattr(mock_selector, method).side_effect = error
+
+                with patch("selectors.DefaultSelector", return_value=mock_selector):
+                    with self.assertRaises(type(error)) as cm:
+                        send(mock_sock, b"test data")
+
+                self.assertIs(cm.exception, error)
+                mock_selector.close.assert_called_once_with()
+                mock_sock.send.assert_called_once_with(b"test data")
 
     def test_send_socket_eagain_error(self):
         """Test send with EAGAIN error (should retry)"""

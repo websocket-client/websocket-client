@@ -108,10 +108,11 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
 
         # Retry logic using selector for both SSLWantReadError and EAGAIN/EWOULDBLOCK
         sel = selectors.DefaultSelector()
-        sel.register(sock, selectors.EVENT_READ)
-
-        r = sel.select(sock.gettimeout())
-        sel.close()
+        try:
+            sel.register(sock, selectors.EVENT_READ)
+            r = sel.select(sock.gettimeout())
+        finally:
+            sel.close()
 
         if r:
             return sock.recv(bufsize)
@@ -177,10 +178,11 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
                 raise
 
         sel = selectors.DefaultSelector()
-        sel.register(sock, selectors.EVENT_WRITE)
-
-        w = sel.select(sock.gettimeout())
-        sel.close()
+        try:
+            sel.register(sock, selectors.EVENT_WRITE)
+            w = sel.select(sock.gettimeout())
+        finally:
+            sel.close()
 
         if w:
             return sock.send(data)
