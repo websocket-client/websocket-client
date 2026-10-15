@@ -540,6 +540,16 @@ class HandshakeTest(unittest.TestCase):
         self.assertEqual(response.status, 302)
         self.assertEqual(response.headers, headers)
 
+    def test_redirect_ignores_cookie_for_other_domain(self):
+        headers = {
+            "location": "ws://victim.com/",
+            "set-cookie": "session=attacker; domain=victim.com",
+        }
+        cookie_jar = SimpleCookieJar()
+        with mock.patch("websocket._handshake.CookieJar", cookie_jar):
+            handshake_response(302, headers, None, "evil.com")
+        self.assertEqual(cookie_jar.get("victim.com"), "")
+
     def test_bad_status_exception_carries_status_message(self):
         exc = WebSocketBadStatusException(
             "Handshake status 404 Not Found", 404, "Not Found"

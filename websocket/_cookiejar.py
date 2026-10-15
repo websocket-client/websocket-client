@@ -21,11 +21,19 @@ limitations under the License.
 """
 
 
+def _domain_match(host: str, domain: str) -> bool:
+    # RFC 6265 5.3 step 6: ignore cookies whose Domain does not match the
+    # host that set them, so one server cannot plant cookies for another.
+    host = host.lower()
+    domain = domain.lower()
+    return host == domain[1:] or host.endswith(domain)
+
+
 class SimpleCookieJar:
     def __init__(self) -> None:
         self.jar: dict = {}
 
-    def add(self, set_cookie: Optional[str]) -> None:
+    def add(self, set_cookie: Optional[str], host: Optional[str] = None) -> None:
         if set_cookie:
             simple_cookie = http.cookies.SimpleCookie(set_cookie)
 
@@ -33,6 +41,8 @@ class SimpleCookieJar:
                 if domain := v.get("domain"):
                     if not domain.startswith("."):
                         domain = f".{domain}"
+                    if host is not None and not _domain_match(host, domain):
+                        continue
                     cookie = self.jar.get(domain)
                     if cookie is None:
                         cookie = http.cookies.SimpleCookie()
