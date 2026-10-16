@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 import importlib
+import io
 import sys
 import unittest
 from unittest import mock
@@ -149,6 +150,42 @@ class ABNFTest(unittest.TestCase):
         self.assertIsNone(fb.length)
         self.assertIsNone(fb.mask_value)
         self.assertFalse(fb.has_mask())
+
+    def test_frame_buffer_rejects_invalid_extended_lengths(self):
+        for length_bits, length in (
+            (126, 0),
+            (126, 125),
+            (127, 0),
+            (127, 126),
+            (127, 65535),
+            (127, 1 << 63),
+            (127, (1 << 64) - 1),
+        ):
+            with self.subTest(length_bits=length_bits, length=length):
+                encoded = length.to_bytes(2 if length_bits == 126 else 8, "big")
+                wire = bytes([0x82, length_bits]) + encoded
+                fb = frame_buffer(io.BytesIO(wire).read, False)
+                fb.recv_header()
+                with self.assertRaises(WebSocketProtocolException):
+                    fb.recv_length()
+
+    def test_frame_buffer_accepts_canonical_lengths(self):
+        for length_bits, length in (
+            (0, 0),
+            (125, 125),
+            (126, 126),
+            (126, 65535),
+            (127, 65536),
+            (127, (1 << 63) - 1),
+        ):
+            with self.subTest(length_bits=length_bits, length=length):
+                wire = bytes([0x82, length_bits])
+                if length_bits >= 126:
+                    wire += length.to_bytes(2 if length_bits == 126 else 8, "big")
+                fb = frame_buffer(io.BytesIO(wire).read, False)
+                fb.recv_header()
+                fb.recv_length()
+                self.assertEqual(fb.length, length)
 
     def test_frame_buffer_recv_frame_handles_chunked_reads(self):
         payload = b"Hello"
