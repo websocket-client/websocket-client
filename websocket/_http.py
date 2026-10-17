@@ -372,6 +372,8 @@ def _ssl_socket(sock: socket.socket, user_sslopt: dict, hostname: str) -> Any:
 
 def _tunnel(sock: socket.socket, host: str, port: int, auth: Any) -> socket.socket:
     debug("Connecting proxy...")
+    if ":" in host:
+        host = f"[{host}]"
     connect_header = f"CONNECT {host}:{port} HTTP/1.1\r\n"
     connect_header += f"Host: {host}:{port}\r\n"
 

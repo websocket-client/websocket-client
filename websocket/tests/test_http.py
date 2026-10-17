@@ -161,6 +161,26 @@ class HttpTest(unittest.TestCase):
             ("username", "password"),
         )
 
+    def test_tunnel_authority(self):
+        for host, expected_host in (
+            ("::1", "[::1]"),
+            ("2001:db8::1", "[2001:db8::1]"),
+            ("::ffff:192.0.2.1", "[::ffff:192.0.2.1]"),
+            ("127.0.0.1", "127.0.0.1"),
+            ("example.com", "example.com"),
+        ):
+            for port in (80, 443, 8080):
+                with self.subTest(host=host, port=port):
+                    sock = SockMock()
+                    sock.add_packet(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+                    self.assertIs(_tunnel(sock, host, port, ("user", "pass")), sock)
+                    self.assertEqual(
+                        b"".join(sock.sent).decode("ascii"),
+                        f"CONNECT {expected_host}:{port} HTTP/1.1\r\n"
+                        f"Host: {expected_host}:{port}\r\n"
+                        "Proxy-Authorization: Basic dXNlcjpwYXNz\r\n\r\n",
+                    )
+
     def test_connect(self):
         # Test proxy error handling without requiring internet - using fast local addresses and short timeouts
         if HAVE_PYTHON_SOCKS:
