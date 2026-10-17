@@ -39,7 +39,8 @@ specific websocket-client features.
  `pip install websocket-client[docs]`
 
 While not a strict dependency, [rel](https://github.com/bubbleboy14/registeredeventlistener)
-is useful when using `run_forever` with automatic reconnect. Install rel with `pip install rel`.
+can run multiple `WebSocketApp` instances in one event loop. Install rel with `pip install rel`.
+It is not required for automatic reconnection with the built-in dispatcher.
 
 Footnote: Some shells, such as zsh, require you to escape the `[` and `]` characters with a `\`.
 
@@ -73,29 +74,27 @@ Many more examples are found in the
 ### Long-lived Connection
 
 Most real-world WebSockets situations involve longer-lived connections.
-The WebSocketApp `run_forever` loop will automatically try to reconnect
-to an open WebSocket connection when a network
-connection is lost if it is provided with:
+The WebSocketApp `run_forever` loop will automatically try to reconnect when
+provided with a non-zero `reconnect` argument (the delay in seconds between
+disconnection and attempted reconnection). The built-in dispatcher supports
+this directly: `ws.run_forever(reconnect=5)`. This call blocks until the
+application stops.
 
-- a `dispatcher` argument (async dispatcher like rel or pyevent)
-- a non-zero `reconnect` argument (delay between disconnection and attempted reconnection)
+A custom `dispatcher`, such as [rel](https://github.com/bubbleboy14/registeredeventlistener),
+is optional. It is useful for running multiple `WebSocketApp` instances in a
+shared event loop; see the [multiple connections example](https://websocket-client.readthedocs.io/en/latest/examples.html#dispatching-multiple-websocketapps).
 
-`run_forever` provides a variety of event-based connection controls
-using callbacks like `on_message` and `on_error`.
-`run_forever` **does not automatically reconnect** if the server
-closes the WebSocket gracefully (returning
-[a standard websocket close code](https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1)).
-[This is the logic](https://github.com/websocket-client/websocket-client/pull/838#issuecomment-1228454826) behind the decision.
-Customizing behavior when the server closes
-the WebSocket should be handled in the `on_close` callback.
-This example uses [rel](https://github.com/bubbleboy14/registeredeventlistener)
-for the dispatcher to provide automatic reconnection.
+`run_forever` provides event-based connection controls using callbacks like
+`on_message` and `on_error`. On the current version, a non-zero `reconnect`
+also retries after a WebSocket close frame, including a normal close (code
+1000). Set `reconnect=0` to disable automatic reconnection, or call `ws.close()`
+to stop the application.
+
+This example uses the built-in dispatcher and waits five seconds before
+reconnecting.
 
 ```python
 import websocket
-import _thread
-import time
-import rel
 
 def on_message(ws, message):
     print(message)
@@ -117,9 +116,7 @@ if __name__ == "__main__":
                               on_error=on_error,
                               on_close=on_close)
 
-    ws.run_forever(dispatcher=rel, reconnect=5)  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
-    rel.signal(2, rel.abort)  # Keyboard Interrupt
-    rel.dispatch()
+    ws.run_forever(reconnect=5)
 ```
 
 ### Short-lived Connection
