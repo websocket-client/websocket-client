@@ -9,6 +9,13 @@ ChangeLog
   - Cap response header and error body size during the handshake (3c81e66)
   - Keep only Set-Cookie headers whose domain matches the responding host; skip invalid Set-Cookie headers individually (#1071, 8425559)
   - Stop carrying authority-scoped headers and options across redirect boundaries (82a9788)
+  - Reject fragmented and oversized control frames (#1072, 7171b46)
+  - Validate extended frame payload lengths (#1073, 6a19e73)
+  - Bracket IPv6 hosts in HTTP proxy CONNECT authority (#1076, 0084ec3)
+  - Fix `no_proxy` leading-dot suffix match to require a domain boundary (#1069, b2ee91c)
+  - Close SOCKS sockets when TLS setup fails (#1074, 7681105)
+  - Reject `bool` and non-finite websocket timeouts (#1062, 8c36dc4)
+  - Propagate `KeyboardInterrupt` from `run_forever` (#1070, fixes #964, c43ecdc)
   - Include traceback details when logging exceptions from WebSocketApp callbacks (#1004)
 
 - 1.9.2
