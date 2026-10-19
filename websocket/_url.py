@@ -131,9 +131,11 @@ def _is_no_proxy_host(hostname: str, no_proxy: Optional[list[str]]) -> bool:
     # This makes behavior consistent with urllib and other Python libraries
     for domain in no_proxy:
         if domain.startswith("."):
-            # Handle .domain.com format
+            # Handle .domain.com format - match the domain itself and its
+            # subdomains, but not unrelated hosts that merely share the suffix
+            # (e.g. ".example.com" must not match "notexample.com").
             stripped_domain = domain.lstrip(".")
-            if hostname.endswith(stripped_domain):
+            if hostname == stripped_domain or hostname.endswith("." + stripped_domain):
                 return True
         else:
             # Handle domain.com format (should match subdomains too)

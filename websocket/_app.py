@@ -331,8 +331,14 @@ class WebSocketApp:
         Returns
         -------
         teardown: bool
-            False if the `WebSocketApp` is closed or caught KeyboardInterrupt,
-            True if any other exception was raised during a loop.
+            False if the `WebSocketApp` is closed gracefully,
+            True if an error was handled during the loop.
+
+        Raises
+        ------
+        KeyboardInterrupt
+            If interrupted during the loop. The connection is torn down before
+            the interrupt is propagated to the caller.
         """
 
         if reconnect is None:
@@ -593,9 +599,13 @@ class WebSocketApp:
             return self.has_errored
 
         custom_dispatcher = bool(dispatcher)
-        dispatcher = self.create_dispatcher(
-            ping_timeout, dispatcher, parse_url(self.url)[3], closed
-        )
+        try:
+            dispatcher = self.create_dispatcher(
+                ping_timeout, dispatcher, parse_url(self.url)[3], closed
+            )
+        except KeyboardInterrupt:
+            teardown()
+            raise
 
         try:
             initialize_socket()
@@ -606,8 +616,10 @@ class WebSocketApp:
                     )
                     dispatcher.reconnect(reconnect, initialize_socket)
         except (KeyboardInterrupt, Exception) as e:
-            info(f"tearing down on exception {e}")
+            info(f"tearing down on exception {e!r}")
             teardown()
+            if isinstance(e, KeyboardInterrupt):
+                raise
         finally:
             if not custom_dispatcher:
                 # Ensure teardown was called before returning from run_forever

@@ -727,6 +727,214 @@ class WebSocketAppUnitTests(unittest.TestCase):
         with self.assertRaises(ws.WebSocketException):
             app.run_forever()
 
+    def _assert_run_forever_cleanup(self, app, sock):
+        self.assertIsNone(app.sock)
+        self.assertFalse(app.keep_running)
+        self.assertTrue(app.has_done_teardown)
+        self.assertIsNone(app.ping_thread)
+        self.assertIsNone(app.stop_ping)
+        sock.close.assert_called_once_with()
+        app.on_close.assert_called_once()
+
+    def test_run_forever_propagates_keyboard_interrupt(self):
+        stages = (
+            "settimeout",
+            "connect",
+            "on_open",
+            "recv_data_frame",
+            "on_message",
+            "on_error",
+            "on_close",
+        )
+        for custom_dispatcher in (False, True):
+            for stage in stages:
+                with self.subTest(custom_dispatcher=custom_dispatcher, stage=stage):
+                    interrupt = KeyboardInterrupt()
+                    app = self._build_app()
+                    app.on_close = mock.Mock()
+                    sock = mock.Mock()
+                    frame = ABNF(fin=1, opcode=ABNF.OPCODE_TEXT, data=b"hello")
+                    sock.recv_data_frame.return_value = (frame.opcode, frame)
+
+                    if stage.startswith("on_"):
+                        setattr(app, stage, mock.Mock(side_effect=interrupt))
+                    else:
+                        getattr(sock, stage).side_effect = interrupt
+                    if stage == "on_error":
+                        sock.recv_data_frame.side_effect = RuntimeError("read failed")
+                    elif stage == "on_close":
+                        frame = ABNF(fin=1, opcode=ABNF.OPCODE_CLOSE, data=b"")
+                        sock.recv_data_frame.return_value = (frame.opcode, frame)
+
+                    def read_once(sock, read_callback, check_callback=None):
+                        return read_callback()
+
+                    external_dispatcher = mock.Mock()
+                    external_dispatcher.read.side_effect = read_once
+                    ping_thread = mock.Mock()
+                    ping_thread.is_alive.return_value = True
+                    ping_thread.join.side_effect = lambda timeout: setattr(
+                        ping_thread.is_alive, "return_value", False
+                    )
+                    ping_events = []
+                    ping_thread.start.side_effect = lambda: ping_events.append(
+                        app.stop_ping
+                    )
+
+                    with (
+                        mock.patch("websocket._app.WebSocket", return_value=sock),
+                        mock.patch(
+                            "websocket._app.Dispatcher.read", side_effect=read_once
+                        ),
+                        mock.patch(
+                            "websocket._app.threading.Thread", return_value=ping_thread
+                        ),
+                    ):
+                        with self.assertRaises(KeyboardInterrupt) as caught:
+                            app.run_forever(
+                                dispatcher=(
+                                    external_dispatcher if custom_dispatcher else None
+                                ),
+                                ping_interval=1,
+                                reconnect=0,
+                            )
+
+                    self.assertIs(caught.exception, interrupt)
+                    self._assert_run_forever_cleanup(app, sock)
+                    if stage in ("settimeout", "connect"):
+                        ping_thread.start.assert_not_called()
+                    else:
+                        ping_thread.start.assert_called_once_with()
+                        ping_thread.join.assert_called_once_with(3)
+                        self.assertTrue(ping_events[0].is_set())
+
+    def test_run_forever_interrupt_during_reconnect_wait(self):
+        for custom_dispatcher in (False, True):
+            with self.subTest(custom_dispatcher=custom_dispatcher):
+                interrupt = KeyboardInterrupt()
+                app = self._build_app()
+                app.on_close = mock.Mock()
+                app.on_error = mock.Mock()
+                sock = mock.Mock()
+                connection_error = ConnectionRefusedError("connection failed")
+                sock.connect.side_effect = connection_error
+                dispatcher = mock.Mock()
+                dispatcher.timeout.side_effect = interrupt
+
+                with (
+                    mock.patch("websocket._app.WebSocket", return_value=sock),
+                    mock.patch(
+                        "websocket._dispatcher.time.sleep", side_effect=interrupt
+                    ) as sleep,
+                ):
+                    with self.assertRaises(KeyboardInterrupt) as caught:
+                        app.run_forever(
+                            dispatcher=dispatcher if custom_dispatcher else None,
+                            reconnect=1,
+                        )
+
+                self.assertIs(caught.exception, interrupt)
+                if custom_dispatcher:
+                    dispatcher.timeout.assert_called_once_with(1, mock.ANY, True)
+                    sleep.assert_not_called()
+                else:
+                    sleep.assert_called_once_with(1)
+                sock.connect.assert_called_once()
+                app.on_error.assert_called_once_with(app, connection_error)
+                self._assert_run_forever_cleanup(app, sock)
+
+    def test_run_forever_interrupt_during_custom_dispatcher_initialization(self):
+        interrupt = KeyboardInterrupt()
+        app = self._build_app()
+        app.on_close = mock.Mock()
+        dispatcher = mock.Mock()
+        dispatcher.signal.side_effect = interrupt
+
+        with mock.patch("websocket._app.WebSocket") as socket_class:
+            with self.assertRaises(KeyboardInterrupt) as caught:
+                app.run_forever(dispatcher=dispatcher)
+
+        self.assertIs(caught.exception, interrupt)
+        socket_class.assert_not_called()
+        self.assertIsNone(app.sock)
+        self.assertFalse(app.keep_running)
+        self.assertTrue(app.has_done_teardown)
+        app.on_close.assert_called_once_with(app, None, None)
+
+    def test_run_forever_connection_error_returns_true(self):
+        for custom_dispatcher in (False, True):
+            with self.subTest(custom_dispatcher=custom_dispatcher):
+                app = self._build_app()
+                app.on_close = mock.Mock()
+                app.on_error = mock.Mock()
+                sock = mock.Mock()
+                error = RuntimeError("connection failed")
+                sock.connect.side_effect = error
+
+                with mock.patch("websocket._app.WebSocket", return_value=sock):
+                    result = app.run_forever(
+                        dispatcher=mock.Mock() if custom_dispatcher else None,
+                        reconnect=0,
+                    )
+
+                self.assertIs(result, True)
+                app.on_error.assert_called_once_with(app, error)
+                self._assert_run_forever_cleanup(app, sock)
+
+    def test_run_forever_graceful_close_returns_false(self):
+        for custom_dispatcher in (False, True):
+            with self.subTest(custom_dispatcher=custom_dispatcher):
+                app = self._build_app()
+                app.on_close = mock.Mock()
+                sock = mock.Mock()
+                # Use the imported class directly: test_abnf reloads its module,
+                # so create_frame() can return a different ABNF class instance.
+                frame = ABNF(
+                    fin=1,
+                    opcode=ABNF.OPCODE_CLOSE,
+                    data=struct.pack("!H", 1000) + b"goodbye",
+                )
+                sock.recv_data_frame.return_value = (frame.opcode, frame)
+
+                def read_once(sock, read_callback, check_callback=None):
+                    return read_callback()
+
+                dispatcher = mock.Mock()
+                dispatcher.read.side_effect = read_once
+                with (
+                    mock.patch("websocket._app.WebSocket", return_value=sock),
+                    mock.patch("websocket._app.Dispatcher.read", side_effect=read_once),
+                ):
+                    result = app.run_forever(
+                        dispatcher=dispatcher if custom_dispatcher else None,
+                        reconnect=0,
+                    )
+
+                self.assertIs(result, False)
+                self._assert_run_forever_cleanup(app, sock)
+                app.on_close.assert_called_once_with(app, 1000, "goodbye")
+
+    def test_run_forever_propagates_system_exit(self):
+        for custom_dispatcher in (False, True):
+            with self.subTest(custom_dispatcher=custom_dispatcher):
+                app = self._build_app()
+                app.on_close = mock.Mock()
+                app.on_error = mock.Mock()
+                sock = mock.Mock()
+                exit_error = SystemExit(2)
+                sock.connect.side_effect = exit_error
+
+                with mock.patch("websocket._app.WebSocket", return_value=sock):
+                    with self.assertRaises(SystemExit) as caught:
+                        app.run_forever(
+                            dispatcher=mock.Mock() if custom_dispatcher else None,
+                            reconnect=0,
+                        )
+
+                self.assertIs(caught.exception, exit_error)
+                app.on_error.assert_called_once_with(app, exit_error)
+                self._assert_run_forever_cleanup(app, sock)
+
     def test_close_frame_parsing(self):
         app = self._build_app()
         app.on_close = lambda *_: None

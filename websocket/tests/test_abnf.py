@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 import importlib
+import io
 import sys
 import unittest
 from unittest import mock
@@ -118,6 +119,34 @@ class ABNFTest(unittest.TestCase):
         )
         self.assertEqual(abnf_str_data._get_masked(bytes_val), b"aaaa\x00")
 
+    def test_received_control_frames_reject_fragmentation(self):
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            for payload in (b"", b"\x03\xe8"):
+                with self.subTest(opcode=opcode, payload=payload):
+                    wire = bytes([opcode, len(payload)]) + payload
+                    fb = frame_buffer(io.BytesIO(wire).read, False)
+                    with self.assertRaises(WebSocketProtocolException):
+                        fb.recv_frame()
+
+    def test_received_control_frames_reject_long_payloads(self):
+        payload = b"\x03\xe8" + b"a" * 124
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            with self.subTest(opcode=opcode):
+                wire = bytes([0x80 | opcode, 126, 0, 126]) + payload
+                fb = frame_buffer(io.BytesIO(wire).read, False)
+                with self.assertRaises(WebSocketProtocolException):
+                    fb.recv_frame()
+
+    def test_received_control_frames_accept_valid_payloads(self):
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            for payload in (b"", b"\x03\xe8" + b"a" * 123):
+                with self.subTest(opcode=opcode, length=len(payload)):
+                    wire = bytes([0x80 | opcode, len(payload)]) + payload
+                    fb = frame_buffer(io.BytesIO(wire).read, False)
+                    frame = fb.recv_frame()
+                    self.assertEqual(frame.opcode, opcode)
+                    self.assertEqual(frame.data, payload)
+
     def test_format(self):
         abnf_bad_rsv_bits = ABNF(2, 0, 0, 0, opcode=ABNF.OPCODE_TEXT)
         self.assertRaises(ValueError, abnf_bad_rsv_bits.format)
@@ -149,6 +178,42 @@ class ABNFTest(unittest.TestCase):
         self.assertIsNone(fb.length)
         self.assertIsNone(fb.mask_value)
         self.assertFalse(fb.has_mask())
+
+    def test_frame_buffer_rejects_invalid_extended_lengths(self):
+        for length_bits, length in (
+            (126, 0),
+            (126, 125),
+            (127, 0),
+            (127, 126),
+            (127, 65535),
+            (127, 1 << 63),
+            (127, (1 << 64) - 1),
+        ):
+            with self.subTest(length_bits=length_bits, length=length):
+                encoded = length.to_bytes(2 if length_bits == 126 else 8, "big")
+                wire = bytes([0x82, length_bits]) + encoded
+                fb = frame_buffer(io.BytesIO(wire).read, False)
+                fb.recv_header()
+                with self.assertRaises(WebSocketProtocolException):
+                    fb.recv_length()
+
+    def test_frame_buffer_accepts_canonical_lengths(self):
+        for length_bits, length in (
+            (0, 0),
+            (125, 125),
+            (126, 126),
+            (126, 65535),
+            (127, 65536),
+            (127, (1 << 63) - 1),
+        ):
+            with self.subTest(length_bits=length_bits, length=length):
+                wire = bytes([0x82, length_bits])
+                if length_bits >= 126:
+                    wire += length.to_bytes(2 if length_bits == 126 else 8, "big")
+                fb = frame_buffer(io.BytesIO(wire).read, False)
+                fb.recv_header()
+                fb.recv_length()
+                self.assertEqual(fb.length, length)
 
     def test_frame_buffer_recv_frame_handles_chunked_reads(self):
         payload = b"Hello"

@@ -14,6 +14,7 @@ from websocket._ssl_compat import (
 )
 from websocket._exceptions import (
     WebSocketTimeoutException,
+    WebSocketException,
     WebSocketConnectionClosedException,
 )
 
@@ -169,6 +170,26 @@ class SocketTest(unittest.TestCase):
             self.assertEqual(result, b"Hello\n")
             self.assertEqual(mock_recv.call_count, 6)
 
+    def test_recv_line_too_long(self):
+        """An unterminated line beyond MAX_LINE_BYTES raises instead of
+        buffering indefinitely (N33)."""
+        mock_sock = Mock()
+        with patch("websocket._socket.MAX_LINE_BYTES", 16):
+            with patch("websocket._socket.recv", side_effect=[b"A"] * 100):
+                with self.assertRaises(WebSocketException) as cm:
+                    recv_line(mock_sock)
+        self.assertIn("exceeds 16 bytes", str(cm.exception))
+
+    def test_recv_line_exactly_at_limit_ok(self):
+        """A line of exactly MAX_LINE_BYTES plus newline is accepted."""
+        mock_sock = Mock()
+        feed = [bytes([ord("a") + (i % 26)]) for i in range(16)] + [b"\n"]
+        with patch("websocket._socket.MAX_LINE_BYTES", 16):
+            with patch("websocket._socket.recv", side_effect=feed):
+                result = recv_line(mock_sock)
+        self.assertEqual(len(result), 17)
+        self.assertTrue(result.endswith(b"\n"))
+
     def test_send_normal(self):
         """Test normal send operation"""
         mock_sock = Mock()
@@ -190,6 +211,62 @@ class SocketTest(unittest.TestCase):
 
         self.assertEqual(result, 9)
         mock_sock.send.assert_called_once_with(b"test data")
+
+    def test_recv_nonblocking_no_data_raises_timeout(self):
+        """Non-blocking recv with no data raises WebSocketTimeoutException, not BlockingIOError"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 0
+        mock_sock.recv.side_effect = BlockingIOError(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        class FakeSelector:
+            polled_timeout = None
+
+            def register(self, *args, **kwargs):
+                pass
+
+            def select(self, timeout):
+                self.polled_timeout = timeout
+                return []
+
+            def close(self):
+                pass
+
+        fake = FakeSelector()
+        with patch("selectors.DefaultSelector", return_value=fake):
+            with self.assertRaises(WebSocketTimeoutException):
+                recv(mock_sock, 1024)
+
+        self.assertEqual(fake.polled_timeout, 0)
+
+    def test_send_nonblocking_not_writable_raises_timeout(self):
+        """Non-blocking send when unwritable raises WebSocketTimeoutException, not BlockingIOError"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 0
+        mock_sock.send.side_effect = BlockingIOError(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        class FakeSelector:
+            polled_timeout = None
+
+            def register(self, *args, **kwargs):
+                pass
+
+            def select(self, timeout):
+                self.polled_timeout = timeout
+                return []
+
+            def close(self):
+                pass
+
+        fake = FakeSelector()
+        with patch("selectors.DefaultSelector", return_value=fake):
+            with self.assertRaises(WebSocketTimeoutException):
+                send(mock_sock, b"test data")
+
+        self.assertEqual(fake.polled_timeout, 0)
 
     def test_send_ssl_eof_error(self):
         """Test send with SSLEOFError"""
@@ -311,10 +388,11 @@ class SocketTest(unittest.TestCase):
             mock_selector_class.return_value = mock_selector
             mock_selector.select.return_value = []  # Timeout - nothing ready
 
-            result = send(mock_sock, b"test data")
-
-            # Should return 0 when write times out
-            self.assertEqual(result, 0)
+            # Should raise WebSocketTimeoutException when write times out,
+            # matching recv()'s behavior (busy-loop fix: send() no longer
+            # returns 0, which spun send_frame()'s while-data loop forever)
+            with self.assertRaises(WebSocketTimeoutException):
+                send(mock_sock, b"test data")
 
     def test_send_string_data(self):
         """Test send with string data (should be encoded)"""
@@ -371,6 +449,42 @@ class SocketTest(unittest.TestCase):
         with patch("selectors.DefaultSelector", return_value=FakeSelector()):
             with self.assertRaises(WebSocketTimeoutException):
                 recv(mock_sock, 10)
+
+    def test_recv_selector_closed_on_select_error(self):
+        """Selector must be closed even when select() raises (leak fix)"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 30.0
+        mock_sock.recv.side_effect = socket.error(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        with patch("selectors.DefaultSelector") as mock_selector_class:
+            mock_selector = Mock()
+            mock_selector_class.return_value = mock_selector
+            mock_selector.select.side_effect = socket.error(errno.EBADF, "Bad fd")
+
+            with self.assertRaises(socket.error):
+                recv(mock_sock, 1024)
+
+            mock_selector.close.assert_called_once()
+
+    def test_send_selector_closed_on_select_error(self):
+        """Selector must be closed even when select() raises (leak fix)"""
+        mock_sock = Mock()
+        mock_sock.gettimeout.return_value = 30.0
+        mock_sock.send.side_effect = socket.error(
+            errno.EAGAIN, "Resource temporarily unavailable"
+        )
+
+        with patch("selectors.DefaultSelector") as mock_selector_class:
+            mock_selector = Mock()
+            mock_selector_class.return_value = mock_selector
+            mock_selector.select.side_effect = socket.error(errno.EBADF, "Bad fd")
+
+            with self.assertRaises(socket.error):
+                send(mock_sock, b"test data")
+
+            mock_selector.close.assert_called_once()
 
     def test_send_socket_timeout_error(self):
         mock_sock = Mock()

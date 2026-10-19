@@ -183,14 +183,15 @@ class ABNF:
         if self.opcode not in ABNF.OPCODES:
             raise WebSocketProtocolException(f"Invalid opcode {self.opcode!r}")
 
-        if self.opcode == ABNF.OPCODE_PING and not self.fin:
-            raise WebSocketProtocolException("Invalid ping frame.")
+        if self.opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            if not self.fin or len(self.data) >= ABNF.LENGTH_7:
+                raise WebSocketProtocolException("Invalid control frame.")
 
         if self.opcode == ABNF.OPCODE_CLOSE:
             data_length = len(self.data)
             if not data_length:
                 return
-            if data_length == 1 or data_length >= 126:
+            if data_length == 1:
                 raise WebSocketProtocolException("Invalid close frame.")
             if (
                 data_length > 2
@@ -357,12 +358,17 @@ class frame_buffer:
         length_bits = bits & 0x7F
         if length_bits == 0x7E:
             v = self.recv_strict(2)
-            self.length = struct.unpack("!H", v)[0]
+            length = struct.unpack("!H", v)[0]
+            if length < ABNF.LENGTH_7:
+                raise WebSocketProtocolException("Invalid 16-bit frame length.")
         elif length_bits == 0x7F:
             v = self.recv_strict(8)
-            self.length = struct.unpack("!Q", v)[0]
+            length = struct.unpack("!Q", v)[0]
+            if length < ABNF.LENGTH_16 or length >= ABNF.LENGTH_63:
+                raise WebSocketProtocolException("Invalid 64-bit frame length.")
         else:
-            self.length = length_bits
+            length = length_bits
+        self.length = length
 
     def needs_mask(self) -> bool:
         return self.mask_value is None

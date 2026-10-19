@@ -49,11 +49,18 @@ CookieJar = SimpleCookieJar()
 
 
 class handshake_response:
-    def __init__(self, status: int, headers: dict, subprotocol: Optional[str]) -> None:
+    def __init__(
+        self,
+        status: int,
+        headers: dict,
+        subprotocol: Optional[str],
+        host: Optional[str] = None,
+    ) -> None:
         self.status = status
         self.headers = headers
         self.subprotocol = subprotocol
-        CookieJar.add(headers.get("set-cookie"))
+        CookieJar.add(headers.get("set-cookie"), host)
+
 
 
 def handshake(
@@ -72,12 +79,12 @@ def handshake(
 
     status, resp = _get_resp_headers(sock)
     if status in SUPPORTED_REDIRECT_STATUSES:
-        return handshake_response(status, resp, None)
+        return handshake_response(status, resp, None, hostname)
     success, subproto = _validate(resp, key, options.get("subprotocols"))
     if not success:
         raise WebSocketException("Invalid WebSocket Header")
 
-    return handshake_response(status, resp, subproto)
+    return handshake_response(status, resp, subproto, hostname)
 
 
 def _pack_hostname(hostname: str) -> str:
@@ -146,6 +153,9 @@ def _get_handshake_headers(
     return headers, key
 
 
+MAX_ERROR_BODY_BYTES = 65536
+
+
 def _get_resp_headers(
     sock: socket.socket, success_statuses: tuple = SUCCESS_STATUSES
 ) -> tuple:
@@ -163,11 +173,16 @@ def _get_resp_headers(
                 raise WebSocketException(
                     f"Invalid content-length header: {content_len!r}"
                 )
+            truncated = remaining > MAX_ERROR_BODY_BYTES
+            if truncated:
+                remaining = MAX_ERROR_BODY_BYTES
             while remaining > 0:
                 chunk_size = min(remaining, 16384)  # Read in 16KB chunks
                 chunk = recv(sock, chunk_size)
                 response_body += chunk
                 remaining -= len(chunk)
+            if truncated:
+                response_body += b"\n... (body truncated)"
         else:
             response_body = None
         raise WebSocketBadStatusException(

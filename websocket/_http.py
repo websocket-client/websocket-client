@@ -124,11 +124,15 @@ def _start_proxied_socket(
 
     sock = ws_proxy.connect(hostname, port, timeout=proxy.proxy_timeout)
 
-    if is_secure:
-        if HAVE_SSL:
-            sock = _ssl_socket(sock, options.sslopt, hostname)
-        else:
-            raise WebSocketException("SSL not available.")
+    try:
+        if is_secure:
+            if HAVE_SSL:
+                sock = _ssl_socket(sock, options.sslopt, hostname)
+            else:
+                raise WebSocketException("SSL not available.")
+    except BaseException:
+        sock.close()
+        raise
 
     return sock, (hostname, port, resource)
 
@@ -372,6 +376,8 @@ def _ssl_socket(sock: socket.socket, user_sslopt: dict, hostname: str) -> Any:
 
 def _tunnel(sock: socket.socket, host: str, port: int, auth: Any) -> socket.socket:
     debug("Connecting proxy...")
+    if ":" in host:
+        host = f"[{host}]"
     connect_header = f"CONNECT {host}:{port} HTTP/1.1\r\n"
     connect_header += f"Host: {host}:{port}\r\n"
 
@@ -398,14 +404,21 @@ def _tunnel(sock: socket.socket, host: str, port: int, auth: Any) -> socket.sock
     return sock
 
 
+MAX_HEADER_BYTES = 65536
+
+
 def read_headers(sock: socket.socket) -> tuple:
     status = None
     status_message = None
     headers: dict = {}
     trace("--- response header ---")
 
+    total = 0
     while True:
         line = recv_line(sock)
+        total += len(line)
+        if total > MAX_HEADER_BYTES:
+            raise WebSocketException("Response headers too large")
         try:
             line = line.decode("utf-8").strip()
         except UnicodeDecodeError as e:
@@ -413,6 +426,8 @@ def read_headers(sock: socket.socket) -> tuple:
                 f"Invalid header line, not valid UTF-8 at byte {e.start}: {line!r}"
             )
         if not line:
+            if not status:
+                raise WebSocketException(f"Invalid status line: {line!r}")
             break
         trace(line)
         if not status:
@@ -428,10 +443,13 @@ def read_headers(sock: socket.socket) -> tuple:
             if len(kv) != 2:
                 raise WebSocketException("Invalid header")
             key, value = kv
-            if key.lower() == "set-cookie" and headers.get("set-cookie"):
-                existing_cookie = headers.get("set-cookie")
-                if existing_cookie is not None:
-                    headers["set-cookie"] = existing_cookie + "; " + value.strip()
+            if key.lower() == "set-cookie":
+                if "set-cookie" in headers:
+                    existing = headers["set-cookie"]
+                    if isinstance(existing, list):
+                        existing.append(value.strip())
+                    else:
+                        headers["set-cookie"] = [existing, value.strip()]
                 else:
                     headers["set-cookie"] = value.strip()
             else:

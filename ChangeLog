@@ -1,13 +1,18 @@
 ChangeLog
 ============
 
-- Unreleased
-
+- 1.10.0
+  - Raise `WebSocketTimeoutException` instead of returning 0 when `send()` times out writing (91abd2d)
+  - Close retry selectors in `send()`/`recv()` when registration or waiting fails (66dd6f1)
+  - Raise `WebSocketTimeoutException` instead of `BlockingIOError` in non-blocking mode (414b6df)
+  - Store Set-Cookie morsels under their own domain and support multiple Set-Cookie headers (4c223f7)
+  - Cap response header and error body size during the handshake (3c81e66)
+  - Keep only Set-Cookie headers whose domain matches the responding host; skip invalid Set-Cookie headers individually (#1071, 8425559)
+  - Stop carrying authority-scoped headers and options across redirect boundaries (82a9788)
   - Include traceback details when logging exceptions from WebSocketApp callbacks (#1004)
 
 - 1.9.2
   - Fix race in `WebSocketApp.close()` when `run_forever()` thread clears the socket during the close handshake (#1057, fixes #1055 and #1056)
-
 
 - 1.9.1
   - Add Python 3.14 support to setup config and CI (f2bc97a)

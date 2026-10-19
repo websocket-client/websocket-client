@@ -11,6 +11,7 @@ from unittest import mock
 import websocket
 from websocket._exceptions import (
     WebSocketAddressException,
+    WebSocketBadStatusException,
     WebSocketProxyException,
     WebSocketException,
 )
@@ -110,6 +111,35 @@ class HttpTest(unittest.TestCase):
             WebSocketException, read_headers, HeaderSockMock("data/header02.txt")
         )
 
+    def test_read_header_multiple_set_cookie(self):
+        """Multiple Set-Cookie headers are collected into a list, not joined"""
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Set-Cookie: session=x; Domain=.example.com\r\n"
+            b"Set-Cookie: tracking=y; Domain=.ads.example.com\r\n"
+            b"Set-Cookie: prefs=z; Domain=example.com\r\n"
+            b"\r\n"
+        )
+        status, header, _ = read_headers(sock)
+        self.assertEqual(status, 101)
+        self.assertEqual(
+            header["set-cookie"],
+            [
+                "session=x; Domain=.example.com",
+                "tracking=y; Domain=.ads.example.com",
+                "prefs=z; Domain=example.com",
+            ],
+        )
+
+        # single Set-Cookie stays a plain string (no list wrapping)
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n" b"Set-Cookie: session=x\r\n" b"\r\n"
+        )
+        _, header, _ = read_headers(sock)
+        self.assertEqual(header["set-cookie"], "session=x")
+
     def test_read_header_malformed_status_line(self):
         """Malformed responses surface as WebSocketException, not raw
         IndexError, ValueError, or UnicodeDecodeError."""
@@ -143,6 +173,45 @@ class HttpTest(unittest.TestCase):
             _get_resp_headers(sock)
         self.assertIn("Invalid content-length", str(cm.exception))
 
+    def test_read_header_too_large(self):
+        """Headers past MAX_HEADER_BYTES raise instead of buffering
+        indefinitely (N33)."""
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\nX-Long: " + b"a" * 200 + b"\r\n\r\n"
+        )
+
+        with mock.patch("websocket._http.MAX_HEADER_BYTES", 64):
+            with self.assertRaises(WebSocketException) as cm:
+                read_headers(sock)
+        self.assertEqual(str(cm.exception), "Response headers too large")
+
+    def test_read_header_blank_first_line(self):
+        """A blank first line raises instead of returning status=None,
+        which surfaced as a confusing 'Handshake status None' error."""
+        sock = SockMock()
+        sock.add_packet(b"\r\n\r\n")
+        with self.assertRaises(WebSocketException) as cm:
+            read_headers(sock)
+        self.assertIn("Invalid status line", str(cm.exception))
+
+    def test_get_resp_headers_error_body_truncated(self):
+        """An oversized declared error body is capped, not fully buffered
+        (N13 cap; N33 defect class)."""
+        from websocket._handshake import _get_resp_headers
+
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 500 Internal Server Error\r\n"
+            b"Content-Length: 200\r\n"
+            b"\r\n" + b"B" * 200
+        )
+        with mock.patch("websocket._handshake.MAX_ERROR_BODY_BYTES", 64):
+            with self.assertRaises(WebSocketBadStatusException) as cm:
+                _get_resp_headers(sock, success_statuses=(101,))
+        self.assertIn("(body truncated)", str(cm.exception))
+        self.assertIn("B" * 64, str(cm.exception))
+
     def test_tunnel(self):
         self.assertRaises(
             WebSocketProxyException,
@@ -160,6 +229,26 @@ class HttpTest(unittest.TestCase):
             80,
             ("username", "password"),
         )
+
+    def test_tunnel_authority(self):
+        for host, expected_host in (
+            ("::1", "[::1]"),
+            ("2001:db8::1", "[2001:db8::1]"),
+            ("::ffff:192.0.2.1", "[::ffff:192.0.2.1]"),
+            ("127.0.0.1", "127.0.0.1"),
+            ("example.com", "example.com"),
+        ):
+            for port in (80, 443, 8080):
+                with self.subTest(host=host, port=port):
+                    sock = SockMock()
+                    sock.add_packet(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+                    self.assertIs(_tunnel(sock, host, port, ("user", "pass")), sock)
+                    self.assertEqual(
+                        b"".join(sock.sent).decode("ascii"),
+                        f"CONNECT {expected_host}:{port} HTTP/1.1\r\n"
+                        f"Host: {expected_host}:{port}\r\n"
+                        "Proxy-Authorization: Basic dXNlcjpwYXNz\r\n\r\n",
+                    )
 
     def test_connect(self):
         # Test proxy error handling without requiring internet - using fast local addresses and short timeouts
@@ -270,6 +359,8 @@ class HttpTest(unittest.TestCase):
         )
         self.assertIs(sock, ssl_wrapped_socket)
         self.assertEqual(addr, ("example.com", 443, "/ws"))
+        proxied_socket.close.assert_not_called()
+        ssl_wrapped_socket.close.assert_not_called()
 
         fake_sock = mock.Mock()
         with mock.patch("websocket._http.send") as send_mock, mock.patch(
@@ -279,6 +370,48 @@ class HttpTest(unittest.TestCase):
 
         self.assertIs(returned, fake_sock)
         send_mock.assert_called_once()
+
+    def test_proxy_connect_closes_socket_on_tls_configuration_error(self):
+        options = OptsList()
+        options.sslopt = {"cert_reqs": ssl.CERT_NONE, "check_hostname": True}
+        proxy_types = SimpleNamespace(SOCKS4="socks4", SOCKS5="socks5")
+        for proxy_type in ("socks4", "socks4a", "socks5", "socks5h"):
+            with self.subTest(proxy_type=proxy_type):
+                client, peer = socket.socketpair()
+                self.addCleanup(client.close)
+                self.addCleanup(peer.close)
+                proxy_cfg = proxy_info(
+                    http_proxy_host="proxy.local",
+                    http_proxy_port=1080,
+                    proxy_type=proxy_type,
+                )
+                with mock.patch(
+                    "websocket._http.HAVE_PYTHON_SOCKS", True
+                ), mock.patch.object(
+                    websocket._http, "ProxyType", proxy_types
+                ), mock.patch(
+                    "websocket._http.Proxy", create=True
+                ) as proxy_cls:
+                    proxy_cls.create.return_value.connect.return_value = client
+                    with self.assertRaisesRegex(WebSocketException, "check_hostname"):
+                        _start_proxied_socket("wss://example.com", options, proxy_cfg)
+                    self.assertEqual(client.fileno(), -1)
+
+    def test_proxy_connect_closes_socket_when_ssl_is_unavailable(self):
+        proxy_cfg = proxy_info(
+            http_proxy_host="proxy.local", http_proxy_port=1080, proxy_type="socks5"
+        )
+        proxied_socket = mock.Mock()
+        proxy_types = SimpleNamespace(SOCKS4="socks4", SOCKS5="socks5")
+        with mock.patch("websocket._http.HAVE_PYTHON_SOCKS", True), mock.patch.object(
+            websocket._http, "ProxyType", proxy_types
+        ), mock.patch("websocket._http.Proxy", create=True) as proxy_cls, mock.patch(
+            "websocket._http.HAVE_SSL", False
+        ):
+            proxy_cls.create.return_value.connect.return_value = proxied_socket
+            with self.assertRaisesRegex(WebSocketException, "SSL not available"):
+                _start_proxied_socket("wss://example.com", OptsList(), proxy_cfg)
+        proxied_socket.close.assert_called_once()
 
     def test_proxy_connect_no_port_raises(self):
         """A SOCKS proxy with an explicit host but no port raises the same

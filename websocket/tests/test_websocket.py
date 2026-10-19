@@ -9,11 +9,13 @@ from unittest import mock
 
 import websocket as ws
 from websocket._abnf import ABNF
+from websocket._cookiejar import SimpleCookieJar
 from websocket._exceptions import (
     WebSocketBadStatusException,
     WebSocketAddressException,
     WebSocketException,
 )
+from websocket._handshake import CookieJar
 from websocket._handshake import _create_sec_websocket_key
 from websocket._handshake import _validate as _validate_header
 from websocket._handshake import _get_handshake_headers
@@ -107,6 +109,16 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(ws.getdefaulttimeout(), None)
         ws.setdefaulttimeout(10)
         self.assertEqual(ws.getdefaulttimeout(), 10)
+        ws.setdefaulttimeout(None)
+
+    def test_default_timeout_rejects_bool_and_nonfinite(self):
+        """bool subclasses int; True must not become a 1s default timeout."""
+        for value in (True, False):
+            with self.assertRaises(TypeError):
+                ws.setdefaulttimeout(value)
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.assertRaises(ValueError):
+                ws.setdefaulttimeout(value)
         ws.setdefaulttimeout(None)
 
     def test_ws_key(self):
@@ -504,6 +516,86 @@ class UtilsTest(unittest.TestCase):
 
 
 class HandshakeTest(unittest.TestCase):
+    def test_connect_ignores_invalid_cookie(self):
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Connection: Upgrade\r\n"
+            b"Upgrade: websocket\r\n"
+            b"Sec-WebSocket-Accept: Kxep+hNu9n51529fGidYu7a3wO0=\r\n"
+            b"Set-Cookie: bad@name=secret-value; domain=example.com\r\n\r\n"
+        )
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("existing=preserved; domain=example.com")
+        with mock.patch("websocket._handshake.CookieJar", cookie_jar), mock.patch(
+            "websocket._handshake._create_sec_websocket_key",
+            return_value="c6b8hTg4EeGb2gQMztV1/g==",
+        ), self.assertLogs("websocket", level="WARNING") as logs:
+            websock = ws.create_connection("ws://example.com/", socket=sock)
+        try:
+            self.assertTrue(websock.connected)
+            self.assertEqual(websock.getstatus(), 101)
+            self.assertEqual(cookie_jar.get("example.com"), "existing=preserved")
+            self.assertEqual(
+                logs.output, ["WARNING:websocket:Ignoring invalid Set-Cookie header"]
+            )
+        finally:
+            websock.shutdown()
+
+    def test_redirect_ignores_invalid_cookie(self):
+        headers = {"location": "ws://example.com/", "set-cookie": "bad@name=value"}
+        with mock.patch(
+            "websocket._handshake.CookieJar", SimpleCookieJar()
+        ), self.assertLogs("websocket", level="WARNING"):
+            response = handshake_response(302, headers, None)
+        self.assertEqual(response.status, 302)
+        self.assertEqual(response.headers, headers)
+
+    def test_cookiejar_rejects_cross_host_domain(self):
+        jar = SimpleCookieJar()
+        jar.add("fixated=1; Domain=good.com", host="evil.com")
+        self.assertEqual(jar.get("good.com"), "")
+
+    def test_cookiejar_allows_own_and_parent_domain(self):
+        jar = SimpleCookieJar()
+        jar.add("self=1; Domain=sub.example.com", host="sub.example.com")
+        jar.add("parent=1; Domain=example.com", host="sub.example.com")
+        self.assertEqual(jar.get("sub.example.com"), "parent=1; self=1")
+        self.assertEqual(jar.get("example.com"), "parent=1")
+
+    def test_cookiejar_rejects_single_label_domain(self):
+        jar = SimpleCookieJar()
+        jar.add("s=1; Domain=com", host="example.com")
+        self.assertEqual(jar.get("example.com"), "")
+
+    def test_cookiejar_invalid_cookie_does_not_block_valid(self):
+        jar = SimpleCookieJar()
+        with self.assertLogs("websocket", level="WARNING"):
+            jar.add(["bad@name=1", "good=1; Domain=example.com"], host="example.com")
+        self.assertEqual(jar.get("example.com"), "good=1")
+
+    def test_handshake_scopes_set_cookie_to_responding_host(self):
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Connection: Upgrade\r\n"
+            b"Upgrade: websocket\r\n"
+            b"Sec-WebSocket-Accept: Kxep+hNu9n51529fGidYu7a3wO0=\r\n"
+            b"Set-Cookie: fixated=1; Domain=other.com\r\n"
+            b"Set-Cookie: session=1; Domain=example.com\r\n\r\n"
+        )
+        jar = SimpleCookieJar()
+        with mock.patch("websocket._handshake.CookieJar", jar), mock.patch(
+            "websocket._handshake._create_sec_websocket_key",
+            return_value="c6b8hTg4EeGb2gQMztV1/g==",
+        ):
+            websock = ws.create_connection("ws://example.com/", socket=sock)
+        try:
+            self.assertEqual(jar.get("other.com"), "")
+            self.assertEqual(jar.get("example.com"), "session=1")
+        finally:
+            websock.shutdown()
+
     def test_bad_status_exception_carries_status_message(self):
         exc = WebSocketBadStatusException(
             "Handshake status 404 Not Found", 404, "Not Found"
@@ -631,6 +723,28 @@ class HandshakeTest(unittest.TestCase):
         host_headers = [h for h in headers if h.startswith("Host:")]
         self.assertEqual(len(host_headers), 0)
 
+    def test_handshake_cookie_from_multiple_set_cookie(self):
+        """Cookies received as two Set-Cookie headers must reach the next
+        handshake's Cookie header uncontaminated (one per domain)."""
+        with mock.patch.dict(CookieJar.jar, clear=True):
+            sock = SockMock()
+            sock.add_packet(
+                b"HTTP/1.1 101 Switching Protocols\r\n"
+                b"Set-Cookie: session=x; Domain=.example.com\r\n"
+                b"Set-Cookie: tracking=y; Domain=.ads.example.com\r\n"
+                b"\r\n"
+            )
+            _, header, _ = read_headers(sock)
+            handshake_response(101, header, None)
+
+            headers, _ = _get_handshake_headers(
+                "/", "ws://example.com", "example.com", 80, {}
+            )
+            self.assertEqual(
+                [h for h in headers if h.startswith("Cookie:")],
+                ["Cookie: session=x"],
+            )
+
     def test_suppress_host_websocket_connect(self):
         """Test suppress_host parameter with WebSocket.connect()"""
         websock = ws.WebSocket()
@@ -691,6 +805,20 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         self.assertEqual(sock.gettimeout(), 5)
         fake_socket.settimeout.assert_called_once_with(5)
 
+    def test_settimeout_rejects_bool_and_nonfinite(self):
+        """bool subclasses int; True must not become a 1s socket timeout."""
+        sock = ws.WebSocket()
+        for value in (True, False):
+            with self.assertRaises(TypeError):
+                sock.settimeout(value)
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.assertRaises(ValueError):
+                sock.settimeout(value)
+        sock.settimeout(None)
+        self.assertIsNone(sock.gettimeout())
+        sock.settimeout(2.5)
+        self.assertEqual(sock.gettimeout(), 2.5)
+
     def test_is_ssl_detection(self):
         sock = ws.WebSocket()
         self.assertFalse(sock.is_ssl())
@@ -747,6 +875,100 @@ class WebSocketCoreUnitTests(unittest.TestCase):
             ["ws://origin", "ws://redirect"],
         )
         self.assertEqual(handshake_mock.call_count, 2)
+
+    def test_connect_cross_authority_redirect_strips_credentials(self):
+        sock = ws.WebSocket()
+        connect_results = [
+            (mock.Mock(), ("origin", 80, "/")),
+            (mock.Mock(), ("redirect", 80, "/")),
+        ]
+
+        def fake_connect(url, *_):
+            return connect_results.pop(0)
+
+        redirect_resp = handshake_response(302, {"location": "ws://redirect"}, None)
+        success_resp = handshake_response(101, {}, None)
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch(
+            "websocket._core.handshake", side_effect=[redirect_resp, success_resp]
+        ) as handshake_mock:
+            sock.connect(
+                "ws://origin",
+                header=[
+                    "Authorization: Bearer t",
+                    "Cookie: session=abc",
+                    "X-Custom: v",
+                ],
+                cookie="session=abc",
+                redirect_limit=1,
+            )
+
+        redirected = handshake_mock.call_args_list[1]
+        self.assertNotIn("cookie", redirected.kwargs)
+        self.assertEqual(redirected.kwargs["header"], ["X-Custom: v"])
+
+    def test_connect_cross_authority_redirect_strips_dict_credentials(self):
+        sock = ws.WebSocket()
+        connect_results = [
+            (mock.Mock(), ("origin", 80, "/")),
+            (mock.Mock(), ("redirect", 80, "/")),
+        ]
+
+        def fake_connect(url, *_):
+            return connect_results.pop(0)
+
+        redirect_resp = handshake_response(301, {"location": "ws://redirect"}, None)
+        success_resp = handshake_response(101, {}, None)
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch(
+            "websocket._core.handshake", side_effect=[redirect_resp, success_resp]
+        ) as handshake_mock:
+            sock.connect(
+                "ws://origin",
+                header={
+                    "Authorization ": "Bearer t",
+                    "Cookie": "session=abc",
+                    "X-Custom": "v",
+                },
+                cookie="session=abc",
+                redirect_limit=1,
+            )
+
+        redirected = handshake_mock.call_args_list[1]
+        self.assertEqual(redirected.kwargs["header"], {"X-Custom": "v"})
+
+    def test_connect_same_authority_redirect_keeps_credentials(self):
+        sock = ws.WebSocket()
+        connect_results = [
+            (mock.Mock(), ("origin", 80, "/")),
+            (mock.Mock(), ("origin", 80, "/new")),
+        ]
+
+        def fake_connect(url, *_):
+            return connect_results.pop(0)
+
+        redirect_resp = handshake_response(302, {"location": "ws://origin/new"}, None)
+        success_resp = handshake_response(101, {}, None)
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=fake_connect
+        ), mock.patch(
+            "websocket._core.handshake", side_effect=[redirect_resp, success_resp]
+        ) as handshake_mock:
+            sock.connect(
+                "ws://origin",
+                header=["Authorization: Bearer t"],
+                cookie="session=abc",
+                redirect_limit=1,
+            )
+
+        redirected = handshake_mock.call_args_list[1]
+        self.assertEqual(redirected.kwargs["header"], ["Authorization: Bearer t"])
+        self.assertEqual(redirected.kwargs["cookie"], "session=abc")
 
     def test_connect_redirect_limit_exhausted_raises(self):
         sock = ws.WebSocket()
