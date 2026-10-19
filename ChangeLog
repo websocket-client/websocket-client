@@ -9,10 +9,10 @@ ChangeLog
   - Cap response header and error body size during the handshake (3c81e66)
   - Keep only Set-Cookie headers whose domain matches the responding host; skip invalid Set-Cookie headers individually (#1071, 8425559)
   - Stop carrying authority-scoped headers and options across redirect boundaries (82a9788)
+  - Include traceback details when logging exceptions from WebSocketApp callbacks (#1004)
 
 - 1.9.2
   - Fix race in `WebSocketApp.close()` when `run_forever()` thread clears the socket during the close handshake (#1057, fixes #1055 and #1056)
-
 
 - 1.9.1
   - Add Python 3.14 support to setup config and CI (f2bc97a)

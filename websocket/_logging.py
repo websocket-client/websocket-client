@@ -88,8 +88,8 @@ def dump(title: str, message: str) -> None:
         _logger.debug("-----------------------")
 
 
-def error(msg: str) -> None:
-    _logger.error(msg)
+def error(msg: str, *, exc_info: bool = False) -> None:
+    _logger.error(msg, exc_info=exc_info)
 
 
 def warning(msg: str) -> None:
