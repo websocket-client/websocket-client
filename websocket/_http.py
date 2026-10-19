@@ -124,11 +124,15 @@ def _start_proxied_socket(
 
     sock = ws_proxy.connect(hostname, port, timeout=proxy.proxy_timeout)
 
-    if is_secure:
-        if HAVE_SSL:
-            sock = _ssl_socket(sock, options.sslopt, hostname)
-        else:
-            raise WebSocketException("SSL not available.")
+    try:
+        if is_secure:
+            if HAVE_SSL:
+                sock = _ssl_socket(sock, options.sslopt, hostname)
+            else:
+                raise WebSocketException("SSL not available.")
+    except BaseException:
+        sock.close()
+        raise
 
     return sock, (hostname, port, resource)
 

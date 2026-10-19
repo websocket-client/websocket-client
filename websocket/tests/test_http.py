@@ -359,6 +359,8 @@ class HttpTest(unittest.TestCase):
         )
         self.assertIs(sock, ssl_wrapped_socket)
         self.assertEqual(addr, ("example.com", 443, "/ws"))
+        proxied_socket.close.assert_not_called()
+        ssl_wrapped_socket.close.assert_not_called()
 
         fake_sock = mock.Mock()
         with mock.patch("websocket._http.send") as send_mock, mock.patch(
@@ -368,6 +370,48 @@ class HttpTest(unittest.TestCase):
 
         self.assertIs(returned, fake_sock)
         send_mock.assert_called_once()
+
+    def test_proxy_connect_closes_socket_on_tls_configuration_error(self):
+        options = OptsList()
+        options.sslopt = {"cert_reqs": ssl.CERT_NONE, "check_hostname": True}
+        proxy_types = SimpleNamespace(SOCKS4="socks4", SOCKS5="socks5")
+        for proxy_type in ("socks4", "socks4a", "socks5", "socks5h"):
+            with self.subTest(proxy_type=proxy_type):
+                client, peer = socket.socketpair()
+                self.addCleanup(client.close)
+                self.addCleanup(peer.close)
+                proxy_cfg = proxy_info(
+                    http_proxy_host="proxy.local",
+                    http_proxy_port=1080,
+                    proxy_type=proxy_type,
+                )
+                with mock.patch(
+                    "websocket._http.HAVE_PYTHON_SOCKS", True
+                ), mock.patch.object(
+                    websocket._http, "ProxyType", proxy_types
+                ), mock.patch(
+                    "websocket._http.Proxy", create=True
+                ) as proxy_cls:
+                    proxy_cls.create.return_value.connect.return_value = client
+                    with self.assertRaisesRegex(WebSocketException, "check_hostname"):
+                        _start_proxied_socket("wss://example.com", options, proxy_cfg)
+                    self.assertEqual(client.fileno(), -1)
+
+    def test_proxy_connect_closes_socket_when_ssl_is_unavailable(self):
+        proxy_cfg = proxy_info(
+            http_proxy_host="proxy.local", http_proxy_port=1080, proxy_type="socks5"
+        )
+        proxied_socket = mock.Mock()
+        proxy_types = SimpleNamespace(SOCKS4="socks4", SOCKS5="socks5")
+        with mock.patch("websocket._http.HAVE_PYTHON_SOCKS", True), mock.patch.object(
+            websocket._http, "ProxyType", proxy_types
+        ), mock.patch("websocket._http.Proxy", create=True) as proxy_cls, mock.patch(
+            "websocket._http.HAVE_SSL", False
+        ):
+            proxy_cls.create.return_value.connect.return_value = proxied_socket
+            with self.assertRaisesRegex(WebSocketException, "SSL not available"):
+                _start_proxied_socket("wss://example.com", OptsList(), proxy_cfg)
+        proxied_socket.close.assert_called_once()
 
     def test_proxy_connect_no_port_raises(self):
         """A SOCKS proxy with an explicit host but no port raises the same
