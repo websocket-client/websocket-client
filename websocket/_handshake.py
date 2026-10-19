@@ -62,7 +62,6 @@ class handshake_response:
         CookieJar.add(headers.get("set-cookie"), host)
 
 
-
 def handshake(
     sock: socket.socket,
     url: str,

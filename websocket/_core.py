@@ -216,7 +216,8 @@ class WebSocket:
             # bool subclasses int; True would become 1.0s on the socket
             if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
                 raise TypeError(
-                    "timeout must be an int or float, not %r" % (type(timeout).__name__,)
+                    "timeout must be an int or float, not %r"
+                    % (type(timeout).__name__,)
                 )
             if not math.isfinite(timeout):
                 raise ValueError("timeout must be a finite number, got %r" % (timeout,))

@@ -110,6 +110,7 @@ class CookieJarTest(unittest.TestCase):
         cookie_jar = SimpleCookieJar()
         cookie_jar.add(["tok=1; domain=abc", "tok=2; domain=abc"])
         self.assertEqual(cookie_jar.get("abc"), "tok=2")
+
     def test_add_rejects_foreign_domain(self):
         cookie_jar = SimpleCookieJar()
         cookie_jar.add("a=b; domain=victim.com", "evil.com")
