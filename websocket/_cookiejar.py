@@ -1,5 +1,7 @@
 import http.cookies
 from typing import Optional, Union
+from http.cookies import CookieError
+from ._logging import debug, warning
 
 """
 _cookiejar.py
@@ -25,12 +27,20 @@ class SimpleCookieJar:
     def __init__(self) -> None:
         self.jar: dict = {}
 
-    def add(self, set_cookie: Optional[Union[str, list]]) -> None:
+    def add(
+        self,
+        set_cookie: Optional[Union[str, list]],
+        host: Optional[str] = None,
+    ) -> None:
         if not set_cookie:
             return
         cookie_headers = set_cookie if isinstance(set_cookie, list) else [set_cookie]
         for cookie_header in cookie_headers:
-            simple_cookie = http.cookies.SimpleCookie(cookie_header)
+            try:
+                simple_cookie = http.cookies.SimpleCookie(cookie_header)
+            except CookieError:
+                warning("Ignoring invalid Set-Cookie header")
+                continue
 
             # Store each morsel only under its own domain: morsels that
             # carry a domain attribute never leak into a sibling's domain
@@ -41,6 +51,9 @@ class SimpleCookieJar:
                     if not domain.startswith("."):
                         domain = f".{domain}"
                     domain = domain.lower()
+                    if host is not None and not self._domain_match(host, domain):
+                        debug("Ignoring Set-Cookie for another domain")
+                        continue
                     cookie = self.jar.get(domain)
                     if cookie is None:
                         cookie = http.cookies.SimpleCookie()
@@ -81,4 +94,19 @@ class SimpleCookieJar:
                     ]
                 ),
             )
+        )
+
+    @staticmethod
+    def _domain_match(host: str, domain: str) -> bool:
+        # RFC 6265 5.3 step 6: ignore cookies whose Domain does not
+        # match the host that set them, so one server cannot plant
+        # cookies for another. The two-label floor keeps public-suffix
+        # style values like Domain=com from matching every host under
+        # them (no public-suffix list: a co.uk-style suffix would still
+        # pass; add a PSL if that matters).
+        host = host.lower()
+        domain = domain.lower()
+        labels = domain[1:] if domain.startswith(".") else domain
+        return labels.count(".") >= 1 and (
+            host == labels or host.endswith("." + labels)
         )

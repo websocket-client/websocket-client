@@ -23,13 +23,12 @@ import os
 import socket
 from base64 import encodebytes as base64encode
 from http import HTTPStatus
-from http.cookies import CookieError
 from typing import Any, List, Optional
 
 from ._cookiejar import SimpleCookieJar
 from ._exceptions import WebSocketException, WebSocketBadStatusException
 from ._http import read_headers
-from ._logging import dump, error, warning
+from ._logging import dump, error
 from ._socket import send
 
 __all__ = ["handshake_response", "handshake", "SUPPORTED_REDIRECT_STATUSES"]
@@ -50,14 +49,18 @@ CookieJar = SimpleCookieJar()
 
 
 class handshake_response:
-    def __init__(self, status: int, headers: dict, subprotocol: Optional[str]) -> None:
+    def __init__(
+        self,
+        status: int,
+        headers: dict,
+        subprotocol: Optional[str],
+        host: Optional[str] = None,
+    ) -> None:
         self.status = status
         self.headers = headers
         self.subprotocol = subprotocol
-        try:
-            CookieJar.add(headers.get("set-cookie"))
-        except CookieError:
-            warning("Ignoring invalid Set-Cookie header")
+        CookieJar.add(headers.get("set-cookie"), host)
+
 
 
 def handshake(
@@ -76,12 +79,12 @@ def handshake(
 
     status, resp = _get_resp_headers(sock)
     if status in SUPPORTED_REDIRECT_STATUSES:
-        return handshake_response(status, resp, None)
+        return handshake_response(status, resp, None, hostname)
     success, subproto = _validate(resp, key, options.get("subprotocols"))
     if not success:
         raise WebSocketException("Invalid WebSocket Header")
 
-    return handshake_response(status, resp, subproto)
+    return handshake_response(status, resp, subproto, hostname)
 
 
 def _pack_hostname(hostname: str) -> str:

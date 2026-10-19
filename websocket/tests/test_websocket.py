@@ -541,6 +541,51 @@ class HandshakeTest(unittest.TestCase):
         self.assertEqual(response.status, 302)
         self.assertEqual(response.headers, headers)
 
+    def test_cookiejar_rejects_cross_host_domain(self):
+        jar = SimpleCookieJar()
+        jar.add("fixated=1; Domain=good.com", host="evil.com")
+        self.assertEqual(jar.get("good.com"), "")
+
+    def test_cookiejar_allows_own_and_parent_domain(self):
+        jar = SimpleCookieJar()
+        jar.add("self=1; Domain=sub.example.com", host="sub.example.com")
+        jar.add("parent=1; Domain=example.com", host="sub.example.com")
+        self.assertEqual(jar.get("sub.example.com"), "parent=1; self=1")
+        self.assertEqual(jar.get("example.com"), "parent=1")
+
+    def test_cookiejar_rejects_single_label_domain(self):
+        jar = SimpleCookieJar()
+        jar.add("s=1; Domain=com", host="example.com")
+        self.assertEqual(jar.get("example.com"), "")
+
+    def test_cookiejar_invalid_cookie_does_not_block_valid(self):
+        jar = SimpleCookieJar()
+        with self.assertLogs("websocket", level="WARNING"):
+            jar.add(["bad@name=1", "good=1; Domain=example.com"], host="example.com")
+        self.assertEqual(jar.get("example.com"), "good=1")
+
+    def test_handshake_scopes_set_cookie_to_responding_host(self):
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Connection: Upgrade\r\n"
+            b"Upgrade: websocket\r\n"
+            b"Sec-WebSocket-Accept: Kxep+hNu9n51529fGidYu7a3wO0=\r\n"
+            b"Set-Cookie: fixated=1; Domain=other.com\r\n"
+            b"Set-Cookie: session=1; Domain=example.com\r\n\r\n"
+        )
+        jar = SimpleCookieJar()
+        with mock.patch("websocket._handshake.CookieJar", jar), mock.patch(
+            "websocket._handshake._create_sec_websocket_key",
+            return_value="c6b8hTg4EeGb2gQMztV1/g==",
+        ):
+            websock = ws.create_connection("ws://example.com/", socket=sock)
+        try:
+            self.assertEqual(jar.get("other.com"), "")
+            self.assertEqual(jar.get("example.com"), "session=1")
+        finally:
+            websock.shutdown()
+
     def test_bad_status_exception_carries_status_message(self):
         exc = WebSocketBadStatusException(
             "Handshake status 404 Not Found", 404, "Not Found"
