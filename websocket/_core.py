@@ -602,6 +602,7 @@ class WebSocket:
             If None, it will wait forever until receive a close frame.
         """
         if not self.connected:
+            self.shutdown()
             return
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
