@@ -17,6 +17,7 @@ ChangeLog
   - Reject `bool` and non-finite websocket timeouts (#1062, 8c36dc4)
   - Propagate `KeyboardInterrupt` from `run_forever` (#1070, fixes #964, c43ecdc)
   - Include traceback details when logging exceptions from WebSocketApp callbacks (#1004)
+  - Security: wrap a plain pre-initialized `socket=` in TLS for `wss://` URLs instead of sending the handshake and data in cleartext; pass an `ssl.SSLSocket` to keep a custom TLS setup (N82)
 
 - 1.9.2
   - Fix race in `WebSocketApp.close()` when `run_forever()` thread clears the socket during the close handshake (#1057, fixes #1055 and #1056)

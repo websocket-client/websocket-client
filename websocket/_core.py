@@ -314,7 +314,8 @@ class WebSocket:
         subprotocols: list
             List of available subprotocols. Default is None.
         socket: socket
-            Pre-initialized stream socket.
+            Pre-initialized stream socket. With a wss:// URL, a socket that is
+            not already an ssl.SSLSocket is wrapped in TLS using sslopt.
         """
         self.sock_opt.timeout = options.get("timeout", self.sock_opt.timeout)
         self.sock, addrs = connect(
@@ -764,7 +765,8 @@ def create_connection(
     skip_utf8_validation: bool
         Skip utf8 validation.
     socket: socket
-        Pre-initialized stream socket.
+        Pre-initialized stream socket. With a wss:// URL, a socket that is
+        not already an ssl.SSLSocket is wrapped in TLS using sslopt.
     """
     sockopt = options.pop("sockopt", [])
     sslopt = options.pop("sslopt", {})

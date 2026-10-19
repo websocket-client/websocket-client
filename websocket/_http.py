@@ -149,6 +149,12 @@ def connect(
     hostname, port_from_url, resource, is_secure = parse_url(url)
 
     if socket:
+        # A wss:// URL always runs over TLS: wrap a caller-supplied plain socket
+        # instead of silently sending the handshake and data in cleartext.
+        if is_secure and not (HAVE_SSL and isinstance(socket, ssl.SSLSocket)):
+            if not HAVE_SSL:
+                raise WebSocketException("SSL not available.")
+            socket = _ssl_socket(socket, options.sslopt, hostname)
         return socket, (hostname, port_from_url, resource)
 
     addrinfo_list, need_tunnel, auth = _get_addrinfo_list(

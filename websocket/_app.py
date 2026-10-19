@@ -138,7 +138,8 @@ class WebSocketApp:
         subprotocols: list
             List of available sub protocols. Default is None.
         socket: socket
-            Pre-initialized stream socket.
+            Pre-initialized stream socket. With a wss:// URL, a socket that is
+            not already an ssl.SSLSocket is wrapped in TLS using sslopt.
         """
         self.url = url
         self.header = header if header is not None else []

@@ -550,6 +550,26 @@ class HttpPureUnitTests(unittest.TestCase):
 
         self.assertIn("SSL CA certificate loading failed", str(ctx.exception))
 
+    def test_connect_wraps_plain_socket_for_wss(self):
+        """A wss:// URL must never run in cleartext over a caller-supplied socket."""
+        options = OptsList()
+        options.sslopt = {"cert_reqs": ssl.CERT_REQUIRED}
+        plain = mock.Mock(spec=socket.socket)
+        tls = mock.Mock(spec=ssl.SSLSocket)
+        with mock.patch("websocket._http._ssl_socket", return_value=tls) as ssl_socket:
+            sock, addr = connect("wss://example.com/chat", options, proxy_info(), plain)
+            self.assertIs(sock, tls)
+            self.assertEqual(addr, ("example.com", 443, "/chat"))
+            ssl_socket.assert_called_once_with(plain, options.sslopt, "example.com")
+
+            ssl_socket.reset_mock()
+            already_tls = mock.Mock(spec=ssl.SSLSocket)
+            sock, _ = connect("wss://example.com/", options, proxy_info(), already_tls)
+            self.assertIs(sock, already_tls)
+            sock, _ = connect("ws://example.com/", options, proxy_info(), plain)
+            self.assertIs(sock, plain)
+            ssl_socket.assert_not_called()
+
     def test_start_proxied_socket_requires_python_socks(self):
         proxy = proxy_info(
             http_proxy_host="127.0.0.1", http_proxy_port=1080, proxy_type="socks5"
