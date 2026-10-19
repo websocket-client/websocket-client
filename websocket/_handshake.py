@@ -23,12 +23,13 @@ import os
 import socket
 from base64 import encodebytes as base64encode
 from http import HTTPStatus
+from http.cookies import CookieError
 from typing import Any, List, Optional
 
 from ._cookiejar import SimpleCookieJar
 from ._exceptions import WebSocketException, WebSocketBadStatusException
 from ._http import read_headers
-from ._logging import dump, error
+from ._logging import dump, error, warning
 from ._socket import send
 
 __all__ = ["handshake_response", "handshake", "SUPPORTED_REDIRECT_STATUSES"]
@@ -53,7 +54,10 @@ class handshake_response:
         self.status = status
         self.headers = headers
         self.subprotocol = subprotocol
-        CookieJar.add(headers.get("set-cookie"))
+        try:
+            CookieJar.add(headers.get("set-cookie"))
+        except CookieError:
+            warning("Ignoring invalid Set-Cookie header")
 
 
 def handshake(

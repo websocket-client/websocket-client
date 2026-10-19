@@ -1,6 +1,10 @@
 ChangeLog
 ============
 
+- 1.9.2
+  - Fix race in `WebSocketApp.close()` when `run_forever()` thread clears the socket during the close handshake (#1057, fixes #1055 and #1056)
+
+
 - 1.9.1
   - Add Python 3.14 support to setup config and CI (f2bc97a)
   - Fix `close()` dropping close frame when reason is str (2f22e2e)
