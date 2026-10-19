@@ -210,6 +210,17 @@ class IsNoProxyHostTest(unittest.TestCase):
         os.environ["no_proxy"] = "my.websocket.org, .websocket.org"
         self.assertTrue(_is_no_proxy_host("any.websocket.org", None))
 
+    def test_hostname_match_domain_leading_dot_no_substring_match(self):
+        # A ".domain" entry must match the domain and its subdomains only,
+        # not an unrelated host that happens to end with the same substring.
+        self.assertTrue(_is_no_proxy_host("websocket.org", [".websocket.org"]))
+        self.assertTrue(_is_no_proxy_host("my.websocket.org", [".websocket.org"]))
+        self.assertFalse(_is_no_proxy_host("evilwebsocket.org", [".websocket.org"]))
+        self.assertFalse(_is_no_proxy_host("notexample.com", [".example.com"]))
+        os.environ["no_proxy"] = ".example.com"
+        self.assertTrue(_is_no_proxy_host("foo.example.com", None))
+        self.assertFalse(_is_no_proxy_host("notexample.com", None))
+
     def test_hostname_match_domain_without_leading_dot(self):
         """Test that domains without leading dots work like urllib (fixes issues #968, #1005)"""
         # Test domain matching without leading dots - should match subdomains
