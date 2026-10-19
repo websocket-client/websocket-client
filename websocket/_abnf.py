@@ -183,14 +183,15 @@ class ABNF:
         if self.opcode not in ABNF.OPCODES:
             raise WebSocketProtocolException(f"Invalid opcode {self.opcode!r}")
 
-        if self.opcode == ABNF.OPCODE_PING and not self.fin:
-            raise WebSocketProtocolException("Invalid ping frame.")
+        if self.opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            if not self.fin or len(self.data) >= ABNF.LENGTH_7:
+                raise WebSocketProtocolException("Invalid control frame.")
 
         if self.opcode == ABNF.OPCODE_CLOSE:
             data_length = len(self.data)
             if not data_length:
                 return
-            if data_length == 1 or data_length >= 126:
+            if data_length == 1:
                 raise WebSocketProtocolException("Invalid close frame.")
             if (
                 data_length > 2

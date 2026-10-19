@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 import importlib
+import io
 import sys
 import unittest
 from unittest import mock
@@ -117,6 +118,34 @@ class ABNFTest(unittest.TestCase):
             0, 0, 0, 0, opcode=ABNF.OPCODE_PING, mask_value=1, data="a"
         )
         self.assertEqual(abnf_str_data._get_masked(bytes_val), b"aaaa\x00")
+
+    def test_received_control_frames_reject_fragmentation(self):
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            for payload in (b"", b"\x03\xe8"):
+                with self.subTest(opcode=opcode, payload=payload):
+                    wire = bytes([opcode, len(payload)]) + payload
+                    fb = frame_buffer(io.BytesIO(wire).read, False)
+                    with self.assertRaises(WebSocketProtocolException):
+                        fb.recv_frame()
+
+    def test_received_control_frames_reject_long_payloads(self):
+        payload = b"\x03\xe8" + b"a" * 124
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            with self.subTest(opcode=opcode):
+                wire = bytes([0x80 | opcode, 126, 0, 126]) + payload
+                fb = frame_buffer(io.BytesIO(wire).read, False)
+                with self.assertRaises(WebSocketProtocolException):
+                    fb.recv_frame()
+
+    def test_received_control_frames_accept_valid_payloads(self):
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            for payload in (b"", b"\x03\xe8" + b"a" * 123):
+                with self.subTest(opcode=opcode, length=len(payload)):
+                    wire = bytes([0x80 | opcode, len(payload)]) + payload
+                    fb = frame_buffer(io.BytesIO(wire).read, False)
+                    frame = fb.recv_frame()
+                    self.assertEqual(frame.opcode, opcode)
+                    self.assertEqual(frame.data, payload)
 
     def test_format(self):
         abnf_bad_rsv_bits = ABNF(2, 0, 0, 0, opcode=ABNF.OPCODE_TEXT)
