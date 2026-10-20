@@ -511,6 +511,28 @@ class ProxyInfoTest(unittest.TestCase):
         self.assertEqual(get_proxy_info("127.0.0.1", False), (None, 0, None))
         self.assertEqual(get_proxy_info("192.168.1.1", False), (None, 0, None))
 
+    def test_tls_and_socks_env_proxy_is_rejected(self):
+        """The env proxy is spoken to with plaintext HTTP CONNECT, so an https://
+        or socks*:// value must raise instead of leaking credentials to it."""
+        for scheme in ("https", "socks4", "socks4a", "socks5", "socks5h", "HTTPS"):
+            for env_key, is_secure in (("http_proxy", False), ("https_proxy", True)):
+                with self.subTest(scheme=scheme, env_key=env_key):
+                    os.environ[env_key] = f"{scheme}://alice:s3cret@localhost:3128/"
+                    with self.assertRaisesRegex(WebSocketProxyException, env_key) as cm:
+                        get_proxy_info("echo.websocket.events", is_secure)
+                    self.assertNotIn("s3cret", str(cm.exception))
+                    del os.environ[env_key]
+
+        os.environ["https_proxy"] = "http://alice:s3cret@localhost:3128/"
+        self.assertEqual(
+            get_proxy_info("echo.websocket.events", True),
+            ("localhost", 3128, ("alice", "s3cret")),
+        )
+        # A no_proxy host never consults the proxy, so it is not rejected.
+        os.environ["https_proxy"] = "socks5://localhost:3128/"
+        os.environ["no_proxy"] = "echo.websocket.events"
+        self.assertEqual(get_proxy_info("echo.websocket.events", True), (None, 0, None))
+
 
 if __name__ == "__main__":
     unittest.main()

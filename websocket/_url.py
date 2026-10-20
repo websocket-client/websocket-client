@@ -196,6 +196,15 @@ def get_proxy_info(
     )
     if value:
         proxy = urlparse(value)
+        # The environment proxy is always spoken to in plaintext HTTP CONNECT,
+        # so a TLS or SOCKS proxy would receive the request and any
+        # Proxy-Authorization credentials in cleartext.
+        if proxy.scheme == "https" or proxy.scheme.startswith("socks"):
+            raise WebSocketProxyException(
+                f"{env_key} uses a {proxy.scheme}:// proxy, which is not supported "
+                "from the environment; use an http:// proxy, or pass http_proxy_host "
+                "and proxy_type for a SOCKS proxy"
+            )
         auth = (
             (unquote(proxy.username or ""), unquote(proxy.password or ""))
             if proxy.username
