@@ -7,7 +7,7 @@ ChangeLog
   - Raise `WebSocketTimeoutException` instead of `BlockingIOError` in non-blocking mode (414b6df)
   - Store Set-Cookie morsels under their own domain and support multiple Set-Cookie headers (4c223f7)
   - Cap response header and error body size during the handshake (3c81e66)
-  - Keep only Set-Cookie headers whose domain matches the responding host; skip invalid Set-Cookie headers individually (#1071, 8425559)
+  - Keep only Set-Cookie headers whose domain matches the responding host (an IP address matches only itself, and a trailing dot does not bypass the two-label minimum); skip invalid Set-Cookie headers individually (#1071, 8425559)
   - On a redirect to a different scheme, host or port, drop the `Authorization`, `Proxy-Authorization`, `Cookie` and `Host` headers and the `cookie` and `host` options (82a9788)
   - Reject fragmented and oversized control frames (#1072, 7171b46)
   - Validate extended frame payload lengths (#1073, 6a19e73)

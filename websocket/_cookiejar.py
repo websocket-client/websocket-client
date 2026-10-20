@@ -1,4 +1,5 @@
 import http.cookies
+import ipaddress
 from typing import Optional, Union
 from http.cookies import CookieError
 from ._logging import debug, warning
@@ -48,9 +49,7 @@ class SimpleCookieJar:
             # with the no-domain rule above).
             for v in simple_cookie.values():
                 if domain := v.get("domain"):
-                    if not domain.startswith("."):
-                        domain = f".{domain}"
-                    domain = domain.lower()
+                    domain = self._domain_key(domain)
                     if host is not None and not self._domain_match(host, domain):
                         debug("Ignoring Set-Cookie for another domain")
                         continue
@@ -68,9 +67,7 @@ class SimpleCookieJar:
             simple_cookie = http.cookies.SimpleCookie(set_cookie)
             for v in simple_cookie.values():
                 if domain := v.get("domain"):
-                    if not domain.startswith("."):
-                        domain = f".{domain}"
-                    self.jar.pop(domain.lower(), None)
+                    self.jar.pop(self._domain_key(domain), None)
             self.add(set_cookie)
 
     def get(self, host: str) -> str:
@@ -79,8 +76,7 @@ class SimpleCookieJar:
 
         cookies = []
         for domain, _ in self.jar.items():
-            host = host.lower()
-            if host.endswith(domain) or host == domain[1:]:
+            if self._host_in_domain(host, domain[1:]):
                 cookies.append(self.jar.get(domain))
 
         return "; ".join(
@@ -97,16 +93,43 @@ class SimpleCookieJar:
         )
 
     @staticmethod
-    def _domain_match(host: str, domain: str) -> bool:
+    def _domain_key(domain: str) -> str:
+        """Jar key for a Domain attribute: lowercase, one leading dot, no
+        trailing dot (``Domain=Example.COM.`` and ``.example.com`` are the
+        same domain)."""
+        return "." + domain.lower().strip(".")
+
+    @staticmethod
+    def _is_ip(host: str) -> bool:
+        try:
+            ipaddress.ip_address(host.strip("[]"))
+        except ValueError:
+            return False
+        return True
+
+    @classmethod
+    def _host_in_domain(cls, host: str, labels: str) -> bool:
+        """RFC 6265 5.1.3 domain-match of host against a domain without its
+        leading dot. An IP address only matches itself: the suffix rule
+        applies to host names, otherwise Domain=0.1 would cover 10.0.0.1
+        and 192.168.0.1 alike."""
+        host = host.lower().rstrip(".")
+        if cls._is_ip(host) or cls._is_ip(labels):
+            # an IP host, or a cookie whose Domain is an IP, is host-only
+            return host.strip("[]") == labels.strip("[]")
+        return host == labels or host.endswith("." + labels)
+
+    @classmethod
+    def _domain_match(cls, host: str, domain: str) -> bool:
         # RFC 6265 5.3 step 6: ignore cookies whose Domain does not
         # match the host that set them, so one server cannot plant
         # cookies for another. The two-label floor keeps public-suffix
         # style values like Domain=com from matching every host under
-        # them (no public-suffix list: a co.uk-style suffix would still
-        # pass; add a PSL if that matters).
-        host = host.lower()
-        domain = domain.lower()
-        labels = domain[1:] if domain.startswith(".") else domain
-        return labels.count(".") >= 1 and (
-            host == labels or host.endswith("." + labels)
-        )
+        # them; trailing dots are removed first, so Domain=com. is also a
+        # single label. An IP address passes only by exact match, so the
+        # floor does not apply to it (no public-suffix list: a co.uk-style
+        # suffix would still pass; add a PSL if that matters).
+        labels = domain.lower().strip(".")
+        if not cls._host_in_domain(host, labels):
+            return False
+        return "." in labels or cls._is_ip(labels)

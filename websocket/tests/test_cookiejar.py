@@ -124,6 +124,37 @@ class CookieJarTest(unittest.TestCase):
         cookie_jar.add("g=h; domain=abc.com", "xabc.com")
         self.assertEqual(cookie_jar.get("abc.com"), "a=b; c=d")
 
+    def test_ip_host_matches_only_itself(self):
+        """RFC 6265 5.1.3: the domain suffix rule does not apply to IP addresses."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("a=b; Domain=0.1", "10.0.0.1")
+        self.assertFalse(cookie_jar.jar)
+        self.assertEqual(cookie_jar.get("192.168.0.1"), "")
+
+        cookie_jar.add("c=d; Domain=10.0.0.1", "10.0.0.1")
+        self.assertEqual(cookie_jar.get("10.0.0.1"), "c=d")
+        self.assertEqual(cookie_jar.get("110.0.0.1"), "")
+        self.assertEqual(cookie_jar.get("192.168.10.0.0.1"), "")
+
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("e=f; Domain=::1", "::1")
+        self.assertEqual(cookie_jar.get("::1"), "e=f")
+        self.assertEqual(cookie_jar.get("fe80::1"), "")
+
+    def test_trailing_dot_domain(self):
+        """A trailing dot must not get a single label past the two-label floor."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("a=b; Domain=com.", "evil.com.")
+        self.assertFalse(cookie_jar.jar)
+        self.assertEqual(cookie_jar.get("bank.com."), "")
+        self.assertEqual(cookie_jar.get("bank.com"), "")
+
+        # A fully qualified host and Domain are the same domain as without the dot
+        cookie_jar.add("c=d; Domain=example.com.", "www.example.com.")
+        self.assertEqual(sorted(cookie_jar.jar), [".example.com"])
+        self.assertEqual(cookie_jar.get("www.example.com"), "c=d")
+        self.assertEqual(cookie_jar.get("example.com."), "c=d")
+
     def test_set(self):
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b")
