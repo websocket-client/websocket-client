@@ -752,9 +752,6 @@ The examples are found in the README and are copied here for sphinx doctests to 
 .. doctest:: long-lived-connection
 
   >>> import websocket
-  >>> import _thread
-  >>> import time
-  >>> import rel
 
   >>> def on_message(ws, message):
   ...     print(message)
@@ -775,11 +772,7 @@ The examples are found in the README and are copied here for sphinx doctests to 
   ...                               on_message=on_message,
   ...                               on_error=on_error,
   ...                               on_close=on_close)
-
-  >>> ws.run_forever(dispatcher=rel, reconnect=5)  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly  # doctest: +SKIP
-  >>> rel.signal(2, rel.abort)  # Keyboard Interrupt
-  <Signal Object | Callback:"abort">
-  >>> rel.dispatch()  # doctest: +SKIP
+  ...     ws.run_forever(reconnect=5)  # doctest: +SKIP
 
 **Short-lived Connection**
 
