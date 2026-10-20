@@ -569,6 +569,35 @@ class ProxyInfoTest(unittest.TestCase):
         ):
             self.assertEqual(get_proxy_info(host, True), ("good2", 3128, None))
 
+    def test_cgi_ignores_http_proxy_with_case_insensitive_environ(self):
+        """On Windows os.environ is case-insensitive, so get("http_proxy")
+        returns the client-injected HTTP_PROXY. Under CGI the lowercase name
+        must be matched by exact key case, as urllib does."""
+
+        class WindowsEnviron(dict):
+            # Keys stored uppercase and looked up case-insensitively, like
+            # os.environ on Windows.
+            def __init__(self, data):
+                super().__init__({k.upper(): v for k, v in data.items()})
+
+            def get(self, key, default=None):
+                return super().get(key.upper(), default)
+
+            def __contains__(self, key):
+                return super().__contains__(key.upper())
+
+        host = "echo.websocket.events"
+        env = WindowsEnviron(
+            {"REQUEST_METHOD": "GET", "HTTP_PROXY": "http://evil:3128/"}
+        )
+        with patch("os.environ", env):
+            self.assertEqual(get_proxy_info(host, False), (None, 0, None))
+
+        # Outside CGI the variable is honored, whatever its case
+        env = WindowsEnviron({"HTTP_PROXY": "http://corp:3128/"})
+        with patch("os.environ", env):
+            self.assertEqual(get_proxy_info(host, False), ("corp", 3128, None))
+
 
 if __name__ == "__main__":
     unittest.main()
