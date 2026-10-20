@@ -313,6 +313,9 @@ class HttpTest(unittest.TestCase):
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_connect_with_internet(self):
         # Separate test for cases that actually need internet
+        # A caller-supplied socket that is already TLS is returned unchanged for
+        # wss:// (a plain one is wrapped; see test_connect_wraps_plain_socket_for_wss)
+        tls_sock = mock.Mock(spec=ssl.SSLSocket)
         self.assertEqual(
             connect(
                 "wss://google.com",
@@ -320,9 +323,9 @@ class HttpTest(unittest.TestCase):
                 proxy_info(
                     http_proxy_host="8.8.8.8", http_proxy_port=8080, proxy_type="http"
                 ),
-                True,
+                tls_sock,
             ),
-            (True, ("google.com", 443, "/")),
+            (tls_sock, ("google.com", 443, "/")),
         )
 
     def test_proxy_connect(self):
