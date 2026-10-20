@@ -140,7 +140,7 @@ def _get_handshake_headers(
             header = [": ".join([k, v]) for k, v in header.items() if v is not None]
         headers.extend(header)
 
-    server_cookie = CookieJar.get(host)
+    server_cookie = CookieJar.get(host, scheme == "wss")
     client_cookie = options.get("cookie", None)
 
     if cookie := "; ".join(filter(None, [server_cookie, client_cookie])):

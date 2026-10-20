@@ -49,7 +49,9 @@ class SimpleCookieJar:
                         domain = f".{domain}"
                     self.jar[domain.lower()] = simple_cookie
 
-    def get(self, host: str) -> str:
+    def get(self, host: str, secure: bool = False) -> str:
+        """Cookie header value for host. Morsels with the Secure attribute
+        are only returned when secure is True (RFC 6265 5.4 step 1)."""
         if not host:
             return ""
 
@@ -67,6 +69,7 @@ class SimpleCookieJar:
                         f"{k}={v.value}"
                         for cookie in filter(None, cookies)
                         for k, v in cookie.items()
+                        if secure or not v["secure"]
                     ]
                 ),
             )
