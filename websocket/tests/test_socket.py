@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch, MagicMock
 import time
 
 from websocket._socket import recv, recv_line, send, DEFAULT_SOCKET_OPTION
+from websocket.tests._fakes import FakeSelector
 from websocket._ssl_compat import (
     SSLError,
     SSLEOFError,
@@ -220,19 +221,6 @@ class SocketTest(unittest.TestCase):
             errno.EAGAIN, "Resource temporarily unavailable"
         )
 
-        class FakeSelector:
-            polled_timeout = None
-
-            def register(self, *args, **kwargs):
-                pass
-
-            def select(self, timeout):
-                self.polled_timeout = timeout
-                return []
-
-            def close(self):
-                pass
-
         fake = FakeSelector()
         with patch("selectors.DefaultSelector", return_value=fake):
             with self.assertRaises(WebSocketTimeoutException):
@@ -247,19 +235,6 @@ class SocketTest(unittest.TestCase):
         mock_sock.send.side_effect = BlockingIOError(
             errno.EAGAIN, "Resource temporarily unavailable"
         )
-
-        class FakeSelector:
-            polled_timeout = None
-
-            def register(self, *args, **kwargs):
-                pass
-
-            def select(self, timeout):
-                self.polled_timeout = timeout
-                return []
-
-            def close(self):
-                pass
 
         fake = FakeSelector()
         with patch("selectors.DefaultSelector", return_value=fake):
@@ -435,16 +410,6 @@ class SocketTest(unittest.TestCase):
         mock_sock = Mock()
         mock_sock.recv.side_effect = OSError(errno.EWOULDBLOCK, "would block")
         mock_sock.gettimeout.return_value = 1.0
-
-        class FakeSelector:
-            def register(self, *args, **kwargs):
-                pass
-
-            def select(self, timeout):
-                return []
-
-            def close(self):
-                pass
 
         with patch("selectors.DefaultSelector", return_value=FakeSelector()):
             with self.assertRaises(WebSocketTimeoutException):

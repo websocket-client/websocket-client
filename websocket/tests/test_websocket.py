@@ -12,6 +12,7 @@ from unittest import mock
 import websocket as ws
 from websocket._abnf import ABNF
 from websocket._cookiejar import SimpleCookieJar
+from websocket.tests._fakes import HeaderSockMock, SockMock
 from websocket._exceptions import (
     WebSocketBadStatusException,
     WebSocketAddressException,
@@ -62,42 +63,6 @@ TRACEABLE = True
 
 def create_mask_key(_):
     return "abcd"
-
-
-class SockMock:
-    def __init__(self):
-        self.data = []
-        self.sent = []
-
-    def add_packet(self, data):
-        self.data.append(data)
-
-    def gettimeout(self):
-        return None
-
-    def recv(self, bufsize):
-        if self.data:
-            e = self.data.pop(0)
-            if isinstance(e, Exception):
-                raise e
-            if len(e) > bufsize:
-                self.data.insert(0, e[bufsize:])
-            return e[:bufsize]
-
-    def send(self, data):
-        self.sent.append(data)
-        return len(data)
-
-    def close(self):
-        pass
-
-
-class HeaderSockMock(SockMock):
-    def __init__(self, fname):
-        SockMock.__init__(self)
-        path = os.path.join(os.path.dirname(__file__), fname)
-        with open(path, "rb") as f:
-            self.add_packet(f.read())
 
 
 class WebSocketTest(unittest.TestCase):

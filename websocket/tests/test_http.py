@@ -25,6 +25,7 @@ from websocket._http import (
     read_headers,
     HAVE_PYTHON_SOCKS,
 )
+from websocket.tests._fakes import HeaderSockMock, OptsList, SockMock
 
 """
 test_http.py
@@ -56,49 +57,6 @@ TEST_WITH_PROXY = os.environ.get("TEST_WITH_PROXY", "0") == "1"
 # Skip tests relying on local websockets server unless LOCAL_WS_SERVER_PORT != -1
 LOCAL_WS_SERVER_PORT = os.environ.get("LOCAL_WS_SERVER_PORT", "-1")
 TEST_WITH_LOCAL_SERVER = LOCAL_WS_SERVER_PORT != "-1"
-
-
-class SockMock:
-    def __init__(self):
-        self.data = []
-        self.sent = []
-
-    def add_packet(self, data):
-        self.data.append(data)
-
-    def gettimeout(self):
-        return None
-
-    def recv(self, bufsize):
-        if self.data:
-            e = self.data.pop(0)
-            if isinstance(e, Exception):
-                raise e
-            if len(e) > bufsize:
-                self.data.insert(0, e[bufsize:])
-            return e[:bufsize]
-
-    def send(self, data):
-        self.sent.append(data)
-        return len(data)
-
-    def close(self):
-        pass
-
-
-class HeaderSockMock(SockMock):
-    def __init__(self, fname):
-        SockMock.__init__(self)
-        path = os.path.join(os.path.dirname(__file__), fname)
-        with open(path, "rb") as f:
-            self.add_packet(f.read())
-
-
-class OptsList:
-    def __init__(self):
-        self.timeout = 1
-        self.sockopt = []
-        self.sslopt = {"cert_reqs": ssl.CERT_NONE}
 
 
 class HttpTest(unittest.TestCase):
