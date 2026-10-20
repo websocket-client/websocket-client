@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+import tempfile
 import unittest
 import socket
 import ssl
@@ -112,22 +114,24 @@ class SSLEdgeCasesTest(unittest.TestCase):
         """Test CA bundle environment variable edge cases"""
         mock_sock = Mock()
 
-        # Test with non-existent CA bundle file
+        # A path that is neither a file nor a directory fails closed instead of
+        # falling back to the system CAs
         with patch.dict(
             "os.environ", {"WEBSOCKET_CLIENT_CA_BUNDLE": "/nonexistent/ca-bundle.crt"}
         ):
             with patch("os.path.isfile", return_value=False):
                 with patch("os.path.isdir", return_value=False):
                     with patch("ssl.SSLContext") as mock_ssl_context:
-                        mock_context = Mock()
-                        mock_ssl_context.return_value = mock_context
-                        mock_context.wrap_socket.return_value = Mock()
+                        with self.assertRaisesRegex(
+                            WebSocketException, "WEBSOCKET_CLIENT_CA_BUNDLE"
+                        ):
+                            _ssl_socket(mock_sock, {}, "example.com")
+                        mock_ssl_context.return_value.wrap_socket.assert_not_called()
 
-                        sslopt = {}
-                        _ssl_socket(mock_sock, sslopt, "example.com")
-
-                        # Should not try to load non-existent CA bundle
-                        mock_context.load_verify_locations.assert_not_called()
+                        # Not read when nothing is verified
+                        _ssl_socket(
+                            mock_sock, {"cert_reqs": ssl.CERT_NONE}, "example.com"
+                        )
 
         # Test with CA bundle directory
         with patch.dict("os.environ", {"WEBSOCKET_CLIENT_CA_BUNDLE": "/etc/ssl/certs"}):
@@ -145,6 +149,29 @@ class SSLEdgeCasesTest(unittest.TestCase):
                         mock_context.load_verify_locations.assert_called_with(
                             cafile=None, capath="/etc/ssl/certs"
                         )
+
+    def test_ca_bundle_env_does_not_widen_explicit_ca(self):
+        """An explicit ca_certs or ca_cert_path is the whole trust set; the
+        environment bundle, file or directory, must not be added to it."""
+        with tempfile.TemporaryDirectory() as env_dir:
+            env_file = os.path.join(env_dir, "bundle.pem")
+            open(env_file, "w").close()
+            cases = [
+                (env_dir, {"ca_certs": "/pinned/ca.pem"}, ("/pinned/ca.pem", None)),
+                (env_file, {"ca_cert_path": "/pinned/dir"}, (None, "/pinned/dir")),
+                (env_file, {"ca_certs": "/pinned/ca.pem"}, ("/pinned/ca.pem", None)),
+                (env_dir, {"ca_cert_path": "/pinned/dir"}, (None, "/pinned/dir")),
+            ]
+            for env_value, user_sslopt, (cafile, capath) in cases:
+                with self.subTest(env=env_value, sslopt=user_sslopt):
+                    with patch.dict(
+                        "os.environ", {"WEBSOCKET_CLIENT_CA_BUNDLE": env_value}
+                    ):
+                        with patch("ssl.SSLContext") as mock_ssl_context:
+                            _ssl_socket(Mock(), user_sslopt, "example.com")
+                            mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(
+                                cafile=cafile, capath=capath
+                            )
 
     def test_ssl_cipher_configuration_edge_cases(self):
         """Test SSL cipher configuration edge cases"""

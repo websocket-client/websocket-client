@@ -373,19 +373,29 @@ def _ssl_socket(sock: socket.socket, user_sslopt: dict, hostname: str) -> Any:
     sslopt: dict = {"cert_reqs": ssl.CERT_REQUIRED}
     sslopt.update(user_sslopt)
 
+    # WEBSOCKET_CLIENT_CA_BUNDLE is only a default. An explicit ca_certs or
+    # ca_cert_path pins the trusted CAs, and the variable must not add to it.
+    # It is read only when it would be used: certificates are verified and no
+    # custom context is given.
     cert_path = os.environ.get("WEBSOCKET_CLIENT_CA_BUNDLE")
     if (
         cert_path
-        and os.path.isfile(cert_path)
-        and user_sslopt.get("ca_certs", None) is None
+        and user_sslopt.get("ca_certs") is None
+        and user_sslopt.get("ca_cert_path") is None
+        and sslopt["cert_reqs"] != ssl.CERT_NONE
+        and not sslopt.get("context")
     ):
-        sslopt["ca_certs"] = cert_path
-    elif (
-        cert_path
-        and os.path.isdir(cert_path)
-        and user_sslopt.get("ca_cert_path", None) is None
-    ):
-        sslopt["ca_cert_path"] = cert_path
+        if os.path.isfile(cert_path):
+            sslopt["ca_certs"] = cert_path
+        elif os.path.isdir(cert_path):
+            sslopt["ca_cert_path"] = cert_path
+        else:
+            # Falling back to the system CAs would silently widen the trust
+            # the variable was meant to restrict.
+            raise WebSocketException(
+                "WEBSOCKET_CLIENT_CA_BUNDLE is neither a file nor a directory: "
+                f"{cert_path!r}"
+            )
 
     if sslopt.get("server_hostname", None):
         hostname = sslopt["server_hostname"]
