@@ -918,6 +918,19 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         sock.settimeout(2.5)
         self.assertEqual(sock.gettimeout(), 2.5)
 
+    def test_connect_rejects_bool_and_nonfinite_timeout(self):
+        """connect(timeout=...) is validated like settimeout(), before any socket opens."""
+        cases = [(True, TypeError), (False, TypeError), ("5", TypeError)]
+        cases += [(v, ValueError) for v in (float("nan"), float("inf"), float("-inf"))]
+        for value, exc in cases:
+            with self.subTest(timeout=value):
+                sock = ws.WebSocket()
+                with mock.patch("websocket._core.connect") as connect_mock:
+                    with self.assertRaises(exc):
+                        sock.connect("ws://example.com", timeout=value)
+                connect_mock.assert_not_called()
+                self.assertIsNone(sock.gettimeout())
+
     def test_is_ssl_detection(self):
         sock = ws.WebSocket()
         self.assertFalse(sock.is_ssl())

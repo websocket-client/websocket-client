@@ -14,7 +14,7 @@ ChangeLog
   - Bracket IPv6 hosts in HTTP proxy CONNECT authority (#1076, 0084ec3)
   - Fix `no_proxy` leading-dot suffix match to require a domain boundary (#1069, b2ee91c)
   - Close SOCKS sockets when TLS setup fails (#1074, 7681105)
-  - Reject `bool` and non-finite websocket timeouts (#1062, 8c36dc4)
+  - Reject `bool` and non-finite websocket timeouts in `settimeout()`, `setdefaulttimeout()` and `WebSocket.connect(timeout=...)` (#1062, 8c36dc4)
   - Propagate `KeyboardInterrupt` from `run_forever` (#1070, fixes #964, c43ecdc)
   - Include traceback details when logging exceptions from WebSocketApp callbacks (#1004)
   - Security: wrap a plain pre-initialized `socket=` in TLS for `wss://` URLs instead of sending the handshake and data in cleartext; pass an `ssl.SSLSocket` to keep a custom TLS setup (N82)

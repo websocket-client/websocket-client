@@ -68,6 +68,19 @@ class sock_opt:
         self.timeout: Optional[Union[int, float]] = None
 
 
+def _validate_timeout(timeout: Optional[Union[int, float]]) -> None:
+    """Reject timeouts that the socket layer would misread or reject late."""
+    if timeout is None:
+        return
+    # bool subclasses int; True would become 1.0s on the socket
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
+        raise TypeError(
+            "timeout must be an int or float, not %r" % (type(timeout).__name__,)
+        )
+    if not math.isfinite(timeout):
+        raise ValueError("timeout must be a finite number, got %r" % (timeout,))
+
+
 def setdefaulttimeout(timeout: Optional[Union[int, float]]) -> None:
     """
     Set the global timeout setting to connect.
@@ -79,14 +92,7 @@ def setdefaulttimeout(timeout: Optional[Union[int, float]]) -> None:
         None clears the default timeout.
     """
     global _default_timeout
-    if timeout is not None:
-        # bool subclasses int; True would become a 1.0s default timeout
-        if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
-            raise TypeError(
-                "timeout must be an int or float, not %r" % (type(timeout).__name__,)
-            )
-        if not math.isfinite(timeout):
-            raise ValueError("timeout must be a finite number, got %r" % (timeout,))
+    _validate_timeout(timeout)
     _default_timeout = timeout
 
 

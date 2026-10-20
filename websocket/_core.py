@@ -1,4 +1,3 @@
-import math
 import socket
 import struct
 import threading
@@ -16,7 +15,7 @@ from ._exceptions import (
 from ._handshake import SUPPORTED_REDIRECT_STATUSES, handshake, handshake_response
 from ._http import connect, proxy_info
 from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
-from ._socket import getdefaulttimeout, recv, send, sock_opt
+from ._socket import _validate_timeout, getdefaulttimeout, recv, send, sock_opt
 from ._ssl_compat import ssl
 from ._utils import NoLock
 from ._dispatcher import DispatcherBase, WrappedDispatcher
@@ -215,15 +214,7 @@ class WebSocket:
             timeout time (in seconds). This value could be either float/integer.
             None disables the timeout (blocking mode).
         """
-        if timeout is not None:
-            # bool subclasses int; True would become 1.0s on the socket
-            if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
-                raise TypeError(
-                    "timeout must be an int or float, not %r"
-                    % (type(timeout).__name__,)
-                )
-            if not math.isfinite(timeout):
-                raise ValueError("timeout must be a finite number, got %r" % (timeout,))
+        _validate_timeout(timeout)
         self.sock_opt.timeout = timeout
         if self.sock:
             self.sock.settimeout(timeout)
@@ -320,6 +311,8 @@ class WebSocket:
             Pre-initialized stream socket. With a wss:// URL, a socket that is
             not already an ssl.SSLSocket is wrapped in TLS using sslopt.
         """
+        if "timeout" in options:
+            _validate_timeout(options["timeout"])
         self.sock_opt.timeout = options.get("timeout", self.sock_opt.timeout)
         self.sock, addrs = connect(
             url, self.sock_opt, proxy_info(**options), options.pop("socket", None)
