@@ -232,6 +232,13 @@ class CookieJarTest(unittest.TestCase):
         self.assertEqual(cookie_jar.get("abc.com.es"), "")
         self.assertEqual(cookie_jar.get("xabc.com"), "")
 
+    def test_get_secure(self):
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("a=b; Domain=abc.com; Secure")
+        cookie_jar.add("c=d; Domain=abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "c=d")
+        self.assertEqual(cookie_jar.get("abc.com", secure=True), "a=b; c=d")
+
 
 if __name__ == "__main__":
     unittest.main()
