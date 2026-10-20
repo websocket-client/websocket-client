@@ -751,6 +751,64 @@ class HandshakeTest(unittest.TestCase):
         )
         self.assertIn("Host: example.com", headers)
 
+    def test_handshake_values_reject_crlf_and_nul(self):
+        """CR, LF or NUL in a caller-supplied handshake value would end the
+        header line and inject headers of its own. The handshake raises before
+        sending anything, and the error does not echo the value."""
+        injected = "x\r\nInjected: yes"
+        cases = {
+            "header list": {"header": [f"X-A: {injected}"]},
+            "header dict value": {"header": {"X-A": injected}},
+            "header dict name": {"header": {injected: "1"}},
+            "subprotocols": {"subprotocols": ["chat", injected]},
+            "origin": {"origin": injected},
+            "host": {"host": injected},
+            "cookie": {"cookie": f"a={injected}"},
+            "connection": {"connection": f"Connection: Upgrade{injected}"},
+            "lone LF": {"origin": "http://o\nInjected: yes"},
+            "lone CR": {"origin": "http://o\rInjected: yes"},
+            "NUL": {"origin": "http://o\0Injected"},
+        }
+        for label, options in cases.items():
+            with self.subTest(label):
+                sock = SockMock()
+                with self.assertRaisesRegex(ws.WebSocketException, "not allowed"):
+                    ws.create_connection("ws://example.com/", socket=sock, **options)
+                self.assertEqual(sock.sent, [])
+
+        with self.assertRaises(ws.WebSocketException) as cm:
+            _get_handshake_headers(
+                "/", "ws://example.com", "example.com", 80, {"cookie": "s=SECRET\r\n"}
+            )
+        self.assertIn("'cookie'", str(cm.exception))
+        self.assertNotIn("SECRET", str(cm.exception))
+
+        # Ordinary values are sent exactly as before
+        with mock.patch.dict(CookieJar.jar, clear=True):
+            headers, _ = _get_handshake_headers(
+                "/",
+                "ws://example.com",
+                "example.com",
+                80,
+                {
+                    "header": {"X-A": "1", "X-Skipped": None},
+                    "subprotocols": ["chat", "v2"],
+                    "origin": "http://o",
+                    "host": "h:81",
+                    "cookie": "a=b",
+                    "connection": "Connection: Upgrade, keep-alive",
+                },
+            )
+        for line in (
+            "Host: h:81",
+            "Origin: http://o",
+            "Connection: Upgrade, keep-alive",
+            "Sec-WebSocket-Protocol: chat,v2",
+            "X-A: 1",
+            "Cookie: a=b",
+        ):
+            self.assertIn(line, headers)
+
     def test_handshake_cookie_from_multiple_set_cookie(self):
         """Cookies received as two Set-Cookie headers must reach the next
         handshake's Cookie header uncontaminated (one per domain)."""

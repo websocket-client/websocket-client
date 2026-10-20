@@ -93,6 +93,20 @@ def _pack_hostname(hostname: str) -> str:
     return hostname
 
 
+def _check_header_value(option: str, value: Any) -> None:
+    """Raise if a caller-supplied handshake value contains CR, LF or NUL.
+    CR or LF would end the header line early and let the value inject headers
+    of its own, so this runs before anything is sent. The value is not
+    converted or otherwise validated here. Only the option name goes in the
+    error: values are often tokens or cookies."""
+    text = str(value)
+    if "\r" in text or "\n" in text or "\0" in text:
+        raise WebSocketException(
+            f"Invalid {option!r} option: CR, LF and NUL are not allowed "
+            "in handshake headers"
+        )
+
+
 def _get_handshake_headers(
     resource: str, url: str, host: str, port: int, options: dict
 ) -> tuple:
@@ -118,6 +132,7 @@ def _get_handshake_headers(
         hostport = f"{_pack_hostname(host)}:{port}"
     if not options.get("suppress_host"):
         if options.get("host"):
+            _check_header_value("host", options["host"])
             headers.append(f'Host: {options["host"]}')
         else:
             headers.append(f"Host: {hostport}")
@@ -125,6 +140,7 @@ def _get_handshake_headers(
     # Origin picks http vs https from the scheme parsed above
     if not options.get("suppress_origin"):
         if "origin" in options and options["origin"] is not None:
+            _check_header_value("origin", options["origin"])
             headers.append(f'Origin: {options["origin"]}')
         elif scheme == "wss":
             headers.append(f"Origin: https://{hostport}")
@@ -147,18 +163,25 @@ def _get_handshake_headers(
     if not options.get("connection"):
         headers.append("Connection: Upgrade")
     else:
+        _check_header_value("connection", options["connection"])
         headers.append(options["connection"])
 
     if subprotocols := options.get("subprotocols"):
+        for protocol in subprotocols:
+            _check_header_value("subprotocols", protocol)
         headers.append(f'Sec-WebSocket-Protocol: {",".join(subprotocols)}')
 
     if header:
         if isinstance(header, dict):
             header = [": ".join([k, v]) for k, v in header.items() if v is not None]
+        for entry in header:
+            _check_header_value("header", entry)
         headers.extend(header)
 
     server_cookie = CookieJar.get(host, scheme == "wss")
     client_cookie = options.get("cookie", None)
+    if client_cookie:
+        _check_header_value("cookie", client_cookie)
 
     if cookie := "; ".join(filter(None, [server_cookie, client_cookie])):
         headers.append(f"Cookie: {cookie}")
