@@ -191,9 +191,16 @@ def get_proxy_info(
         return proxy_host, port, auth
 
     env_key = "https_proxy" if is_secure else "http_proxy"
-    value = os.environ.get(env_key, os.environ.get(env_key.upper(), "")).replace(
-        " ", ""
-    )
+    value = os.environ.get(env_key)
+    # httpoxy (CVE-2016-1000110). This only matters when running inside a CGI
+    # script (REQUEST_METHOD is set): there the web server turns the client's
+    # "Proxy:" request header into the HTTP_PROXY environment variable, so it is
+    # ignored, as urllib does. Outside CGI (plain scripts, WSGI, ASGI) request
+    # headers never reach os.environ and HTTP_PROXY is honored as usual. The
+    # lowercase http_proxy cannot come from a request header and is always kept.
+    if value is None and (is_secure or "REQUEST_METHOD" not in os.environ):
+        value = os.environ.get(env_key.upper())
+    value = (value or "").replace(" ", "")
     if value:
         proxy = urlparse(value)
         # The environment proxy is always spoken to in plaintext HTTP CONNECT,

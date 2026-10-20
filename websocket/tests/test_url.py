@@ -2,6 +2,7 @@
 #
 import os
 import unittest
+from unittest.mock import patch
 
 from websocket._url import (
     _is_address_in_network,
@@ -532,6 +533,26 @@ class ProxyInfoTest(unittest.TestCase):
         os.environ["https_proxy"] = "socks5://localhost:3128/"
         os.environ["no_proxy"] = "echo.websocket.events"
         self.assertEqual(get_proxy_info("echo.websocket.events", True), (None, 0, None))
+
+    def test_cgi_ignores_uppercase_http_proxy(self):
+        """httpoxy: under CGI (REQUEST_METHOD set) HTTP_PROXY can come from the
+        client's Proxy: header, so only the lowercase variable is honored."""
+        host = "echo.websocket.events"
+        with patch.dict(os.environ, {"HTTP_PROXY": "http://evil:3128/"}):
+            os.environ.pop("REQUEST_METHOD", None)
+            self.assertEqual(get_proxy_info(host, False), ("evil", 3128, None))
+
+            os.environ["REQUEST_METHOD"] = "GET"
+            self.assertEqual(get_proxy_info(host, False), (None, 0, None))
+
+            os.environ["http_proxy"] = "http://good:3128/"
+            self.assertEqual(get_proxy_info(host, False), ("good", 3128, None))
+
+        # HTTPS_PROXY cannot be set from a request header, so it still applies.
+        with patch.dict(
+            os.environ, {"REQUEST_METHOD": "GET", "HTTPS_PROXY": "http://good2:3128/"}
+        ):
+            self.assertEqual(get_proxy_info(host, True), ("good2", 3128, None))
 
 
 if __name__ == "__main__":
