@@ -283,6 +283,7 @@ class WebSocketApp:
         suppress_host: bool = False,
         proxy_type: Optional[str] = None,
         reconnect: Optional[int] = None,
+        redirect_limit: int = 3,
     ) -> bool:
         """
         Run event loop for WebSocket framework.
@@ -332,6 +333,13 @@ class WebSocketApp:
             type of proxy from: http, socks4, socks4a, socks5, socks5h
         reconnect: int
             delay interval when reconnecting
+        redirect_limit: int
+            Number of HTTP redirects to follow during each opening handshake,
+            the same as ``WebSocket.connect(redirect_limit=...)``. Default is 3.
+            Set it to 0 to refuse redirects, for example when the URL was
+            validated against an allowlist and a redirect could point the
+            connection at another host. A refused redirect is reported to
+            ``on_error`` as a ``WebSocketException``.
 
         Returns
         -------
@@ -355,6 +363,8 @@ class WebSocketApp:
             raise WebSocketException("Ensure ping_interval >= 0")
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
             raise WebSocketException("Ensure ping_interval > ping_timeout")
+        if redirect_limit < 0:
+            raise WebSocketException("Ensure redirect_limit >= 0")
         if not sockopt:
             sockopt = []
         if not sslopt:
@@ -446,6 +456,7 @@ class WebSocketApp:
                     suppress_host=suppress_host,
                     proxy_type=proxy_type,
                     socket=self.prepared_socket,
+                    redirect_limit=redirect_limit,
                 )
 
                 info("Websocket connected")

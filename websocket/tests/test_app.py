@@ -783,6 +783,55 @@ class WebSocketAppUnitTests(unittest.TestCase):
         with self.assertRaises(ws.WebSocketException):
             app.run_forever(ping_interval=1, ping_timeout=1)
 
+    def test_run_forever_redirect_limit_zero_refuses_redirects(self):
+        """run_forever(redirect_limit=0) does not follow a redirect to another
+        host, and a negative limit is rejected; the default still follows it."""
+        with self.assertRaises(ws.WebSocketException):
+            self._build_app().run_forever(redirect_limit=-1)
+
+        def serve(reply):
+            srv = socket.socket()
+            srv.bind(("127.0.0.1", 0))
+            srv.listen()
+            srv.settimeout(5)
+            hits = []
+
+            def loop():
+                try:
+                    while True:
+                        conn, _ = srv.accept()
+                        with conn:
+                            hits.append(conn.recv(65536))
+                            conn.sendall(reply)
+                except OSError:
+                    pass
+
+            threading.Thread(target=loop, daemon=True).start()
+            self.addCleanup(srv.close)
+            return srv.getsockname()[1], hits
+
+        target_port, target_hits = serve(
+            b"HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n"
+        )
+        origin_port, _ = serve(
+            b"HTTP/1.1 302 Found\r\n"
+            + f"Location: ws://127.0.0.1:{target_port}/\r\n".encode()
+            + b"Content-Length: 0\r\n\r\n"
+        )
+        url = f"ws://127.0.0.1:{origin_port}/"
+
+        errors = []
+        app = ws.WebSocketApp(url, on_error=lambda _app, e: errors.append(e))
+        app.run_forever(redirect_limit=0)
+        self.assertEqual(target_hits, [])
+        self.assertEqual(len(errors), 1)
+        self.assertIsInstance(errors[0], ws.WebSocketException)
+        self.assertIn("Redirect limit", str(errors[0]))
+
+        app = ws.WebSocketApp(url, on_error=lambda _app, e: None)
+        app.run_forever()
+        self.assertEqual(len(target_hits), 1)
+
     def test_run_forever_rejects_when_socket_already_open(self):
         app = self._build_app()
         app.sock = object()
