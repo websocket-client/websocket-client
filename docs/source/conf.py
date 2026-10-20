@@ -31,11 +31,11 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 project = "websocket-client"
-copyright = "2025"
+copyright = "2026"
 author = "liris"
 
 # The full version, including alpha/beta/rc tags
-release = "1.9.2"
+release = "1.10.0"
 
 
 # -- General configuration ---------------------------------------------------
