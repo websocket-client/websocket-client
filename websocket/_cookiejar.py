@@ -24,6 +24,10 @@ limitations under the License.
 """
 
 
+def _has_control_char(text: str) -> bool:
+    return any(ord(c) < 0x20 or ord(c) == 0x7F for c in text)
+
+
 class SimpleCookieJar:
     def __init__(self) -> None:
         self.jar: dict = {}
@@ -52,6 +56,12 @@ class SimpleCookieJar:
                     domain = self._domain_key(domain)
                     if host is not None and not self._domain_match(host, domain):
                         debug("Ignoring Set-Cookie for another domain")
+                        continue
+                    if _has_control_char(v.value) or _has_control_char(v.coded_value):
+                        # RFC 6265 4.1.1: cookie values exclude CTLs. A quoted
+                        # value can smuggle them in as octal escapes (\015\012)
+                        # that SimpleCookie decodes into raw CR/LF.
+                        debug("Ignoring Set-Cookie with control characters")
                         continue
                     cookie = self.jar.get(domain)
                     if cookie is None:
@@ -84,7 +94,7 @@ class SimpleCookieJar:
                 None,
                 sorted(
                     [
-                        f"{k}={v.value}"
+                        f"{k}={v.coded_value}"
                         for cookie in filter(None, cookies)
                         for k, v in cookie.items()
                     ]

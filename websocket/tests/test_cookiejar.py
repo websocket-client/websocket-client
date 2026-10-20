@@ -155,6 +155,23 @@ class CookieJarTest(unittest.TestCase):
         self.assertEqual(cookie_jar.get("www.example.com"), "c=d")
         self.assertEqual(cookie_jar.get("example.com."), "c=d")
 
+    def test_escaped_control_characters_are_dropped(self):
+        """Octal-escaped CR/LF in a quoted value must never reach a request
+        header (header injection through the jar)."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add(
+            'sid="x\\015\\012Authorization: Bearer forged"; Domain=example.com',
+            "a.example.com",
+        )
+        cookie_jar.add('t="tab\\011here"; Domain=example.com', "a.example.com")
+        cookie_jar.add("ok=1; Domain=example.com", "a.example.com")
+        self.assertEqual(cookie_jar.get("b.example.com"), "ok=1")
+
+    def test_get_sends_value_as_encoded_by_server(self):
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add('q="a b\\073c"; Domain=example.com', "example.com")
+        self.assertEqual(cookie_jar.get("example.com"), 'q="a b\\073c"')
+
     def test_set(self):
         cookie_jar = SimpleCookieJar()
         cookie_jar.set("a=b")
