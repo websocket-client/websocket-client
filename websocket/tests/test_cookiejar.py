@@ -295,6 +295,29 @@ class CookieJarTest(unittest.TestCase):
         cookie_jar._expiry[(".abc.com", "a")] = time.time() - 1
         self.assertEqual(cookie_jar.get("abc.com"), "e=f")
 
+    def test_unrepresentable_max_age_and_expires(self):
+        """A Max-Age or Expires too large to turn into a timestamp must not
+        raise out of the handshake. Max-Age is clamped (RFC 6265 5.2.2): huge
+        positive keeps the cookie, huge negative deletes it. An Expires date the
+        platform cannot convert is ignored like any invalid attribute."""
+        huge = "9" * 400
+        kept = [
+            f"a=1; Max-Age={huge}",
+            'a=1; Expires="Thu, 01 Jan 9999999999 00:00:00 GMT"',
+            'a=1; Expires="Thu, 01 Jan 9999999999 00:00:00"',
+            'a=1; Expires="Thu, 01 Jan 10000 00:00:00 GMT"',
+        ]
+        for header in kept:
+            with self.subTest(header=header):
+                cookie_jar = SimpleCookieJar()
+                cookie_jar.add(f"{header}; Domain=abc.com", "abc.com")
+                self.assertEqual(cookie_jar.get("abc.com"), "a=1")
+
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("a=1; Domain=abc.com", "abc.com")
+        cookie_jar.add(f"a=; Max-Age=-{huge}; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "")
+
 
 if __name__ == "__main__":
     unittest.main()

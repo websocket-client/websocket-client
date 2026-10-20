@@ -1,6 +1,7 @@
 import email.utils
 import http.cookies
 import ipaddress
+import math
 import time
 from typing import Optional, Union
 from http.cookies import CookieError
@@ -189,14 +190,26 @@ class SimpleCookieJar:
         max_age = v.get("max-age", "")
         if max_age:
             try:
-                return time.time() + int(max_age)
+                delta = int(max_age)
             except ValueError:
                 pass  # invalid Max-Age: ignore it, Expires may still apply
+            else:
+                try:
+                    return time.time() + delta
+                except OverflowError:
+                    # RFC 6265 5.2.2: too large to represent means the latest
+                    # (or, when negative, the earliest) representable time
+                    return math.inf if delta > 0 else -math.inf
         expires = v.get("expires", "")
         if expires:
             parsed = email.utils.parsedate_tz(expires)
             if parsed is not None:
-                return email.utils.mktime_tz(parsed)
+                try:
+                    return email.utils.mktime_tz(parsed)
+                except (OverflowError, ValueError):
+                    # A date the platform cannot convert (e.g. a year past
+                    # 9999) is an invalid attribute, ignored per RFC 6265 5.2.1
+                    pass
         return None
 
     def _expired(self, domain: str, key: str, now: float) -> bool:
