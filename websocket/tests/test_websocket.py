@@ -723,6 +723,49 @@ class HandshakeTest(unittest.TestCase):
         host_headers = [h for h in headers if h.startswith("Host:")]
         self.assertEqual(len(host_headers), 0)
 
+    def test_sec_websocket_key_from_list_header(self):
+        """A custom key passed as a list entry must not be duplicated."""
+        custom_key = "k9kFAUWNAMmf5OEMfTlOEA=="
+        headers, key = _get_handshake_headers(
+            "/",
+            "ws://example.com",
+            "example.com",
+            80,
+            {"header": [f"Sec-WebSocket-Key: {custom_key}"]},
+        )
+        self.assertEqual(
+            [h for h in headers if h.startswith("Sec-WebSocket-Key:")],
+            [f"Sec-WebSocket-Key: {custom_key}"],
+        )
+        self.assertEqual(key, custom_key)
+
+    def test_sec_websocket_key_dict_header_case_and_none(self):
+        # lowercase dict entry is honored; explicit None means "not specified"
+        headers, key = _get_handshake_headers(
+            "/",
+            "ws://example.com",
+            "example.com",
+            80,
+            {"header": {"sec-websocket-key": "abc123"}},
+        )
+        self.assertEqual(
+            [h for h in headers if h.lower().startswith("sec-websocket-key:")],
+            ["sec-websocket-key: abc123"],
+        )
+        self.assertEqual(key, "abc123")
+
+        headers, key = _get_handshake_headers(
+            "/",
+            "ws://example.com",
+            "example.com",
+            80,
+            {"header": {"Sec-WebSocket-Key": None}},
+        )
+        key_headers = [h for h in headers if h.startswith("Sec-WebSocket-Key:")]
+        self.assertEqual(len(key_headers), 1)
+        self.assertEqual(key_headers[0], f"Sec-WebSocket-Key: {key}")
+        self.assertNotIn("None", key)
+
     def test_handshake_cookie_from_multiple_set_cookie(self):
         """Cookies received as two Set-Cookie headers must reach the next
         handshake's Cookie header uncontaminated (one per domain)."""

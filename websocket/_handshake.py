@@ -96,6 +96,18 @@ def _pack_hostname(hostname: str) -> str:
 def _get_handshake_headers(
     resource: str, url: str, host: str, port: int, options: dict
 ) -> tuple:
+    header = options.get("header")
+
+    # Case-insensitive dict view of the header option for membership tests.
+    # Local only — options belongs to the caller and must not be mutated.
+    header_map: dict = {}
+    if isinstance(header, dict):
+        header_map = {name.lower(): value for name, value in header.items()}
+    elif header:
+        for entry in header:
+            name, _, value = entry.partition(":")
+            header_map[name.strip().lower()] = value.strip()
+
     headers = [f"GET {resource} HTTP/1.1", "Upgrade: websocket"]
     if port in [80, 443]:
         hostport = _pack_hostname(host)
@@ -120,13 +132,15 @@ def _get_handshake_headers(
 
     key = _create_sec_websocket_key()
 
-    # Append Sec-WebSocket-Key & Sec-WebSocket-Version if not manually specified
-    if not options.get("header") or "Sec-WebSocket-Key" not in options["header"]:
+    # Append Sec-WebSocket-Key & Sec-WebSocket-Version if not manually specified.
+    # An explicit None value counts as not specified (previously it silently
+    # dropped the key header and _validate hashed "None...").
+    if header_map.get("sec-websocket-key") is None:
         headers.append(f"Sec-WebSocket-Key: {key}")
     else:
-        key = options["header"]["Sec-WebSocket-Key"]
+        key = header_map["sec-websocket-key"]
 
-    if not options.get("header") or "Sec-WebSocket-Version" not in options["header"]:
+    if header_map.get("sec-websocket-version") is None:
         headers.append(f"Sec-WebSocket-Version: {VERSION}")
 
     if not options.get("connection"):
@@ -137,7 +151,7 @@ def _get_handshake_headers(
     if subprotocols := options.get("subprotocols"):
         headers.append(f'Sec-WebSocket-Protocol: {",".join(subprotocols)}')
 
-    if header := options.get("header"):
+    if header:
         if isinstance(header, dict):
             header = [": ".join([k, v]) for k, v in header.items() if v is not None]
         headers.extend(header)
