@@ -766,6 +766,24 @@ class HandshakeTest(unittest.TestCase):
         self.assertEqual(key_headers[0], f"Sec-WebSocket-Key: {key}")
         self.assertNotIn("None", key)
 
+    def test_host_port_elision_follows_scheme(self):
+        # the port is omitted only for the scheme's own default port
+        headers, _ = _get_handshake_headers(
+            "/", "ws://example.com:443", "example.com", 443, {}
+        )
+        self.assertIn("Host: example.com:443", headers)
+        self.assertIn("Origin: http://example.com:443", headers)
+
+        headers, _ = _get_handshake_headers(
+            "/", "wss://example.com:80", "example.com", 80, {}
+        )
+        self.assertIn("Host: example.com:80", headers)
+
+        headers, _ = _get_handshake_headers(
+            "/", "wss://example.com", "example.com", 443, {}
+        )
+        self.assertIn("Host: example.com", headers)
+
     def test_handshake_cookie_from_multiple_set_cookie(self):
         """Cookies received as two Set-Cookie headers must reach the next
         handshake's Cookie header uncontaminated (one per domain)."""

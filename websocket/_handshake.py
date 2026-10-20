@@ -109,7 +109,10 @@ def _get_handshake_headers(
             header_map[name.strip().lower()] = value.strip()
 
     headers = [f"GET {resource} HTTP/1.1", "Upgrade: websocket"]
-    if port in [80, 443]:
+    scheme, url = url.split(":", 1)
+    # Omit the port only when it is the default for the URL scheme
+    # (ws -> 80, wss -> 443), not whenever it is 80 or 443.
+    if port == (443 if scheme == "wss" else 80):
         hostport = _pack_hostname(host)
     else:
         hostport = f"{_pack_hostname(host)}:{port}"
@@ -119,9 +122,7 @@ def _get_handshake_headers(
         else:
             headers.append(f"Host: {hostport}")
 
-    # scheme indicates whether http or https is used in Origin
-    # The same approach is used in parse_url of _url.py to set default port
-    scheme, url = url.split(":", 1)
+    # Origin picks http vs https from the scheme parsed above
     if not options.get("suppress_origin"):
         if "origin" in options and options["origin"] is not None:
             headers.append(f'Origin: {options["origin"]}')
