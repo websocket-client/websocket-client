@@ -88,6 +88,25 @@ def dump(title: str, message: str) -> None:
         _logger.debug("-----------------------")
 
 
+# Header values that are credentials. Trace logs often end up in bug reports
+# and CI output, so these are replaced before logging.
+_REDACTED_HEADERS = frozenset(
+    ("authorization", "proxy-authorization", "cookie", "set-cookie")
+)
+
+
+def _redact_header_line(line: str) -> str:
+    name, sep, _ = line.partition(":")
+    if sep and name.strip().lower() in _REDACTED_HEADERS:
+        return f"{name}: [redacted]"
+    return line
+
+
+def _redact_headers(block: str) -> str:
+    """A CRLF-separated HTTP header block with credential values replaced."""
+    return "\r\n".join(_redact_header_line(line) for line in block.split("\r\n"))
+
+
 def error(msg: str, *, exc_info: bool = False) -> None:
     _logger.error(msg, exc_info=exc_info)
 

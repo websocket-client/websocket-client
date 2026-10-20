@@ -28,7 +28,7 @@ from ._exceptions import (
     WebSocketException,
     WebSocketProxyException,
 )
-from ._logging import debug, dump, trace
+from ._logging import _redact_header_line, _redact_headers, debug, dump, trace
 from ._socket import DEFAULT_SOCKET_OPTION, recv_line, send
 from ._ssl_compat import HAVE_SSL, ssl
 from ._url import get_proxy_info, parse_url
@@ -425,7 +425,7 @@ def _tunnel(sock: socket.socket, host: str, port: int, auth: Any) -> socket.sock
         encoded_str = base64encode(auth_str.encode()).strip().decode().replace("\n", "")
         connect_header += f"Proxy-Authorization: Basic {encoded_str}\r\n"
     connect_header += "\r\n"
-    dump("request header", connect_header)
+    dump("request header", _redact_headers(connect_header))
 
     send(sock, connect_header)
 
@@ -465,7 +465,7 @@ def read_headers(sock: socket.socket) -> tuple:
             if not status:
                 raise WebSocketException(f"Invalid status line: {line!r}")
             break
-        trace(line)
+        trace(_redact_header_line(line))
         if not status:
             status_info = line.split(" ", 2)
             try:

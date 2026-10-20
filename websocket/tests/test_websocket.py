@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 #
+import io
+import logging
 import os
 import os.path
 import socket
@@ -7,6 +9,7 @@ import struct
 import threading
 import unittest
 from base64 import decodebytes as base64decode
+from base64 import encodebytes as base64encode
 from unittest import mock
 
 import websocket as ws
@@ -23,7 +26,7 @@ from websocket._handshake import _create_sec_websocket_key
 from websocket._handshake import _validate as _validate_header
 from websocket._handshake import _get_handshake_headers
 from websocket._handshake import handshake_response
-from websocket._http import read_headers
+from websocket._http import _tunnel, read_headers
 from websocket._utils import validate_utf8
 
 """
@@ -808,6 +811,62 @@ class HandshakeTest(unittest.TestCase):
             "Cookie: a=b",
         ):
             self.assertIn(line, headers)
+
+    def test_trace_redacts_credentials(self):
+        """enableTrace must not log credential values: Authorization and Cookie
+        in the handshake request, Set-Cookie in the response, and the CONNECT
+        Proxy-Authorization. The wire still carries the real values."""
+        stream = io.StringIO()
+        ws.enableTrace(True, handler=logging.StreamHandler(stream))
+        self.addCleanup(ws.enableTrace, False)
+
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Connection: Upgrade\r\n"
+            b"Upgrade: websocket\r\n"
+            b"Sec-WebSocket-Accept: Kxep+hNu9n51529fGidYu7a3wO0=\r\n"
+            b"Set-Cookie: session=SETCOOKIESECRET; domain=example.com\r\n\r\n"
+        )
+        with mock.patch(
+            "websocket._handshake.CookieJar", SimpleCookieJar()
+        ), mock.patch(
+            "websocket._handshake._create_sec_websocket_key",
+            return_value="c6b8hTg4EeGb2gQMztV1/g==",
+        ):
+            websock = ws.create_connection(
+                "ws://example.com/",
+                socket=sock,
+                header=["authorization: Bearer BEARERSECRET", "X-Trace: visible"],
+                cookie="sid=COOKIESECRET",
+            )
+        websock.shutdown()
+
+        tunnel_sock = SockMock()
+        tunnel_sock.add_packet(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+        _tunnel(tunnel_sock, "example.com", 443, ("proxyuser", "PROXYSECRET"))
+        proxy_credentials = base64encode(b"proxyuser:PROXYSECRET").decode().strip()
+
+        logged = stream.getvalue()
+        for secret in (
+            "BEARERSECRET",
+            "COOKIESECRET",
+            "SETCOOKIESECRET",
+            proxy_credentials,
+        ):
+            self.assertNotIn(secret, logged)
+        for line in (
+            "authorization: [redacted]",
+            "Cookie: [redacted]",
+            "Set-Cookie: [redacted]",
+            "Proxy-Authorization: [redacted]",
+            "X-Trace: visible",
+        ):
+            self.assertIn(line, logged)
+
+        sent = b"".join(sock.sent) + b"".join(tunnel_sock.sent)
+        for secret in (b"BEARERSECRET", b"COOKIESECRET", proxy_credentials.encode()):
+            self.assertIn(secret, sent)
 
     def test_handshake_cookie_from_multiple_set_cookie(self):
         """Cookies received as two Set-Cookie headers must reach the next
