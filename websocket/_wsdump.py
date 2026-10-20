@@ -30,6 +30,7 @@ import zlib
 from urllib.parse import urlparse
 
 import websocket
+from websocket._logging import _escape_control_chars
 
 try:
     import readline  # noqa: F401
@@ -39,19 +40,13 @@ except ImportError:
 
 OPCODE_DATA = (websocket.ABNF.OPCODE_TEXT, websocket.ABNF.OPCODE_BINARY)
 
-# C0 controls except tab and newline, DEL, and C1 controls (U+0080-U+009F).
-# Printed raw, a server's message could drive the terminal: move the cursor to
-# hide output, set the title, or query and set the clipboard with OSC 52.
-_CONTROL_CHAR_ESCAPES = {
-    c: f"\\x{c:02x}"
-    for c in (*range(0x20), *range(0x7F, 0xA0))
-    if c not in (0x09, 0x0A)
-}
-
 
 def escape_control_chars(text: str) -> str:
-    """Show terminal control characters as \\xNN instead of sending them."""
-    return text.translate(_CONTROL_CHAR_ESCAPES)
+    """Show terminal control characters as \\xNN instead of sending them.
+    Printed raw, a server's message could drive the terminal: move the cursor
+    to hide output, set the title, or query and set the clipboard with OSC 52.
+    Newlines and tabs are kept."""
+    return _escape_control_chars(text, keep_newlines=True)
 
 
 class VAction(argparse.Action):

@@ -107,6 +107,25 @@ def _redact_headers(block: str) -> str:
     return "\r\n".join(_redact_header_line(line) for line in block.split("\r\n"))
 
 
+# C0 controls except tab, DEL, and C1 controls (U+0080-U+009F). Text a server
+# controls (header lines, close reasons, error messages) could otherwise forge
+# log lines with CR/LF or drive the terminal that shows the log or output.
+_CONTROL_CHAR_ESCAPES = {
+    c: f"\\x{c:02x}" for c in (*range(0x20), *range(0x7F, 0xA0)) if c != 0x09
+}
+_CONTROL_CHAR_ESCAPES_KEEP_NEWLINES = {
+    c: escape for c, escape in _CONTROL_CHAR_ESCAPES.items() if c != 0x0A
+}
+
+
+def _escape_control_chars(text: str, keep_newlines: bool = False) -> str:
+    """Show control characters as \\xNN. Logs escape newlines too; terminal
+    output that prints whole messages can keep them."""
+    return text.translate(
+        _CONTROL_CHAR_ESCAPES_KEEP_NEWLINES if keep_newlines else _CONTROL_CHAR_ESCAPES
+    )
+
+
 def error(msg: str, *, exc_info: bool = False) -> None:
     _logger.error(msg, exc_info=exc_info)
 

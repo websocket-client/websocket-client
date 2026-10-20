@@ -1026,6 +1026,39 @@ class WebSocketAppUnitTests(unittest.TestCase):
                 self._assert_run_forever_cleanup(app, sock)
                 app.on_close.assert_called_once_with(app, 1000, "goodbye")
 
+    def test_close_reason_is_logged_escaped(self):
+        """The server chooses the CLOSE reason. It is logged with control
+        characters escaped, so it cannot forge log lines; on_close still gets
+        it unchanged."""
+        reason = "bye\r\nERROR:websocket:forged\x1b[2J"
+        app = self._build_app()
+        app.on_close = mock.Mock()
+        sock = mock.Mock()
+        frame = ABNF(
+            fin=1,
+            opcode=ABNF.OPCODE_CLOSE,
+            data=struct.pack("!H", 1000) + reason.encode(),
+        )
+        sock.recv_data_frame.return_value = (frame.opcode, frame)
+
+        def read_once(sock, read_callback, check_callback=None):
+            return read_callback()
+
+        with (
+            mock.patch("websocket._app.WebSocket", return_value=sock),
+            mock.patch("websocket._app.Dispatcher.read", side_effect=read_once),
+            self.assertLogs("websocket", level="ERROR") as captured,
+        ):
+            app.run_forever(reconnect=0)
+
+        (message,) = [
+            r.getMessage() for r in captured.records if "goodbye" in r.getMessage()
+        ]
+        self.assertIn("bye\\x0d\\x0aERROR:websocket:forged\\x1b[2J - goodbye", message)
+        for raw in ("\r", "\n", "\x1b"):
+            self.assertNotIn(raw, message)
+        app.on_close.assert_called_once_with(app, 1000, reason)
+
     def test_run_forever_propagates_system_exit(self):
         for custom_dispatcher in (False, True):
             with self.subTest(custom_dispatcher=custom_dispatcher):

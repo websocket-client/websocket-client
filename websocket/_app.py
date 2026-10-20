@@ -4,7 +4,7 @@ import threading
 import time
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-from ._logging import debug, error, info, warning
+from ._logging import _escape_control_chars, debug, error, info, warning
 from ._abnf import ABNF
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import (
@@ -600,7 +600,7 @@ class WebSocketApp:
                 raise
 
             if reconnect:
-                info(f"{e} - reconnect")
+                info(f"{_escape_control_chars(str(e))} - reconnect")
                 if custom_dispatcher:
                     debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
@@ -608,7 +608,7 @@ class WebSocketApp:
                     assert dispatcher is not None
                     dispatcher.reconnect(reconnect, initialize_socket)
             else:
-                error(f"{e} - goodbye")
+                error(f"{_escape_control_chars(str(e))} - goodbye")
                 teardown(close_frame)
             return self.has_errored
 

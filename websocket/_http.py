@@ -28,7 +28,14 @@ from ._exceptions import (
     WebSocketException,
     WebSocketProxyException,
 )
-from ._logging import _redact_header_line, _redact_headers, debug, dump, trace
+from ._logging import (
+    _escape_control_chars,
+    _redact_header_line,
+    _redact_headers,
+    debug,
+    dump,
+    trace,
+)
 from ._socket import DEFAULT_SOCKET_OPTION, recv_line, send
 from ._ssl_compat import HAVE_SSL, ssl
 from ._url import get_proxy_info, parse_url
@@ -465,7 +472,7 @@ def read_headers(sock: socket.socket) -> tuple:
             if not status:
                 raise WebSocketException(f"Invalid status line: {line!r}")
             break
-        trace(_redact_header_line(line))
+        trace(_escape_control_chars(_redact_header_line(line)))
         if not status:
             status_info = line.split(" ", 2)
             try:

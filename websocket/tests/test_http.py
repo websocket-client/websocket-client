@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 #
+import io
+import logging
 import os
 import os.path
 import socket
@@ -68,6 +70,27 @@ class HttpTest(unittest.TestCase):
         self.assertRaises(
             WebSocketException, read_headers, HeaderSockMock("data/header02.txt")
         )
+
+    def test_read_header_trace_escapes_control_chars(self):
+        """A server's header line is traced with control characters escaped, so
+        it cannot forge log lines or send terminal escapes; the parsed value
+        is unchanged."""
+        stream = io.StringIO()
+        websocket.enableTrace(True, handler=logging.StreamHandler(stream))
+        self.addCleanup(websocket.enableTrace, False)
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"X-Evil: a\rERROR:websocket:forged\x1b[2J\xc2\x85b\r\n"
+            b"\r\n"
+        )
+        _, header, _ = read_headers(sock)
+
+        logged = stream.getvalue()
+        self.assertIn("X-Evil: a\\x0dERROR:websocket:forged\\x1b[2J\\x85b", logged)
+        for raw in ("\r", "\x1b", "\x85"):
+            self.assertNotIn(raw, logged)
+        self.assertEqual(header["x-evil"], "a\rERROR:websocket:forged\x1b[2J\x85b")
 
     def test_read_header_multiple_set_cookie(self):
         """Multiple Set-Cookie headers are collected into a list, not joined"""
