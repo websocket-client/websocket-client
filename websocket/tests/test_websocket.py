@@ -1010,16 +1010,28 @@ class WebSocketCoreUnitTests(unittest.TestCase):
                 "ws://origin",
                 header=[
                     "Authorization: Bearer t",
+                    "Proxy-Authorization: Basic cDpx",
                     "Cookie: session=abc",
+                    "Host: a.internal",
                     "X-Custom: v",
                 ],
                 cookie="session=abc",
+                host="a.internal",
                 redirect_limit=1,
             )
 
-        redirected = handshake_mock.call_args_list[1]
+        first, redirected = handshake_mock.call_args_list
+        self.assertEqual(first.kwargs["host"], "a.internal")
         self.assertNotIn("cookie", redirected.kwargs)
+        self.assertNotIn("host", redirected.kwargs)
         self.assertEqual(redirected.kwargs["header"], ["X-Custom: v"])
+        # hop 2 announces the redirect target, not the original authority
+        hop2_headers, _ = _get_handshake_headers(
+            "/", "ws://redirect", "redirect", 80, redirected.kwargs
+        )
+        self.assertEqual(
+            [h for h in hop2_headers if h.startswith("Host")], ["Host: redirect"]
+        )
 
     def test_connect_cross_authority_redirect_strips_dict_credentials(self):
         sock = ws.WebSocket()
@@ -1043,7 +1055,9 @@ class WebSocketCoreUnitTests(unittest.TestCase):
                 "ws://origin",
                 header={
                     "Authorization ": "Bearer t",
+                    "proxy-authorization": "Basic cDpx",
                     "Cookie": "session=abc",
+                    "HOST": "a.internal",
                     "X-Custom": "v",
                 },
                 cookie="session=abc",
@@ -1075,12 +1089,14 @@ class WebSocketCoreUnitTests(unittest.TestCase):
                 "ws://origin",
                 header=["Authorization: Bearer t"],
                 cookie="session=abc",
+                host="a.internal",
                 redirect_limit=1,
             )
 
         redirected = handshake_mock.call_args_list[1]
         self.assertEqual(redirected.kwargs["header"], ["Authorization: Bearer t"])
         self.assertEqual(redirected.kwargs["cookie"], "session=abc")
+        self.assertEqual(redirected.kwargs["host"], "a.internal")
 
     def test_connect_redirect_limit_exhausted_raises(self):
         sock = ws.WebSocket()

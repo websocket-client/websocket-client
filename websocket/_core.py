@@ -60,9 +60,15 @@ def _handshake_authority(url: str, addrs: tuple) -> tuple:
     return (scheme, hostname.lower() if hostname else None, port)
 
 
+# Headers tied to the authority the caller targeted. They must not follow a
+# redirect to a different scheme/host/port.
+_AUTHORITY_SCOPED_HEADERS = ("authorization", "proxy-authorization", "cookie", "host")
+
+
 def _without_credentials(options: dict) -> dict:
-    """Copy of options without Authorization/Cookie credentials, for a
-    redirect whose target authority differs from the previous one."""
+    """Copy of options without the Authorization, Proxy-Authorization, Cookie
+    and Host headers and the cookie and host options, for a redirect whose
+    target authority differs from the previous one."""
     options = dict(options)
     header = options.get("header")
     if header:
@@ -70,16 +76,17 @@ def _without_credentials(options: dict) -> dict:
             header = {
                 k: v
                 for k, v in header.items()
-                if k.strip().lower() not in ("authorization", "cookie")
+                if k.strip().lower() not in _AUTHORITY_SCOPED_HEADERS
             }
         else:
             header = [
                 h
                 for h in header
-                if h.split(":", 1)[0].strip().lower() not in ("authorization", "cookie")
+                if h.split(":", 1)[0].strip().lower() not in _AUTHORITY_SCOPED_HEADERS
             ]
         options["header"] = header
     options.pop("cookie", None)
+    options.pop("host", None)
     return options
 
 
