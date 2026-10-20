@@ -1129,6 +1129,34 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         self.assertFalse(sock.connected)
         self.assertIsNone(sock.sock)
 
+    def test_downgrade_refusal_message_hides_credentials(self):
+        """The refusal names only scheme://host:port of both URLs: the caller's
+        userinfo, path and query (tokens) must not reach logged exceptions."""
+        sock = ws.WebSocket()
+        redirect_resp = handshake_response(
+            302, {"location": "ws://loc-user:loc-pw@redirect:8080/p?t=LOCTOKEN"}, None
+        )
+        with mock.patch(
+            "websocket._core.connect", return_value=(mock.Mock(), ("origin", 8443, "/"))
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
+            with self.assertRaises(ws.WebSocketException) as cm:
+                sock.connect(
+                    "wss://svc-user:Pa55w0rd@origin:8443/stream?access_token=SECRET",
+                    redirect_limit=2,
+                )
+        message = str(cm.exception)
+        self.assertIn("wss://origin:8443", message)
+        self.assertIn("ws://redirect:8080", message)
+        for secret in (
+            "svc-user",
+            "Pa55w0rd",
+            "SECRET",
+            "/stream",
+            "loc-pw",
+            "LOCTOKEN",
+        ):
+            self.assertNotIn(secret, message)
+
     def test_connect_follows_ws_to_wss_redirect(self):
         sock = ws.WebSocket()
         connect_results = [

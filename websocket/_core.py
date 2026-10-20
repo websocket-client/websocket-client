@@ -61,6 +61,20 @@ def _handshake_authority(url: str, addrs: tuple) -> tuple:
     return (scheme, hostname.lower() if hostname else None, port)
 
 
+def _url_origin(url: str) -> str:
+    """scheme://host[:port] of url, for error messages. The userinfo, path and
+    query can carry credentials or tokens and must not end up in logs."""
+    parsed = urlparse(url)
+    host = parsed.hostname or ""
+    if ":" in host:
+        host = f"[{host}]"
+    try:
+        port = parsed.port
+    except ValueError:  # a malformed port in a server-supplied Location
+        port = None
+    return f"{parsed.scheme}://{host}" + (f":{port}" if port is not None else "")
+
+
 # Headers tied to the authority the caller targeted. They must not follow a
 # redirect to a different scheme/host/port.
 _AUTHORITY_SCOPED_HEADERS = ("authorization", "proxy-authorization", "cookie", "host")
@@ -346,7 +360,8 @@ class WebSocket:
                         and urlparse(location).scheme.lower() == "ws"
                     ):
                         raise WebSocketException(
-                            f"Refusing redirect from {url!r} to {location!r}: "
+                            f"Refusing redirect from {_url_origin(url)} to "
+                            f"{_url_origin(location)}: "
                             "it would downgrade wss:// to unencrypted ws://"
                         )
                     url = location
