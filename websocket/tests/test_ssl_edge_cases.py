@@ -173,6 +173,33 @@ class SSLEdgeCasesTest(unittest.TestCase):
                                 cafile=cafile, capath=capath
                             )
 
+    def test_empty_ca_setting_is_not_a_pin(self):
+        """An empty ca_certs/ca_cert_path ("" or False, e.g. an unset config
+        value) is not a pin: the environment bundle still applies instead of
+        the system CAs, and an empty value is never passed to OpenSSL."""
+        with tempfile.TemporaryDirectory() as env_dir:
+            env_file = os.path.join(env_dir, "bundle.pem")
+            open(env_file, "w").close()
+            cases = [
+                (env_file, {"ca_certs": ""}, (env_file, None)),
+                (env_file, {"ca_cert_path": ""}, (env_file, None)),
+                (env_file, {"ca_certs": False}, (env_file, None)),
+                (env_dir, {"ca_certs": ""}, (None, env_dir)),
+                (env_dir, {"ca_certs": "", "ca_cert_path": ""}, (None, env_dir)),
+            ]
+            for env_value, user_sslopt, (cafile, capath) in cases:
+                with self.subTest(env=env_value, sslopt=user_sslopt):
+                    with patch.dict(
+                        "os.environ", {"WEBSOCKET_CLIENT_CA_BUNDLE": env_value}
+                    ):
+                        with patch("ssl.SSLContext") as mock_ssl_context:
+                            context = mock_ssl_context.return_value
+                            _ssl_socket(Mock(), user_sslopt, "example.com")
+                            context.load_verify_locations.assert_called_once_with(
+                                cafile=cafile, capath=capath
+                            )
+                            context.load_default_certs.assert_not_called()
+
     def test_ssl_cipher_configuration_edge_cases(self):
         """Test SSL cipher configuration edge cases"""
         mock_sock = Mock()

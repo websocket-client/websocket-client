@@ -286,8 +286,10 @@ def _wrap_sni_socket(
             context.keylog_filename = keylog_file
 
         if sslopt.get("cert_reqs", ssl.CERT_NONE) != ssl.CERT_NONE:
-            cafile = sslopt.get("ca_certs", None)
-            capath = sslopt.get("ca_cert_path", None)
+            # An empty value ("" or False, e.g. an unset config entry) counts
+            # as unset, the same as in _ssl_socket.
+            cafile = sslopt.get("ca_certs") or None
+            capath = sslopt.get("ca_cert_path") or None
             if cafile or capath:
                 try:
                     context.load_verify_locations(cafile=cafile, capath=capath)
@@ -380,8 +382,10 @@ def _ssl_socket(sock: socket.socket, user_sslopt: dict, hostname: str) -> Any:
     cert_path = os.environ.get("WEBSOCKET_CLIENT_CA_BUNDLE")
     if (
         cert_path
-        and user_sslopt.get("ca_certs") is None
-        and user_sslopt.get("ca_cert_path") is None
+        # An empty ca_certs/ca_cert_path ("" or False) is not a pin: treating it
+        # as one would skip the bundle and fall back to the system CAs.
+        and not user_sslopt.get("ca_certs")
+        and not user_sslopt.get("ca_cert_path")
         and sslopt["cert_reqs"] != ssl.CERT_NONE
         and not sslopt.get("context")
     ):
