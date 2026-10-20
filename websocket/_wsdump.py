@@ -39,6 +39,20 @@ except ImportError:
 
 OPCODE_DATA = (websocket.ABNF.OPCODE_TEXT, websocket.ABNF.OPCODE_BINARY)
 
+# C0 controls except tab and newline, DEL, and C1 controls (U+0080-U+009F).
+# Printed raw, a server's message could drive the terminal: move the cursor to
+# hide output, set the title, or query and set the clipboard with OSC 52.
+_CONTROL_CHAR_ESCAPES = {
+    c: f"\\x{c:02x}"
+    for c in (*range(0x20), *range(0x7F, 0xA0))
+    if c not in (0x09, 0x0A)
+}
+
+
+def escape_control_chars(text: str) -> str:
+    """Show terminal control characters as \\xNN instead of sending them."""
+    return text.translate(_CONTROL_CHAR_ESCAPES)
+
 
 class VAction(argparse.Action):
     def __call__(
@@ -195,6 +209,9 @@ def main() -> None:
                 msg = data
 
             if msg is not None:
+                # Every server-controlled string (text, decompressed binary,
+                # close reasons) reaches the terminal through this point.
+                msg = escape_control_chars(msg)
                 if args.timings:
                     console.write(f"{time.time() - start_time}: {msg}")
                 else:
@@ -225,4 +242,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(e)
+        print(escape_control_chars(str(e)))
