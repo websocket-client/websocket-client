@@ -42,6 +42,11 @@ if hasattr(socket, "TCP_KEEPCNT"):
     DEFAULT_SOCKET_OPTION.append((socket.SOL_TCP, socket.TCP_KEEPCNT, 3))
 MAX_LINE_BYTES = 65536
 
+# Raised by a retried recv()/send() whose socket the selector reported ready
+# but which still cannot make progress. BlockingIOError covers EAGAIN and
+# EWOULDBLOCK; a TLS socket may want either direction on either call.
+_WOULD_BLOCK = (BlockingIOError, SSLWantReadError, SSLWantWriteError)
+
 _default_timeout = None
 
 __all__ = [
@@ -133,7 +138,14 @@ def recv(sock: socket.socket, bufsize: int) -> bytes:
             sel.close()
 
         if r:
-            return sock.recv(bufsize)
+            try:
+                return sock.recv(bufsize)
+            except _WOULD_BLOCK as e:
+                # Ready but still nothing to read (e.g. a partial TLS record on
+                # a non-blocking socket): a timeout, not a raw socket error.
+                raise WebSocketTimeoutException(
+                    "Connection timed out waiting for data"
+                ) from e
         else:
             # Selector timeout should raise WebSocketTimeoutException
             # not return None which gets misclassified as connection closed
@@ -202,7 +214,12 @@ def send(sock: socket.socket, data: Union[bytes, str]) -> int:
             sel.close()
 
         if w:
-            return sock.send(data)
+            try:
+                return sock.send(data)
+            except _WOULD_BLOCK as e:
+                raise WebSocketTimeoutException(
+                    "Connection timed out waiting to send data"
+                ) from e
         raise WebSocketTimeoutException("Connection timed out waiting to send data")
 
     try:

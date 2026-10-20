@@ -243,6 +243,31 @@ class SocketTest(unittest.TestCase):
 
         self.assertEqual(fake.polled_timeout, 0)
 
+    def test_ready_retry_that_would_block_raises_timeout(self):
+        """If the selector reports ready but the retried recv/send would still
+        block (EAGAIN, or a TLS want-read/write), the caller gets
+        WebSocketTimeoutException, not the raw error (N50)."""
+
+        def eagain():
+            return BlockingIOError(errno.EAGAIN, "Resource temporarily unavailable")
+
+        # The first call fails with EAGAIN, which both paths retry; the retry
+        # after the selector reports ready fails with each would-block error.
+        for make_error in (eagain, SSLWantReadError, SSLWantWriteError):
+            for op, call in (
+                ("recv", lambda s: recv(s, 1024)),
+                ("send", lambda s: send(s, b"test data")),
+            ):
+                with self.subTest(op=op, error=type(make_error()).__name__):
+                    mock_sock = Mock()
+                    mock_sock.gettimeout.return_value = 0
+                    getattr(mock_sock, op).side_effect = [eagain(), make_error()]
+                    fake = FakeSelector(ready=[object()])
+                    with patch("selectors.DefaultSelector", return_value=fake):
+                        with self.assertRaises(WebSocketTimeoutException):
+                            call(mock_sock)
+                    self.assertEqual(getattr(mock_sock, op).call_count, 2)
+
     def test_send_ssl_eof_error(self):
         """Test send with SSLEOFError"""
         mock_sock = Mock()
