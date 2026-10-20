@@ -517,6 +517,69 @@ class WebSocketAppTest(unittest.TestCase):
         self.assertEqual(str(error_results[0]), "manual string close")
         self.assertFalse(hasattr(error_results[0], "status_code"))
 
+    def test_on_error_called_on_every_reconnect_attempt(self):
+        """Regression test for #970: on_error must fire during reconnect too."""
+
+        error_results = []
+        reconnect_results = []
+
+        def on_error(app, err):
+            error_results.append(err)
+            if len(error_results) >= 2:
+                app.keep_running = False
+
+        def on_reconnect(app):
+            reconnect_results.append(app)
+
+        class FakeWebSocket:
+            def __init__(self, *args, **kwargs):
+                self.sock = mock.Mock()
+
+            def settimeout(self, timeout):
+                pass
+
+            def connect(self, *args, **kwargs):
+                pass
+
+            def recv_data_frame(self, *args, **kwargs):
+                raise ws.WebSocketConnectionClosedException("boom")
+
+            def close(self):
+                pass
+
+            def shutdown(self):
+                pass
+
+        class FakeDispatcher:
+            def __init__(self, app):
+                self.app = app
+                self.reconnect_calls = 0
+
+            def read(self, sock, read_callback, check_callback):
+                read_callback()
+
+            def reconnect(self, seconds, reconnector):
+                self.reconnect_calls += 1
+                if self.reconnect_calls > 3:
+                    # Terminate even on a broken (error-swallowing) build
+                    self.app.keep_running = False
+                    return
+                reconnector(reconnecting=True)
+
+        app = ws.WebSocketApp(
+            "ws://example.com", on_error=on_error, on_reconnect=on_reconnect
+        )
+        fake_dispatcher = FakeDispatcher(app)
+
+        with mock.patch("websocket._app.WebSocket", FakeWebSocket):
+            with mock.patch.object(
+                ws.WebSocketApp, "create_dispatcher", return_value=fake_dispatcher
+            ):
+                app.run_forever(reconnect=1)
+
+        self.assertEqual(len(error_results), 2)
+        self.assertEqual(len(reconnect_results), 1)
+
     @unittest.skipUnless(
         TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
     )
