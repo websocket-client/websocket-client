@@ -1,5 +1,7 @@
+import email.utils
 import http.cookies
 import ipaddress
+import time
 from typing import Optional, Union
 from http.cookies import CookieError
 from ._logging import debug, warning
@@ -31,6 +33,8 @@ def _has_control_char(text: str) -> bool:
 class SimpleCookieJar:
     def __init__(self) -> None:
         self.jar: dict = {}
+        # (domain key, morsel key) -> epoch after which the morsel is expired
+        self._expiry: dict = {}
 
     def add(
         self,
@@ -63,11 +67,26 @@ class SimpleCookieJar:
                         # that SimpleCookie decodes into raw CR/LF.
                         debug("Ignoring Set-Cookie with control characters")
                         continue
+                    deadline = self._deadline(v)
+                    if deadline is not None and deadline <= time.time():
+                        # RFC 6265 5.3 step 12: an already-expired cookie
+                        # (Max-Age=0 is a deletion) removes any stored value
+                        cookie = self.jar.get(domain)
+                        if cookie is not None:
+                            cookie.pop(v.key, None)
+                            self._expiry.pop((domain, v.key), None)
+                            if not cookie:
+                                del self.jar[domain]
+                        continue
                     cookie = self.jar.get(domain)
                     if cookie is None:
                         cookie = http.cookies.SimpleCookie()
                     cookie[v.key] = v
                     self.jar[domain] = cookie
+                    if deadline is None:
+                        self._expiry.pop((domain, v.key), None)
+                    else:
+                        self._expiry[(domain, v.key)] = deadline
 
     def set(self, set_cookie: str) -> None:
         """Replace-style counterpart to add(): clears the existing entry
@@ -77,7 +96,7 @@ class SimpleCookieJar:
             simple_cookie = http.cookies.SimpleCookie(set_cookie)
             for v in simple_cookie.values():
                 if domain := v.get("domain"):
-                    self.jar.pop(self._domain_key(domain), None)
+                    self._forget(self._domain_key(domain))
             self.add(set_cookie)
 
     def get(self, host: str, secure: bool = False) -> str:
@@ -87,9 +106,18 @@ class SimpleCookieJar:
             return ""
 
         cookies = []
-        for domain, _ in self.jar.items():
-            if self._host_in_domain(host, domain[1:]):
-                cookies.append(self.jar.get(domain))
+        for domain in list(self.jar):
+            if not self._host_in_domain(host, domain[1:]):
+                continue
+            cookie = self.jar[domain]
+            now = time.time()
+            for k in [k for k, _ in cookie.items() if self._expired(domain, k, now)]:
+                del cookie[k]
+                self._expiry.pop((domain, k), None)
+            if not cookie:
+                del self.jar[domain]
+                continue
+            cookies.append(cookie)
 
         return "; ".join(
             filter(
@@ -146,3 +174,31 @@ class SimpleCookieJar:
         if not cls._host_in_domain(host, labels):
             return False
         return "." in labels or cls._is_ip(labels)
+
+    def _forget(self, domain: str) -> None:
+        """Drop a domain entry and the expiry records under it."""
+        self.jar.pop(domain, None)
+        for key in [k for k in self._expiry if k[0] == domain]:
+            del self._expiry[key]
+
+    @staticmethod
+    def _deadline(v: http.cookies.Morsel) -> Optional[float]:
+        """RFC 6265 5.2: Max-Age overrides Expires; an invalid attribute
+        value is ignored. Returns the epoch after which the morsel is
+        expired, or None for a session cookie."""
+        max_age = v.get("max-age", "")
+        if max_age:
+            try:
+                return time.time() + int(max_age)
+            except ValueError:
+                pass  # invalid Max-Age: ignore it, Expires may still apply
+        expires = v.get("expires", "")
+        if expires:
+            parsed = email.utils.parsedate_tz(expires)
+            if parsed is not None:
+                return email.utils.mktime_tz(parsed)
+        return None
+
+    def _expired(self, domain: str, key: str, now: float) -> bool:
+        deadline = self._expiry.get((domain, key))
+        return deadline is not None and deadline <= now

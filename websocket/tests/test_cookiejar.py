@@ -1,3 +1,5 @@
+import email.utils
+import time
 import unittest
 
 from websocket._cookiejar import SimpleCookieJar
@@ -238,6 +240,60 @@ class CookieJarTest(unittest.TestCase):
         cookie_jar.add("c=d; Domain=abc.com")
         self.assertEqual(cookie_jar.get("abc.com"), "c=d")
         self.assertEqual(cookie_jar.get("abc.com", secure=True), "a=b; c=d")
+
+    def test_max_age_zero_deletes_cookie(self):
+        """RFC 6265 5.3 step 12: Max-Age <= 0 removes the stored cookie."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("sid=1; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "sid=1")
+
+        cookie_jar.add("sid=; Max-Age=0; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "")
+        self.assertNotIn(".abc.com", cookie_jar.jar)
+
+        # with nothing stored, a deletion must not leave an empty value behind
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("sid=; Max-Age=0; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "")
+        self.assertFalse(cookie_jar.jar)
+
+    def test_max_age_zero_for_never_stored_name_is_ignored(self):
+        """A deletion for a name that is not in an existing domain entry
+        must not raise, and must keep the other cookies of that domain."""
+        cookie_jar = SimpleCookieJar()
+        cookie_jar.add("other=x; Domain=abc.com", "abc.com")
+        cookie_jar.add("sid=; Max-Age=0; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "other=x")
+
+        cookie_jar.add("sid=; Max-Age=0; Domain=never-seen.com")
+        self.assertEqual(cookie_jar.get("never-seen.com"), "")
+
+    def test_expired_morsels_not_stored_or_sent(self):
+        cookie_jar = SimpleCookieJar()
+        past = email.utils.formatdate(time.time() - 10, usegmt=True)
+        cookie_jar.add(f"a=b; Expires={past}; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "")
+
+        cookie_jar.add("c=d; Max-Age=1; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "c=d")
+        # expiry passing while stored: force the deadline and read again
+        cookie_jar._expiry[(".abc.com", "c")] = time.time() - 1
+        self.assertEqual(cookie_jar.get("abc.com"), "")
+
+    def test_expires_future_and_invalid_max_age(self):
+        cookie_jar = SimpleCookieJar()
+        future = email.utils.formatdate(time.time() + 3600, usegmt=True)
+        cookie_jar.add(f"a=b; Expires={future}; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "a=b")
+
+        # an invalid Max-Age is ignored (RFC 6265 5.2.2), the cookie stays
+        cookie_jar.add("e=f; Max-Age=abc; Domain=abc.com", "abc.com")
+        self.assertEqual(cookie_jar.get("abc.com"), "a=b; e=f")
+
+        # a morsel without expiry attributes replaces a timed one cleanly
+        cookie_jar.add("a=g; Domain=abc.com", "abc.com")
+        cookie_jar._expiry[(".abc.com", "a")] = time.time() - 1
+        self.assertEqual(cookie_jar.get("abc.com"), "e=f")
 
 
 if __name__ == "__main__":
