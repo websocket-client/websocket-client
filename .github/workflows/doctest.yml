@@ -16,5 +16,5 @@ jobs:
 
       - name: Run pytest with doctest args
         run: |
-          pip3 install pytest 'websocket-client[docs]' rel
+          pip3 install pytest -e '.[docs]' rel
           pytest ./docs/source -v --doctest-glob="*.rst" --doctest-modules

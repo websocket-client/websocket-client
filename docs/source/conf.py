@@ -13,8 +13,9 @@
 import os
 import sys
 
-sys.path.append(os.path.abspath("../.."))
-sys.path.append(os.path.abspath("websocket"))
+# Resolve the repository root relative to this file, not the current
+# working directory: CI imports conf.py from wherever it invokes pytest.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 
 # Don't skip __init__, which is skipped by default
