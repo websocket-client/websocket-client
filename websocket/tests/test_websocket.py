@@ -1109,6 +1109,48 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         self.assertFalse(sock.connected)
         self.assertIsNone(sock.sock)
 
+    def test_connect_refuses_wss_to_ws_redirect(self):
+        sock = ws.WebSocket()
+        first_socket = mock.Mock()
+        redirect_resp = handshake_response(302, {"location": "ws://redirect/"}, None)
+
+        with mock.patch(
+            "websocket._core.connect", return_value=(first_socket, ("origin", 443, "/"))
+        ) as connect_mock, mock.patch(
+            "websocket._core.handshake", return_value=redirect_resp
+        ):
+            with self.assertRaisesRegex(ws.WebSocketException, "downgrade"):
+                sock.connect("wss://origin/", redirect_limit=2)
+
+        self.assertEqual(
+            [call.args[0] for call in connect_mock.call_args_list], ["wss://origin/"]
+        )
+        first_socket.close.assert_called_once()
+        self.assertFalse(sock.connected)
+        self.assertIsNone(sock.sock)
+
+    def test_connect_follows_ws_to_wss_redirect(self):
+        sock = ws.WebSocket()
+        connect_results = [
+            (mock.Mock(), ("origin", 80, "/")),
+            (mock.Mock(), ("redirect", 443, "/")),
+        ]
+        redirect_resp = handshake_response(302, {"location": "wss://redirect/"}, None)
+        success_resp = handshake_response(101, {}, None)
+
+        with mock.patch(
+            "websocket._core.connect", side_effect=lambda *a: connect_results.pop(0)
+        ) as connect_mock, mock.patch(
+            "websocket._core.handshake", side_effect=[redirect_resp, success_resp]
+        ):
+            sock.connect("ws://origin/", redirect_limit=2)
+
+        self.assertTrue(sock.connected)
+        self.assertEqual(
+            [call.args[0] for call in connect_mock.call_args_list],
+            ["ws://origin/", "wss://redirect/"],
+        )
+
     def test_connect_redirect_without_location_raises(self):
         sock = ws.WebSocket()
         redirect_resp = handshake_response(302, {}, None)  # no location header

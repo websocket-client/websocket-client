@@ -3,6 +3,7 @@ import struct
 import threading
 import time
 from typing import Any, Callable, Optional, Type, Union
+from urllib.parse import urlparse
 
 # websocket modules
 from ._abnf import ABNF, STATUS_NORMAL, continuous_frame, frame_buffer
@@ -311,7 +312,8 @@ class WebSocket:
         http_proxy_timeout: int or float
             HTTP proxy timeout, default is 60 sec as per python-socks.
         redirect_limit: int
-            Number of redirects to follow.
+            Number of redirects to follow. A redirect from wss:// to ws://
+            is refused with WebSocketException.
         subprotocols: list
             List of available subprotocols. Default is None.
         socket: socket
@@ -333,12 +335,21 @@ class WebSocket:
                     self.handshake_response is not None
                     and self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES
                 ):
-                    url = self.handshake_response.headers.get("location")
-                    if url is None:
+                    location = self.handshake_response.headers.get("location")
+                    if location is None:
                         raise WebSocketException(
                             "Redirect response without Location header, "
                             f"status {self.handshake_response.status}"
                         )
+                    if (
+                        urlparse(url).scheme.lower() == "wss"
+                        and urlparse(location).scheme.lower() == "ws"
+                    ):
+                        raise WebSocketException(
+                            f"Refusing redirect from {url!r} to {location!r}: "
+                            "it would downgrade wss:// to unencrypted ws://"
+                        )
+                    url = location
                     self.sock.close()
                     try:
                         self.sock, addrs = connect(
@@ -763,7 +774,8 @@ def create_connection(
     enable_multithread: bool
         Enable lock for multithread.
     redirect_limit: int
-        Number of redirects to follow.
+        Number of redirects to follow. A redirect from wss:// to ws://
+        is refused with WebSocketException.
     sockopt: tuple
         Values for socket.setsockopt.
         sockopt must be a tuple and each element is an argument of sock.setsockopt.

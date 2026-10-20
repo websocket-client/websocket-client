@@ -26,6 +26,7 @@ ChangeLog
   - Don't send `Secure` cookies over `ws://` handshakes (#1077, ef748a8)
   - Honor `Max-Age` and `Expires`: expired cookies are not stored or sent, and `Max-Age=0` deletes the stored cookie (cafe3a0)
   - Security: send stored cookies exactly as the server encoded them, and ignore Set-Cookie values containing control characters, so an escaped CR/LF in a cookie cannot inject request headers (cf269d3)
+  - Call `on_error` while `run_forever(reconnect=...)` is reconnecting too: for every failed reconnect attempt and every dropped connection, not only the first failure (#1016, fixes #970, ee86e62)
 
 - 1.9.2
   - Fix race in `WebSocketApp.close()` when `run_forever()` thread clears the socket during the close handshake (#1057, fixes #1055 and #1056)
