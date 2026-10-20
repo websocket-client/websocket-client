@@ -256,6 +256,21 @@ class IsNoProxyHostTest(unittest.TestCase):
         self.assertTrue(_is_no_proxy_host("example.com", None))
         self.assertTrue(_is_no_proxy_host("any.websocket.org", None))
 
+    def test_empty_entry_does_not_bypass(self):
+        """An empty entry ("a,,b", a leading or trailing comma, ".") names no
+        domain; it must not make every trailing-dot hostname bypass the proxy."""
+        for env in ("localhost,", ",localhost", "a,,b", ".", ".."):
+            with self.subTest(no_proxy=env):
+                os.environ["no_proxy"] = env
+                self.assertFalse(_is_no_proxy_host("evil.example.", None))
+        for entries in (["", "localhost"], [".", "localhost"]):
+            with self.subTest(no_proxy=entries):
+                self.assertFalse(_is_no_proxy_host("evil.example.", entries))
+                # The real entries next to the empty one still match
+                self.assertTrue(_is_no_proxy_host("localhost", entries))
+        os.environ["no_proxy"] = "localhost,"
+        self.assertTrue(_is_no_proxy_host("localhost", None))
+
 
 class ProxyInfoTest(unittest.TestCase):
     def setUp(self):

@@ -112,8 +112,11 @@ def _is_no_proxy_host(hostname: str, no_proxy: Optional[list[str]]) -> bool:
         ):
             no_proxy = v.split(",")
 
-    if not no_proxy:
-        no_proxy = []
+    # An entry that is empty after removing leading dots ("a,,b", a leading or
+    # trailing comma, ".") names no domain. Kept, it would make the suffix check
+    # below hostname.endswith("."), so every hostname ending in a dot would
+    # silently bypass the proxy. urllib skips empty entries the same way.
+    no_proxy = [entry for entry in no_proxy or [] if entry.lstrip(".")]
 
     if "*" in no_proxy:
         return True
