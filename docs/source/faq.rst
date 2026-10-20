@@ -205,7 +205,7 @@ The ``sslopt`` parameter is a dictionary to which the following keys can be assi
 * ``cert_reqs`` (see `SSLContext.verify_mode <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.verify_mode>`_)
 * ``ssl_version`` (see `SSLContext.protocol <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.protocol>`_)
 * ``ca_certs``, ``ca_cert_path`` (see `SSLContext.load_verify_locations <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.load_verify_locations>`_)
-* ``check_hostname`` (see `SSLContext.check_hostname <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.check_hostname>`_)
+* ``check_hostname`` (see `SSLContext.check_hostname <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.check_hostname>`_). Accepts ``True``, ``False`` or ``None``; ``None`` keeps the default, which verifies the hostname unless ``cert_reqs`` is ``CERT_NONE``. Only ``False`` turns verification off, and any other value raises ``WebSocketException`` (since v1.10.0)
 * ``server_hostname``, ``do_handshake_on_connect``, ``suppress_ragged_eofs`` (see `SSLContext.wrap_socket <https://docs.python.org/3/library/ssl.html#ssl.SSLContext.wrap_socket>`_)
 
 If any other SSL options are required, they can be used by creating a custom SSLContext from the python SSL library and then passing that in as the value of the ``context`` key. (since v1.2.2)

@@ -21,7 +21,7 @@ import errno
 import os
 import socket
 from base64 import encodebytes as base64encode
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 from ._exceptions import (
     WebSocketAddressException,
@@ -259,6 +259,18 @@ def _open_socket(addrinfo_list, sockopt, timeout):
     return sock
 
 
+def _sslopt_check_hostname(sslopt: dict) -> Optional[bool]:
+    """sslopt["check_hostname"] as True, False or None (use the default).
+    Any other value is rejected, so a falsy placeholder such as 0 or ""
+    cannot silently turn hostname verification off."""
+    value = sslopt.get("check_hostname")
+    if value is None or isinstance(value, bool):
+        return value
+    raise WebSocketException(
+        f"sslopt check_hostname must be True, False or None, not {value!r}"
+    )
+
+
 def _wrap_sni_socket(
     sock: socket.socket, sslopt: dict, hostname: str, check_hostname: bool
 ) -> Any:
@@ -303,20 +315,24 @@ def _wrap_sni_socket(
         # Python 3.10 switch to PROTOCOL_TLS_CLIENT defaults to "cert_reqs = ssl.CERT_REQUIRED" and "check_hostname = True"
         # If both disabled, set check_hostname before verify_mode
         # see https://github.com/liris/websocket-client/commit/b96a2e8fa765753e82eea531adb19716b52ca3ca#commitcomment-10803153
-        if sslopt.get("cert_reqs", ssl.CERT_NONE) == ssl.CERT_NONE and not sslopt.get(
-            "check_hostname", False
+        verify_hostname = _sslopt_check_hostname(sslopt)
+        if (
+            sslopt.get("cert_reqs", ssl.CERT_NONE) == ssl.CERT_NONE
+            and not verify_hostname
         ):
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
         else:
-            check_hostname = sslopt.get("check_hostname", True)
             cert_reqs = sslopt.get("cert_reqs", ssl.CERT_REQUIRED)
-            if check_hostname and cert_reqs == ssl.CERT_NONE:
+            if verify_hostname is None:
+                # Only an explicit False turns hostname verification off.
+                verify_hostname = True
+            if verify_hostname and cert_reqs == ssl.CERT_NONE:
                 raise WebSocketException(
                     "SSL certificate verification configuration failed: "
                     "check_hostname cannot be enabled when cert_reqs is CERT_NONE"
                 )
-            context.check_hostname = check_hostname
+            context.check_hostname = verify_hostname
             context.verify_mode = cert_reqs
 
         if "ciphers" in sslopt:

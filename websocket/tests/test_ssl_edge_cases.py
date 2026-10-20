@@ -382,8 +382,11 @@ class SSLEdgeCasesTest(unittest.TestCase):
         test_cases = [
             # (cert_reqs, check_hostname, expected_verify_mode, expected_check_hostname)
             (ssl.CERT_NONE, False, ssl.CERT_NONE, False),
+            (ssl.CERT_NONE, None, ssl.CERT_NONE, False),
             (ssl.CERT_REQUIRED, False, ssl.CERT_REQUIRED, False),
             (ssl.CERT_REQUIRED, True, ssl.CERT_REQUIRED, True),
+            # None means "default": verification on whenever certs are verified
+            (ssl.CERT_REQUIRED, None, ssl.CERT_REQUIRED, True),
         ]
 
         for cert_reqs, check_hostname, expected_verify, expected_check in test_cases:
@@ -398,6 +401,17 @@ class SSLEdgeCasesTest(unittest.TestCase):
 
                     self.assertEqual(mock_context.verify_mode, expected_verify)
                     self.assertEqual(mock_context.check_hostname, expected_check)
+
+    def test_non_bool_check_hostname_is_rejected(self):
+        """A falsy placeholder (0, "") or a string must not turn hostname
+        verification off; only True, False or None are accepted."""
+        for value in (0, "", "false", 1):
+            with self.subTest(check_hostname=value):
+                with patch("ssl.SSLContext") as mock_ssl_context:
+                    sslopt = {"cert_reqs": ssl.CERT_REQUIRED, "check_hostname": value}
+                    with self.assertRaisesRegex(WebSocketException, "check_hostname"):
+                        _ssl_socket(Mock(), sslopt, "example.com")
+                    mock_ssl_context.return_value.wrap_socket.assert_not_called()
 
     def test_ssl_socket_shutdown_edge_cases(self):
         """Test SSL socket shutdown edge cases"""
