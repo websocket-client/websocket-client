@@ -81,14 +81,14 @@ and to read about websocket-client vs. websocket_client, see
 Is WebSocket Compression using the permessage-deflate extension supported?
 ============================================================================
 
-No, `RFC 7692 <https://tools.ietf.org/html/rfc7692>`_ for WebSocket Compression
-is unfortunately not supported by the websocket-client library at this time.
-You can view the currently supported WebSocket features in the
-latest autobahn compliance HTML report, found under the
-`compliance folder. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
-If you use the ``Sec-WebSocket-Extensions: permessage-deflate`` header with
-websocket-client, you will probably encounter errors, such as the ones described
-in `issue #314. <https://github.com/websocket-client/websocket-client/tree/master/compliance>`_
+Yes. Pass ``compression=True``, or a ``PerMessageDeflate`` object, to
+``connect()``, ``create_connection()`` or ``WebSocketApp`` to offer
+`RFC 7692 <https://tools.ietf.org/html/rfc7692>`_ WebSocket Compression, as
+shown in :ref:`Using WebSocket Compression`. Setting a
+``Sec-WebSocket-Extensions: permessage-deflate`` header yourself instead does
+not enable compression: if the server then compresses its messages, you will
+encounter errors such as the ones described in
+`issue #314. <https://github.com/websocket-client/websocket-client/issues/314>`_
 
 I get the error 'utf8' codec can't decode byte 0x81 in position 0
 ============================================================================

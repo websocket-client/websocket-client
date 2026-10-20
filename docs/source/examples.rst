@@ -261,8 +261,8 @@ Setting custom header values, other than ``Host``, ``Origin``, ``Cookie``, or
 handshake request is similar to setting common header values. Use the ``header``
 option to provide custom header values in a list or dict.
 For debugging, remember that it is helpful to enable :ref:`Debug and Logging Options`.
-There is no built-in support for "Sec-WebSocket-Extensions" header values as
-defined in RFC 7692.
+To use WebSocket compression, use the ``compression`` option described in
+:ref:`Using WebSocket Compression` instead of a "Sec-WebSocket-Extensions" header.
 
 **WebSocket custom headers example**
 
@@ -284,6 +284,42 @@ defined in RFC 7692.
   ...     print(message)
   >>> wsapp = websocket.WebSocketApp("wss://testnet.binance.vision/ws/btcusdt@trade",
   ... header={"CustomHeader1":"123", "NewHeader2":"Test"}, on_message=on_message)
+  >>> wsapp.run_forever()  # doctest: +SKIP
+
+Using WebSocket Compression
+--------------------------------
+
+The ``compression`` option offers the permessage-deflate extension from
+`RFC 7692 <https://tools.ietf.org/html/rfc7692>`_ in the handshake. If the
+server accepts it, messages sent with ``send()`` are compressed and compressed
+messages received are decompressed; if the server declines it, the connection
+works uncompressed. Pass ``True`` for the default settings, or a
+``PerMessageDeflate`` object to choose the extension parameters, the
+compression level, and ``max_message_size``, the largest size in bytes a
+received message may decompress to (16 MiB by default, ``None`` for no limit).
+Control frames and frames sent with ``send_frame()`` are never compressed.
+
+**WebSocket compression example**
+
+.. doctest:: compression
+
+  >>> import websocket
+
+  >>> ws = websocket.WebSocket()
+  >>> ws.connect("wss://ws.postman-echo.com/raw", compression=True)  # doctest: +SKIP
+  >>> ws.deflate is not None  # doctest: +SKIP
+  True
+
+**WebSocketApp compression example**
+
+.. doctest:: compression
+
+  >>> import websocket
+
+  >>> compression = websocket.PerMessageDeflate(
+  ...     server_no_context_takeover=True, max_message_size=1024 * 1024)
+  >>> wsapp = websocket.WebSocketApp("wss://ws.postman-echo.com/raw",
+  ... compression=compression, on_message=lambda wsapp, message: print(message))
   >>> wsapp.run_forever()  # doctest: +SKIP
 
 Disabling SSL or Hostname Verification

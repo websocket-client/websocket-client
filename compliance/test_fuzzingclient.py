@@ -1,4 +1,5 @@
 import json
+import sys
 import traceback
 
 import websocket
@@ -23,7 +24,9 @@ limitations under the License.
 """
 
 SERVER = "ws://127.0.0.1:8642"
-AGENT = "py-websockets-client"
+# Run with --compression to offer permessage-deflate (cases 12.* and 13.*).
+COMPRESSION = "--compression" in sys.argv
+AGENT = "py-websockets-client" + ("-deflate" if COMPRESSION else "")
 
 
 ws = websocket.create_connection(f"{SERVER}/getCaseCount")
@@ -36,7 +39,7 @@ for case in range(1, count + 1):
     url = f"{SERVER}/runCase?case={case}&agent={AGENT}"
     status = websocket.STATUS_NORMAL
     try:
-        ws = websocket.create_connection(url)
+        ws = websocket.create_connection(url, compression=COMPRESSION)
         while True:
             opcode, msg = ws.recv_data()
             if opcode == websocket.ABNF.OPCODE_TEXT:

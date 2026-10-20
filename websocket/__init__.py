@@ -22,6 +22,7 @@ from ._app import (  # noqa: F401
     WebSocketApp as WebSocketApp,
     set_reconnect as set_reconnect,
 )
+from ._compression import *  # noqa: F401,F403
 from ._core import *  # noqa: F401,F403
 from ._exceptions import *  # noqa: F401,F403
 from ._logging import *  # noqa: F401,F403

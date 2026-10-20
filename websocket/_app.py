@@ -6,6 +6,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 from ._logging import debug, error, info, warning
 from ._abnf import ABNF
+from ._compression import PerMessageDeflate
 from ._core import WebSocket, getdefaulttimeout
 from ._exceptions import (
     WebSocketConnectionClosedException,
@@ -74,6 +75,7 @@ class WebSocketApp:
         subprotocols: Optional[list[str]] = None,
         on_data: Optional[Callable] = None,
         socket: Optional[socket.socket] = None,
+        compression: Union[bool, PerMessageDeflate, None] = None,
     ) -> None:
         """
         WebSocketApp initialization
@@ -144,6 +146,10 @@ class WebSocketApp:
         socket: socket
             Pre-initialized stream socket. With a wss:// URL, a socket that is
             not already an ssl.SSLSocket is wrapped in TLS using sslopt.
+        compression: bool or PerMessageDeflate
+            Offer the permessage-deflate extension (RFC 7692) on every
+            connection. True offers it with the default settings.
+            Default is None, which offers nothing.
         """
         self.url = url
         self.header = header if header is not None else []
@@ -170,6 +176,7 @@ class WebSocketApp:
         self.ping_payload = ""
         self.subprotocols = subprotocols
         self.prepared_socket = socket
+        self.compression = compression
         self.has_errored = False
         self.has_done_teardown = False
         self.has_done_teardown_lock = threading.Lock()
@@ -457,6 +464,7 @@ class WebSocketApp:
                     proxy_type=proxy_type,
                     socket=self.prepared_socket,
                     redirect_limit=redirect_limit,
+                    compression=self.compression,
                 )
 
                 info("Websocket connected")
