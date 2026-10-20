@@ -7,7 +7,11 @@ import unittest
 from unittest import mock
 
 from websocket._abnf import ABNF, continuous_frame, frame_buffer
-from websocket._exceptions import WebSocketPayloadException, WebSocketProtocolException
+from websocket._exceptions import (
+    WebSocketConnectionClosedException,
+    WebSocketPayloadException,
+    WebSocketProtocolException,
+)
 
 """
 test_abnf.py
@@ -196,6 +200,33 @@ class ABNFTest(unittest.TestCase):
                 fb.recv_header()
                 with self.assertRaises(WebSocketProtocolException):
                     fb.recv_length()
+
+    def test_invalid_length_fails_the_stream(self):
+        """After an invalid extended length the payload is unread, so the
+        stream is off a frame boundary. A retried recv_frame() must not parse
+        that payload as frames (a peer could hide a frame there)."""
+        hidden = bytes([0x81, 6]) + b"HIDDEN"
+        for length_bits, encoded in (
+            (126, (125).to_bytes(2, "big")),
+            (127, (1 << 63).to_bytes(8, "big")),
+        ):
+            with self.subTest(length_bits=length_bits):
+                wire = io.BytesIO(bytes([0x82, length_bits]) + encoded + hidden * 3)
+
+                def recv(n, wire=wire):
+                    data = wire.read(n)
+                    if not data:  # like a closed socket, so a regression fails fast
+                        raise WebSocketConnectionClosedException("end of input")
+                    return data
+
+                fb = frame_buffer(recv, False)
+                with self.assertRaisesRegex(WebSocketProtocolException, "length"):
+                    fb.recv_frame()
+                for _ in range(2):
+                    with self.assertRaisesRegex(
+                        WebSocketProtocolException, "out of sync"
+                    ):
+                        fb.recv_frame()
 
     def test_frame_buffer_accepts_canonical_lengths(self):
         for length_bits, length in (

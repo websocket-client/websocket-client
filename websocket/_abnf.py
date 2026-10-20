@@ -3,7 +3,7 @@ import os
 import struct
 import sys
 from threading import Lock
-from typing import Callable, Optional, Union, Any
+from typing import Callable, NoReturn, Optional, Union, Any
 
 from ._exceptions import WebSocketPayloadException, WebSocketProtocolException
 from ._utils import validate_utf8
@@ -317,6 +317,8 @@ class frame_buffer:
         # Buffers over the packets from the layer beneath until desired amount
         # bytes of bytes are received.
         self.recv_buffer: list = []
+        # Set once the stream has lost frame sync; see _lose_sync().
+        self.sync_error: Optional[str] = None
         self.clear()
         self.lock = Lock()
 
@@ -360,15 +362,26 @@ class frame_buffer:
             v = self.recv_strict(2)
             length = struct.unpack("!H", v)[0]
             if length < ABNF.LENGTH_7:
-                raise WebSocketProtocolException("Invalid 16-bit frame length.")
+                self._lose_sync("Invalid 16-bit frame length.")
         elif length_bits == 0x7F:
             v = self.recv_strict(8)
             length = struct.unpack("!Q", v)[0]
             if length < ABNF.LENGTH_16 or length >= ABNF.LENGTH_63:
-                raise WebSocketProtocolException("Invalid 64-bit frame length.")
+                self._lose_sync("Invalid 64-bit frame length.")
         else:
             length = length_bits
         self.length = length
+
+    def _lose_sync(self, message: str) -> NoReturn:
+        # The length field has been consumed but the payload has not, so the
+        # stream is no longer at a frame boundary. Reading on would parse the
+        # payload as frame headers, letting the peer hide frames inside what
+        # intermediaries see as one frame's data. Fail the connection instead
+        # (RFC 6455 7.1.7): this read and every later one raise.
+        self.clear()
+        self.recv_buffer = []
+        self.sync_error = message
+        raise WebSocketProtocolException(message)
 
     def needs_mask(self) -> bool:
         return self.mask_value is None
@@ -378,6 +391,10 @@ class frame_buffer:
 
     def recv_frame(self) -> ABNF:
         with self.lock:
+            if self.sync_error is not None:
+                raise WebSocketProtocolException(
+                    f"Frame stream out of sync after an earlier error: {self.sync_error}"
+                )
             # Header
             if self.needs_header():
                 self.recv_header()
