@@ -145,6 +145,9 @@ class WebSocket:
 
         self.connected = False
         self.close_frame: Optional[ABNF] = None
+        # True while close() waits for the peer's close frame, so a concurrent
+        # close() does not tear the socket down underneath it.
+        self._closing = False
         self.get_mask_key = get_mask_key
         # These buffer over the build-up of a single frame.
         self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
@@ -604,7 +607,10 @@ class WebSocket:
             If None, it will wait forever until receive a close frame.
         """
         if not self.connected:
-            self.shutdown()
+            # The peer already disconnected: free the socket (#1066). Leave it
+            # alone if another thread is mid-close; that thread shuts it down.
+            if not self._closing:
+                self.shutdown()
             return
         if status < 0 or status >= ABNF.LENGTH_16:
             raise ValueError("code is invalid range")
@@ -612,6 +618,7 @@ class WebSocket:
         # Reset close_frame to avoid stale data from previous connections
         self.close_frame = None
 
+        self._closing = True
         try:
             self.connected = False
             self.send(
@@ -648,6 +655,8 @@ class WebSocket:
                 self.sock.shutdown(socket.SHUT_RDWR)
         except:
             pass
+        finally:
+            self._closing = False
 
         self.shutdown()
 

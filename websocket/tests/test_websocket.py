@@ -3,6 +3,8 @@
 import os
 import os.path
 import socket
+import struct
+import threading
 import unittest
 from base64 import decodebytes as base64decode
 from unittest import mock
@@ -856,6 +858,42 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         fake_socket.fileno.return_value = 42
         sock.sock = fake_socket
         self.assertEqual(sock.fileno(), 42)
+
+    def test_close_after_peer_disconnect_frees_socket(self):
+        """#1066: close() on a connection the peer already dropped frees the fd."""
+        sock = ws.WebSocket()
+        fake_socket = mock.Mock()
+        fake_socket._closed = False
+        sock.sock = fake_socket
+        sock.connected = False
+
+        sock.close()
+
+        fake_socket.close.assert_called_once_with()
+        self.assertIsNone(sock.sock)
+
+    def test_concurrent_close_keeps_close_handshake(self):
+        """A second close() while another thread waits for the peer's close
+        frame must not shut the socket down underneath it (#1066 regression)."""
+        client, peer = socket.socketpair()
+        self.addCleanup(peer.close)
+        sock = ws.WebSocket()
+        sock.sock = client
+        sock.connected = True
+
+        closer = threading.Thread(target=sock.close, kwargs={"timeout": 5})
+        closer.start()
+        peer.settimeout(5)
+        self.assertEqual(peer.recv(2)[0], 0x88)  # the client's CLOSE frame arrived
+
+        sock.close()  # e.g. run_forever's teardown racing app.close()
+        peer.sendall(b"\x88\x05" + struct.pack("!H", 4001) + b"bye")
+        closer.join(5)
+
+        self.assertFalse(closer.is_alive())
+        self.assertIsNotNone(sock.close_frame)
+        self.assertEqual(sock.close_frame.data, struct.pack("!H", 4001) + b"bye")
+        self.assertIsNone(sock.sock)
 
     def test_settimeout_updates_underlying_socket(self):
         sock = ws.WebSocket()
