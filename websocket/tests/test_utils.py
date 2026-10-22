@@ -52,6 +52,8 @@ class UtilsTest(unittest.TestCase):
         # Test invalid UTF-8 sequences
         self.assertFalse(validate_utf8(b"\xff\xfe"))  # Invalid UTF-8
         self.assertFalse(validate_utf8(b"\x80\x80"))  # Invalid continuation
+        self.assertFalse(validate_utf8(b"\xce"))  # Truncated 2-byte sequence
+        self.assertFalse(validate_utf8(b"ab\xe2\x82"))  # Truncated 3-byte sequence
 
     def test_utf8_validation_fallback(self):
         """Test UTF-8 validation fallback when wsaccel is not available"""
@@ -88,6 +90,9 @@ class UtilsTest(unittest.TestCase):
             # Test invalid UTF-8 sequences (should return False)
             self.assertFalse(utils.validate_utf8(b"\xff\xfe"))
             self.assertFalse(utils.validate_utf8(b"\x80\x80"))
+            self.assertFalse(utils.validate_utf8(b"\xce"))
+            self.assertFalse(utils.validate_utf8(b"ab\xe2\x82"))
+            self.assertFalse(utils.validate_utf8(b"\xf0\x9f\x8c"))
 
             # Note: The fallback implementation may have different validation behavior
             # than wsaccel, so we focus on clearly invalid sequences

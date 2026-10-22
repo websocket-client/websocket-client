@@ -359,6 +359,26 @@ class AbnfPureUnitTests(unittest.TestCase):
         with self.assertRaises(WebSocketPayloadException):
             cont.extract(end)
 
+    def test_continuous_frame_truncated_utf8_raises(self):
+        # The message ends partway through the 3-byte encoding of U+20AC
+        cont = continuous_frame(fire_cont_frame=False, skip_utf8_validation=False)
+        frame = ABNF(fin=1, opcode=ABNF.OPCODE_TEXT, data=b"\xe2\x82", mask_value=0)
+        cont.validate(frame)
+        cont.add(frame)
+        with self.assertRaises(WebSocketPayloadException):
+            cont.extract(frame)
+
+    def test_continuous_frame_codepoint_split_across_fragments(self):
+        cont = continuous_frame(fire_cont_frame=False, skip_utf8_validation=False)
+        start = ABNF(fin=0, opcode=ABNF.OPCODE_TEXT, data=b"\xe2\x82", mask_value=0)
+        cont.validate(start)
+        cont.add(start)
+        end = ABNF(fin=1, opcode=ABNF.OPCODE_CONT, data=b"\xac", mask_value=0)
+        cont.validate(end)
+        cont.add(end)
+        self.assertEqual(cont.extract(end), (ABNF.OPCODE_TEXT, end))
+        self.assertEqual(end.data, "\u20ac".encode("utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()
