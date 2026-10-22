@@ -64,7 +64,10 @@ def _handshake_authority(url: str, addrs: tuple) -> tuple:
 def _url_origin(url: str) -> str:
     """scheme://host[:port] of url, for error messages. The userinfo, path and
     query can carry credentials or tokens and must not end up in logs."""
-    parsed = urlparse(url)
+    try:
+        parsed = urlparse(url)
+    except ValueError:  # e.g. an unbalanced "[" in a server-supplied Location
+        return url.split(":", 1)[0] + "://"
     host = parsed.hostname or ""
     if ":" in host:
         host = f"[{host}]"
@@ -375,7 +378,7 @@ class WebSocket:
                         )
                     except ValueError as e:
                         raise WebSocketException(
-                            f"Invalid redirect target {url!r}: {e}"
+                            f"Invalid redirect target {_url_origin(url)}: {e}"
                         ) from e
                     new_authority = _handshake_authority(url, addrs)
                     if new_authority != authority:
