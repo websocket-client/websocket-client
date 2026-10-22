@@ -35,8 +35,10 @@ try:
     from wsaccel.utf8validator import Utf8Validator
 
     def _validate_utf8(utfbytes: Union[str, bytes]) -> bool:
-        result: bool = Utf8Validator().validate(utfbytes)[0]
-        return result
+        # validate() returns (valid, endsOnCodePoint, ...); both must hold, or
+        # input that stops partway through a multi-byte sequence passes.
+        valid, ends_on_codepoint = Utf8Validator().validate(utfbytes)[:2]
+        return bool(valid and ends_on_codepoint)
 
 except ImportError:
     # UTF-8 validator
@@ -434,7 +436,8 @@ except ImportError:
             if state == _UTF8_REJECT:
                 return False
 
-        return True
+        # Input that ends inside a multi-byte sequence is not valid UTF-8.
+        return state == _UTF8_ACCEPT
 
 
 def validate_utf8(utfbytes: Union[str, bytes]) -> bool:
