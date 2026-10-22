@@ -141,8 +141,27 @@ class WebSocketTest(unittest.TestCase):
         )
 
         header = required_header.copy()
-        # This case will print out a logging error using the error() function, but that is expected
-        self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (False, None))
+        self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (True, None))
+
+        for selected in ("", " ", "sub3", "sub1,sub2", '"sub1"'):
+            with self.subTest(selected=selected):
+                header = required_header.copy()
+                header["sec-websocket-protocol"] = selected
+                self.assertEqual(
+                    _validate_header(header, key, ["sub1", "sub2"]), (False, None)
+                )
+
+        for name in required_header:
+            for value in (None, "", "invalid"):
+                with self.subTest(header=name, value=value):
+                    header = required_header.copy()
+                    if value is None:
+                        del header[name]
+                    else:
+                        header[name] = value
+                    self.assertEqual(
+                        _validate_header(header, key, ["sub1", "sub2"]), (False, None)
+                    )
 
     def test_read_header(self):
         status, header, _ = read_headers(HeaderSockMock("data/header01.txt"))
@@ -483,6 +502,32 @@ class UtilsTest(unittest.TestCase):
 
 
 class HandshakeTest(unittest.TestCase):
+    def test_connect_without_selected_subprotocol(self):
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 101 Switching Protocols\r\n"
+            b"Connection: Upgrade\r\n"
+            b"Upgrade: websocket\r\n"
+            b"Sec-WebSocket-Accept: Kxep+hNu9n51529fGidYu7a3wO0=\r\n\r\n"
+        )
+        with mock.patch(
+            "websocket._handshake._create_sec_websocket_key",
+            return_value="c6b8hTg4EeGb2gQMztV1/g==",
+        ):
+            websock = ws.create_connection(
+                "ws://example.com/", socket=sock, subprotocols=["chat", "superchat"]
+            )
+        try:
+            self.assertTrue(websock.connected)
+            self.assertEqual(websock.getstatus(), 101)
+            self.assertIsNone(websock.getsubprotocol())
+            self.assertNotIn("sec-websocket-protocol", websock.getheaders())
+            self.assertIn(
+                b"Sec-WebSocket-Protocol: chat,superchat\r\n", b"".join(sock.sent)
+            )
+        finally:
+            websock.shutdown()
+
     def test_connect_ignores_invalid_cookie(self):
         sock = SockMock()
         sock.add_packet(

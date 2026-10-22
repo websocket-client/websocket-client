@@ -225,7 +225,7 @@ def _validate(headers: dict, key: str, subprotocols: Optional[List[str]]) -> tup
         if v not in r:
             return False, None
 
-    if subprotocols:
+    if subprotocols and "sec-websocket-protocol" in headers:
         subproto = headers.get("sec-websocket-protocol", None)
         if not subproto or subproto.lower() not in [s.lower() for s in subprotocols]:
             error(f"Invalid subprotocol: {subprotocols}")
