@@ -169,16 +169,24 @@ class ABNF:
         self.data = data
         self.get_mask_key = os.urandom
 
-    def validate(self, skip_utf8_validation: bool = False) -> None:
+    def validate(
+        self, skip_utf8_validation: bool = False, rsv1_allowed: bool = False
+    ) -> None:
         """
         Validate the ABNF frame.
 
         Parameters
         ----------
         skip_utf8_validation: skip utf8 validation.
+        rsv1_allowed: allow RSV1 on the first frame of a data message, as
+            the permessage-deflate extension uses it.
         """
-        if self.rsv1 or self.rsv2 or self.rsv3:
+        if self.rsv2 or self.rsv3 or (self.rsv1 and not rsv1_allowed):
             raise WebSocketProtocolException("rsv is not implemented, yet")
+        if self.rsv1 and self.opcode not in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
+            raise WebSocketProtocolException(
+                f"RSV1 set on a frame with opcode {self.opcode!r}"
+            )
 
         if self.opcode not in ABNF.OPCODES:
             raise WebSocketProtocolException(f"Invalid opcode {self.opcode!r}")
@@ -319,6 +327,8 @@ class frame_buffer:
         self.recv_buffer: list = []
         # Set once the stream has lost frame sync; see _lose_sync().
         self.sync_error: Optional[str] = None
+        # Set once an extension that uses RSV1 has been negotiated.
+        self.rsv1_allowed = False
         self.clear()
         self.lock = Lock()
 
@@ -425,7 +435,7 @@ class frame_buffer:
             self.clear()
 
             frame = ABNF(fin, rsv1, rsv2, rsv3, opcode, has_mask, payload)
-            frame.validate(self.skip_utf8_validation)
+            frame.validate(self.skip_utf8_validation, self.rsv1_allowed)
 
         return frame
 

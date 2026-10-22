@@ -11,9 +11,8 @@
 websocket-client is a WebSocket client for Python. It provides access
 to low level APIs for WebSockets. websocket-client implements version
 [hybi-13](https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-13)
-of the WebSocket protocol. This client does not currently support the
-permessage-deflate extension from
-[RFC 7692](https://tools.ietf.org/html/rfc7692).
+of the WebSocket protocol, and the permessage-deflate extension from
+[RFC 7692](https://tools.ietf.org/html/rfc7692) through the `compression` option.
 
 ## Documentation
 
@@ -49,8 +48,7 @@ Footnote: Some shells, such as zsh, require you to escape the `[` and `]` charac
 Check out the documentation's FAQ for additional guidelines:
 [https://websocket-client.readthedocs.io/en/latest/faq.html](https://websocket-client.readthedocs.io/en/latest/faq.html)
 
-Known issues with this library include lack of WebSocket Compression
-support (RFC 7692) and [minimal threading documentation/support](https://websocket-client.readthedocs.io/en/latest/threading.html).
+Known issues with this library include [minimal threading documentation/support](https://websocket-client.readthedocs.io/en/latest/threading.html).
 
 ## Performance
 

@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 # websocket modules
 from ._abnf import ABNF, STATUS_NORMAL, continuous_frame, frame_buffer
+from ._compression import deflate_session
 from ._exceptions import (
     WebSocketProtocolException,
     WebSocketConnectionClosedException,
@@ -173,6 +174,8 @@ class WebSocket:
         # These buffer over the build-up of a single frame.
         self.frame_buffer = frame_buffer(self._recv, skip_utf8_validation)
         self.cont_frame = continuous_frame(fire_cont_frame, skip_utf8_validation)
+        # The negotiated permessage-deflate state, if the server accepted it.
+        self.deflate: Optional[deflate_session] = None
         self.dispatcher = dispatcher
 
         if enable_multithread:
@@ -333,9 +336,14 @@ class WebSocket:
         socket: socket
             Pre-initialized stream socket. With a wss:// URL, a socket that is
             not already an ssl.SSLSocket is wrapped in TLS using sslopt.
+        compression: bool or PerMessageDeflate
+            Offer the permessage-deflate extension (RFC 7692). True offers it
+            with the default settings. Default is None, which offers nothing.
         """
         if "timeout" in options:
             _validate_timeout(options["timeout"])
+        self.deflate = None
+        self.frame_buffer.rsv1_allowed = False
         self.sock_opt.timeout = options.get("timeout", self.sock_opt.timeout)
         self.sock, addrs = connect(
             url, self.sock_opt, proxy_info(**options), options.pop("socket", None)
@@ -391,6 +399,9 @@ class WebSocket:
                 and self.handshake_response.status in SUPPORTED_REDIRECT_STATUSES
             ):
                 raise WebSocketException("Redirect limit exhausted")
+            if self.handshake_response is not None:
+                self.deflate = self.handshake_response.deflate
+                self.frame_buffer.rsv1_allowed = self.deflate is not None
             self.connected = True
         except:
             if self.sock:
@@ -413,7 +424,22 @@ class WebSocket:
         """
 
         frame = ABNF.create_frame(payload, opcode)
-        return self.send_frame(frame)
+        if (
+            self.deflate is None
+            or not self.deflate.compresses
+            or opcode not in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY)
+        ):
+            return self.send_frame(frame)
+        # create_frame encoded text already; ABNF.mask sends other str payloads as latin-1.
+        data = (
+            frame.data.encode("latin-1") if isinstance(frame.data, str) else frame.data
+        )
+        # Compressed messages must reach the socket in the order they were
+        # compressed, so both happen under the send lock.
+        with self.lock:
+            frame.data = self.deflate.compress(data)
+            frame.rsv1 = 1
+            return self._send_frame(frame)
 
     def send_text(self, text_data: str) -> int:
         """
@@ -444,6 +470,10 @@ class WebSocket:
         frame: ABNF frame
             frame data created by ABNF.create_frame
         """
+        with self.lock:
+            return self._send_frame(frame)
+
+    def _send_frame(self, frame: ABNF) -> int:
         if self.get_mask_key:
             frame.get_mask_key = self.get_mask_key
         data = frame.format()
@@ -451,10 +481,9 @@ class WebSocket:
         if isEnabledForTrace():
             trace(f"++Sent raw: {repr(data)}")
             trace(f"++Sent decoded: {frame.__str__()}")
-        with self.lock:
-            while data:
-                bytes_sent = self._send(data)
-                data = data[bytes_sent:]
+        while data:
+            bytes_sent = self._send(data)
+            data = data[bytes_sent:]
 
         return length
 
@@ -563,6 +592,10 @@ class WebSocket:
                 ABNF.OPCODE_CONT,
             ):
                 self.cont_frame.validate(frame)
+                if self.deflate is not None:
+                    if frame.opcode != ABNF.OPCODE_CONT:
+                        self.deflate.start_message(bool(frame.rsv1))
+                    frame.data = self.deflate.decompress(frame.data, bool(frame.fin))
                 self.cont_frame.add(frame)
 
                 if self.cont_frame.is_fire(frame):
@@ -585,6 +618,10 @@ class WebSocket:
     def recv_frame(self):
         """
         Receive data as frame from server.
+
+        The frame is returned as received: with permessage-deflate in use,
+        a compressed message's payload is still compressed. Use
+        recv_data_frame to receive decompressed messages.
 
         Returns
         -------
@@ -803,6 +840,9 @@ def create_connection(
     socket: socket
         Pre-initialized stream socket. With a wss:// URL, a socket that is
         not already an ssl.SSLSocket is wrapped in TLS using sslopt.
+    compression: bool or PerMessageDeflate
+        Offer the permessage-deflate extension (RFC 7692). True offers it
+        with the default settings. Default is None, which offers nothing.
     """
     sockopt = options.pop("sockopt", [])
     sslopt = options.pop("sslopt", {})
