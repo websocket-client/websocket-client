@@ -58,6 +58,8 @@ class DispatcherBase:
 
     def send(self, sock: socket.socket, data: Union[str, bytes]) -> int:
         return send(sock, data)
+    # def __del__(self):
+    #     print( 'dispatcher del called:',id(self))
 
 
 class Dispatcher(DispatcherBase):
