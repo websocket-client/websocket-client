@@ -1091,10 +1091,11 @@ class WebSocketCoreUnitTests(unittest.TestCase):
 
     def test_connect_redirect_invalid_target_raises(self):
         sock = ws.WebSocket()
-        redirect_resp = handshake_response(302, {"location": "https://redirect"}, None)
+        location = "https://loc-user:loc-pw@redirect/p?t=LOCTOKEN"
+        redirect_resp = handshake_response(302, {"location": location}, None)
 
         def fake_connect(url, *args, **kwargs):
-            if url == "https://redirect":
+            if url == location:
                 raise ValueError("scheme https is invalid")
             return mock.Mock(), ("origin", 80, "/")
 
@@ -1102,12 +1103,28 @@ class WebSocketCoreUnitTests(unittest.TestCase):
             "websocket._core.connect", side_effect=fake_connect
         ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
             with self.assertRaisesRegex(
-                ws.WebSocketException, "Invalid redirect target 'https://redirect'"
-            ):
+                ws.WebSocketException, "Invalid redirect target https://redirect:"
+            ) as cm:
                 sock.connect("ws://origin", redirect_limit=2)
 
+        # Like the downgrade refusal, the message names only scheme://host:port
+        for secret in ("loc-user", "loc-pw", "/p", "LOCTOKEN"):
+            self.assertNotIn(secret, str(cm.exception))
         self.assertFalse(sock.connected)
         self.assertIsNone(sock.sock)
+
+    def test_connect_redirect_unparsable_target_raises(self):
+        sock = ws.WebSocket()
+        redirect_resp = handshake_response(302, {"location": "ws://[bad/"}, None)
+
+        with mock.patch(
+            "websocket._core.connect",
+            side_effect=[(mock.Mock(), ("origin", 80, "/")), ValueError("bad")],
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
+            with self.assertRaisesRegex(
+                ws.WebSocketException, "Invalid redirect target ws://: bad"
+            ):
+                sock.connect("ws://origin", redirect_limit=2)
 
     def test_connect_refuses_wss_to_ws_redirect(self):
         sock = ws.WebSocket()
