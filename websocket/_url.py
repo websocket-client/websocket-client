@@ -40,6 +40,7 @@ def parse_url(url: str) -> tuple:
         raise ValueError("url is invalid")
 
     scheme, url = url.split(":", 1)
+    scheme = scheme.lower()
 
     parsed = urlparse(url, scheme="http")
     if parsed.hostname:

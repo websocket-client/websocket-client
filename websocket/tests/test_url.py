@@ -33,6 +33,23 @@ limitations under the License.
 
 
 class UrlTest(unittest.TestCase):
+    def test_parse_url_case_insensitive_scheme(self):
+        for scheme, port, secure in (
+            ("WS", 80, False),
+            ("Ws", 80, False),
+            ("WSS", 443, True),
+            ("WsS", 443, True),
+        ):
+            with self.subTest(scheme=scheme):
+                self.assertEqual(
+                    parse_url(scheme + "://example.com/Case?Key=Value"),
+                    ("example.com", port, "/Case?Key=Value", secure),
+                )
+                self.assertEqual(
+                    parse_url(scheme + "://example.com:8080/Case?Key=Value"),
+                    ("example.com", 8080, "/Case?Key=Value", secure),
+                )
+
     def test_address_in_network(self):
         self.assertTrue(_is_address_in_network("127.0.0.1", "127.0.0.0/8"))
         self.assertTrue(_is_address_in_network("127.1.0.1", "127.0.0.0/8"))
