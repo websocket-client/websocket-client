@@ -31,7 +31,7 @@ from ._exceptions import (
 from ._logging import debug, dump, trace
 from ._socket import DEFAULT_SOCKET_OPTION, recv_line, send
 from ._ssl_compat import HAVE_SSL, ssl
-from ._url import get_proxy_info, parse_url
+from ._url import _is_no_proxy_host, get_proxy_info, parse_url
 
 __all__ = ["proxy_info", "connect", "read_headers"]
 
@@ -61,10 +61,11 @@ except ImportError:
 class proxy_info:
     def __init__(self, **options):
         self.proxy_host = options.get("http_proxy_host", None)
+        # Also applies to proxies taken from the environment.
+        self.no_proxy = options.get("http_no_proxy", None)
         if self.proxy_host:
             self.proxy_port = options.get("http_proxy_port", 0)
             self.auth = options.get("http_proxy_auth", None)
-            self.no_proxy = options.get("http_no_proxy", None)
             self.proxy_protocol = options.get("proxy_type", "http")
             # Note: If timeout not specified, default python-socks timeout is 60 seconds
             self.proxy_timeout = options.get("http_proxy_timeout", None)
@@ -81,7 +82,6 @@ class proxy_info:
         else:
             self.proxy_port = 0
             self.auth = None
-            self.no_proxy = None
             self.proxy_protocol = "http"
             self.proxy_timeout = None
 
@@ -143,10 +143,16 @@ def connect(
     # Use _start_proxied_socket() only for socks4 or socks5 proxy
     # Use _tunnel() for http proxy
     # TODO: Use python-socks for http protocol also, to standardize flow
-    if proxy.proxy_host and not socket and proxy.proxy_protocol != "http":
-        return _start_proxied_socket(url, options, proxy)
-
     hostname, port_from_url, resource, is_secure = parse_url(url)
+
+    # Only an explicit http_no_proxy bypasses SOCKS, not an inherited NO_PROXY.
+    if (
+        proxy.proxy_host
+        and not socket
+        and proxy.proxy_protocol != "http"
+        and not (proxy.no_proxy and _is_no_proxy_host(hostname, proxy.no_proxy))
+    ):
+        return _start_proxied_socket(url, options, proxy)
 
     if socket:
         # A wss:// URL always runs over TLS: wrap a caller-supplied plain socket

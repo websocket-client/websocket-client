@@ -531,6 +531,49 @@ class HttpPureUnitTests(unittest.TestCase):
             self.assertIs(sock, plain)
             ssl_socket.assert_not_called()
 
+    def test_connect_bypasses_socks_proxy_for_no_proxy_host(self):
+        proxy = proxy_info(
+            http_proxy_host="proxy.local",
+            http_proxy_port=1080,
+            proxy_type="socks5",
+            http_no_proxy=["internal.lan"],
+        )
+        direct, proxied = mock.Mock(), mock.Mock()
+        with mock.patch(
+            "websocket._http._start_proxied_socket",
+            return_value=(proxied, ("other.example", 80, "/")),
+        ) as socks, mock.patch(
+            "websocket._http.socket.getaddrinfo", return_value=[("addr",)]
+        ) as getaddrinfo, mock.patch(
+            "websocket._http._open_socket", return_value=direct
+        ):
+            sock, addr = connect("ws://internal.lan:8080/", OptsList(), proxy, None)
+            self.assertIs(sock, direct)
+            self.assertEqual(addr, ("internal.lan", 8080, "/"))
+            socks.assert_not_called()
+            getaddrinfo.assert_called_once_with(
+                "internal.lan", 8080, 0, socket.SOCK_STREAM, socket.SOL_TCP
+            )
+
+            sock, _ = connect("ws://other.example/", OptsList(), proxy, None)
+            self.assertIs(sock, proxied)
+            socks.assert_called_once()
+
+    def test_http_no_proxy_applies_to_environment_proxy(self):
+        env = {"http_proxy": "http://proxy.local:3128"}
+        proxy = proxy_info(http_no_proxy=["internal.lan"])
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch(
+            "websocket._http.socket.getaddrinfo", return_value=[("addr",)]
+        ) as getaddrinfo:
+            _, need_tunnel, _ = _get_addrinfo_list("internal.lan", 80, False, proxy)
+            self.assertFalse(need_tunnel)
+            getaddrinfo.assert_called_once_with(
+                "internal.lan", 80, 0, socket.SOCK_STREAM, socket.SOL_TCP
+            )
+
+            _, need_tunnel, _ = _get_addrinfo_list("other.example", 80, False, proxy)
+            self.assertTrue(need_tunnel)
+
     def test_start_proxied_socket_requires_python_socks(self):
         proxy = proxy_info(
             http_proxy_host="127.0.0.1", http_proxy_port=1080, proxy_type="socks5"
