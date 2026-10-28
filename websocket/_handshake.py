@@ -176,6 +176,13 @@ def _get_handshake_headers(
             header = [": ".join([k, v]) for k, v in header.items() if v is not None]
         for entry in header:
             _check_header_value("header", entry)
+            # An empty entry would end the header block early; an entry
+            # without a name or ":" is not a header line either.
+            name, colon, _ = entry.partition(":")
+            if not colon or not name.strip():
+                raise WebSocketException(
+                    "Invalid 'header' option: each entry must be a 'Name: value' line"
+                )
         headers.extend(header)
 
     server_cookie = CookieJar.get(host, scheme == "wss")

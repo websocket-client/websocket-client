@@ -150,7 +150,8 @@ def main() -> None:
     if args.nocert:
         opts = {"cert_reqs": ssl.CERT_NONE, "check_hostname": False}
     if args.headers:
-        options["header"] = list(map(str.strip, args.headers.split(",")))
+        # skip empty items, e.g. from a trailing or doubled comma
+        options["header"] = [h.strip() for h in args.headers.split(",") if h.strip()]
     ws = websocket.create_connection(args.url, sslopt=opts, **options)
     if args.raw:
         console = NonInteractive()

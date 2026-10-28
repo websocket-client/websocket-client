@@ -813,6 +813,25 @@ class HandshakeTest(unittest.TestCase):
         ):
             self.assertIn(line, headers)
 
+    def test_handshake_rejects_header_entries_that_are_not_lines(self):
+        """An empty entry in a list header ends the request's header block
+        early, so later headers and the Cookie line are sent after the request
+        (N166); an entry without a name or ':' is not a header line either. The
+        handshake raises before sending anything, without echoing the entry."""
+        for entry in ("", "   ", "Bearer SECRET", ": SECRET"):
+            with self.subTest(entry=entry):
+                sock = SockMock()
+                with self.assertRaisesRegex(
+                    ws.WebSocketException, "Invalid 'header' option"
+                ) as cm:
+                    ws.create_connection(
+                        "ws://example.com/",
+                        socket=sock,
+                        header=["X-A: 1", entry, "X-B: 2"],
+                    )
+                self.assertNotIn("SECRET", str(cm.exception))
+                self.assertEqual(sock.sent, [])
+
     def test_trace_redacts_credentials(self):
         """enableTrace must not log credential values: Authorization and Cookie
         in the handshake request, Set-Cookie in the response, and the CONNECT
