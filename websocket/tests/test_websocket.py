@@ -1219,7 +1219,7 @@ class WebSocketCoreUnitTests(unittest.TestCase):
             "websocket._core.connect", side_effect=fake_connect
         ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
             with self.assertRaisesRegex(
-                ws.WebSocketException, "Invalid redirect target 'https://redirect'"
+                ws.WebSocketException, "Invalid redirect target https://redirect"
             ):
                 sock.connect("ws://origin", redirect_limit=2)
 
@@ -1311,6 +1311,135 @@ class WebSocketCoreUnitTests(unittest.TestCase):
 
         self.assertFalse(sock.connected)
         self.assertIsNone(sock.sock)
+
+    def test_connect_with_caller_socket_does_not_follow_redirect(self):
+        """A redirect on a caller-supplied socket (an SSH or Tor tunnel, a unix
+        socket) must not make the client dial the new location directly, outside
+        that tunnel and with the caller's credentials."""
+        target = socket.socket()
+        target.bind(("127.0.0.1", 0))
+        target.listen()
+        target.settimeout(0.2)
+        self.addCleanup(target.close)
+        target_port = target.getsockname()[1]
+
+        tunnel, peer = socket.socketpair()
+        self.addCleanup(peer.close)
+        # a stalled answerer must fail the test, not hang the suite
+        tunnel.settimeout(5)
+
+        def answer_302():
+            peer.recv(65536)
+            peer.sendall(
+                b"HTTP/1.1 302 Found\r\n"
+                + f"Location: ws://user:pw@127.0.0.1:{target_port}/x?t=1\r\n".encode()
+                + b"Content-Length: 0\r\n\r\n"
+            )
+
+        server = threading.Thread(target=answer_302, daemon=True)
+        server.start()
+        websock = ws.WebSocket()
+        with self.assertRaisesRegex(
+            ws.WebSocketException,
+            rf"Redirect \(status 302\) to ws://127\.0\.0\.1:{target_port} not followed",
+        ):
+            websock.connect(
+                "ws://example.com/",
+                socket=tunnel,
+                header=["Authorization: Bearer SECRET"],
+                timeout=2,  # if the redirect is followed, fail instead of hanging
+            )
+        server.join(5)
+
+        with self.assertRaises(socket.timeout):
+            target.accept()
+        self.assertFalse(websock.connected)
+        self.assertIsNone(websock.sock)
+
+    def test_malformed_redirect_location_raises_websocket_exception(self):
+        """A server-controlled Location that urlparse rejects must raise
+        WebSocketException on every path (N149), and the target in the message
+        must not carry its path or query (N148)."""
+
+        def answer_302(peer, location):
+            peer.recv(65536)
+            peer.sendall(
+                b"HTTP/1.1 302 Found\r\n"
+                + f"Location: {location}\r\n".encode()
+                + b"Content-Length: 0\r\n\r\n"
+            )
+
+        for location in (
+            "ws://[::1/x",
+            # parse errors quote everything before the first ":", which here
+            # includes the query
+            "/cb?code=SECRET&redirect_uri=https://app.example/",
+            "//idp.example/cb?code=SECRET&redirect_uri=https://app.example/",
+        ):
+            with self.subTest(location=location, path="caller socket"):
+                # connect() closes the caller socket when it raises, so each
+                # subTest needs a fresh one
+                tunnel, peer = socket.socketpair()
+                self.addCleanup(peer.close)
+                # a stalled answerer must fail the test, not hang the suite
+                tunnel.settimeout(5)
+                server = threading.Thread(
+                    target=answer_302, args=(peer, location), daemon=True
+                )
+                server.start()
+                websock = ws.WebSocket()
+                with self.assertRaises(ws.WebSocketException) as caught:
+                    websock.connect("ws://example.com/", socket=tunnel, timeout=2)
+                self.assertNotIn("SECRET", str(caught.exception))
+                self.assertNotIn("to ://", str(caught.exception))
+                self.assertNotIsInstance(caught.exception, ws.WebSocketTimeoutException)
+                server.join(5)
+
+        # the wss->ws downgrade check parses Location too
+        redirect_resp = handshake_response(302, {"location": "ws://[::1/x"}, None)
+        with mock.patch(
+            "websocket._core.connect", return_value=(mock.Mock(), ("origin", 443, "/"))
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
+            with self.assertRaisesRegex(
+                ws.WebSocketException, "Invalid redirect target <invalid URL>"
+            ):
+                ws.WebSocket().connect("wss://origin/")
+
+        # a Location that is not a ws/wss URL is refused with a fixed message
+        redirect_resp = handshake_response(
+            302, {"location": "https://idp.example/cb?code=SECRET"}, None
+        )
+        with mock.patch(
+            "websocket._core.connect", return_value=(mock.Mock(), ("origin", 80, "/"))
+        ) as connect_mock, mock.patch(
+            "websocket._core.handshake", return_value=redirect_resp
+        ):
+            with self.assertRaisesRegex(
+                ws.WebSocketException, r"Invalid redirect target https://idp\.example:"
+            ) as caught:
+                ws.WebSocket().connect("ws://origin/")
+            self.assertNotIn("SECRET", str(caught.exception))
+            self.assertEqual(connect_mock.call_count, 1)
+
+        # a ValueError from dialing a valid ws:// target (an IDNA label that is
+        # too long) shows only the target's origin
+        def first_hop_ok_then_invalid(url, *args, **kwargs):
+            if url != "ws://origin/":
+                raise UnicodeError("label too long")
+            return mock.Mock(), ("origin", 80, "/")
+
+        redirect_resp = handshake_response(
+            302, {"location": "ws://idp.example/cb?code=SECRET"}, None
+        )
+        with mock.patch(
+            "websocket._core.connect", side_effect=first_hop_ok_then_invalid
+        ), mock.patch("websocket._core.handshake", return_value=redirect_resp):
+            with self.assertRaisesRegex(
+                ws.WebSocketException,
+                r"Invalid redirect target ws://idp\.example: label too long",
+            ) as caught:
+                ws.WebSocket().connect("ws://origin/")
+            self.assertNotIn("SECRET", str(caught.exception))
 
     def test_shutdown_and_abort(self):
         sock = ws.WebSocket()

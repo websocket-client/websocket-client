@@ -144,6 +144,8 @@ class WebSocketApp:
         socket: socket
             Pre-initialized stream socket. With a wss:// URL, a socket that is
             not already an ssl.SSLSocket is wrapped in TLS using sslopt.
+            A redirect is not followed on such a socket (that would connect
+            outside it); it is reported to on_error.
         """
         self.url = url
         self.header = header if header is not None else []

@@ -18,6 +18,7 @@ from ._http import connect, proxy_info
 from ._logging import debug, error, trace, isEnabledForError, isEnabledForTrace
 from ._socket import _validate_timeout, getdefaulttimeout, recv, send, sock_opt
 from ._ssl_compat import ssl
+from ._url import parse_url
 from ._utils import NoLock
 from ._dispatcher import DispatcherBase, WrappedDispatcher
 
@@ -64,8 +65,15 @@ def _handshake_authority(url: str, addrs: tuple) -> tuple:
 def _url_origin(url: str) -> str:
     """scheme://host[:port] of url, for error messages. The userinfo, path and
     query can carry credentials or tokens and must not end up in logs."""
-    parsed = urlparse(url)
-    host = parsed.hostname or ""
+    try:
+        parsed = urlparse(url)
+    except ValueError:  # e.g. an invalid IPv6 literal in a Location header
+        return "<invalid URL>"
+    if not parsed.scheme:  # a relative or scheme-relative (//host/…) reference
+        return "<relative URL>"
+    host = parsed.hostname
+    if host is None:
+        return "<URL without host>"
     if ":" in host:
         host = f"[{host}]"
     try:
@@ -333,12 +341,15 @@ class WebSocket:
         socket: socket
             Pre-initialized stream socket. With a wss:// URL, a socket that is
             not already an ssl.SSLSocket is wrapped in TLS using sslopt.
+            A redirect is not followed on such a socket (that would connect
+            outside it); it raises WebSocketException.
         """
         if "timeout" in options:
             _validate_timeout(options["timeout"])
         self.sock_opt.timeout = options.get("timeout", self.sock_opt.timeout)
+        caller_socket = options.pop("socket", None)
         self.sock, addrs = connect(
-            url, self.sock_opt, proxy_info(**options), options.pop("socket", None)
+            url, self.sock_opt, proxy_info(**options), caller_socket
         )
 
         try:
@@ -355,6 +366,21 @@ class WebSocket:
                             "Redirect response without Location header, "
                             f"status {self.handshake_response.status}"
                         )
+                    try:
+                        parse_url(location)
+                    except ValueError as e:
+                        # Fixed text: parse errors can quote the path and query.
+                        raise WebSocketException(
+                            f"Invalid redirect target {_url_origin(location)}: "
+                            "only absolute ws:// and wss:// URLs are followed"
+                        ) from e
+                    if caller_socket is not None:
+                        raise WebSocketException(
+                            f"Redirect (status {self.handshake_response.status}) "
+                            f"to {_url_origin(location)} not followed: the "
+                            "connection uses a caller-supplied socket, and "
+                            "following it would connect outside that socket"
+                        )
                     if (
                         urlparse(url).scheme.lower() == "wss"
                         and urlparse(location).scheme.lower() == "ws"
@@ -368,14 +394,11 @@ class WebSocket:
                     self.sock.close()
                     try:
                         self.sock, addrs = connect(
-                            url,
-                            self.sock_opt,
-                            proxy_info(**options),
-                            options.pop("socket", None),
+                            url, self.sock_opt, proxy_info(**options), None
                         )
                     except ValueError as e:
                         raise WebSocketException(
-                            f"Invalid redirect target {url!r}: {e}"
+                            f"Invalid redirect target {_url_origin(url)}: {e}"
                         ) from e
                     new_authority = _handshake_authority(url, addrs)
                     if new_authority != authority:
@@ -803,6 +826,8 @@ def create_connection(
     socket: socket
         Pre-initialized stream socket. With a wss:// URL, a socket that is
         not already an ssl.SSLSocket is wrapped in TLS using sslopt.
+        A redirect is not followed on such a socket (that would connect
+        outside it); it raises WebSocketException.
     """
     sockopt = options.pop("sockopt", [])
     sslopt = options.pop("sslopt", {})
