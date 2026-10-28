@@ -428,6 +428,9 @@ class WebSocketApp:
 
         def initialize_socket(reconnecting: bool = False) -> None:
             nonlocal used_socket
+            if not self.keep_running:  # close() during the reconnect back-off
+                teardown()
+                return
             if reconnecting and self.sock:
                 self.sock.shutdown()
 

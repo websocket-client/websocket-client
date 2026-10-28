@@ -50,7 +50,14 @@ class DispatcherBase:
             info(
                 f"reconnect() - retrying in {seconds} seconds [{len(inspect.stack())} frames in stack]"
             )
-            time.sleep(seconds)
+            # Sleep in steps of at most 0.1 s and stop once close() has cleared
+            # keep_running, so close() during the back-off ends the run
+            # promptly. The first time.sleep() still raises for a negative
+            # interval, as before.
+            end = time.monotonic() + seconds
+            time.sleep(min(seconds, 0.1))
+            while self.app.keep_running and (left := end - time.monotonic()) > 0:
+                time.sleep(min(left, 0.1))
             reconnector(reconnecting=True)
         except KeyboardInterrupt as e:
             info(f"User exited {e}")

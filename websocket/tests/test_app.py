@@ -605,6 +605,35 @@ class WebSocketAppTest(unittest.TestCase):
         # dropped, then two connections that each end at the server's CLOSE
         self.assertEqual(len(harness.connections), 3)
 
+    def test_close_during_reconnect_backoff_ends_run(self):
+        """close() while run_forever waits to reconnect (N59) must end the run
+        within a fraction of a second: no new connection, no on_reconnect,
+        one on_close."""
+        events = []
+        app = ws.WebSocketApp(
+            "ws://example.com/",
+            on_reconnect=lambda app: events.append("reconnect"),
+            on_close=lambda app, code, reason: events.append("close"),
+        )
+        harness = RunForeverHarness(
+            script=[ws.WebSocketConnectionClosedException("dropped")]
+        )
+        start = harness.clock.now
+        fake_sleep = harness.clock.sleep
+
+        def sleep(seconds):
+            fake_sleep(seconds)
+            if harness.clock.now - start >= 0.6 and app.keep_running:
+                app.close()  # another thread, 0.6 s into the 5 s back-off
+
+        harness.clock.sleep = sleep
+        with harness:
+            app.run_forever(reconnect=5)
+
+        self.assertEqual(len(harness.connections), 1)
+        self.assertEqual(events, ["close"])
+        self.assertLess(harness.clock.now - start, 1)
+
     def test_caller_socket_drop_is_final_with_reconnect(self):
         """With socket=, a reconnect would reuse the closed socket, an endless
         on_error loop (N20), and dialing the URL instead would leave the
@@ -1010,7 +1039,7 @@ class WebSocketAppUnitTests(unittest.TestCase):
                     dispatcher.timeout.assert_called_once_with(1, mock.ANY, True)
                     sleep.assert_not_called()
                 else:
-                    sleep.assert_called_once_with(1)
+                    sleep.assert_called_once()  # interrupted during the wait
                 sock.connect.assert_called_once()
                 app.on_error.assert_called_once_with(app, connection_error)
                 self._assert_run_forever_cleanup(app, sock)

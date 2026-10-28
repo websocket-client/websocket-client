@@ -168,6 +168,7 @@ class FakeConn:
     def __init__(self, *args, **kwargs):
         self.sock = object()
         self.connected = False
+        self.close_frame = None  # read by WebSocketApp.close()
         self.script = []
         self.calls = []
         self.sent = []
