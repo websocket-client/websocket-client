@@ -26,6 +26,7 @@ import ssl
 import sys
 import threading
 import time
+import traceback
 import zlib
 from urllib.parse import urlparse
 
@@ -133,6 +134,16 @@ class NonInteractive(RawInput):
 
 
 def main() -> None:
+    """Entry point of the installed wsdump command. An uncaught error still
+    ends with a traceback on stderr and exit status 1, but the server's text
+    in it is escaped like everything else wsdump prints."""
+    try:
+        _main()
+    except Exception:
+        sys.exit(escape_control_chars(traceback.format_exc()))
+
+
+def _main() -> None:
     start_time = time.time()
     args = parse_args()
     if args.verbose > 1:
@@ -236,6 +247,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     try:
-        main()
+        _main()
     except Exception as e:
         print(escape_control_chars(str(e)))
