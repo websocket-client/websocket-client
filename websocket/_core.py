@@ -342,12 +342,15 @@ class WebSocket:
             Pre-initialized stream socket. With a wss:// URL, a socket that is
             not already an ssl.SSLSocket is wrapped in TLS using sslopt.
             A redirect is not followed on such a socket (that would connect
-            outside it); it raises WebSocketException.
+            outside it); it raises WebSocketException. An explicit timeout is
+            applied to it; without one it keeps its own.
         """
         if "timeout" in options:
             _validate_timeout(options["timeout"])
         self.sock_opt.timeout = options.get("timeout", self.sock_opt.timeout)
         caller_socket = options.pop("socket", None)
+        if caller_socket is not None and options.get("timeout") is not None:
+            caller_socket.settimeout(options["timeout"])
         self.sock, addrs = connect(
             url, self.sock_opt, proxy_info(**options), caller_socket
         )
@@ -827,7 +830,8 @@ def create_connection(
         Pre-initialized stream socket. With a wss:// URL, a socket that is
         not already an ssl.SSLSocket is wrapped in TLS using sslopt.
         A redirect is not followed on such a socket (that would connect
-        outside it); it raises WebSocketException.
+        outside it); it raises WebSocketException. An explicit timeout is
+        applied to it; without one it keeps its own.
     """
     sockopt = options.pop("sockopt", [])
     sslopt = options.pop("sslopt", {})
@@ -843,5 +847,7 @@ def create_connection(
         **options,
     )
     websock.settimeout(timeout if timeout is not None else getdefaulttimeout())
+    if timeout is not None:
+        options["timeout"] = timeout  # so connect() applies it to a socket=
     websock.connect(url, **options)
     return websock

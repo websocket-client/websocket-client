@@ -7,6 +7,7 @@ import os.path
 import socket
 import struct
 import threading
+import time
 import unittest
 from base64 import decodebytes as base64decode
 from base64 import encodebytes as base64encode
@@ -1440,6 +1441,36 @@ class WebSocketCoreUnitTests(unittest.TestCase):
             ) as caught:
                 ws.WebSocket().connect("ws://origin/")
             self.assertNotIn("SECRET", str(caught.exception))
+
+    def test_explicit_timeout_applies_to_caller_socket(self):
+        """An explicit timeout bounds the handshake on a caller-supplied socket
+        (N109); without one, the socket keeps its own timeout."""
+        cases = (
+            # (socket's own timeout, API, options, expected socket timeout)
+            (5, "connect", {"timeout": 0.2}, 0.2),
+            (5, "create_connection", {"timeout": 0.2}, 0.2),
+            (0.2, "connect", {}, 0.2),
+            (0.2, "connect", {"timeout": None}, 0.2),
+            (0.2, "create_connection", {}, 0.2),
+        )
+        for own, api, options, expected in cases:
+            with self.subTest(own=own, api=api, options=options):
+                tunnel, peer = socket.socketpair()  # the peer never answers
+                self.addCleanup(tunnel.close)
+                self.addCleanup(peer.close)
+                tunnel.settimeout(own)
+                start = time.monotonic()
+                with self.assertRaises(ws.WebSocketTimeoutException):
+                    if api == "connect":
+                        ws.WebSocket().connect(
+                            "ws://example.com/", socket=tunnel, **options
+                        )
+                    else:
+                        ws.create_connection(
+                            "ws://example.com/", socket=tunnel, **options
+                        )
+                self.assertLess(time.monotonic() - start, 2)
+                self.assertEqual(tunnel.gettimeout(), expected)
 
     def test_shutdown_and_abort(self):
         sock = ws.WebSocket()
