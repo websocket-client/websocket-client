@@ -451,7 +451,8 @@ class WebSocketAppTest(unittest.TestCase):
                 app.run_forever(dispatcher=object())
 
         self.assertTrue(dispatcher_wrapper.read_called)
-        self.assertTrue(dispatcher_wrapper.last_result)
+        # the connection is gone, so the read event must not stay registered
+        self.assertFalse(dispatcher_wrapper.last_result)
         self.assertEqual(close_results, [(None, None)])
         self.assertEqual(len(error_results), 1)
         self.assertIsInstance(error_results[0], ws.WebSocketConnectionClosedException)
@@ -580,6 +581,29 @@ class WebSocketAppTest(unittest.TestCase):
 
         self.assertEqual(len(error_results), 2)
         self.assertEqual(len(reconnect_results), 1)
+
+    def test_read_stops_after_server_close_once_an_error_happened(self):
+        """read() used to return has_errored as its keep-reading flag (N58):
+        after an earlier error in the same run_forever, a server CLOSE left the
+        dispatcher reading the closed connection until TCP dropped, delaying
+        the reconnect. Every connection must stop reading at its CLOSE."""
+        errors = []
+
+        def on_error(app, e):
+            errors.append(e)
+            harness.script = []  # later connections end with a server CLOSE
+            if len(errors) >= 3:
+                app.keep_running = False
+
+        app = ws.WebSocketApp("ws://example.com/", on_error=on_error)
+        with RunForeverHarness(
+            script=[ws.WebSocketConnectionClosedException("dropped")]
+        ) as harness:
+            app.run_forever(reconnect=1)
+
+        self.assertNotIn(True, harness.read_results)
+        # dropped, then two connections that each end at the server's CLOSE
+        self.assertEqual(len(harness.connections), 3)
 
     def test_caller_socket_drop_is_final_with_reconnect(self):
         """With socket=, a reconnect would reuse the closed socket, an endless

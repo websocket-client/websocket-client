@@ -507,12 +507,16 @@ class WebSocketApp:
                 WebSocketTimeoutException,
             ) as e:
                 if custom_dispatcher:
-                    return closed(e)
+                    # The connection is gone: stop reading it. closed() has
+                    # already scheduled a reconnect or torn down.
+                    closed(e)
+                    return False
                 else:
                     raise e
 
             if op_code == ABNF.OPCODE_CLOSE:
-                return closed(frame)
+                closed(frame)
+                return False
             elif op_code == ABNF.OPCODE_PING:
                 self._callback(self.on_ping, frame.data)
             elif op_code == ABNF.OPCODE_PONG:
