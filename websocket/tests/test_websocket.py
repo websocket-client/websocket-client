@@ -888,6 +888,34 @@ class HandshakeTest(unittest.TestCase):
         for secret in (b"BEARERSECRET", b"COOKIESECRET", proxy_credentials.encode()):
             self.assertIn(secret, sent)
 
+    def test_trace_redacts_url_query_and_location_credentials(self):
+        """Tokens often travel in the URL query (AWS presigned URLs, Azure Web
+        PubSub access_token) or a redirect's query (OAuth code). The trace keeps
+        the path but not the query, and a Location loses its userinfo (N172)."""
+        stream = io.StringIO()
+        ws.enableTrace(True, handler=logging.StreamHandler(stream))
+        self.addCleanup(ws.enableTrace, False)
+
+        sock = SockMock()
+        sock.add_packet(
+            b"HTTP/1.1 302 Found\r\n"
+            b"Location: ws://user:PWSECRET@example.com/cb?code=CODESECRET\r\n"
+            b"Content-Length: 0\r\n\r\n"
+        )
+        with self.assertRaisesRegex(ws.WebSocketException, "Redirect limit exhausted"):
+            ws.WebSocket().connect(
+                "ws://example.com/ws?access_token=QUERYSECRET",
+                socket=sock,
+                redirect_limit=0,
+            )
+
+        logged = stream.getvalue()
+        for secret in ("QUERYSECRET", "PWSECRET", "CODESECRET"):
+            self.assertNotIn(secret, logged)
+        self.assertIn("GET /ws?[redacted] HTTP/1.1", logged)
+        self.assertIn("Location: ws://example.com/cb?[redacted]", logged)
+        self.assertIn(b"QUERYSECRET", b"".join(sock.sent))
+
     def test_handshake_cookie_from_multiple_set_cookie(self):
         """Cookies received as two Set-Cookie headers must reach the next
         handshake's Cookie header uncontaminated (one per domain)."""

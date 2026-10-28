@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Optional
+from urllib.parse import urlsplit, urlunsplit
 
 """
 _logging.py
@@ -95,16 +96,41 @@ _REDACTED_HEADERS = frozenset(
 )
 
 
+def _redact_url(url: str) -> str:
+    """url without its userinfo, query and fragment, which can carry
+    credentials or tokens (presigned URLs, OAuth codes)."""
+    try:
+        parts = urlsplit(url)
+    except ValueError:  # e.g. an invalid IPv6 literal
+        return "[redacted]"
+    return urlunsplit(
+        parts._replace(
+            netloc=parts.netloc.rpartition("@")[2],
+            query="[redacted]" if parts.query else "",
+            fragment="[redacted]" if parts.fragment else "",
+        )
+    )
+
+
 def _redact_header_line(line: str) -> str:
-    name, sep, _ = line.partition(":")
-    if sep and name.strip().lower() in _REDACTED_HEADERS:
+    name, sep, value = line.partition(":")
+    field = name.strip().lower()
+    if sep and field in _REDACTED_HEADERS:
         return f"{name}: [redacted]"
+    if sep and field == "location":
+        return f"{name}: {_redact_url(value.strip())}"
     return line
 
 
 def _redact_headers(block: str) -> str:
-    """A CRLF-separated HTTP header block with credential values replaced."""
-    return "\r\n".join(_redact_header_line(line) for line in block.split("\r\n"))
+    """A CRLF-separated HTTP request with credential values and the URL query
+    replaced."""
+    request_line, *lines = block.split("\r\n")
+    method, _, rest = request_line.partition(" ")
+    target, _, version = rest.rpartition(" ")
+    if "?" in target:
+        request_line = f"{method} {_redact_url(target)} {version}"
+    return "\r\n".join([request_line, *map(_redact_header_line, lines)])
 
 
 # C0 controls except tab, DEL, and C1 controls (U+0080-U+009F). Text a server
