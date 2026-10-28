@@ -20,6 +20,7 @@ limitations under the License.
 import errno
 import os
 import socket
+import sys
 from base64 import encodebytes as base64encode
 from typing import Any, Optional, Tuple
 
@@ -284,12 +285,11 @@ def _wrap_sni_socket(
     context = sslopt.get("context", None)
     if not context:
         context = ssl.SSLContext(sslopt.get("ssl_version", ssl.PROTOCOL_TLS_CLIENT))
-        # Non default context need to manually enable SSLKEYLOGFILE support by setting the keylog_filename attribute.
-        # For more details see also:
-        # * https://docs.python.org/3.8/library/ssl.html?highlight=sslkeylogfile#context-creation
-        # * https://docs.python.org/3.8/library/ssl.html?highlight=sslkeylogfile#ssl.SSLContext.keylog_filename
+        # A custom-built context does not read SSLKEYLOGFILE by itself; read it
+        # as ssl.create_default_context() does: an empty value is unset, and
+        # python -E/-I ignores the environment.
         keylog_file = os.environ.get("SSLKEYLOGFILE")
-        if keylog_file is not None:
+        if keylog_file and not sys.flags.ignore_environment:
             context.keylog_filename = keylog_file
 
         if sslopt.get("cert_reqs", ssl.CERT_NONE) != ssl.CERT_NONE:

@@ -412,22 +412,24 @@ class SSLEdgeCasesTest(unittest.TestCase):
 
                 mock_ssl_context.assert_called_with(ssl.PROTOCOL_TLS)
 
-    def test_ssl_keylog_file_edge_cases(self):
-        """Test SSL keylog file configuration edge cases"""
-        mock_sock = Mock()
-
-        # Test with SSLKEYLOGFILE environment variable
-        with patch.dict("os.environ", {"SSLKEYLOGFILE": "/tmp/ssl_keys.log"}):
-            with patch("ssl.SSLContext") as mock_ssl_context:
-                mock_context = Mock()
-                mock_ssl_context.return_value = mock_context
-                mock_context.wrap_socket.return_value = Mock()
-
-                sslopt = {}
-                _ssl_socket(mock_sock, sslopt, "example.com")
-
-                # Should set keylog_filename
-                self.assertEqual(mock_context.keylog_filename, "/tmp/ssl_keys.log")
+    def test_ssl_keylog_file_follows_stdlib_rules(self):
+        """SSLKEYLOGFILE is read like ssl.create_default_context does (N104):
+        an empty value is unset, and python -E/-I ignores the variable."""
+        cases = (
+            # (SSLKEYLOGFILE, sys.flags.ignore_environment, expected)
+            ("/tmp/ssl_keys.log", 0, "/tmp/ssl_keys.log"),
+            ("", 0, None),
+            ("/tmp/ssl_keys.log", 1, None),
+        )
+        for value, ignore_environment, expected in cases:
+            with self.subTest(value=value, ignore_environment=ignore_environment):
+                with patch.dict("os.environ", {"SSLKEYLOGFILE": value}), patch(
+                    "sys.flags", Mock(ignore_environment=ignore_environment)
+                ), patch("ssl.SSLContext") as mock_ssl_context:
+                    mock_context = Mock(keylog_filename=None)
+                    mock_ssl_context.return_value = mock_context
+                    _ssl_socket(Mock(), {}, "example.com")
+                self.assertEqual(mock_context.keylog_filename, expected)
 
     def test_ssl_context_verification_modes(self):
         """Test different SSL verification mode combinations"""
