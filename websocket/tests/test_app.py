@@ -11,6 +11,7 @@ from unittest import mock
 
 import websocket as ws
 from websocket._abnf import ABNF
+from websocket.tests._fakes import RunForeverHarness
 
 """
 test_app.py
@@ -579,6 +580,41 @@ class WebSocketAppTest(unittest.TestCase):
 
         self.assertEqual(len(error_results), 2)
         self.assertEqual(len(reconnect_results), 1)
+
+    def test_caller_socket_drop_is_final_with_reconnect(self):
+        """With socket=, a reconnect would reuse the closed socket, an endless
+        on_error loop (N20), and dialing the URL instead would leave the
+        caller's tunnel, so a drop is final. A new socket that on_error puts
+        in prepared_socket is still used."""
+        drop = ws.WebSocketConnectionClosedException("tunnel dropped")
+        for swap in (False, True):
+            with self.subTest(swap=swap):
+                tunnel, replacement = object(), object()
+                errors, closes = [], []
+
+                def on_error(app, e):
+                    errors.append(e)
+                    if swap and app.prepared_socket is tunnel:
+                        app.prepared_socket = replacement
+                    if len(errors) > 3:  # end a broken build instead of looping
+                        app.keep_running = False
+
+                app = ws.WebSocketApp(
+                    "ws://example.com/",
+                    socket=tunnel,
+                    on_error=on_error,
+                    on_close=lambda app, code, reason: closes.append(code),
+                )
+                with RunForeverHarness(script=[drop]) as harness:
+                    app.run_forever(reconnect=1)
+
+                used = [
+                    next(c[2]["socket"] for c in conn.calls if c[0] == "connect")
+                    for conn in harness.connections
+                ]
+                self.assertEqual(used, [tunnel, replacement] if swap else [tunnel])
+                self.assertEqual(errors, [drop] * len(used))
+                self.assertEqual(len(closes), 1)
 
     @unittest.skipUnless(
         TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"

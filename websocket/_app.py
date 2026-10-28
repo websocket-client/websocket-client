@@ -145,7 +145,9 @@ class WebSocketApp:
             Pre-initialized stream socket. With a wss:// URL, a socket that is
             not already an ssl.SSLSocket is wrapped in TLS using sslopt.
             A redirect is not followed on such a socket (that would connect
-            outside it); it is reported to on_error.
+            outside it); it is reported to on_error. A dropped connection on
+            such a socket is not reconnected: run_forever ends, unless on_error
+            puts a new socket into prepared_socket.
         """
         self.url = url
         self.header = header if header is not None else []
@@ -334,7 +336,8 @@ class WebSocketApp:
         proxy_type: str
             type of proxy from: http, socks4, socks4a, socks5, socks5h
         reconnect: int
-            delay interval when reconnecting
+            delay interval when reconnecting. A connection on a caller-supplied
+            socket is not reconnected (see socket in __init__).
         redirect_limit: int
             Number of HTTP redirects to follow during each opening handshake,
             the same as ``WebSocket.connect(redirect_limit=...)``. Default is 3.
@@ -380,6 +383,8 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.has_errored = False
         self.keep_running = True
+        # The caller-supplied socket the last connection attempt used.
+        used_socket = None
 
         def teardown(close_frame: Optional[ABNF] = None) -> None:
             """
@@ -422,6 +427,7 @@ class WebSocketApp:
             self._callback(self.on_close, close_status_code, close_reason)
 
         def initialize_socket(reconnecting: bool = False) -> None:
+            nonlocal used_socket
             if reconnecting and self.sock:
                 self.sock.shutdown()
 
@@ -440,6 +446,7 @@ class WebSocketApp:
 
             self.sock.settimeout(getdefaulttimeout())
             try:
+                used_socket = self.prepared_socket
                 header = self.header() if callable(self.header) else self.header
 
                 self.sock.connect(
@@ -601,7 +608,13 @@ class WebSocketApp:
                 # Propagate further
                 raise
 
-            if reconnect:
+            # A caller-supplied socket cannot be reopened, and dialing the URL
+            # instead would leave the caller's tunnel, so a drop is final
+            # unless on_error put a new socket into prepared_socket.
+            stuck = (
+                self.prepared_socket is not None and self.prepared_socket is used_socket
+            )
+            if reconnect and not stuck:
                 info(f"{_escape_control_chars(str(e))} - reconnect")
                 if custom_dispatcher:
                     debug(
@@ -610,7 +623,12 @@ class WebSocketApp:
                     assert dispatcher is not None
                     dispatcher.reconnect(reconnect, initialize_socket)
             else:
-                error(f"{_escape_control_chars(str(e))} - goodbye")
+                why = (
+                    " (a caller-supplied socket cannot be reconnected)"
+                    if reconnect
+                    else ""
+                )
+                error(f"{_escape_control_chars(str(e))} - goodbye{why}")
                 teardown(close_frame)
             return self.has_errored
 
