@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import unittest
-from unittest.mock import patch
 
 """
 test_utils.py
@@ -38,59 +37,18 @@ class UtilsTest(unittest.TestCase):
         self.assertIsNone(lock.__enter__())
         self.assertIsNone(lock.__exit__(None, None, None))
 
-    def test_utf8_validation_with_wsaccel(self):
-        """Test UTF-8 validation when wsaccel is available"""
-        # Import normally (wsaccel should be available in test environment)
+    def test_utf8_validation(self):
+        """Test UTF-8 validation"""
         from websocket._utils import validate_utf8
 
-        # Test valid UTF-8 strings (convert to bytes for wsaccel)
         self.assertTrue(validate_utf8("Hello, World!".encode("utf-8")))
         self.assertTrue(validate_utf8("🌟 Unicode test".encode("utf-8")))
         self.assertTrue(validate_utf8(b"Hello, bytes"))
         self.assertTrue(validate_utf8("Héllo with accénts".encode("utf-8")))
+        self.assertTrue(validate_utf8(b""))
 
-        # Test invalid UTF-8 sequences
         self.assertFalse(validate_utf8(b"\xff\xfe"))  # Invalid UTF-8
         self.assertFalse(validate_utf8(b"\x80\x80"))  # Invalid continuation
-
-    def test_utf8_validation_fallback(self):
-        """Test UTF-8 validation fallback when wsaccel is not available"""
-        # Remove _utils from modules to force reimport
-        if "websocket._utils" in sys.modules:
-            del sys.modules["websocket._utils"]
-
-        # Mock wsaccel import to raise ImportError
-        import builtins
-
-        original_import = builtins.__import__
-
-        def mock_import(name, *args, **kwargs):
-            if "wsaccel" in name:
-                raise ImportError(f"No module named '{name}'")
-            return original_import(name, *args, **kwargs)
-
-        with patch("builtins.__import__", side_effect=mock_import):
-            import websocket._utils as utils
-
-            # Test valid UTF-8 strings with fallback implementation (convert strings to bytes)
-            self.assertTrue(utils.validate_utf8("Hello, World!".encode("utf-8")))
-            self.assertTrue(utils.validate_utf8(b"Hello, bytes"))
-            self.assertTrue(utils.validate_utf8("ASCII text".encode("utf-8")))
-
-            # Test Unicode strings (convert to bytes)
-            self.assertTrue(utils.validate_utf8("🌟 Unicode test".encode("utf-8")))
-            self.assertTrue(utils.validate_utf8("Héllo with accénts".encode("utf-8")))
-
-            # Test empty string/bytes
-            self.assertTrue(utils.validate_utf8("".encode("utf-8")))
-            self.assertTrue(utils.validate_utf8(b""))
-
-            # Test invalid UTF-8 sequences (should return False)
-            self.assertFalse(utils.validate_utf8(b"\xff\xfe"))
-            self.assertFalse(utils.validate_utf8(b"\x80\x80"))
-
-            # Note: The fallback implementation may have different validation behavior
-            # than wsaccel, so we focus on clearly invalid sequences
 
     def test_utf8_validation_edge_cases(self):
         """Test UTF-8 validation on boundary and invalid sequences"""

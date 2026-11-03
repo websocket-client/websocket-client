@@ -30,9 +30,7 @@ class NoLock:
 
 
 def _validate_utf8(utfbytes: bytes) -> bool:
-    # Python's built-in UTF-8 decoder applies the same rules as a dedicated
-    # validator and runs in C, so it is faster than a pure-Python loop or
-    # wsaccel's validator.
+    # bytes.decode applies the UTF-8 rules in C.
     try:
         utfbytes.decode("utf-8")
     except UnicodeDecodeError as e:
