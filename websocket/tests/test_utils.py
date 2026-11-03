@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import unittest
-from unittest.mock import patch
 
 """
 test_utils.py
@@ -38,59 +37,54 @@ class UtilsTest(unittest.TestCase):
         self.assertIsNone(lock.__enter__())
         self.assertIsNone(lock.__exit__(None, None, None))
 
-    def test_utf8_validation_with_wsaccel(self):
-        """Test UTF-8 validation when wsaccel is available"""
-        # Import normally (wsaccel should be available in test environment)
+    def test_utf8_validation(self):
+        """Test UTF-8 validation"""
         from websocket._utils import validate_utf8
 
-        # Test valid UTF-8 strings (convert to bytes for wsaccel)
         self.assertTrue(validate_utf8("Hello, World!".encode("utf-8")))
         self.assertTrue(validate_utf8("🌟 Unicode test".encode("utf-8")))
         self.assertTrue(validate_utf8(b"Hello, bytes"))
         self.assertTrue(validate_utf8("Héllo with accénts".encode("utf-8")))
+        self.assertTrue(validate_utf8(b""))
 
-        # Test invalid UTF-8 sequences
         self.assertFalse(validate_utf8(b"\xff\xfe"))  # Invalid UTF-8
         self.assertFalse(validate_utf8(b"\x80\x80"))  # Invalid continuation
 
-    def test_utf8_validation_fallback(self):
-        """Test UTF-8 validation fallback when wsaccel is not available"""
-        # Remove _utils from modules to force reimport
-        if "websocket._utils" in sys.modules:
-            del sys.modules["websocket._utils"]
+    def test_utf8_validation_edge_cases(self):
+        """Test UTF-8 validation on boundary and invalid sequences"""
+        from websocket._utils import validate_utf8
 
-        # Mock wsaccel import to raise ImportError
-        import builtins
-
-        original_import = builtins.__import__
-
-        def mock_import(name, *args, **kwargs):
-            if "wsaccel" in name:
-                raise ImportError(f"No module named '{name}'")
-            return original_import(name, *args, **kwargs)
-
-        with patch("builtins.__import__", side_effect=mock_import):
-            import websocket._utils as utils
-
-            # Test valid UTF-8 strings with fallback implementation (convert strings to bytes)
-            self.assertTrue(utils.validate_utf8("Hello, World!".encode("utf-8")))
-            self.assertTrue(utils.validate_utf8(b"Hello, bytes"))
-            self.assertTrue(utils.validate_utf8("ASCII text".encode("utf-8")))
-
-            # Test Unicode strings (convert to bytes)
-            self.assertTrue(utils.validate_utf8("🌟 Unicode test".encode("utf-8")))
-            self.assertTrue(utils.validate_utf8("Héllo with accénts".encode("utf-8")))
-
-            # Test empty string/bytes
-            self.assertTrue(utils.validate_utf8("".encode("utf-8")))
-            self.assertTrue(utils.validate_utf8(b""))
-
-            # Test invalid UTF-8 sequences (should return False)
-            self.assertFalse(utils.validate_utf8(b"\xff\xfe"))
-            self.assertFalse(utils.validate_utf8(b"\x80\x80"))
-
-            # Note: The fallback implementation may have different validation behavior
-            # than wsaccel, so we focus on clearly invalid sequences
+        valid = [
+            b"\x00\x7f",
+            b"\xc2\x80\xdf\xbf",  # first and last 2-byte characters
+            b"\xe0\xa0\x80\xed\x9f\xbf\xee\x80\x80\xef\xbf\xbf",
+            b"\xf0\x90\x80\x80\xf4\x8f\xbf\xbf",  # U+10000 and U+10FFFF
+            "Grüße こんにちは 🌟".encode("utf-8") * 20000,
+            # data that stops partway through a character is accepted
+            b"\xc3",
+            b"\xe2\x82",
+            b"abc\xf0\x9f\x8c",
+        ]
+        invalid = [
+            b"\x80",
+            b"\xc0\x80",  # overlong
+            b"\xc1\xbf",  # overlong
+            b"\xe0\x80\x80",  # overlong
+            b"\xed\xa0\x80",  # surrogate
+            b"\xed\xa0",  # start of a surrogate
+            b"\xf0\x80",  # start of an overlong
+            b"\xf4\x90\x80\x80",  # above U+10FFFF
+            b"\xf4\x90",  # start of a character above U+10FFFF
+            b"\xf5",
+            b"\xff",
+            b"\xe2\x82A",
+            b"\xe2\x82\xff",
+            "Grüße こんにちは 🌟".encode("utf-8") * 20000 + b"\xff" + b"a" * 1000,
+        ]
+        for data in valid:
+            self.assertTrue(validate_utf8(data), data[:20])
+        for data in invalid:
+            self.assertFalse(validate_utf8(data), data[:20])
 
     def test_extract_err_message(self):
         """Test extract_err_message function"""
