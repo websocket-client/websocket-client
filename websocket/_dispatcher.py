@@ -2,7 +2,8 @@ import time
 import socket
 import inspect
 import selectors
-from typing import Any, TYPE_CHECKING, Callable, Optional, Union
+import threading
+from typing import Any, TYPE_CHECKING, Callable, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from ._app import WebSocketApp
@@ -39,6 +40,61 @@ class DispatcherBase:
     ) -> None:
         self.app = app
         self.ping_timeout = ping_timeout
+        self._wakeup_lock = threading.Lock()
+        self._wakeup: Optional[Tuple[threading.Event, socket.socket]] = None
+
+    def _wake(self) -> None:
+        with self._wakeup_lock:
+            if self._wakeup is not None:
+                stopped, writer = self._wakeup
+                stopped.set()
+                try:
+                    writer.send(b"\0")
+                except BlockingIOError:
+                    pass  # A pending wakeup already makes the selector readable.
+
+    def _read(
+        self, read_callback: Callable, check_callback: Callable, select: Callable
+    ) -> None:
+        websocket = self.app.sock
+        if websocket is None or websocket.sock is None:
+            return
+        sock = websocket.sock
+        reader, writer = socket.socketpair()
+        writer.setblocking(False)
+        stopped = threading.Event()
+        sel = None
+        try:
+            sel = selectors.DefaultSelector()
+            with self._wakeup_lock:
+                self._wakeup = (stopped, writer)
+            try:
+                sel.register(sock, selectors.EVENT_READ)
+            except (OSError, ValueError):
+                if not self.app.keep_running:
+                    return
+                raise
+            sel.register(reader, selectors.EVENT_READ)
+            while self.app.keep_running:
+                try:
+                    ready = select(sock, sel)
+                except (OSError, ValueError):
+                    if stopped.is_set() or not self.app.keep_running:
+                        break
+                    raise
+                if stopped.is_set() or not self.app.keep_running:
+                    break
+                if ready and not read_callback():
+                    break
+                check_callback()
+        finally:
+            with self._wakeup_lock:
+                if self._wakeup is not None and self._wakeup[1] is writer:
+                    self._wakeup = None
+            if sel is not None:
+                sel.close()
+            reader.close()
+            writer.close()
 
     def timeout(self, seconds: Optional[Union[float, int]], callback: Callable) -> None:
         if seconds is not None:
@@ -71,18 +127,11 @@ class Dispatcher(DispatcherBase):
         read_callback: Callable,
         check_callback: Callable,
     ) -> None:
-        if self.app.sock is None or self.app.sock.sock is None:
-            return
-        sel = selectors.DefaultSelector()
-        sel.register(self.app.sock.sock, selectors.EVENT_READ)
-        try:
-            while self.app.keep_running:
-                if sel.select(self.ping_timeout):
-                    if not read_callback():
-                        break
-                check_callback()
-        finally:
-            sel.close()
+        self._read(
+            read_callback,
+            check_callback,
+            lambda sock, sel: sel.select(self.ping_timeout),
+        )
 
 
 class SSLDispatcher(DispatcherBase):
@@ -96,24 +145,15 @@ class SSLDispatcher(DispatcherBase):
         read_callback: Callable,
         check_callback: Callable,
     ) -> None:
-        if self.app.sock is None or self.app.sock.sock is None:
-            return
-        sock = self.app.sock.sock
-        sel = selectors.DefaultSelector()
-        sel.register(sock, selectors.EVENT_READ)
-        try:
-            while self.app.keep_running:
-                if self.select(sock, sel):
-                    if not read_callback():
-                        break
-                check_callback()
-        finally:
-            sel.close()
+        self._read(read_callback, check_callback, self.select)
 
     def select(self, sock: Any, sel: selectors.DefaultSelector) -> Any:
         if self.app.sock is None:
             return None
-        sock = self.app.sock.sock
+        if sock is None:
+            sock = self.app.sock.sock
+        if sock is None:
+            return None
         if sock.pending():
             return [
                 sock,
