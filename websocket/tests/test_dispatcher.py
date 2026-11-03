@@ -4,6 +4,8 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 import threading
 import time
+import selectors
+from types import SimpleNamespace
 
 import websocket
 from websocket._dispatcher import (
@@ -81,6 +83,98 @@ class MockDispatcher:
 class DispatcherTest(unittest.TestCase):
     def setUp(self):
         self.app = MockApp()
+
+    def test_close_before_selector_wait_wakes_dispatcher(self):
+        self.check_close_wakes_dispatcher(Dispatcher)
+
+    def test_close_before_selector_wait_wakes_ssl_dispatcher(self):
+        self.check_close_wakes_dispatcher(SSLDispatcher)
+
+    def check_close_wakes_dispatcher(self, dispatcher_type):
+        client_socket, peer_socket = socket.socketpair()
+        self.addCleanup(client_socket.close)
+        self.addCleanup(peer_socket.close)
+        app = websocket.WebSocketApp("ws://localhost")
+        app.sock = websocket.WebSocket()
+        if dispatcher_type is SSLDispatcher:
+            # Exercise the SSL dispatcher's pending-data path with a real fd.
+            client_socket = Mock(wraps=client_socket, fileno=client_socket.fileno)
+            client_socket.pending = Mock(return_value=0)
+        app.sock.sock = client_socket
+        app.sock.connected = True
+        app.keep_running = True
+        dispatcher = dispatcher_type(app, 2)
+        app._dispatcher = dispatcher
+        selector = selectors.DefaultSelector()
+        polling = threading.Event()
+        proceed = threading.Event()
+        real_select = selector.select
+
+        def delayed_select(timeout):
+            polling.set()
+            if not proceed.wait(2):
+                raise AssertionError("test did not release selector")
+            return real_select(timeout)
+
+        errors = []
+        read_callback = Mock(return_value=True)
+        check_callback = Mock()
+
+        def read():
+            try:
+                dispatcher.read(client_socket, read_callback, check_callback)
+            except Exception as error:
+                errors.append(error)
+
+        def peer_close():
+            peer = websocket.WebSocket()
+            peer.sock = peer_socket
+            peer.recv_frame()
+            peer_socket.sendall(b"\x88\x02\x03\xe8")
+
+        server = threading.Thread(target=peer_close)
+        server.start()
+        worker = threading.Thread(target=read)
+        selector_module = SimpleNamespace(
+            DefaultSelector=lambda: selector, EVENT_READ=selectors.EVENT_READ
+        )
+        try:
+            with patch(
+                "websocket._dispatcher.selectors", selector_module
+            ), patch.object(selector, "select", side_effect=delayed_select):
+                worker.start()
+                self.assertTrue(polling.wait(2))
+                app.close(timeout=1)
+                proceed.set()
+                worker.join(0.5)
+                self.assertFalse(
+                    worker.is_alive(), "dispatcher waited for ping_timeout after close"
+                )
+                self.assertEqual(errors, [])
+                read_callback.assert_not_called()
+                check_callback.assert_not_called()
+                self.assertIsNone(dispatcher._wakeup)
+                self.assertEqual(app.last_close_frame.data, b"\x03\xe8")
+        finally:
+            proceed.set()
+            app.keep_running = False
+            worker.join(3)
+            server.join(2)
+            selector.close()
+
+    def test_dispatcher_cleans_up_after_callback_error(self):
+        client, peer = socket.socketpair()
+        self.addCleanup(client.close)
+        self.addCleanup(peer.close)
+        self.app.sock.sock = client
+        dispatcher = Dispatcher(self.app, 2)
+        peer.sendall(b"ready")
+        callback = Mock(side_effect=RuntimeError("callback failed"))
+        for _ in range(2):
+            with self.assertRaisesRegex(RuntimeError, "callback failed"):
+                dispatcher.read(client, callback, Mock())
+            self.assertIsNone(dispatcher._wakeup)
+            dispatcher._wake()  # Closing an inactive/reconnecting read is harmless.
 
     def test_dispatcher_base_init(self):
         """Test DispatcherBase initialization"""
@@ -164,7 +258,7 @@ class DispatcherTest(unittest.TestCase):
             mock_selector.register.assert_called()
             mock_selector.select.assert_called_with(5.0)
             mock_selector.close.assert_called()
-            check_callback.assert_called()
+            check_callback.assert_not_called()
 
     def test_dispatcher_read_with_data(self):
         """Test Dispatcher read method when data is available"""
@@ -194,7 +288,7 @@ class DispatcherTest(unittest.TestCase):
             dispatcher.read(mock_sock, read_callback, check_callback)
 
             read_callback.assert_called()
-            check_callback.assert_called()
+            check_callback.assert_called_once()
 
     def test_ssl_dispatcher_read(self):
         """Test SSLDispatcher read method"""
@@ -221,7 +315,7 @@ class DispatcherTest(unittest.TestCase):
             dispatcher.read(None, read_callback, check_callback)
 
             mock_selector.register.assert_called()
-            check_callback.assert_called()
+            check_callback.assert_not_called()
 
     def test_ssl_dispatcher_select_with_pending(self):
         """Test SSLDispatcher select method with pending data"""

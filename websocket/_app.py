@@ -160,6 +160,7 @@ class WebSocketApp:
         self.on_cont_message = on_cont_message
         self.keep_running = False
         self.get_mask_key = get_mask_key
+        self._dispatcher: Optional[DispatcherBase] = None
         self.sock: Optional[WebSocket] = None
         self.last_ping_tm = float(0)
         self.last_pong_tm = float(0)
@@ -210,13 +211,19 @@ class WebSocketApp:
         Close websocket connection.
         """
         self.keep_running = False
+        dispatcher = self._dispatcher
         sock = self.sock
-        if sock:
-            sock.close(**kwargs)
-            # Capture the peer's close frame before clearing socket reference
-            if sock.close_frame is not None:
-                self.last_close_frame = sock.close_frame
-            self.sock = None
+        try:
+            if sock:
+                sock.close(**kwargs)
+                # Capture the peer's close frame before clearing socket reference
+                if sock.close_frame is not None:
+                    self.last_close_frame = sock.close_frame
+                self.sock = None
+        finally:
+            # Finish the close handshake before waking the dispatcher's teardown.
+            if dispatcher is not None:
+                dispatcher._wake()
 
     def _start_ping_thread(self) -> None:
         self.last_ping_tm = self.last_pong_tm = float(0)
@@ -621,6 +628,9 @@ class WebSocketApp:
             teardown()
             raise
 
+        if not custom_dispatcher:
+            self._dispatcher = dispatcher
+
         try:
             initialize_socket()
             if not custom_dispatcher and reconnect:
@@ -638,6 +648,8 @@ class WebSocketApp:
             if not custom_dispatcher:
                 # Ensure teardown was called before returning from run_forever
                 teardown()
+                if self._dispatcher is dispatcher:
+                    self._dispatcher = None
 
         return self.has_errored
 
