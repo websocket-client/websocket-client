@@ -11,13 +11,12 @@ future releases 1.X.X and beyond will only support Python 3.
 Why is this library slow?
 ===========================
 
-The ``send`` and ``validate_utf8`` methods are very slow in pure Python.
-You can disable UTF8 validation in this library (and receive a
-performance enhancement) with the ``skip_utf8_validation`` parameter.
+The ``send`` method is slow in pure Python. UTF-8 validation of
+received text uses Python's built-in decoder, so it is fast; you can
+still skip it with the ``skip_utf8_validation`` parameter.
 If you want to get better performance, install wsaccel. While
 websocket-client does not depend on wsaccel, it will be used if
-available. wsaccel doubles the speed of UTF8 validation and
-offers a very minor 10% performance boost when masking the
+available. wsaccel offers a very minor 10% performance boost when masking the
 payload data as part of the ``send`` process. Numpy used to
 be a suggested alternative, but
 `issue #687 <https://github.com/websocket-client/websocket-client/issues/687>`_

@@ -92,6 +92,42 @@ class UtilsTest(unittest.TestCase):
             # Note: The fallback implementation may have different validation behavior
             # than wsaccel, so we focus on clearly invalid sequences
 
+    def test_utf8_validation_edge_cases(self):
+        """Test UTF-8 validation on boundary and invalid sequences"""
+        from websocket._utils import validate_utf8
+
+        valid = [
+            b"\x00\x7f",
+            b"\xc2\x80\xdf\xbf",  # first and last 2-byte characters
+            b"\xe0\xa0\x80\xed\x9f\xbf\xee\x80\x80\xef\xbf\xbf",
+            b"\xf0\x90\x80\x80\xf4\x8f\xbf\xbf",  # U+10000 and U+10FFFF
+            "Grüße こんにちは 🌟".encode("utf-8") * 20000,
+            # data that stops partway through a character is accepted
+            b"\xc3",
+            b"\xe2\x82",
+            b"abc\xf0\x9f\x8c",
+        ]
+        invalid = [
+            b"\x80",
+            b"\xc0\x80",  # overlong
+            b"\xc1\xbf",  # overlong
+            b"\xe0\x80\x80",  # overlong
+            b"\xed\xa0\x80",  # surrogate
+            b"\xed\xa0",  # start of a surrogate
+            b"\xf0\x80",  # start of an overlong
+            b"\xf4\x90\x80\x80",  # above U+10FFFF
+            b"\xf4\x90",  # start of a character above U+10FFFF
+            b"\xf5",
+            b"\xff",
+            b"\xe2\x82A",
+            b"\xe2\x82\xff",
+            "Grüße こんにちは 🌟".encode("utf-8") * 20000 + b"\xff" + b"a" * 1000,
+        ]
+        for data in valid:
+            self.assertTrue(validate_utf8(data), data[:20])
+        for data in invalid:
+            self.assertFalse(validate_utf8(data), data[:20])
+
     def test_extract_err_message(self):
         """Test extract_err_message function"""
         from websocket._utils import extract_err_message
