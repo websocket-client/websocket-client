@@ -176,14 +176,14 @@ def main() -> None:
             ):  # gzip magick
                 try:
                     data = "[gzip] " + str(gzip.decompress(data), "utf-8")
-                except:
+                except (OSError, EOFError, zlib.error, UnicodeDecodeError):
                     pass
             elif isinstance(data, bytes):
                 try:
                     data = "[zlib] " + str(
                         zlib.decompress(data, -zlib.MAX_WBITS), "utf-8"
                     )
-                except:
+                except (zlib.error, UnicodeDecodeError):
                     pass
 
             if isinstance(data, bytes):

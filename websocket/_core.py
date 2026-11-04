@@ -679,7 +679,7 @@ class WebSocket:
             if self.sock is not None:
                 self.sock.settimeout(sock_timeout)
                 self.sock.shutdown(socket.SHUT_RDWR)
-        except:
+        except OSError:
             pass
         finally:
             self._closing = False
