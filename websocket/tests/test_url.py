@@ -553,8 +553,9 @@ class ProxyInfoTest(unittest.TestCase):
         """httpoxy: under CGI (REQUEST_METHOD set) HTTP_PROXY can come from the
         client's Proxy: header, so only the lowercase variable is honored."""
         host = "echo.websocket.events"
-        with patch.dict(os.environ, {"HTTP_PROXY": "http://evil:3128/"}):
-            os.environ.pop("REQUEST_METHOD", None)
+        # Model a case-sensitive environment even on Windows. The
+        # case-insensitive environment is tested separately below.
+        with patch("os.environ", {"HTTP_PROXY": "http://evil:3128/"}):
             self.assertEqual(get_proxy_info(host, False), ("evil", 3128, None))
 
             os.environ["REQUEST_METHOD"] = "GET"
@@ -564,8 +565,8 @@ class ProxyInfoTest(unittest.TestCase):
             self.assertEqual(get_proxy_info(host, False), ("good", 3128, None))
 
         # HTTPS_PROXY cannot be set from a request header, so it still applies.
-        with patch.dict(
-            os.environ, {"REQUEST_METHOD": "GET", "HTTPS_PROXY": "http://good2:3128/"}
+        with patch(
+            "os.environ", {"REQUEST_METHOD": "GET", "HTTPS_PROXY": "http://good2:3128/"}
         ):
             self.assertEqual(get_proxy_info(host, True), ("good2", 3128, None))
 
