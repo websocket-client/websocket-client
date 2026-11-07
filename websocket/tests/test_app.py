@@ -6,6 +6,7 @@ import socket
 import ssl
 import struct
 import threading
+import traceback
 import unittest
 from unittest import mock
 
@@ -1159,6 +1160,234 @@ class WebSocketAppUnitTests(unittest.TestCase):
         # inside run_forever(). We verify the attribute exists and can be reset.
         app.last_close_frame = None
         self.assertIsNone(app.last_close_frame)
+
+    def test_run_forever_disconnect_log_includes_traceback(self):
+        for stage in ("connect", "recv_data_frame"):
+            for custom_dispatcher in (False, True):
+                with self.subTest(stage=stage, custom_dispatcher=custom_dispatcher):
+                    failure = KeyError("missing connection key")
+
+                    def failing_operation(*args, **kwargs):
+                        raise failure
+
+                    app = self._build_app()
+                    app.on_error = mock.Mock()
+                    app.on_close = mock.Mock()
+                    sock = mock.Mock()
+                    getattr(sock, stage).side_effect = failing_operation
+
+                    def read_once(sock, read_callback, check_callback=None):
+                        return read_callback()
+
+                    dispatcher = mock.Mock()
+                    dispatcher.read.side_effect = read_once
+                    with (
+                        mock.patch("websocket._app.WebSocket", return_value=sock),
+                        mock.patch(
+                            "websocket._app.Dispatcher.read", side_effect=read_once
+                        ),
+                        self.assertLogs("websocket", level="ERROR") as captured,
+                    ):
+                        result = app.run_forever(
+                            dispatcher=dispatcher if custom_dispatcher else None,
+                            reconnect=0,
+                        )
+
+                    self.assertIs(result, True)
+                    app.on_error.assert_called_once_with(app, failure)
+                    self._assert_run_forever_cleanup(app, sock)
+                    self.assertEqual(len(captured.records), 1)
+                    record = captured.records[0]
+                    self.assertTrue(record.exc_info)
+                    self.assertIs(record.exc_info[1], failure)
+                    self.assertIn(
+                        "failing_operation",
+                        [
+                            frame.name
+                            for frame in traceback.extract_tb(record.exc_info[2])
+                        ],
+                    )
+                    self.assertIn(
+                        "Traceback (most recent call last)", captured.output[0]
+                    )
+
+    def test_run_forever_reconnect_log_includes_traceback(self):
+        failure = OSError("connection unavailable")
+
+        def failing_connect(*args, **kwargs):
+            raise failure
+
+        app = self._build_app()
+        app.on_close = mock.Mock()
+        app.on_error = mock.Mock(
+            side_effect=lambda app, error: setattr(app, "keep_running", False)
+        )
+        sock = mock.Mock()
+        sock.connect.side_effect = failing_connect
+
+        with (
+            mock.patch("websocket._app.WebSocket", return_value=sock),
+            self.assertLogs("websocket", level="INFO") as captured,
+        ):
+            result = app.run_forever(reconnect=1)
+
+        self.assertIs(result, True)
+        app.on_error.assert_called_once_with(app, failure)
+        self._assert_run_forever_cleanup(app, sock)
+        record = next(
+            r for r in captured.records if r.getMessage().endswith("reconnect")
+        )
+        self.assertTrue(record.exc_info)
+        self.assertIs(record.exc_info[1], failure)
+        self.assertIn(
+            "failing_connect",
+            [frame.name for frame in traceback.extract_tb(record.exc_info[2])],
+        )
+
+    def test_run_forever_disconnect_logs_supplied_exception(self):
+        try:
+            raise KeyError("original error")
+        except KeyError as error:
+            failure = error
+
+        app = self._build_app()
+        app.on_error = mock.Mock()
+        app.on_close = mock.Mock()
+        sock = mock.Mock()
+
+        def create_dispatcher(ping_timeout, dispatcher, is_ssl, closed):
+            def read_once(*args):
+                try:
+                    raise ValueError("unrelated active exception")
+                except ValueError:
+                    closed(failure)
+
+            result = mock.Mock()
+            result.read.side_effect = read_once
+            return result
+
+        with (
+            mock.patch("websocket._app.WebSocket", return_value=sock),
+            mock.patch.object(app, "create_dispatcher", side_effect=create_dispatcher),
+            self.assertLogs("websocket", level="ERROR") as captured,
+        ):
+            result = app.run_forever(dispatcher=mock.Mock(), reconnect=0)
+
+        self.assertIs(result, True)
+        self._assert_run_forever_cleanup(app, sock)
+        app.on_error.assert_called_once_with(app, failure)
+        record = captured.records[0]
+        self.assertTrue(record.exc_info)
+        self.assertIs(record.exc_info[0], KeyError)
+        self.assertIs(record.exc_info[1], failure)
+        self.assertNotIn("unrelated active exception", captured.output[0])
+
+    def test_run_forever_reconnect_wait_log_includes_traceback(self):
+        failure = RuntimeError("reconnect failed")
+
+        def failing_reconnect(*args, **kwargs):
+            raise failure
+
+        app = self._build_app()
+        app.on_close = mock.Mock()
+        sock = mock.Mock()
+        dispatcher = mock.Mock()
+        dispatcher.reconnect.side_effect = failing_reconnect
+
+        with (
+            mock.patch("websocket._app.WebSocket", return_value=sock),
+            mock.patch.object(app, "create_dispatcher", return_value=dispatcher),
+            self.assertLogs("websocket", level="INFO") as captured,
+        ):
+            result = app.run_forever(reconnect=1)
+
+        # Preserve the existing return value for an outer-loop failure.
+        self.assertIs(result, False)
+        self._assert_run_forever_cleanup(app, sock)
+        record = next(
+            r for r in captured.records if r.getMessage().startswith("tearing down")
+        )
+        self.assertTrue(record.exc_info)
+        self.assertIs(record.exc_info[1], failure)
+        self.assertIn(
+            "failing_reconnect",
+            [frame.name for frame in traceback.extract_tb(record.exc_info[2])],
+        )
+
+    def test_run_forever_custom_close_message_has_no_traceback(self):
+        class CloseReason(str):
+            pass
+
+        reason = CloseReason("dispatcher closed")
+        app = self._build_app()
+        app.on_error = mock.Mock()
+        app.on_close = mock.Mock()
+        sock = mock.Mock()
+
+        def create_dispatcher(ping_timeout, dispatcher, is_ssl, closed):
+            result = mock.Mock()
+            result.read.side_effect = lambda *args: closed(reason)
+            return result
+
+        with (
+            mock.patch("websocket._app.WebSocket", return_value=sock),
+            mock.patch.object(app, "create_dispatcher", side_effect=create_dispatcher),
+            self.assertLogs("websocket", level="ERROR") as captured,
+        ):
+            result = app.run_forever(dispatcher=mock.Mock(), reconnect=0)
+
+        self.assertIs(result, True)
+        app.on_error.assert_called_once_with(app, reason)
+        self._assert_run_forever_cleanup(app, sock)
+        self.assertEqual(len(captured.records), 1)
+        self.assertIn("dispatcher closed - goodbye", captured.output[0])
+        self.assertFalse(captured.records[0].exc_info)
+
+    def test_run_forever_close_log_has_no_traceback(self):
+        for reconnect in (0, 1):
+            for custom_dispatcher in (False, True):
+                with self.subTest(
+                    reconnect=reconnect, custom_dispatcher=custom_dispatcher
+                ):
+                    app = self._build_app()
+                    app.on_error = lambda app, error: setattr(
+                        app, "keep_running", False
+                    )
+                    sock = mock.Mock()
+                    frame = ABNF(
+                        fin=1, opcode=ABNF.OPCODE_CLOSE, data=struct.pack("!H", 1000)
+                    )
+                    sock.recv_data_frame.return_value = (frame.opcode, frame)
+
+                    def read_once(sock, read_callback, check_callback=None):
+                        return read_callback()
+
+                    dispatcher = mock.Mock()
+                    dispatcher.read.side_effect = read_once
+                    with (
+                        mock.patch("websocket._app.WebSocket", return_value=sock),
+                        mock.patch(
+                            "websocket._app.Dispatcher.read", side_effect=read_once
+                        ),
+                        self.assertLogs("websocket", level="INFO") as captured,
+                    ):
+                        try:
+                            raise RuntimeError("unrelated active exception")
+                        except RuntimeError:
+                            result = app.run_forever(
+                                dispatcher=dispatcher if custom_dispatcher else None,
+                                reconnect=reconnect,
+                            )
+                        finally:
+                            app.close()
+
+                    self.assertIs(result, False)
+                    for record in captured.records:
+                        self.assertFalse(record.exc_info)
+                    self.assertNotIn("NoneType: None", "\n".join(captured.output))
+                    self.assertNotIn(
+                        "unrelated active exception", "\n".join(captured.output)
+                    )
 
     def test_callback_errors_propagate_to_on_error_once(self):
         capture = []

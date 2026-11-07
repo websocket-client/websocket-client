@@ -1,6 +1,9 @@
 ChangeLog
 ============
 
+- Unreleased
+  - Include the original traceback when logging connection, dispatcher and reconnect-loop exceptions in WebSocketApp.run_forever() (#1004).
+
 - 1.10.0
   - Raise `WebSocketTimeoutException` instead of returning 0 when `send()` times out writing (91abd2d)
   - Close retry selectors in `send()`/`recv()` when registration or waiting fails (66dd6f1)
