@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 """
 _logging.py
@@ -88,7 +88,7 @@ def dump(title: str, message: str) -> None:
         _logger.debug("-----------------------")
 
 
-def error(msg: str, *, exc_info: bool = False) -> None:
+def error(msg: str, *, exc_info: Union[bool, BaseException] = False) -> None:
     _logger.error(msg, exc_info=exc_info)
 
 
@@ -100,8 +100,8 @@ def debug(msg: str) -> None:
     _logger.debug(msg)
 
 
-def info(msg: str) -> None:
-    _logger.info(msg)
+def info(msg: str, *, exc_info: Union[bool, BaseException] = False) -> None:
+    _logger.info(msg, exc_info=exc_info)
 
 
 def trace(msg: str) -> None:

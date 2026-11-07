@@ -599,8 +599,15 @@ class WebSocketApp:
                 # Propagate further
                 raise
 
+            # The dispatcher may deliver an exception outside its except block.
+            # Close frames and plain close messages have no traceback to report.
+            exc_info = (
+                e
+                if isinstance(e, BaseException) and e.__traceback__ is not None
+                else False
+            )
             if reconnect:
-                info(f"{e} - reconnect")
+                info(f"{e} - reconnect", exc_info=exc_info)
                 if custom_dispatcher:
                     debug(
                         f"Calling custom dispatcher reconnect [{len(inspect.stack())} frames in stack]"
@@ -608,7 +615,7 @@ class WebSocketApp:
                     assert dispatcher is not None
                     dispatcher.reconnect(reconnect, initialize_socket)
             else:
-                error(f"{e} - goodbye")
+                error(f"{e} - goodbye", exc_info=exc_info)
                 teardown(close_frame)
             return self.has_errored
 
@@ -630,7 +637,7 @@ class WebSocketApp:
                     )
                     dispatcher.reconnect(reconnect, initialize_socket)
         except (KeyboardInterrupt, Exception) as e:
-            info(f"tearing down on exception {e!r}")
+            info(f"tearing down on exception {e!r}", exc_info=True)
             teardown()
             if isinstance(e, KeyboardInterrupt):
                 raise
