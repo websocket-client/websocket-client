@@ -1254,5 +1254,56 @@ class WebSocketCoreUnitTests(unittest.TestCase):
         self.assertEqual(conn.options["origin"], "https://origin")
 
 
+
+
+class CloseStatusValidationTest(unittest.TestCase):
+    """RFC 6455 §7.4: forbidden/reserved close codes must not be sent."""
+
+    def _send_close_captures(self, status):
+        sock = ws.WebSocket()
+        captured = {}
+
+        def fake_send(payload, opcode):
+            captured["payload"] = payload
+            captured["opcode"] = opcode
+            return len(payload)
+
+        sock.send = fake_send  # type: ignore[assignment]
+        sock.connected = True
+        sock.send_close(status=status, reason=b"")
+        return captured
+
+    def test_send_close_accepts_registered_status(self):
+        for status in (1000, 1001, 1004 - 1, 1011, 1012, 1013, 1014, 3000, 4999):
+            captured = self._send_close_captures(status)
+            self.assertEqual(captured["opcode"], ws.ABNF.OPCODE_CLOSE)
+            self.assertEqual(captured["payload"][:2], status.to_bytes(2, "big"))
+
+    def test_send_close_rejects_rfc_forbidden_status(self):
+        for status in (1005, 1006, 1015):
+            with self.assertRaises(ValueError):
+                self._send_close_captures(status)
+
+    def test_send_close_rejects_reserved_status(self):
+        for status in (0, 1, 999, 2000, 2500, 2999, 5000, 65535):
+            with self.assertRaises(ValueError):
+                self._send_close_captures(status)
+
+    def test_close_rejects_invalid_status_before_connected_check(self):
+        # close() on an unconnected socket returns early; use a connected
+        # fake to prove the status validation fires
+        sock = ws.WebSocket()
+        sock.connected = True
+
+        def fake_send(payload, opcode):
+            return len(payload)
+
+        sock.send = fake_send  # type: ignore[assignment]
+        with self.assertRaises(ValueError):
+            sock.close(status=1005)
+        with self.assertRaises(ValueError):
+            sock.close(status=0)
+
+
 if __name__ == "__main__":
     unittest.main()
