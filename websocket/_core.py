@@ -43,6 +43,22 @@ limitations under the License.
 __all__ = ["WebSocket", "create_connection"]
 
 
+def _validate_close_status(status: int) -> None:
+    """
+    RFC 6455 §7.4.1/§7.4.2: an endpoint must not use 1005, 1006 or 1015
+    in a Close frame, and 0-999/2000-2999 are reserved and not allowed
+    for sending. The receive path already rejects these codes via
+    ABNF._is_valid_close_status(); enforce the same rule when sending.
+    """
+    if status < 0 or status >= ABNF.LENGTH_16:
+        raise ValueError("code is invalid range")
+    if not ABNF._is_valid_close_status(status):
+        raise ValueError(
+            f"close status code {status} is invalid per RFC 6455 "
+            "(1005, 1006 and 1015 must not be sent; 0-999 and 2000-2999 are reserved)"
+        )
+
+
 def _normalize_close_reason(reason: Union[str, bytes, None]) -> bytes:
     """Convert a close reason into the UTF-8 bytes for a close-frame payload."""
     if reason is None:
@@ -605,8 +621,7 @@ class WebSocket:
         reason: str or bytes
             The reason to close. This must be string or UTF-8 bytes.
         """
-        if status < 0 or status >= ABNF.LENGTH_16:
-            raise ValueError("code is invalid range")
+        _validate_close_status(status)
 
         reason_bytes = _normalize_close_reason(reason)
 
@@ -638,8 +653,7 @@ class WebSocket:
             if not self._closing:
                 self.shutdown()
             return
-        if status < 0 or status >= ABNF.LENGTH_16:
-            raise ValueError("code is invalid range")
+        _validate_close_status(status)
 
         # Reset close_frame to avoid stale data from previous connections
         self.close_frame = None
