@@ -246,6 +246,17 @@ class ABNF:
             raise ValueError("not 0 or 1")
         if self.opcode not in ABNF.OPCODES:
             raise ValueError("Invalid OPCODE")
+        # RFC 6455 5.5: all control frames MUST have a payload length of
+        # 125 bytes or less and MUST NOT be fragmented. The receive path
+        # (validate()) already rejects such frames; enforce the same rule
+        # before putting them on the wire.
+        if self.opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            if not self.fin:
+                raise ValueError("control frames must not be fragmented")
+            if len(self.data) >= ABNF.LENGTH_7:
+                raise ValueError(
+                    "control frame payload must be 125 bytes or less"
+                )
         length = len(self.data)
         if length >= ABNF.LENGTH_63:
             raise ValueError("data is too long")

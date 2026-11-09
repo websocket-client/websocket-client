@@ -644,11 +644,17 @@ class WebSocket:
         # Reset close_frame to avoid stale data from previous connections
         self.close_frame = None
 
+        reason_bytes = _normalize_close_reason(reason)
+        if len(struct.pack("!H", status)) + len(reason_bytes) >= ABNF.LENGTH_7:
+            # RFC 6455 5.5: validate before the best-effort try below,
+            # which swallows send errors for a connection already dying
+            raise ValueError("close frame payload must be 125 bytes or less")
+
         self._closing = True
         try:
             self.connected = False
             self.send(
-                struct.pack("!H", status) + _normalize_close_reason(reason),
+                struct.pack("!H", status) + reason_bytes,
                 ABNF.OPCODE_CLOSE,
             )
             if self.sock is None:

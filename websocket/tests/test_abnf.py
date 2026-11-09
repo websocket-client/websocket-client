@@ -151,6 +151,34 @@ class ABNFTest(unittest.TestCase):
                     self.assertEqual(frame.opcode, opcode)
                     self.assertEqual(frame.data, payload)
 
+    def test_format_control_frames_reject_long_payloads(self):
+        # RFC 6455 5.5: control frames must carry <= 125 payload bytes;
+        # format() must not put an extended-length control frame on the wire
+        payload = b"\x03\xe8" + b"a" * 124
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            with self.subTest(opcode=opcode):
+                frame = ABNF(1, 0, 0, 0, opcode=opcode, mask_value=1, data=payload)
+                with self.assertRaises(ValueError):
+                    frame.format()
+
+    def test_format_control_frames_reject_fragmentation(self):
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            with self.subTest(opcode=opcode):
+                frame = ABNF(0, 0, 0, 0, opcode=opcode, mask_value=1, data=b"a")
+                with self.assertRaises(ValueError):
+                    frame.format()
+
+    def test_format_control_frames_accept_valid_payloads(self):
+        for opcode in (ABNF.OPCODE_CLOSE, ABNF.OPCODE_PING, ABNF.OPCODE_PONG):
+            for payload in (b"", b"\x03\xe8" + b"a" * 123):
+                with self.subTest(opcode=opcode, length=len(payload)):
+                    frame = ABNF(
+                        1, 0, 0, 0, opcode=opcode, mask_value=0, data=payload
+                    )
+                    wire = frame.format()
+                    self.assertEqual(wire[0], 0x80 | opcode)
+                    self.assertEqual(wire[1], len(payload))
+
     def test_format(self):
         abnf_bad_rsv_bits = ABNF(2, 0, 0, 0, opcode=ABNF.OPCODE_TEXT)
         self.assertRaises(ValueError, abnf_bad_rsv_bits.format)
