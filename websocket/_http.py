@@ -35,6 +35,37 @@ from ._url import get_proxy_info, parse_url
 
 __all__ = ["proxy_info", "connect", "read_headers"]
 
+# Errnos raised when a process (EMFILE) or the whole system (ENFILE) runs
+# out of file descriptors, e.g. when opening many connections at once.
+# See https://github.com/websocket-client/websocket-client/issues/979
+_FD_EXHAUSTION_ERRNOS = frozenset(
+    [errno.EMFILE, getattr(errno, "ENFILE", errno.EMFILE)]
+)
+
+_FD_EXHAUSTION_HINT = (
+    "This may mean the process ran out of file descriptors "
+    "(e.g. by opening many connections at once without closing them). "
+    "Close connections/sockets you no longer need, or raise the "
+    "per-process open-file limit, e.g. with `ulimit -n 4096` "
+    "(Linux/macOS shell) or LimitNOFILE for a service."
+)
+
+
+def _is_fd_exhaustion(error: BaseException) -> bool:
+    """Return True if *error* reports file-descriptor exhaustion."""
+    return getattr(error, "errno", None) in _FD_EXHAUSTION_ERRNOS
+
+
+def _with_fd_exhaustion_hint(error: OSError) -> OSError:
+    """Return a copy of *error* with a hint on file-descriptor exhaustion.
+
+    The errno is preserved so existing ``error.errno`` checks keep working,
+    and the original error is chained as the cause.
+    """
+    hinted = OSError(error.errno, f"{error}. {_FD_EXHAUSTION_HINT}")
+    hinted.__cause__ = error
+    return hinted
+
 # Import python_socks if available, otherwise define fallback classes
 try:
     from python_socks._errors import ProxyConnectionError, ProxyError, ProxyTimeoutError
@@ -122,7 +153,12 @@ def _start_proxied_socket(
         rdns=rdns,
     )
 
-    sock = ws_proxy.connect(hostname, port, timeout=proxy.proxy_timeout)
+    try:
+        sock = ws_proxy.connect(hostname, port, timeout=proxy.proxy_timeout)
+    except OSError as error:
+        if _is_fd_exhaustion(error):
+            raise _with_fd_exhaustion_hint(error) from error
+        raise
 
     try:
         if is_secure:
@@ -223,7 +259,12 @@ def _open_socket(addrinfo_list, sockopt, timeout):
     err = None
     for addrinfo in addrinfo_list:
         family, socktype, proto = addrinfo[:3]
-        sock = socket.socket(family, socktype, proto)
+        try:
+            sock = socket.socket(family, socktype, proto)
+        except OSError as error:
+            if _is_fd_exhaustion(error):
+                raise _with_fd_exhaustion_hint(error) from error
+            raise
         sock.settimeout(timeout)
         for opts in DEFAULT_SOCKET_OPTION:
             sock.setsockopt(*opts)
@@ -237,6 +278,8 @@ def _open_socket(addrinfo_list, sockopt, timeout):
                 sock.connect(address)
             except socket.error as error:
                 sock.close()
+                if _is_fd_exhaustion(error):
+                    raise _with_fd_exhaustion_hint(error) from error
                 error.remote_ip = str(address[0])  # type: ignore[attr-defined]
                 eConnRefused = (
                     errno.ECONNREFUSED,

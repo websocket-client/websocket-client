@@ -235,6 +235,29 @@ keep the connection alive. See
 `issue #200 <https://github.com/websocket-client/websocket-client/issues/200>`_
 for possible solutions.
 
+I get "[Errno 24] Too many open files" when opening many connections
+============================================================================
+
+Each open WebSocket connection uses a file descriptor (a socket), and
+operating systems limit how many file descriptors one process may hold
+open at once. If you open many connections in a batch without closing
+them, you can hit that limit and ``connect()`` / ``create_connection()``
+fails with ``OSError: [Errno 24] Too many open files`` (or ``[Errno 23]
+Too many open files in system``). The error message now says so and
+suggests what to do; see
+`issue #979 <https://github.com/websocket-client/websocket-client/issues/979>`_.
+
+To fix it:
+
+* Close connections you no longer need (``ws.close()``), or reuse a
+  single connection instead of opening one per message.
+* Check how many descriptors your process currently holds, e.g. on
+  Linux ``ls /proc/<pid>/fd | wc -l``.
+* Raise the per-process limit for the shell that runs your program,
+  e.g. ``ulimit -n 4096`` (Linux/macOS). To raise it persistently, use
+  ``LimitNOFILE=4096`` for a systemd service or
+  ``/etc/security/limits.conf`` for a login session.
+
 Using Subprotocols
 ====================
 
